@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import logo from "../../assets/ArcHive_logo.png"
 
 const navItems = [
   { to: "/library", label: "Library" },
@@ -10,10 +11,14 @@ export function AppLayout() {
   return (
     <div style={styles.shell}>
       <aside style={styles.sidebar}>
-        <div style={styles.brand}>
-          <div style={styles.brandTitle}>ArcHive</div>
-          <div style={styles.brandSubtitle}>Game Hub</div>
-        </div>
+      <div style={styles.brand}>
+        <img
+          src={logo}
+          alt="ArcHive logo"
+          style={{ width: 128, height: 128, marginBottom: 8 }}
+        />
+        <div style={styles.brandSubtitle}>Game Hub</div>
+      </div>
 
         <nav style={styles.nav}>
           {navItems.map((item) => (
