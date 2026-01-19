@@ -1,0 +1,51 @@
+.empty {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+  place-items: center;
+  text-align: center;
+}
+
+.icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 24px;
+}
+
+.title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.subtitle {
+  margin: 0;
+  opacity: 0.75;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.primary {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+}
+.primary:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
