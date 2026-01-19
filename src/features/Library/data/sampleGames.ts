@@ -7,7 +7,7 @@ export const sampleGames: Game[] = [
     platform: "Steam",
     installed: true,
     lastPlayedAt: "2026-01-10T18:20:00.000Z",
-    coverUrl: null,
+    launchUrl: "steam://rungameid/367520",
   },
   {
     id: "epic-hades",
@@ -15,7 +15,7 @@ export const sampleGames: Game[] = [
     platform: "Epic",
     installed: false,
     lastPlayedAt: null,
-    coverUrl: null,
+    launchUrl: "com.epicgames.launcher://apps/Hades?action=launch&silent=true",
   },
   {
     id: "gog-cyberpunk",
@@ -23,7 +23,7 @@ export const sampleGames: Game[] = [
     platform: "GOG",
     installed: true,
     lastPlayedAt: "2026-01-15T21:05:00.000Z",
-    coverUrl: null,
+    launchUrl: "goggalaxy://launch/1423049311",
   },
   {
     id: "other-stardew",
@@ -31,6 +31,6 @@ export const sampleGames: Game[] = [
     platform: "Other",
     installed: true,
     lastPlayedAt: "2026-01-18T12:00:00.000Z",
-    coverUrl: null,
+    launchUrl: null,
   },
 ];
