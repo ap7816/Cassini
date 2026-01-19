@@ -1,0 +1,161 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+  box-sizing: border-box;
+  background: rgba(15, 20, 26, 1);
+}
+
+.sidebarDesktop {
+  width: 260px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.sidebarMobile {
+  width: 260px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  transition: transform 160ms ease;
+}
+
+.sidebarMobileOpen {
+  transform: translateX(0);
+}
+
+.sidebarMobileClosed {
+  transform: translateX(-110%);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40;
+}
+
+.brand {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.logo {
+  width: 128px;
+  height: 128px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.brandSubtitle {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navItem {
+  text-decoration: none;
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.navItemActive {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.muted {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.headerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.burger {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+}
+
+.search {
+  width: min(520px, 55vw);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  outline: none;
+}
+
+.content {
+  padding: 16px;
+  overflow: auto;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .search {
+    width: min(420px, 60vw);
+  }
+}
