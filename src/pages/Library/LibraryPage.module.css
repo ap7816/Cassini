@@ -1,0 +1,15 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.subtitle {
+  opacity: 0.75;
+  margin: 0;
+}
