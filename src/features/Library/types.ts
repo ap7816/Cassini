@@ -7,4 +7,7 @@ export type Game = {
   coverUrl?: string | null;
   installed?: boolean;
   lastPlayedAt?: string | null; // ISO date string
+
+  // Nouveau: URL/URI à ouvrir pour lancer le jeu (steam://..., epic://..., etc.)
+  launchUrl?: string | null;
 };
