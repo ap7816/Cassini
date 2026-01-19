@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
-import { LibraryPage } from "../pages/LibraryPage";
-import { LaunchersPage } from "../pages/LaunchersPage";
-import { SettingsPage } from "../pages/SettingsPage";
+import { LibraryPage } from "../pages/Library/LibraryPage";
+import { LaunchersPage } from "../pages/Launchers/LaunchersPage";
+import { SettingsPage } from "../pages/Settings/SettingsPage";
 
 export function AppRouter() {
   return (
