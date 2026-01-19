@@ -62,7 +62,7 @@ export function AppLayout() {
                 aria-label="Open menu"
                 title="Menu"
               >
-                ☰
+                <span className={css.burgerIcon} aria-hidden="true">☰</span>
               </button>
             )}
             <div className={css.headerTitle}>{pageTitle}</div>
