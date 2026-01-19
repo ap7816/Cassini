@@ -85,7 +85,6 @@ export function AppLayout() {
             alt="ArcHive logo"
             style={{ width: 128, height: 128, marginBottom: 8 }}
           />
-          <div style={styles.brandTitle}>ArcHive</div>
           <div style={styles.brandSubtitle}>Game Hub</div>
         </div>
 
