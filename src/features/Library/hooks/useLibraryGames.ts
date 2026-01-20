@@ -14,7 +14,8 @@ export function useLibraryGames() {
   }, []);
 
   useEffect(() => {
-    saveGamesToStorage(games);
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
   }, [games]);
 
   const isEmpty = games.length === 0;
