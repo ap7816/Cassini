@@ -34,9 +34,7 @@ export function useLibraryGames() {
   }
 
   function toggleInstalled(id: string) {
-    setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g))
-    );
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
   }
 
   async function exportToFile() {
