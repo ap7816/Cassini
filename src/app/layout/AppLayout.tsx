@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
-import logo from '../../assets/ArcHive_logo.png';
+import logo from '../../../public/favicon.png'
 import css from './AppLayout.module.css';
 import { useAppLayout, type NavItem } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
