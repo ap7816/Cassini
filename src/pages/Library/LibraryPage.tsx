@@ -16,6 +16,7 @@ export function LibraryPage() {
     toggleInstalled,
     exportToFile,
     importFromFile,
+    addGameFromPicker,
   } = useLibraryGames();
 
   async function handlePlay(game: Game) {
@@ -26,7 +27,7 @@ export function LibraryPage() {
   async function handleExport() {
     try {
       await exportToFile();
-    } catch (e) {
+    } catch {
       window.alert("Export failed.");
     }
   }
@@ -34,8 +35,16 @@ export function LibraryPage() {
   async function handleImport() {
     try {
       await importFromFile();
-    } catch (e) {
+    } catch {
       window.alert("Import failed (invalid file).");
+    }
+  }
+
+  async function handleAddGame() {
+    const res = await addGameFromPicker();
+    // Si tu veux, on remplacera par un toast plus tard
+    if (!res.ok && res.message !== "Cancelled.") {
+      window.alert(res.message);
     }
   }
 
@@ -52,6 +61,10 @@ export function LibraryPage() {
         </div>
 
         <div className={css.actions}>
+          <button type="button" className={css.primaryButton} onClick={handleAddGame}>
+            Add game
+          </button>
+
           <button type="button" className={css.button} onClick={handleImport}>
             Import
           </button>
@@ -96,7 +109,6 @@ export function LibraryPage() {
               onToggleInstalled={toggleInstalled}
             />
           ))}
-
         </div>
       )}
     </div>
