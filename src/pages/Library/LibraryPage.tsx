@@ -1,8 +1,8 @@
 import css from "./LibraryPage.module.css";
-import { useLibraryGames } from "../../features/Library/hooks/useLibraryGames";
-import { EmptyState } from "../../features/Library/components/EmptyState";
-import { GameCard } from "../../features/Library/components/GameCard";
-import { launchGame } from "../../features/Library/services/launchGame";
+import { useLibraryGames } from "../../features/library/hooks/useLibraryGames";
+import { EmptyState } from "../../features/library/components/EmptyState";
+import { GameCard } from "../../features/library/components/GameCard";
+import { launchGame } from "../../features/library/services/launchGame";
 import type { Game } from "../../features/library/types";
 
 export function LibraryPage() {
@@ -54,7 +54,9 @@ export function LibraryPage() {
         <div>
           <h1 className={css.title}>Library</h1>
           <p className={css.subtitle}>
-            {isEmpty ? "Your games will appear here." : `${games.length} games • ${installedCount} installed`}
+            {isEmpty
+              ? "Your games will appear here."
+              : `${games.length} games • ${installedCount} installed`}
           </p>
         </div>
 
@@ -81,6 +83,7 @@ export function LibraryPage() {
           <button type="button" className={css.button} onClick={loadSamples}>
             Load samples
           </button>
+
           <button
             type="button"
             className={css.button}
@@ -98,7 +101,13 @@ export function LibraryPage() {
       ) : (
         <div className={css.grid}>
           {games.map((g) => (
-            <GameCard key={g.id} game={g} onRemove={removeGame} onPlay={handlePlay} />
+            <GameCard
+              key={g.id}
+              game={g}
+              onRemove={removeGame}
+              onPlay={handlePlay}
+              onToggleInstalled={toggleInstalled}
+            />
           ))}
         </div>
       )}
