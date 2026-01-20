@@ -5,7 +5,7 @@ import { useLibraryGames } from "../../features/library/hooks/useLibraryGames";
 import { EmptyState } from "../../features/library/components/EmptyState";
 import { GameCard } from "../../features/library/components/GameCard";
 import { launchGame } from "../../features/library/services/launchGame";
-import type { Game } from "../../features/library/types";
+import type { Game } from "../../features/types";
 
 export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();

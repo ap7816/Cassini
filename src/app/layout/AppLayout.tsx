@@ -2,6 +2,7 @@ import { NavLink, Outlet, useSearchParams } from "react-router-dom";
 import logo from "../../assets/ArcHive_logo.png";
 import css from "./AppLayout.module.css";
 import { useAppLayout, type NavItem } from "./useAppLayout";
+import { useAppSettings } from "../../features/settings/context/AppSettingsContext";
 
 const navItems: NavItem[] = [
   { to: "/library", label: "Library" },
@@ -38,8 +39,16 @@ export function AppLayout() {
     .filter(Boolean)
     .join(" ");
 
+  const { settings } = useAppSettings();
+
+  const bgStyle = {
+    ["--app-bg-image" as any]: settings.backgroundImageDataUrl
+      ? `url("${settings.backgroundImageDataUrl}")`
+      : "none",
+  };
+
   return (
-    <div className={css.shell}>
+    <div className={css.shell} style={bgStyle}>
       {isMobile && sidebarOpen && (
         <div className={css.backdrop} onClick={closeSidebar} aria-hidden="true" />
       )}
