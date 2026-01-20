@@ -1,14 +1,7 @@
-import { createContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppSettings } from "../../types";
-import { loadSettings, saveSettings } from '../service/settingsStorage';
-
-type AppSettingsContextValue = {
-  settings: AppSettings;
-  setBackgroundImageDataUrl: (dataUrl: string) => void;
-  clearBackgroundImage: () => void;
-};
-
-export const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
+import { loadSettings, saveSettings } from "../services/settingsStorage";
+import { AppSettingsContext } from "./appSettingsContext";
 
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AppSettingsContext } from "./AppSettingsProvider";
+import { AppSettingsContext } from "./appSettingsContext";
 
 export function useAppSettings() {
   const ctx = useContext(AppSettingsContext);
