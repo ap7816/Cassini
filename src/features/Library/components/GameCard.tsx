@@ -18,6 +18,14 @@ function formatLastPlayed(iso?: string | null) {
 export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
 
+  function handleToggleInstalled() {
+    if (game.installed) {
+      const ok = window.confirm(`Uninstall "${game.title}" ?`);
+      if (!ok) return;
+    }
+    onToggleInstalled(game.id);
+  }
+
   return (
     <article className={css.card}>
       <div className={css.cover} aria-hidden="true">
@@ -41,8 +49,8 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
             <button
               type="button"
               className={css.secondary}
-              onClick={() => onToggleInstalled(game.id)}
-              title="Toggle installed"
+              onClick={handleToggleInstalled}
+              title={game.installed ? "Uninstall" : "Install"}
             >
               {game.installed ? "Uninstall" : "Install"}
             </button>
