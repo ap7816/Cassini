@@ -45,7 +45,6 @@ export function useLibraryGames() {
         return {
           ...g,
           installed: nextInstalled,
-          launchUrl: nextInstalled ? g.launchUrl : null,
         };
       })
     );
