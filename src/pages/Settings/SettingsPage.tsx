@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import css from './SettingsPage.module.css';
-import { useAppSettings } from "../../features/settings/context/useAppSettings";
+import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

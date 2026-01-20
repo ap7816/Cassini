@@ -1,5 +1,5 @@
-import { createContext } from "react";
-import type { AppSettings } from "../../types";
+import { createContext } from 'react';
+import type { AppSettings } from '../../types';
 
 export type AppSettingsContextValue = {
   settings: AppSettings;
