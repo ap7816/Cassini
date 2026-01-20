@@ -1,4 +1,4 @@
-import type { Game } from "../types";
+import type { Game } from "../../types";
 import { normalizeGames } from "./libraryStorage";
 
 type ExportPayload = {

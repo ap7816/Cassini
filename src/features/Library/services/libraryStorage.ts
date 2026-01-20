@@ -1,4 +1,4 @@
-import type { Game, GamePlatform } from "../types";
+import type { Game, GamePlatform } from "../../types";
 
 const STORAGE_KEY = "arctive.library.games.v1";
 const PLATFORMS: GamePlatform[] = ["Steam", "Epic", "GOG", "Other"];

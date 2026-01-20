@@ -1,4 +1,4 @@
-import type { Game } from "../types";
+import type { Game } from "../../types";
 
 function basename(path: string): string {
   // Support Windows + Unix

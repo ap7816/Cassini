@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Game } from "../types";
+import type { Game } from "../../types";
 import { sampleGames } from "../data/sampleGames";
 import { loadGamesFromStorage, saveGamesToStorage } from "../services/libraryStorage";
 import { exportLibraryToFile, importLibraryFromFile } from "../services/libraryFile";
