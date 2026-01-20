@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useSearchParams } from "react-router-dom";
 import logo from "../../assets/ArcHive_logo.png";
 import css from "./AppLayout.module.css";
 import { useAppLayout, type NavItem } from "./useAppLayout";
@@ -10,7 +10,25 @@ const navItems: NavItem[] = [
 ];
 
 export function AppLayout() {
-  const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(navItems, 900);
+  const { pathname, isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } =
+    useAppLayout(navItems, 900);
+
+  const isLibraryRoute = pathname === "/library" || pathname.startsWith("/library/");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const q = searchParams.get("q") ?? "";
+
+  function handleSearchChange(nextValue: string) {
+    if (!isLibraryRoute) return;
+
+    const next = new URLSearchParams(searchParams);
+    const trimmed = nextValue.trim();
+
+    if (!trimmed) next.delete("q");
+    else next.set("q", nextValue);
+
+    setSearchParams(next, { replace: true });
+  }
 
   const sidebarClassName = [
     css.sidebar,
@@ -47,7 +65,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          <div className={css.muted}>v0.3 (dev)</div>
+          <div className={css.muted}>v0.1 (dev)</div>
         </div>
       </aside>
 
@@ -70,8 +88,10 @@ export function AppLayout() {
 
           <input
             className={css.search}
-            placeholder="Search games..."
-            disabled
+            placeholder={isLibraryRoute ? "Search games..." : "Search (Library)"}
+            value={isLibraryRoute ? q : ""}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            disabled={!isLibraryRoute}
             aria-label="Search"
           />
         </header>
