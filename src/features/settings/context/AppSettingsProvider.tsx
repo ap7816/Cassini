@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppSettings } from "../../types";
-import { loadSettings, saveSettings } from "../services/settingsStorage";
+import { loadSettings, saveSettings } from "../service/settingsStorage";
 import { AppSettingsContext } from "./appSettingsContext";
 
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
