@@ -13,6 +13,7 @@ export function LibraryPage() {
     loadSamples,
     clearLibrary,
     removeGame,
+    toggleInstalled,
     exportToFile,
     importFromFile,
   } = useLibraryGames();
@@ -87,8 +88,15 @@ export function LibraryPage() {
       ) : (
         <div className={css.grid}>
           {games.map((g) => (
-            <GameCard key={g.id} game={g} onRemove={removeGame} onPlay={handlePlay} />
+            <GameCard
+              key={g.id}
+              game={g}
+              onRemove={removeGame}
+              onPlay={handlePlay}
+              onToggleInstalled={toggleInstalled}
+            />
           ))}
+
         </div>
       )}
     </div>

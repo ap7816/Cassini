@@ -5,6 +5,7 @@ type Props = {
   game: Game;
   onRemove: (id: string) => void;
   onPlay: (game: Game) => void;
+  onToggleInstalled: (id: string) => void;
 };
 
 function formatLastPlayed(iso?: string | null) {
@@ -14,7 +15,7 @@ function formatLastPlayed(iso?: string | null) {
   return `Last played: ${d.toLocaleDateString()}`;
 }
 
-export function GameCard({ game, onRemove, onPlay }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
 
   return (
@@ -37,6 +38,15 @@ export function GameCard({ game, onRemove, onPlay }: Props) {
           </div>
 
           <div className={css.actions}>
+            <button
+              type="button"
+              className={css.secondary}
+              onClick={() => onToggleInstalled(game.id)}
+              title="Toggle installed"
+            >
+              {game.installed ? "Uninstall" : "Install"}
+            </button>
+
             <button
               type="button"
               className={css.play}
