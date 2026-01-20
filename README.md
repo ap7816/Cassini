@@ -6,10 +6,10 @@ ArcHive is a Windows desktop app that unifies all your installed games (launcher
 
 ArcHive aims to provide:
 
-* A single game library (Steam/Epic/other launchers + Windows shortcuts)
-* Automatic detection when new games are installed (scan + watchers)
-* A "Launchers" tab to open Steam/Epic/etc quickly
-* UI customization (background image/GIF/video, theme, layout)
+- A single game library (Steam/Epic/other launchers + Windows shortcuts)
+- Automatic detection when new games are installed (scan + watchers)
+- A "Launchers" tab to open Steam/Epic/etc quickly
+- UI customization (background image/GIF/video, theme, layout)
 
 Product notes and roadmap are stored in `docs/` (Obsidian-compatible).
 
@@ -17,15 +17,15 @@ Product notes and roadmap are stored in `docs/` (Obsidian-compatible).
 
 Required tools:
 
-* Git
-* Node.js (LTS) with npm
-* Rust (rustup) + Cargo
-* Visual Studio Build Tools 2022 with:
+- Git
+- Node.js (LTS) with npm
+- Rust (rustup) + Cargo
+- Visual Studio Build Tools 2022 with:
+  - Desktop development with C++
+  - MSVC v143
+  - Windows 10/11 SDK
 
-  * Desktop development with C++
-  * MSVC v143
-  * Windows 10/11 SDK
-* Microsoft Edge WebView2 Runtime (often already installed)
+- Microsoft Edge WebView2 Runtime (often already installed)
 
 Verify in "Developer PowerShell for VS 2022":
 
@@ -73,9 +73,9 @@ npm run tauri build
 
 ## Useful Scripts
 
-* `npm run dev`: start only the Vite frontend
-* `npm run tauri dev`: start the full desktop app in dev mode
-* `npm run tauri build`: build the desktop app (release)
+- `npm run dev`: start only the Vite frontend
+- `npm run tauri dev`: start the full desktop app in dev mode
+- `npm run tauri build`: build the desktop app (release)
 
 ## Troubleshooting
 
@@ -85,9 +85,9 @@ Cause: MSVC C++ build tools are missing or not loaded in the current terminal.
 
 Fix:
 
-* Install Visual Studio Build Tools 2022 with "Desktop development with C++" (MSVC v143 + Windows SDK)
-* Use "Developer PowerShell for VS 2022"
-* Verify:
+- Install Visual Studio Build Tools 2022 with "Desktop development with C++" (MSVC v143 + Windows SDK)
+- Use "Developer PowerShell for VS 2022"
+- Verify:
 
 ```powershell
 where.exe link
@@ -113,4 +113,4 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 Documentation lives in `docs/`.
 Entry point:
 
-* `docs/Home.md`
+- `docs/Home.md`

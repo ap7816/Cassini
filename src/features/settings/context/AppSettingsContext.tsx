@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AppSettings } from "../../types";
-import { loadSettings, saveSettings } from "../service/settingsStorage";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { AppSettings } from '../../types';
+import { loadSettings, saveSettings } from '../service/settingsStorage';
 
 type AppSettingsContextValue = {
   settings: AppSettings;
@@ -27,7 +27,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ settings, setBackgroundImageDataUrl, clearBackgroundImage }),
-    [settings]
+    [settings],
   );
 
   return <AppSettingsContext.Provider value={value}>{children}</AppSettingsContext.Provider>;
@@ -35,6 +35,6 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
 
 export function useAppSettings() {
   const ctx = useContext(AppSettingsContext);
-  if (!ctx) throw new Error("useAppSettings must be used within AppSettingsProvider");
+  if (!ctx) throw new Error('useAppSettings must be used within AppSettingsProvider');
   return ctx;
 }

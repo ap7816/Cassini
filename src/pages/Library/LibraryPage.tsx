@@ -1,15 +1,15 @@
-import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import css from "./LibraryPage.module.css";
-import { useLibraryGames } from "../../features/library/hooks/useLibraryGames";
-import { EmptyState } from "../../features/library/components/EmptyState";
-import { GameCard } from "../../features/library/components/GameCard";
-import { launchGame } from "../../features/library/services/launchGame";
-import type { Game } from "../../features/types";
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import css from './LibraryPage.module.css';
+import { useLibraryGames } from '../../features/library/hooks/useLibraryGames';
+import { EmptyState } from '../../features/library/components/EmptyState';
+import { GameCard } from '../../features/library/components/GameCard';
+import { launchGame } from '../../features/library/services/launchGame';
+import type { Game } from '../../features/types';
 
 export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const qRaw = searchParams.get("q") ?? "";
+  const qRaw = searchParams.get('q') ?? '';
   const q = qRaw.trim().toLowerCase();
 
   const {
@@ -32,7 +32,7 @@ export function LibraryPage() {
 
   function clearSearch() {
     const next = new URLSearchParams(searchParams);
-    next.delete("q");
+    next.delete('q');
     setSearchParams(next, { replace: true });
   }
 
@@ -45,7 +45,7 @@ export function LibraryPage() {
     try {
       await exportToFile();
     } catch {
-      window.alert("Export failed.");
+      window.alert('Export failed.');
     }
   }
 
@@ -53,13 +53,13 @@ export function LibraryPage() {
     try {
       await importFromFile();
     } catch {
-      window.alert("Import failed (invalid file).");
+      window.alert('Import failed (invalid file).');
     }
   }
 
   async function handleAddGame() {
     const res = await addGameFromPicker();
-    if (!res.ok && res.message !== "Cancelled.") window.alert(res.message);
+    if (!res.ok && res.message !== 'Cancelled.') window.alert(res.message);
   }
 
   const showNoResults = !isEmpty && q.length > 0 && filteredGames.length === 0;
@@ -71,7 +71,7 @@ export function LibraryPage() {
           <h1 className={css.title}>Library</h1>
           <p className={css.subtitle}>
             {isEmpty
-              ? "Your games will appear here."
+              ? 'Your games will appear here.'
               : q
                 ? `${filteredGames.length} result(s) • ${games.length} total`
                 : `${games.length} games • ${installedCount} installed`}
