@@ -14,7 +14,6 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
   const [isMobile, setIsMobile] = useState(() => getInitialIsMobile(breakpointPx));
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // matchMedia pour mobile/desktop
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -36,12 +35,10 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
     };
   }, [breakpointPx]);
 
-  // Ferme le drawer quand on navigue (mobile)
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
   }, [pathname, isMobile]);
 
-  // Ferme sur Escape
   useEffect(() => {
     if (!sidebarOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -57,6 +54,7 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
   }, [pathname, navItems]);
 
   return {
+    pathname,
     isMobile,
     sidebarOpen,
     pageTitle,

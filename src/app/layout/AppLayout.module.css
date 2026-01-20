@@ -159,6 +159,7 @@
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
   outline: none;
+  box-shadow: none;
 }
 
 .content {
