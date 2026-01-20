@@ -27,11 +27,11 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
     onChange(mq);
 
     if (mq.addEventListener) mq.addEventListener('change', onChange);
-    else mq.addListener(onChange as any);
+    else mq.addListener(onChange);
 
     return () => {
       if (mq.removeEventListener) mq.removeEventListener('change', onChange);
-      else mq.removeListener(onChange as any);
+      else mq.removeListener(onChange);
     };
   }, [breakpointPx]);
 

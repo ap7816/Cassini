@@ -35,7 +35,7 @@ export function useLibraryGames() {
 
   function toggleInstalled(id: string) {
     setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, installed: !Boolean(g.installed) } : g)),
+      prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g))
     );
   }
 

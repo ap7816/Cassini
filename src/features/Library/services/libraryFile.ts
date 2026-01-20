@@ -1,5 +1,5 @@
-import type { Game } from '../../types';
-import { normalizeGames } from './libraryStorage';
+import type { Game } from "../../types";
+import { normalizeGames } from "./libraryStorage";
 
 type ExportPayload = {
   version: 1;
@@ -8,14 +8,13 @@ type ExportPayload = {
 };
 
 function isTauri(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).__TAURI__);
+  return typeof window !== "undefined" && Boolean(window.__TAURI__);
 }
 
 function getTauriApis() {
-  const w = window as any;
   return {
-    dialog: w.__TAURI__?.dialog,
-    fs: w.__TAURI__?.fs,
+    dialog: window.__TAURI__?.dialog,
+    fs: window.__TAURI__?.fs,
   };
 }
 
@@ -30,13 +29,14 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
 
   if (isTauri()) {
     const { dialog, fs } = getTauriApis();
+
     if (!dialog?.save || !fs?.writeTextFile) {
-      throw new Error('Tauri dialog/fs APIs not available.');
+      throw new Error("Tauri dialog/fs APIs not available.");
     }
 
     const path = await dialog.save({
-      defaultPath: 'arctive-library.json',
-      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: "arctive-library.json",
+      filters: [{ name: "JSON", extensions: ["json"] }],
     });
 
     if (!path) return; // user cancelled
@@ -46,12 +46,12 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
   }
 
   // Browser fallback: download
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = 'arctive-library.json';
+  a.download = "arctive-library.json";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -62,16 +62,17 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
 export async function importLibraryFromFile(): Promise<Game[]> {
   if (isTauri()) {
     const { dialog, fs } = getTauriApis();
+
     if (!dialog?.open || !fs?.readTextFile) {
-      throw new Error('Tauri dialog/fs APIs not available.');
+      throw new Error("Tauri dialog/fs APIs not available.");
     }
 
     const path = await dialog.open({
       multiple: false,
-      filters: [{ name: 'JSON', extensions: ['json'] }],
+      filters: [{ name: "JSON", extensions: ["json"] }],
     });
 
-    if (!path || typeof path !== 'string') return [];
+    if (!path || typeof path !== "string") return [];
 
     const txt = await fs.readTextFile(path);
     return parseImport(txt);
@@ -85,25 +86,29 @@ export async function importLibraryFromFile(): Promise<Game[]> {
   return parseImport(txt);
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
 function parseImport(txt: string): Game[] {
   try {
-    const parsed = JSON.parse(txt);
+    const parsed: unknown = JSON.parse(txt);
 
-    // support: soit {games: [...]}, soit directement [...]
+    // support: soit { games: [...] }, soit directement [...]
     const gamesRaw =
-      parsed && typeof parsed === 'object' && 'games' in parsed ? (parsed as any).games : parsed;
+      isRecord(parsed) && "games" in parsed ? (parsed as Record<string, unknown>).games : parsed;
 
     return normalizeGames(gamesRaw);
   } catch {
-    throw new Error('Invalid JSON file.');
+    throw new Error("Invalid JSON file.");
   }
 }
 
 function pickJsonFileInBrowser(): Promise<File | null> {
   return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.json';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
     input.onchange = () => resolve(input.files?.[0] ?? null);
     input.click();
   });

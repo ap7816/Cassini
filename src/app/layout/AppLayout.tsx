@@ -43,10 +43,12 @@ export function AppLayout() {
 
   const { settings } = useAppSettings();
 
-  const bgStyle = {
-    ['--app-bg-image' as any]: settings.backgroundImageDataUrl
+  type CSSVarStyle = React.CSSProperties & { ["--app-bg-image"]?: string };
+
+  const bgStyle: CSSVarStyle = {
+    "--app-bg-image": settings.backgroundImageDataUrl
       ? `url("${settings.backgroundImageDataUrl}")`
-      : 'none',
+      : "none",
   };
 
   return (
