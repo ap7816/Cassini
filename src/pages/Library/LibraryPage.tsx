@@ -1,19 +1,40 @@
 import css from "./LibraryPage.module.css";
-import { useLibraryGames } from "../../features/Library/hooks/useLibraryGames";
-import { EmptyState } from "../../features/Library/components/EmptyState";
-import { GameCard } from "../../features/Library/components/GameCard";
-import { launchGame } from "../../features/Library/services/launchGame";
+import { useLibraryGames } from "../../features/library/hooks/useLibraryGames";
+import { EmptyState } from "../../features/library/components/EmptyState";
+import { GameCard } from "../../features/library/components/GameCard";
+import { launchGame } from "../../features/library/services/launchGame";
 import type { Game } from "../../features/library/types";
 
 export function LibraryPage() {
-  const { games, isEmpty, installedCount, loadSamples, clearLibrary, removeGame } =
-    useLibraryGames();
+  const {
+    games,
+    isEmpty,
+    installedCount,
+    loadSamples,
+    clearLibrary,
+    removeGame,
+    exportToFile,
+    importFromFile,
+  } = useLibraryGames();
 
   async function handlePlay(game: Game) {
     const res = await launchGame(game);
-    if (!res.ok) {
-      // simple feedback (on pourra faire un toast plus tard)
-      console.warn(res.reason, res.message);
+    if (!res.ok) window.alert(res.message);
+  }
+
+  async function handleExport() {
+    try {
+      await exportToFile();
+    } catch (e) {
+      window.alert("Export failed.");
+    }
+  }
+
+  async function handleImport() {
+    try {
+      await importFromFile();
+    } catch (e) {
+      window.alert("Import failed (invalid file).");
     }
   }
 
@@ -23,14 +44,32 @@ export function LibraryPage() {
         <div>
           <h1 className={css.title}>Library</h1>
           <p className={css.subtitle}>
-            {isEmpty ? "Your games will appear here." : `${games.length} games • ${installedCount} installed`}
+            {isEmpty
+              ? "Your games will appear here."
+              : `${games.length} games • ${installedCount} installed`}
           </p>
         </div>
 
         <div className={css.actions}>
+          <button type="button" className={css.button} onClick={handleImport}>
+            Import
+          </button>
+
+          <button
+            type="button"
+            className={css.button}
+            onClick={handleExport}
+            disabled={isEmpty}
+            aria-disabled={isEmpty}
+            title={isEmpty ? "Nothing to export" : "Export library to JSON"}
+          >
+            Export
+          </button>
+
           <button type="button" className={css.button} onClick={loadSamples}>
             Load samples
           </button>
+
           <button
             type="button"
             className={css.button}

@@ -1,32 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Game } from "../types";
 import { sampleGames } from "../data/sampleGames";
-
-const STORAGE_KEY = "arctive.library.games";
-
-function safeParseGames(raw: string | null): Game[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(Boolean) as Game[];
-  } catch {
-    return [];
-  }
-}
+import { loadGamesFromStorage, saveGamesToStorage } from "../services/libraryStorage";
+import { exportLibraryToFile, importLibraryFromFile } from "../services/libraryFile";
 
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
 
+  // Load on mount
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    setGames(safeParseGames(stored));
+    setGames(loadGamesFromStorage());
   }, []);
 
+  // Auto-save on change
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+    saveGamesToStorage(games);
   }, [games]);
 
   const isEmpty = games.length === 0;
@@ -48,6 +36,16 @@ export function useLibraryGames() {
     setGames((prev) => prev.filter((g) => g.id !== id));
   }
 
+  async function exportToFile() {
+    await exportLibraryToFile(games);
+  }
+
+  async function importFromFile() {
+    const imported = await importLibraryFromFile();
+    if (imported.length === 0) return;
+    setGames(imported);
+  }
+
   return {
     games,
     isEmpty,
@@ -55,5 +53,7 @@ export function useLibraryGames() {
     loadSamples,
     clearLibrary,
     removeGame,
+    exportToFile,
+    importFromFile,
   };
 }
