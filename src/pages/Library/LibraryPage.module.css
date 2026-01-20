@@ -57,3 +57,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+.primaryButton {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.10);
+  color: inherit;
+  cursor: pointer;
+
+  box-shadow: none; /* important: neutralise ton CSS global */
+}
+
+.primaryButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

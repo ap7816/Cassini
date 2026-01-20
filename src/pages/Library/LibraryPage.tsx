@@ -6,14 +6,45 @@ import { launchGame } from "../../features/Library/services/launchGame";
 import type { Game } from "../../features/library/types";
 
 export function LibraryPage() {
-  const { games, isEmpty, installedCount, loadSamples, clearLibrary, removeGame } =
-    useLibraryGames();
+  const {
+    games,
+    isEmpty,
+    installedCount,
+    loadSamples,
+    clearLibrary,
+    removeGame,
+    toggleInstalled,
+    exportToFile,
+    importFromFile,
+    addGameFromPicker,
+  } = useLibraryGames();
 
   async function handlePlay(game: Game) {
     const res = await launchGame(game);
-    if (!res.ok) {
-      // simple feedback (on pourra faire un toast plus tard)
-      console.warn(res.reason, res.message);
+    if (!res.ok) window.alert(res.message);
+  }
+
+  async function handleExport() {
+    try {
+      await exportToFile();
+    } catch {
+      window.alert("Export failed.");
+    }
+  }
+
+  async function handleImport() {
+    try {
+      await importFromFile();
+    } catch {
+      window.alert("Import failed (invalid file).");
+    }
+  }
+
+  async function handleAddGame() {
+    const res = await addGameFromPicker();
+    // Si tu veux, on remplacera par un toast plus tard
+    if (!res.ok && res.message !== "Cancelled.") {
+      window.alert(res.message);
     }
   }
 
@@ -28,6 +59,25 @@ export function LibraryPage() {
         </div>
 
         <div className={css.actions}>
+          <button type="button" className={css.primaryButton} onClick={handleAddGame}>
+            Add game
+          </button>
+
+          <button type="button" className={css.button} onClick={handleImport}>
+            Import
+          </button>
+
+          <button
+            type="button"
+            className={css.button}
+            onClick={handleExport}
+            disabled={isEmpty}
+            aria-disabled={isEmpty}
+            title={isEmpty ? "Nothing to export" : "Export library to JSON"}
+          >
+            Export
+          </button>
+
           <button type="button" className={css.button} onClick={loadSamples}>
             Load samples
           </button>
