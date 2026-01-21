@@ -8,11 +8,52 @@ type LauncherDto = {
   name: string;
   installed: boolean;
   launchTarget: string; // steam://... ou chemin exe
-  iconPath?: string | null; // NEW: chemin exe (pour extraire l'icône Windows)
+  iconPath?: string | null; // chemin exe (pour extraire l'icône Windows)
 };
 
 type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
 
+/** -------- Local cache (localStorage) -------- */
+type IconCacheEntry = { dataUrl: string; updatedAt: number };
+type IconCache = Record<string, IconCacheEntry>; // key = iconPath
+
+const ICON_CACHE_KEY = 'arctive.launcherIcons.v1';
+const ICON_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
+
+function readIconCache(): IconCache {
+  try {
+    const raw = window.localStorage.getItem(ICON_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as IconCache;
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function writeIconCache(cache: IconCache): void {
+  try {
+    window.localStorage.setItem(ICON_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // ignore (quota / disabled)
+  }
+}
+
+function pruneIconCache(cache: IconCache): IconCache {
+  const now = Date.now();
+  const next: IconCache = {};
+  for (const [k, v] of Object.entries(cache)) {
+    if (!v || typeof v !== 'object') continue;
+    if (typeof v.dataUrl !== 'string') continue;
+    if (typeof v.updatedAt !== 'number') continue;
+    if (now - v.updatedAt > ICON_CACHE_TTL_MS) continue;
+    next[k] = v;
+  }
+  return next;
+}
+
+/** -------- Utils -------- */
 function isUrlTarget(target: string): boolean {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
 }
@@ -35,7 +76,7 @@ export function LaunchersPage() {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [openStatus, setOpenStatus] = useState<OpenStatus>('idle');
 
-  // Icons cache (dataUrl)
+  // Icons (dataUrl) par launcher id (pour l'UI)
   const [iconsById, setIconsById] = useState<Record<string, string>>({});
 
   async function refresh() {
@@ -60,38 +101,77 @@ export function LaunchersPage() {
     if (ok) void refresh();
   }, []);
 
-  // Load icons when launchers change (desktop only)
+  // Load icons with local cache (desktop only)
   useEffect(() => {
     if (!desktop) return;
-    if (launchers.length === 0) return;
+    if (launchers.length === 0) {
+      setIconsById({});
+      return;
+    }
+
+    let cancelled = false;
 
     void (async () => {
-      const results = await Promise.all(
-        launchers.map(async (l) => {
-          const iconPath = l.iconPath ?? null;
-          if (!iconPath) return [l.id, null] as const;
+      // 1) load + prune cache
+      let cache = pruneIconCache(readIconCache());
+      writeIconCache(cache);
 
-          // Already cached
-          if (iconsById[l.id]) return [l.id, iconsById[l.id]] as const;
+      // 2) build immediate UI map from cache
+      const immediateById: Record<string, string> = {};
+      const toFetch: Array<{ id: string; iconPath: string }> = [];
 
+      for (const l of launchers) {
+        const iconPath = l.iconPath ?? null;
+        if (!iconPath) continue;
+
+        const hit = cache[iconPath];
+        if (hit?.dataUrl) {
+          immediateById[l.id] = hit.dataUrl;
+        } else {
+          toFetch.push({ id: l.id, iconPath });
+        }
+      }
+
+      if (!cancelled) setIconsById(immediateById);
+
+      // 3) fetch missing icons, update cache once
+      if (toFetch.length === 0) return;
+
+      const now = Date.now();
+      const fetched: Array<{ id: string; iconPath: string; dataUrl: string }> = [];
+
+      await Promise.all(
+        toFetch.map(async (x) => {
           try {
-            const dataUrl = await invoke<string>('get_file_icon_data_url', { path: iconPath });
-            return [l.id, dataUrl] as const;
+            const dataUrl = await invoke<string>('get_file_icon_data_url', { path: x.iconPath });
+            fetched.push({ id: x.id, iconPath: x.iconPath, dataUrl });
           } catch {
-            return [l.id, null] as const;
+            // ignore failures -> fallback letter
           }
         })
       );
 
+      if (fetched.length === 0) return;
+
+      // update cache
+      for (const f of fetched) {
+        cache[f.iconPath] = { dataUrl: f.dataUrl, updatedAt: now };
+      }
+      cache = pruneIconCache(cache);
+      writeIconCache(cache);
+
+      // update UI state
+      if (cancelled) return;
       setIconsById((prev) => {
         const next = { ...prev };
-        for (const [id, dataUrl] of results) {
-          if (dataUrl) next[id] = dataUrl;
-        }
+        for (const f of fetched) next[f.id] = f.dataUrl;
         return next;
       });
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      cancelled = true;
+    };
   }, [launchers, desktop]);
 
   async function handleOpen(l: LauncherDto) {
