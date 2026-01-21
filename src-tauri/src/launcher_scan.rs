@@ -212,47 +212,6 @@ fn detect_steam() -> Option<LauncherDto> {
     })
 }
 
-fn find_steam_path() -> Option<PathBuf> {
-    // HKCU\Software\Valve\Steam -> SteamPath
-    {
-        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        if let Ok(key) = hkcu.open_subkey("Software\\Valve\\Steam") {
-            if let Ok(val) = key.get_value::<String, _>("SteamPath") {
-                let p = PathBuf::from(val);
-                if p.is_dir() {
-                    return Some(p);
-                }
-            }
-        }
-    }
-
-    // HKLM\SOFTWARE\WOW6432Node\Valve\Steam -> InstallPath
-    {
-        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-        if let Ok(key) = hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
-            if let Ok(val) = key.get_value::<String, _>("InstallPath") {
-                let p = PathBuf::from(val);
-                if p.is_dir() {
-                    return Some(p);
-                }
-            }
-        }
-    }
-
-    let candidates = [
-        PathBuf::from(r"C:\Program Files (x86)\Steam"),
-        PathBuf::from(r"C:\Program Files\Steam"),
-    ];
-
-    for c in candidates {
-        if c.is_dir() {
-            return Some(c);
-        }
-    }
-
-    None
-}
-
 /* ---------------- Epic Games Launcher ---------------- */
 
 fn detect_epic() -> Option<LauncherDto> {
