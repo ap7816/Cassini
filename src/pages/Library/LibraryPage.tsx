@@ -23,6 +23,11 @@ export function LibraryPage() {
     exportToFile,
     importFromFile,
     addGameFromPicker,
+
+    // Steam scan
+    scanPcSteam,
+    isScanning,
+    scanError,
   } = useLibraryGames();
 
   const filteredGames = useMemo(() => {
@@ -62,6 +67,19 @@ export function LibraryPage() {
     if (!res.ok && res.message !== 'Cancelled.') window.alert(res.message);
   }
 
+  async function handleScanPc() {
+    const res = await scanPcSteam();
+    if (!res.ok) {
+      // message déjà exposé via scanError, mais on peut aussi alerter
+      // window.alert(res.message);
+      return;
+    }
+    if (res.added > 0) {
+      // petit feedback (optionnel)
+      // window.alert(`${res.added} game(s) added from Steam.`);
+    }
+  }
+
   const showNoResults = !isEmpty && q.length > 0 && filteredGames.length === 0;
 
   return (
@@ -79,6 +97,17 @@ export function LibraryPage() {
         </div>
 
         <div className={css.actions}>
+          <button
+            type="button"
+            className={css.button}
+            onClick={handleScanPc}
+            disabled={isScanning}
+            aria-disabled={isScanning}
+            title="Scan Steam installed games"
+          >
+            {isScanning ? 'Scanning...' : 'Scan PC'}
+          </button>
+
           <button type="button" className={css.primaryButton} onClick={handleAddGame}>
             Add game
           </button>
@@ -112,6 +141,8 @@ export function LibraryPage() {
           </button>
         </div>
       </div>
+
+      {scanError && <div className={css.error}>{scanError}</div>}
 
       {isEmpty ? (
         <EmptyState onLoadSamples={loadSamples} />
