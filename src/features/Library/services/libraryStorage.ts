@@ -1,10 +1,10 @@
-import type { Game, GamePlatform } from "../types";
+import type { Game, GamePlatform } from '../../types';
 
-const STORAGE_KEY = "arctive.library.games.v1";
-const PLATFORMS: GamePlatform[] = ["Steam", "Epic", "GOG", "Other"];
+const STORAGE_KEY = 'arctive.library.games.v1';
+const PLATFORMS: GamePlatform[] = ['Steam', 'Epic', 'GOG', 'Other'];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
+  return typeof v === 'object' && v !== null;
 }
 
 export function normalizeGames(input: unknown): Game[] {
@@ -13,30 +13,30 @@ export function normalizeGames(input: unknown): Game[] {
   return input
     .filter(isRecord)
     .map((g) => {
-      const id = typeof g.id === "string" ? g.id : "";
-      const title = typeof g.title === "string" ? g.title : "";
+      const id = typeof g.id === 'string' ? g.id : '';
+      const title = typeof g.title === 'string' ? g.title : '';
       if (!id || !title) return null;
 
-      const platformRaw = typeof g.platform === "string" ? g.platform : "Other";
-      const platform = (PLATFORMS.includes(platformRaw as GamePlatform)
-        ? platformRaw
-        : "Other") as GamePlatform;
+      const platformRaw = typeof g.platform === 'string' ? g.platform : 'Other';
+      const platform = (
+        PLATFORMS.includes(platformRaw as GamePlatform) ? platformRaw : 'Other'
+      ) as GamePlatform;
 
       return {
         id,
         title,
         platform,
-        coverUrl: typeof g.coverUrl === "string" ? g.coverUrl : null,
-        installed: typeof g.installed === "boolean" ? g.installed : false,
-        lastPlayedAt: typeof g.lastPlayedAt === "string" ? g.lastPlayedAt : null,
-        launchUrl: typeof g.launchUrl === "string" ? g.launchUrl : null,
+        coverUrl: typeof g.coverUrl === 'string' ? g.coverUrl : null,
+        installed: typeof g.installed === 'boolean' ? g.installed : false,
+        lastPlayedAt: typeof g.lastPlayedAt === 'string' ? g.lastPlayedAt : null,
+        launchUrl: typeof g.launchUrl === 'string' ? g.launchUrl : null,
       } satisfies Game;
     })
     .filter(Boolean) as Game[];
 }
 
 export function loadGamesFromStorage(): Game[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return [];
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
 
@@ -49,6 +49,6 @@ export function loadGamesFromStorage(): Game[] {
 }
 
 export function saveGamesToStorage(games: Game[]): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
 }

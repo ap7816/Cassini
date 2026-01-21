@@ -1,27 +1,58 @@
-import { NavLink, Outlet } from "react-router-dom";
-import logo from "../../assets/ArcHive_logo.png";
-import css from "./AppLayout.module.css";
-import { useAppLayout, type NavItem } from "./useAppLayout";
+import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
+import logo from '../../assets/favicon.png'
+import css from './AppLayout.module.css';
+import { useAppLayout, type NavItem } from './useAppLayout';
+import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
 const navItems: NavItem[] = [
-  { to: "/library", label: "Library" },
-  { to: "/launchers", label: "Launchers" },
-  { to: "/settings", label: "Settings" },
+  { to: '/library', label: 'Library' },
+  { to: '/launchers', label: 'Launchers' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export function AppLayout() {
-  const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(navItems, 900);
+  const { pathname, isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(
+    navItems,
+    900,
+  );
+
+  const isLibraryRoute = pathname === '/library' || pathname.startsWith('/library/');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const q = searchParams.get('q') ?? '';
+
+  function handleSearchChange(nextValue: string) {
+    if (!isLibraryRoute) return;
+
+    const next = new URLSearchParams(searchParams);
+    const trimmed = nextValue.trim();
+
+    if (!trimmed) next.delete('q');
+    else next.set('q', nextValue);
+
+    setSearchParams(next, { replace: true });
+  }
 
   const sidebarClassName = [
     css.sidebar,
     isMobile ? css.sidebarMobile : css.sidebarDesktop,
-    isMobile ? (sidebarOpen ? css.sidebarMobileOpen : css.sidebarMobileClosed) : "",
+    isMobile ? (sidebarOpen ? css.sidebarMobileOpen : css.sidebarMobileClosed) : '',
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ');
+
+  const { settings } = useAppSettings();
+
+  type CSSVarStyle = React.CSSProperties & { ['--app-bg-image']?: string };
+
+  const bgStyle: CSSVarStyle = {
+    '--app-bg-image': settings.backgroundImageDataUrl
+      ? `url("${settings.backgroundImageDataUrl}")`
+      : 'none',
+  };
 
   return (
-    <div className={css.shell}>
+    <div className={css.shell} style={bgStyle}>
       {isMobile && sidebarOpen && (
         <div className={css.backdrop} onClick={closeSidebar} aria-hidden="true" />
       )}
@@ -47,7 +78,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          <div className={css.muted}>v0.3 (dev)</div>
+          <div className={css.muted}>v0.4 (dev)</div>
         </div>
       </aside>
 
@@ -62,7 +93,9 @@ export function AppLayout() {
                 aria-label="Open menu"
                 title="Menu"
               >
-                <span className={css.burgerIcon} aria-hidden="true">☰</span>
+                <span className={css.burgerIcon} aria-hidden="true">
+                  ☰
+                </span>
               </button>
             )}
             <div className={css.headerTitle}>{pageTitle}</div>
@@ -70,8 +103,10 @@ export function AppLayout() {
 
           <input
             className={css.search}
-            placeholder="Search games..."
-            disabled
+            placeholder={isLibraryRoute ? 'Search games...' : 'Search (Library)'}
+            value={isLibraryRoute ? q : ''}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            disabled={!isLibraryRoute}
             aria-label="Search"
           />
         </header>

@@ -1,4 +1,4 @@
-export type GamePlatform = "Steam" | "Epic" | "GOG" | "Other";
+export type GamePlatform = 'Steam' | 'Epic' | 'GOG' | 'Other';
 
 export type Game = {
   id: string;
@@ -10,4 +10,8 @@ export type Game = {
 
   // Nouveau: URL/URI à ouvrir pour lancer le jeu (steam://..., epic://..., etc.)
   launchUrl?: string | null;
+};
+
+export type AppSettings = {
+  backgroundImageDataUrl: string | null;
 };

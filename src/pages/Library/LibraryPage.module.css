@@ -30,7 +30,7 @@
 .button {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
   cursor: pointer;
@@ -64,7 +64,7 @@
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   color: inherit;
   cursor: pointer;
 
@@ -73,4 +73,25 @@
 
 .primaryButton:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+
+.noResults {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.noResultsTitle {
+  font-weight: 700;
+}
+
+.noResultsText {
+  opacity: 0.75;
+}
+
+.query {
+  opacity: 0.9;
 }

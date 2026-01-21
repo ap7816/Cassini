@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Game } from "../types";
-import { sampleGames } from "../data/sampleGames";
-import { loadGamesFromStorage, saveGamesToStorage } from "../services/libraryStorage";
-import { exportLibraryToFile, importLibraryFromFile } from "../services/libraryFile";
-import { pickGameFile } from "../services/pickGameFile";
-import { createGameFromPath } from "../services/createGameFromPath";
+import { useEffect, useMemo, useState } from 'react';
+import type { Game } from '../../types';
+import { sampleGames } from '../data/sampleGames';
+import { loadGamesFromStorage, saveGamesToStorage } from '../services/libraryStorage';
+import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
+import { pickGameFile } from '../services/pickGameFile';
+import { createGameFromPath } from '../services/createGameFromPath';
 
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
@@ -19,10 +19,7 @@ export function useLibraryGames() {
 
   const isEmpty = games.length === 0;
 
-  const installedCount = useMemo(
-    () => games.filter((g) => g.installed).length,
-    [games]
-  );
+  const installedCount = useMemo(() => games.filter((g) => g.installed).length, [games]);
 
   function loadSamples() {
     setGames(sampleGames);
@@ -37,9 +34,7 @@ export function useLibraryGames() {
   }
 
   function toggleInstalled(id: string) {
-    setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, installed: !Boolean(g.installed) } : g))
-    );
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
   }
 
   async function exportToFile() {
@@ -56,7 +51,7 @@ export function useLibraryGames() {
     const picked = await pickGameFile();
     if (!picked.ok) {
       // CANCELLED = pas une erreur bloquante
-      if (picked.reason === "CANCELLED") return { ok: false, message: "Cancelled." };
+      if (picked.reason === 'CANCELLED') return { ok: false, message: 'Cancelled.' };
       return { ok: false, message: picked.message };
     }
 

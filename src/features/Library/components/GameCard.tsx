@@ -1,5 +1,5 @@
-import type { Game } from "../types";
-import css from "./GameCard.module.css";
+import type { Game } from '../../types';
+import css from './GameCard.module.css';
 
 type Props = {
   game: Game;
@@ -9,9 +9,9 @@ type Props = {
 };
 
 function formatLastPlayed(iso?: string | null) {
-  if (!iso) return "Never played";
+  if (!iso) return 'Never played';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Unknown";
+  if (Number.isNaN(d.getTime())) return 'Unknown';
   return `Last played: ${d.toLocaleDateString()}`;
 }
 
@@ -38,10 +38,10 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
             <div className={css.title}>{game.title}</div>
             <div className={css.meta}>
               <span className={css.badge}>{game.platform}</span>
-              <span className={css.dot} aria-hidden="true">•</span>
-              <span className={css.muted}>
-                {game.installed ? "Installed" : "Not installed"}
+              <span className={css.dot} aria-hidden="true">
+                •
               </span>
+              <span className={css.muted}>{game.installed ? 'Installed' : 'Not installed'}</span>
             </div>
           </div>
 
@@ -50,9 +50,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
               type="button"
               className={css.secondary}
               onClick={handleToggleInstalled}
-              title={game.installed ? "Uninstall" : "Install"}
+              title={game.installed ? 'Uninstall' : 'Install'}
             >
-              {game.installed ? "Uninstall" : "Install"}
+              {game.installed ? 'Uninstall' : 'Install'}
             </button>
 
             <button
@@ -60,7 +60,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
               className={css.play}
               onClick={() => onPlay(game)}
               disabled={!canPlay}
-              title={!canPlay ? "Not available" : "Launch"}
+              title={!canPlay ? 'Not available' : 'Launch'}
             >
               Play
             </button>

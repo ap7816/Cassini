@@ -10,6 +10,7 @@
 }
 
 .icon {
+
   width: 52px;
   height: 52px;
   border-radius: 14px;
@@ -47,5 +48,5 @@
   cursor: pointer;
 }
 .primary:hover {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
 }

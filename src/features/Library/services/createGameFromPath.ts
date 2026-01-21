@@ -1,4 +1,4 @@
-import type { Game } from "../types";
+import type { Game } from '../../types';
 
 function basename(path: string): string {
   // Support Windows + Unix
@@ -7,7 +7,7 @@ function basename(path: string): string {
 }
 
 function stripExtension(name: string): string {
-  return name.replace(/\.[^/.]+$/, "");
+  return name.replace(/\.[^/.]+$/, '');
 }
 
 function simpleHash(input: string): string {
@@ -21,12 +21,12 @@ function simpleHash(input: string): string {
 
 export function createGameFromPath(path: string): Game {
   const fileName = basename(path);
-  const title = stripExtension(fileName).trim() || "New Game";
+  const title = stripExtension(fileName).trim() || 'New Game';
 
   return {
     id: `local-${simpleHash(path)}`,
     title,
-    platform: "Other",
+    platform: 'Other',
     installed: true,
     lastPlayedAt: null,
     launchUrl: path, // on stocke le chemin brut (Tauri shell.open le gère)
