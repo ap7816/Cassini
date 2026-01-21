@@ -60,6 +60,14 @@ fn is_appmanifest(path: &Path) -> bool {
     false
 }
 
+fn steam_cover_url(appid: &str) -> String {
+    // Cover "desktop" (poster Steam Library). Si ça 404 côté front => lettre.
+    format!(
+        "https://steamcdn-a.akamaihd.net/steam/apps/{}/library_600x900_2x.jpg",
+        appid
+    )
+}
+
 fn parse_appmanifest(content: &str) -> Option<GameDto> {
     // ACF resembles: "appid" "570" / "name" "Dota 2"
     let mut appid: Option<String> = None;
@@ -97,7 +105,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         installed: true,
         last_played_at: None,
         launch_url: Some(format!("steam://rungameid/{}", appid)),
-        cover_url: None,
+        cover_url: Some(steam_cover_url(&appid)),
     })
 }
 
