@@ -10,8 +10,9 @@ type LauncherDto = {
   launchTarget: string; // steam://... ou chemin exe
 };
 
+type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
+
 function isUrlTarget(target: string): boolean {
-  // steam://..., https://..., etc.
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
 }
 
@@ -28,6 +29,10 @@ export function LaunchersPage() {
   const [launchers, setLaunchers] = useState<LauncherDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Opening UI state (par carte)
+  const [openingId, setOpeningId] = useState<string | null>(null);
+  const [openStatus, setOpenStatus] = useState<OpenStatus>('idle');
 
   async function refresh() {
     setLoading(true);
@@ -52,10 +57,25 @@ export function LaunchersPage() {
   }, []);
 
   async function handleOpen(l: LauncherDto) {
+    setOpeningId(l.id);
+    setOpenStatus('opening');
+
     try {
       await openTarget(l.launchTarget);
+      setOpenStatus('done');
+
+      // laisse la barre “finie” un court instant, puis reset
+      window.setTimeout(() => {
+        setOpenStatus('idle');
+        setOpeningId(null);
+      }, 900);
     } catch (e) {
+      setOpenStatus('error');
       const msg = e instanceof Error ? e.message : 'Failed to open launcher.';
+      window.setTimeout(() => {
+        setOpenStatus('idle');
+        setOpeningId(null);
+      }, 1200);
       window.alert(msg);
     }
   }
@@ -96,35 +116,65 @@ export function LaunchersPage() {
       {isEmpty ? (
         <div className={css.empty}>
           <div className={css.emptyTitle}>No launchers detected</div>
-          <div className={css.emptyText}>Install Steam/Epic then click Refresh.</div>
+          <div className={css.emptyText}>Install launchers then click Refresh.</div>
         </div>
       ) : (
         <div className={css.grid}>
-          {launchers.map((l) => (
-            <section key={l.id} className={css.card} aria-label={`${l.name} launcher`}>
-              <div className={css.cardTop}>
-                <div className={css.cardTitleRow}>
-                  <div className={css.badge}>{l.name}</div>
-                  <div className={css.cardTitle}>{l.name}</div>
-                </div>
-                <div className={css.cardSubtitle}>
-                  {l.installed ? 'Installed' : 'Not installed'}
-                </div>
-              </div>
+          {launchers.map((l) => {
+            const isThisOpening = openingId === l.id && openStatus !== 'idle';
+            const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id);
 
-              <div className={css.cardActions}>
-                <button
-                  type="button"
-                  className={css.primaryButton}
-                  onClick={() => handleOpen(l)}
-                  disabled={!l.installed || loading}
-                  title={!l.installed ? 'Not installed' : 'Open'}
-                >
-                  Open
-                </button>
-              </div>
-            </section>
-          ))}
+            return (
+              <section key={l.id} className={css.card} aria-label={`${l.name} launcher`}>
+                <div className={css.cardTop}>
+                  <div className={css.cardTitleRow}>
+                    <div className={css.badge}>{l.name}</div>
+                    <div className={css.cardTitle}>{l.name}</div>
+                  </div>
+                  <div className={css.cardSubtitle}>
+                    {l.installed ? 'Installed' : 'Not installed'}
+                  </div>
+                </div>
+
+                <div className={css.cardActions}>
+                  <button
+                    type="button"
+                    className={css.primaryButton}
+                    onClick={() => handleOpen(l)}
+                    disabled={disabled}
+                    title={!l.installed ? 'Not installed' : 'Open'}
+                  >
+                    {isThisOpening && openStatus === 'opening' ? 'Opening…' : 'Open'}
+                  </button>
+                </div>
+
+                {isThisOpening && (
+                  <div className={css.opening}>
+                    <div className={css.openingLabel}>
+                      {openStatus === 'opening'
+                        ? 'Opening launcher…'
+                        : openStatus === 'done'
+                          ? 'Launcher opened'
+                          : 'Failed to open'}
+                    </div>
+
+                    <div
+                      className={[
+                        css.progressTrack,
+                        openStatus === 'opening'
+                          ? css.progressIndeterminate
+                          : openStatus === 'done'
+                            ? css.progressDone
+                            : css.progressError,
+                      ].join(' ')}
+                    >
+                      <div className={css.progressFill} />
+                    </div>
+                  </div>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
     </div>

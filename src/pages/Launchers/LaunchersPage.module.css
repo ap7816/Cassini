@@ -165,3 +165,56 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.opening {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.openingLabel {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Indeterminate animation */
+.progressIndeterminate .progressFill {
+  width: 40%;
+  transform: translateX(-100%);
+  animation: launchProgress 900ms ease-in-out infinite;
+}
+
+@keyframes launchProgress {
+  0% {
+    transform: translateX(-120%);
+  }
+  50% {
+    transform: translateX(60%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+/* Done / Error = barre pleine */
+.progressDone .progressFill,
+.progressError .progressFill {
+  width: 100%;
+  transform: none;
+  animation: none;
+}
