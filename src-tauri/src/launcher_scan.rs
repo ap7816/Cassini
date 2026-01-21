@@ -27,7 +27,7 @@ pub fn scan_launchers() -> Result<Vec<LauncherDto>, String> {
     if let Some(x) = detect_battlenet() {
         out.push(x);
     }
-    if let Some(x) = detect_riot_client() {
+    if let Some(x) = detect_riot() {
         out.push(x);
     }
     if let Some(x) = detect_rockstar_launcher() {
@@ -195,20 +195,20 @@ fn make_exe_launcher(id: &str, name: &str, exe: PathBuf) -> LauncherDto {
 /* ---------------- Steam ---------------- */
 
 fn detect_steam() -> Option<LauncherDto> {
-    let steam_path = find_steam_path()?;
-    let steam_exe = steam_path.join("steam.exe");
-    let icon = if steam_exe.is_file() {
-        Some(steam_exe.to_string_lossy().to_string())
-    } else {
-        None
-    };
+    let base = PathBuf::from(r"C:\Program Files (x86)\Steam");
+    let exe = base.join("steam.exe");
+    if !exe.is_file() {
+        return None;
+    }
 
     Some(LauncherDto {
         id: "steam".to_string(),
         name: "Steam".to_string(),
-        installed: steam_path.is_dir(),
+        installed: true,
+        // On garde l’URI (souvent le plus fiable) pour ouvrir Steam
         launch_target: "steam://open/main".to_string(),
-        icon_path: icon,
+        // Mais l’icône doit venir d’un vrai .exe
+        icon_path: Some(exe.to_string_lossy().to_string()),
     })
 }
 
@@ -295,25 +295,33 @@ fn detect_battlenet() -> Option<LauncherDto> {
 
 /* ---------------- Riot Client ---------------- */
 
-fn detect_riot_client() -> Option<LauncherDto> {
-    if let Some(exe) = find_exe_from_uninstall(
-        &["Riot Client", "Riot Games"],
-        &[
-            r"Riot Client\RiotClientServices.exe",
-            r"RiotClientServices.exe",
-        ],
-    ) {
-        return Some(make_exe_launcher("riot", "Riot Client", exe));
-    }
+fn detect_riot() -> Option<LauncherDto> {
+    let base = PathBuf::from(r"C:\Riot Games\Riot Client");
 
-    let known = [
-        r"C:\Riot Games\Riot Client\RiotClientServices.exe",
-        r"C:\Program Files\Riot Games\Riot Client\RiotClientServices.exe",
-        r"C:\Program Files (x86)\Riot Games\Riot Client\RiotClientServices.exe",
-    ];
+    // L’exe le plus courant
+    let exe1 = base.join("RiotClientServices.exe");
+    // au cas où (selon install)
+    let exe2 = base.join("RiotClientUx.exe");
 
-    first_existing_path(&known).map(|p| make_exe_launcher("riot", "Riot Client", p))
+    let exe = if exe1.is_file() {
+        exe1
+    } else if exe2.is_file() {
+        exe2
+    } else {
+        return None;
+    };
+
+    Some(LauncherDto {
+        id: "riot".to_string(),
+        name: "Riot Client".to_string(),
+        installed: true,
+        // Ouvrir le launcher via l’exe directement
+        launch_target: exe.to_string_lossy().to_string(),
+        // Icône depuis le même exe
+        icon_path: Some(exe.to_string_lossy().to_string()),
+    })
 }
+
 
 /* ---------------- Rockstar Games Launcher ---------------- */
 
