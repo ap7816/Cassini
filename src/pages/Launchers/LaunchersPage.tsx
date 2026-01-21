@@ -8,6 +8,7 @@ type LauncherDto = {
   name: string;
   installed: boolean;
   launchTarget: string; // steam://... ou chemin exe
+  iconPath?: string | null; // NEW: chemin exe (pour extraire l'icône Windows)
 };
 
 type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
@@ -34,6 +35,9 @@ export function LaunchersPage() {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [openStatus, setOpenStatus] = useState<OpenStatus>('idle');
 
+  // Icons cache (dataUrl)
+  const [iconsById, setIconsById] = useState<Record<string, string>>({});
+
   async function refresh() {
     setLoading(true);
     setError(null);
@@ -56,6 +60,40 @@ export function LaunchersPage() {
     if (ok) void refresh();
   }, []);
 
+  // Load icons when launchers change (desktop only)
+  useEffect(() => {
+    if (!desktop) return;
+    if (launchers.length === 0) return;
+
+    void (async () => {
+      const results = await Promise.all(
+        launchers.map(async (l) => {
+          const iconPath = l.iconPath ?? null;
+          if (!iconPath) return [l.id, null] as const;
+
+          // Already cached
+          if (iconsById[l.id]) return [l.id, iconsById[l.id]] as const;
+
+          try {
+            const dataUrl = await invoke<string>('get_file_icon_data_url', { path: iconPath });
+            return [l.id, dataUrl] as const;
+          } catch {
+            return [l.id, null] as const;
+          }
+        })
+      );
+
+      setIconsById((prev) => {
+        const next = { ...prev };
+        for (const [id, dataUrl] of results) {
+          if (dataUrl) next[id] = dataUrl;
+        }
+        return next;
+      });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [launchers, desktop]);
+
   async function handleOpen(l: LauncherDto) {
     setOpeningId(l.id);
     setOpenStatus('opening');
@@ -64,7 +102,6 @@ export function LaunchersPage() {
       await openTarget(l.launchTarget);
       setOpenStatus('done');
 
-      // laisse la barre “finie” un court instant, puis reset
       window.setTimeout(() => {
         setOpenStatus('idle');
         setOpeningId(null);
@@ -124,13 +161,23 @@ export function LaunchersPage() {
             const isThisOpening = openingId === l.id && openStatus !== 'idle';
             const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id);
 
+            const icon = iconsById[l.id] ?? null;
+
             return (
               <section key={l.id} className={css.card} aria-label={`${l.name} launcher`}>
                 <div className={css.cardTop}>
                   <div className={css.cardTitleRow}>
-                    <div className={css.badge}>{l.name}</div>
+                    <div className={css.iconWrap} aria-hidden="true">
+                      {icon ? (
+                        <img className={css.iconImg} src={icon} alt="" draggable={false} />
+                      ) : (
+                        <div className={css.iconFallback}>{l.name.slice(0, 1).toUpperCase()}</div>
+                      )}
+                    </div>
+
                     <div className={css.cardTitle}>{l.name}</div>
                   </div>
+
                   <div className={css.cardSubtitle}>
                     {l.installed ? 'Installed' : 'Not installed'}
                   </div>

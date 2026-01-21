@@ -10,6 +10,7 @@ pub struct LauncherDto {
     pub name: String,
     pub installed: bool,
     pub launch_target: String, // URI (steam://...) ou chemin exe
+    pub icon_path: Option<String>,
 }
 
 // IMPORTANT: PAS de #[tauri::command] ici.
@@ -180,24 +181,34 @@ fn first_existing_path(candidates: &[&str]) -> Option<PathBuf> {
 }
 
 fn make_exe_launcher(id: &str, name: &str, exe: PathBuf) -> LauncherDto {
+    let p = exe.to_string_lossy().to_string();
     LauncherDto {
         id: id.to_string(),
         name: name.to_string(),
         installed: true,
-        launch_target: exe.to_string_lossy().to_string(),
+        launch_target: p.clone(),
+        icon_path: Some(p),
     }
 }
+
 
 /* ---------------- Steam ---------------- */
 
 fn detect_steam() -> Option<LauncherDto> {
     let steam_path = find_steam_path()?;
+    let steam_exe = steam_path.join("steam.exe");
+    let icon = if steam_exe.is_file() {
+        Some(steam_exe.to_string_lossy().to_string())
+    } else {
+        None
+    };
 
     Some(LauncherDto {
         id: "steam".to_string(),
         name: "Steam".to_string(),
         installed: steam_path.is_dir(),
         launch_target: "steam://open/main".to_string(),
+        icon_path: icon,
     })
 }
 

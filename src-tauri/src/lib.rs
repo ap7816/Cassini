@@ -1,6 +1,12 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod steam_scan;
 mod launcher_scan;
+mod icon_extract;
+
+#[tauri::command]
+fn get_file_icon_data_url(path: String) -> Result<String, String> {
+    icon_extract::file_icon_png_data_url(&path, 64)
+}
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -22,7 +28,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_launchers])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_launchers, get_file_icon_data_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
