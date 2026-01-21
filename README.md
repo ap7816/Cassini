@@ -126,10 +126,3 @@ If you need a clean state:
 
 - Clear the library (UI) and restart the app
 - Or clear site/app storage via DevTools (Application > Storage)
-
-## Documentation
-
-Documentation lives in `docs/`.
-Entry point:
-
-- `docs/Home.md`
