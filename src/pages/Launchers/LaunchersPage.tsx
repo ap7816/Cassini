@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
+import {
+  getCachedLauncherIconsById,
+  pruneLauncherIconCache,
+  storeLauncherIcons,
+} from '../../features/launchers/services/launcherIconCache';
 
 type LauncherDto = {
   id: string;
@@ -13,47 +18,6 @@ type LauncherDto = {
 
 type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
 
-/** -------- Local cache (localStorage) -------- */
-type IconCacheEntry = { dataUrl: string; updatedAt: number };
-type IconCache = Record<string, IconCacheEntry>; // key = iconPath
-
-const ICON_CACHE_KEY = 'arctive.launcherIcons.v1';
-const ICON_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
-
-function readIconCache(): IconCache {
-  try {
-    const raw = window.localStorage.getItem(ICON_CACHE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as IconCache;
-    if (!parsed || typeof parsed !== 'object') return {};
-    return parsed;
-  } catch {
-    return {};
-  }
-}
-
-function writeIconCache(cache: IconCache): void {
-  try {
-    window.localStorage.setItem(ICON_CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // ignore (quota / disabled)
-  }
-}
-
-function pruneIconCache(cache: IconCache): IconCache {
-  const now = Date.now();
-  const next: IconCache = {};
-  for (const [k, v] of Object.entries(cache)) {
-    if (!v || typeof v !== 'object') continue;
-    if (typeof v.dataUrl !== 'string') continue;
-    if (typeof v.updatedAt !== 'number') continue;
-    if (now - v.updatedAt > ICON_CACHE_TTL_MS) continue;
-    next[k] = v;
-  }
-  return next;
-}
-
-/** -------- Utils -------- */
 function isUrlTarget(target: string): boolean {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
 }
@@ -104,6 +68,10 @@ export function LaunchersPage() {
   // Load icons with local cache (desktop only)
   useEffect(() => {
     if (!desktop) return;
+
+    // 0) prune cache
+    pruneLauncherIconCache();
+
     if (launchers.length === 0) {
       setIconsById({});
       return;
@@ -112,39 +80,23 @@ export function LaunchersPage() {
     let cancelled = false;
 
     void (async () => {
-      // 1) load + prune cache
-      let cache = pruneIconCache(readIconCache());
-      writeIconCache(cache);
+      // 1) cache hits
+      const { byId: cachedById, missing } = getCachedLauncherIconsById(
+        launchers.map((l) => ({ id: l.id, iconPath: l.iconPath }))
+      );
 
-      // 2) build immediate UI map from cache
-      const immediateById: Record<string, string> = {};
-      const toFetch: Array<{ id: string; iconPath: string }> = [];
+      if (!cancelled) setIconsById(cachedById);
 
-      for (const l of launchers) {
-        const iconPath = l.iconPath ?? null;
-        if (!iconPath) continue;
+      // 2) fetch missing
+      if (missing.length === 0) return;
 
-        const hit = cache[iconPath];
-        if (hit?.dataUrl) {
-          immediateById[l.id] = hit.dataUrl;
-        } else {
-          toFetch.push({ id: l.id, iconPath });
-        }
-      }
-
-      if (!cancelled) setIconsById(immediateById);
-
-      // 3) fetch missing icons, update cache once
-      if (toFetch.length === 0) return;
-
-      const now = Date.now();
       const fetched: Array<{ id: string; iconPath: string; dataUrl: string }> = [];
 
       await Promise.all(
-        toFetch.map(async (x) => {
+        missing.map(async (m) => {
           try {
-            const dataUrl = await invoke<string>('get_file_icon_data_url', { path: x.iconPath });
-            fetched.push({ id: x.id, iconPath: x.iconPath, dataUrl });
+            const dataUrl = await invoke<string>('get_file_icon_data_url', { path: m.iconPath });
+            fetched.push({ id: m.id, iconPath: m.iconPath, dataUrl });
           } catch {
             // ignore failures -> fallback letter
           }
@@ -153,14 +105,10 @@ export function LaunchersPage() {
 
       if (fetched.length === 0) return;
 
-      // update cache
-      for (const f of fetched) {
-        cache[f.iconPath] = { dataUrl: f.dataUrl, updatedAt: now };
-      }
-      cache = pruneIconCache(cache);
-      writeIconCache(cache);
+      // 3) store batch in cache
+      storeLauncherIcons(fetched.map((f) => ({ iconPath: f.iconPath, dataUrl: f.dataUrl })));
 
-      // update UI state
+      // 4) update UI
       if (cancelled) return;
       setIconsById((prev) => {
         const next = { ...prev };
