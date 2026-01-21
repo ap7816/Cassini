@@ -43,7 +43,7 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
 
     let screen_dc = unsafe { GetDC(hwnd) };
     if screen_dc.0.is_null() {
-        unsafe { DestroyIcon(hicon) };
+        unsafe { let _ = DestroyIcon(hicon); }
         return Err("GetDC failed.".to_string());
     }
 
@@ -51,13 +51,13 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     if mem_dc.0.is_null() {
         unsafe {
             ReleaseDC(hwnd, screen_dc);
-            DestroyIcon(hicon);
+            let _ = DestroyIcon(hicon);
         }
         return Err("CreateCompatibleDC failed.".to_string());
     }
 
     // 3) Crée une DIB 32bpp (top-down)
-    let mut bmi = BITMAPINFO {
+    let bmi = BITMAPINFO {
         bmiHeader: BITMAPINFOHEADER {
             biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
             biWidth: size,
@@ -80,9 +80,9 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
 
     if hbitmap.0.is_null() || bits_ptr.is_null() {
         unsafe {
-            DeleteDC(mem_dc);
+            let _ =DeleteDC(mem_dc);
             ReleaseDC(hwnd, screen_dc);
-            DestroyIcon(hicon);
+            let _ = DestroyIcon(hicon);
         }
         return Err("CreateDIBSection returned null.".to_string());
     }
@@ -110,10 +110,10 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     // Cleanup GDI / icon
     unsafe {
         SelectObject(mem_dc, old);
-        DeleteObject(hbitmap);
-        DeleteDC(mem_dc);
+        let _ = DeleteObject(hbitmap);
+        let _ = DeleteDC(mem_dc);
         ReleaseDC(hwnd, screen_dc);
-        DestroyIcon(hicon);
+        let _ = DestroyIcon(hicon);
     }
 
     // 6) Encode PNG
