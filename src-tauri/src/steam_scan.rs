@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use winreg::enums::*;
 use winreg::RegKey;
+use chrono::{TimeZone, Utc};
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -72,6 +73,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
     // ACF resembles: "appid" "570" / "name" "Dota 2"
     let mut appid: Option<String> = None;
     let mut name: Option<String> = None;
+    let mut last_played: Option<i64> = None;
 
     for line in content.lines() {
         let line = line.trim();
@@ -91,6 +93,13 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         match key {
             "appid" => appid = Some(val.to_string()),
             "name" => name = Some(val.to_string()),
+            "LastPlayed" => {
+                if let Ok(ts) = val.parse::<i64>() {
+                    if ts > 0 {
+                        last_played = Some(ts);
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -103,7 +112,9 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         title,
         platform: "Steam".to_string(),
         installed: true,
-        last_played_at: None,
+        last_played_at: last_played
+            .and_then(|ts| Utc.timestamp_opt(ts, 0).single())
+            .map(|dt| dt.to_rfc3339()),
         launch_url: Some(format!("steam://rungameid/{}", appid)),
         cover_url: Some(steam_cover_url(&appid)),
     })
