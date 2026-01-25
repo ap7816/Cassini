@@ -29,10 +29,18 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
       map.set(g.id, {
         ...existing,
         ...g,
+
+        // on garde le lastPlayedAt local si déjà présent
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
+
+        // IMPORTANT: ne jamais écraser les favoris (stockés localement)
+        favorite: existing.favorite ?? g.favorite ?? false,
       });
     } else {
-      map.set(g.id, g);
+      map.set(g.id, {
+        ...g,
+        favorite: g.favorite ?? false,
+      });
     }
   }
 
@@ -46,7 +54,9 @@ export function useLibraryGames() {
 
   // Load une fois
   useEffect(() => {
-    setGames(loadGamesFromStorage());
+    const loaded = loadGamesFromStorage();
+    // sécurité: favorite toujours défini
+    setGames(loaded.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }, []);
 
   // Save (sans écraser le storage au tout premier render)
@@ -62,9 +72,10 @@ export function useLibraryGames() {
   const isEmpty = games.length === 0;
 
   const installedCount = useMemo(() => games.filter((g) => g.installed).length, [games]);
+  const favoritesCount = useMemo(() => games.filter((g) => g.favorite).length, [games]);
 
   function loadSamples() {
-    setGames(sampleGames);
+    setGames(sampleGames.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
   function clearLibrary() {
@@ -75,8 +86,23 @@ export function useLibraryGames() {
     setGames((prev) => prev.filter((g) => g.id !== id));
   }
 
+  function markPlayed(id: string) {
+    const nowIso = new Date().toISOString();
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, lastPlayedAt: nowIso } : g)));
+  }
+
   function toggleInstalled(id: string) {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
+  }
+
+  function toggleFavorite(id: string) {
+    setGames((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g))
+    );
+  }
+
+  function setFavorite(id: string, favorite: boolean) {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite } : g)));
   }
 
   async function exportToFile() {
@@ -86,7 +112,7 @@ export function useLibraryGames() {
   async function importFromFile() {
     const imported = await importLibraryFromFile();
     if (imported.length === 0) return;
-    setGames(imported);
+    setGames(imported.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
   async function addGameFromPicker(): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -100,8 +126,19 @@ export function useLibraryGames() {
 
     setGames((prev) => {
       const exists = prev.some((g) => g.id === newGame.id);
-      if (exists) return prev.map((g) => (g.id === newGame.id ? { ...g, ...newGame } : g));
-      return [newGame, ...prev];
+      if (exists) {
+        return prev.map((g) =>
+          g.id === newGame.id
+            ? {
+                ...g,
+                ...newGame,
+                favorite: g.favorite ?? false, // conserve
+              }
+            : g
+        );
+      }
+
+      return [{ ...newGame, favorite: false }, ...prev];
     });
 
     return { ok: true };
@@ -119,6 +156,7 @@ export function useLibraryGames() {
         ...g,
         platform: 'Steam',
         installed: true,
+        favorite: g.favorite ?? false,
       }));
 
       let added = 0;
@@ -128,7 +166,7 @@ export function useLibraryGames() {
         for (const g of normalized) if (!before.has(g.id)) added += 1;
 
         const merged = mergeById(prev, normalized);
-        merged.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
+        // ⚠️ On ne trie plus ici en alpha: l’UI gère déjà ton tri (last played, etc.)
         return merged;
       });
 
@@ -156,10 +194,17 @@ export function useLibraryGames() {
     games,
     isEmpty,
     installedCount,
+    favoritesCount,
+
     loadSamples,
     clearLibrary,
     removeGame,
+    markPlayed,
     toggleInstalled,
+
+    toggleFavorite, // NEW
+    setFavorite, // NEW
+
     exportToFile,
     importFromFile,
     addGameFromPicker,

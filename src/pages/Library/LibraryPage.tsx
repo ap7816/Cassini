@@ -19,6 +19,7 @@ export function LibraryPage() {
     loadSamples,
     clearLibrary,
     removeGame,
+    markPlayed,
     toggleInstalled,
     exportToFile,
     importFromFile,
@@ -31,9 +32,29 @@ export function LibraryPage() {
   } = useLibraryGames();
 
   const filteredGames = useMemo(() => {
-    if (!q) return games;
-    return games.filter((g) => g.title.toLowerCase().includes(q));
+    const list = q
+      ? games.filter((g) => g.title.toLowerCase().includes(q))
+      : games;
+
+    const ts = (g: Game): number => {
+      const iso = g.lastPlayedAt ?? null;
+      if (!iso) return -1; // jamais joué => tout en bas
+      const t = Date.parse(iso);
+      return Number.isFinite(t) ? t : -1;
+    };
+
+    return list
+      .slice()
+      .sort((a, b) => {
+        const tb = ts(b);
+        const ta = ts(a);
+        if (tb !== ta) return tb - ta; // récent d'abord
+
+        // même date (ou jamais joué) => ordre alpha (stable)
+        return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+      });
   }, [games, q]);
+
 
   function clearSearch() {
     const next = new URLSearchParams(searchParams);
@@ -43,8 +64,14 @@ export function LibraryPage() {
 
   async function handlePlay(game: Game) {
     const res = await launchGame(game);
-    if (!res.ok) window.alert(res.message);
+    if (!res.ok) {
+      window.alert(res.message);
+      return;
+    }
+
+    markPlayed(game.id);
   }
+
 
   async function handleExport() {
     try {

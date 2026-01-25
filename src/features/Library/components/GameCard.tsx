@@ -7,6 +7,7 @@ type Props = {
   onRemove: (id: string) => void;
   onPlay: (game: Game) => void;
   onToggleInstalled: (id: string) => void;
+  onToggleFavorite: (id: string) => void; // NEW
 };
 
 function formatLastPlayed(iso?: string | null) {
@@ -21,7 +22,7 @@ function isLocalWindowsPath(input: string): boolean {
   return /^[a-zA-Z]:\\/.test(input) || input.startsWith('\\\\');
 }
 
-export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleInstalled, onToggleFavorite }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
 
   // coverUrl peut être:
@@ -87,6 +88,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
   }
 
   const showLetter = !imgSrc;
+  const isFav = Boolean(game.favorite);
 
   return (
     <article className={css.card}>
@@ -119,6 +121,16 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled }: Props) {
           </div>
 
           <div className={css.actions}>
+            <button
+              type="button"
+              className={[css.fav, isFav ? css.favActive : ''].join(' ')}
+              onClick={() => onToggleFavorite(game.id)}
+              aria-label={isFav ? `Remove ${game.title} from favorites` : `Add ${game.title} to favorites`}
+              title={isFav ? 'Unfavorite' : 'Favorite'}
+            >
+              ★
+            </button>
+
             <button
               type="button"
               className={css.secondary}

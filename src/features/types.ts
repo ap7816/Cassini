@@ -8,8 +8,11 @@ export type Game = {
   installed?: boolean;
   lastPlayedAt?: string | null; // ISO date string
 
-  // Nouveau: URL/URI à ouvrir pour lancer le jeu (steam://..., epic://..., etc.)
+  // Launch URL/URI (steam://..., epic://..., etc.)
   launchUrl?: string | null;
+
+  // NEW: favorites
+  favorite?: boolean;
 };
 
 export type AppSettings = {
