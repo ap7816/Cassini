@@ -14,3 +14,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     </AppSettingsProvider>
   </React.StrictMode>,
 );
+
+const pre = document.getElementById('app-preloader');
+if (pre) {
+  pre.classList.add('preloader--done');
+  window.setTimeout(() => pre.remove(), 260);
+}
