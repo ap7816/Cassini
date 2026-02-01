@@ -57,7 +57,21 @@
         padding: 20px 18px;
       }
 
-      .brand {
+      /* Logo: apparition progressive (fade + scale + blur) */
+      .preloader-logo {
+        width: 108px;
+        height: 108px;
+        object-fit: contain;
+        display: block;
+
+        opacity: 0;
+        transform: scale(0.92) translateY(6px);
+        filter: blur(10px);
+        animation: logoIn 700ms ease forwards;
+      }
+
+      /* Texte: révèle “Arc” puis “Hive” (stagger) */
+      .brandLine {
         font-family:
           Inter,
           system-ui,
@@ -66,11 +80,34 @@
           Roboto,
           Arial,
           sans-serif;
-        font-weight: 800;
+        font-weight: 900;
         letter-spacing: 0.2px;
-        font-size: 22px;
-        line-height: 1.1;
+        font-size: 26px;
+        line-height: 1.05;
+        margin-top: 2px;
+
+        display: inline-flex;
+        gap: 0px;
+        align-items: baseline;
       }
+
+      .word {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(6px);
+        filter: blur(6px);
+      }
+
+      .word--arc {
+        animation: wordIn 520ms ease forwards;
+        animation-delay: 520ms;
+      }
+
+      .word--hive {
+        animation: wordIn 520ms ease forwards;
+        animation-delay: 650ms;
+      }
+
       .sub {
         font-family:
           Inter,
@@ -81,20 +118,14 @@
           Arial,
           sans-serif;
         font-size: 12px;
-        opacity: 0.7;
-        margin-top: 2px;
+        opacity: 0;
+
+        transform: translateY(6px);
+        animation: subIn 420ms ease forwards;
+        animation-delay: 820ms;
       }
 
-      .spinner {
-        width: 44px;
-        height: 44px;
-        border-radius: 999px;
-        border: 3px solid rgba(255, 255, 255, 0.14);
-        border-top-color: rgba(255, 255, 255, 0.85);
-        animation: spin 0.9s linear infinite;
-        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.02);
-      }
-
+      /* Petite barre de chargement (optionnelle) */
       .bar {
         width: min(260px, 70vw);
         height: 7px;
@@ -102,6 +133,10 @@
         background: rgba(255, 255, 255, 0.08);
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.08);
+        opacity: 0;
+
+        animation: subIn 420ms ease forwards;
+        animation-delay: 900ms;
       }
       .bar::before {
         content: '';
@@ -113,11 +148,29 @@
         animation: move 1.05s ease-in-out infinite;
       }
 
-      @keyframes spin {
+      @keyframes logoIn {
         to {
-          transform: rotate(360deg);
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          filter: blur(0);
         }
       }
+
+      @keyframes wordIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
+      }
+
+      @keyframes subIn {
+        to {
+          opacity: 0.75;
+          transform: translateY(0);
+        }
+      }
+
       @keyframes move {
         0% {
           transform: translateX(-10%);
@@ -132,6 +185,20 @@
           opacity: 0.55;
         }
       }
+
+      /* Accessibilité: réduit les animations si demandé */
+      @media (prefers-reduced-motion: reduce) {
+        .preloader-logo,
+        .word,
+        .sub,
+        .bar,
+        .bar::before {
+          animation: none !important;
+          opacity: 1 !important;
+          transform: none !important;
+          filter: none !important;
+        }
+      }
     </style>
   </head>
 
@@ -139,16 +206,56 @@
     <!-- Preloader affiché AVANT React -->
     <div id="app-preloader" aria-label="Loading">
       <div class="preloader-wrap">
-        <div class="spinner" aria-hidden="true"></div>
-        <div>
-          <div class="brand">ArcHive</div>
-          <div class="sub">Starting…</div>
+        <img
+          class="preloader-logo"
+          src="/src/assets/favicon_logo.png"
+          alt="ArcHive"
+          draggable="false"
+        />
+
+        <div class="brandLine" aria-label="ArcHive">
+          <span class="word word--arc">Arc</span><span class="word word--hive">Hive</span>
         </div>
+
+        <div class="sub">Starting…</div>
+
         <div class="bar" aria-hidden="true"></div>
       </div>
     </div>
-
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      function startApp() {
+        import('/src/main.tsx');
+      }
+
+      function waitForPreloaderThenStart() {
+        const pre = document.getElementById('app-preloader');
+        if (!pre) return startApp();
+
+        const last = pre.querySelector('.word--hive');
+
+        const FALLBACK_MS = 1200;
+        const timer = window.setTimeout(() => {
+          startApp();
+        }, FALLBACK_MS);
+
+        if (!last) {
+          return;
+        }
+
+        const onEnd = () => {
+          window.clearTimeout(timer);
+          startApp();
+        };
+
+        last.addEventListener('animationend', onEnd, { once: true });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForPreloaderThenStart, { once: true });
+      } else {
+        waitForPreloaderThenStart();
+      }
+    </script>
   </body>
 </html>
