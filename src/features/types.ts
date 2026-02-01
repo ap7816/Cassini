@@ -7,11 +7,9 @@ export type Game = {
   coverUrl?: string | null;
   installed?: boolean;
   lastPlayedAt?: string | null; // ISO date string
-
-  // Launch URL/URI (steam://..., epic://..., etc.)
   launchUrl?: string | null;
 
-  // NEW: favorites
+  // NEW
   favorite?: boolean;
 };
 

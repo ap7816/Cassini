@@ -104,3 +104,88 @@
 .query {
   opacity: 0.9;
 }
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tab {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tabActive {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.count {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.error {
+  border: 1px solid rgba(255, 80, 80, 0.25);
+  background: rgba(255, 80, 80, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.empty {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.emptyTitle {
+  font-weight: 700;
+}
+
+.emptyText {
+  opacity: 0.75;
+}
+
+.favTitles {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.favTitlesLabel {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.favTitlesList {
+  margin: 0;
+  padding-left: 18px;
+  opacity: 0.85;
+  display: grid;
+  gap: 4px;
+}
+
+.favTitleItem {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

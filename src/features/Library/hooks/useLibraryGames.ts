@@ -30,10 +30,8 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
         ...existing,
         ...g,
 
-        // on garde le lastPlayedAt local si déjà présent
+        // garde les champs "user" si le scan n'apporte rien
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
-
-        // IMPORTANT: ne jamais écraser les favoris (stockés localement)
         favorite: existing.favorite ?? g.favorite ?? false,
       });
     } else {
@@ -54,9 +52,7 @@ export function useLibraryGames() {
 
   // Load une fois
   useEffect(() => {
-    const loaded = loadGamesFromStorage();
-    // sécurité: favorite toujours défini
-    setGames(loaded.map((g) => ({ ...g, favorite: g.favorite ?? false })));
+    setGames(loadGamesFromStorage());
   }, []);
 
   // Save (sans écraser le storage au tout premier render)
@@ -72,9 +68,11 @@ export function useLibraryGames() {
   const isEmpty = games.length === 0;
 
   const installedCount = useMemo(() => games.filter((g) => g.installed).length, [games]);
-  const favoritesCount = useMemo(() => games.filter((g) => g.favorite).length, [games]);
+
+  const favoritesCount = useMemo(() => games.filter((g) => Boolean(g.favorite)).length, [games]);
 
   function loadSamples() {
+    // s'assure que favorite existe sur les samples
     setGames(sampleGames.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
@@ -97,12 +95,10 @@ export function useLibraryGames() {
 
   function toggleFavorite(id: string) {
     setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g))
+      prev.map((g) =>
+        g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g
+      )
     );
-  }
-
-  function setFavorite(id: string, favorite: boolean) {
-    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite } : g)));
   }
 
   async function exportToFile() {
@@ -112,6 +108,8 @@ export function useLibraryGames() {
   async function importFromFile() {
     const imported = await importLibraryFromFile();
     if (imported.length === 0) return;
+
+    // s'assure que favorite existe
     setGames(imported.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
@@ -129,15 +127,10 @@ export function useLibraryGames() {
       if (exists) {
         return prev.map((g) =>
           g.id === newGame.id
-            ? {
-                ...g,
-                ...newGame,
-                favorite: g.favorite ?? false, // conserve
-              }
+            ? { ...g, ...newGame, favorite: g.favorite ?? false }
             : g
         );
       }
-
       return [{ ...newGame, favorite: false }, ...prev];
     });
 
@@ -151,7 +144,6 @@ export function useLibraryGames() {
     try {
       const detected = await tauriInvoke<Game[]>('scan_steam_games');
 
-      // sécurise les champs Steam (au cas où)
       const normalized: Game[] = detected.map((g) => ({
         ...g,
         platform: 'Steam',
@@ -166,7 +158,8 @@ export function useLibraryGames() {
         for (const g of normalized) if (!before.has(g.id)) added += 1;
 
         const merged = mergeById(prev, normalized);
-        // ⚠️ On ne trie plus ici en alpha: l’UI gère déjà ton tri (last played, etc.)
+        // tu peux changer le tri après, mais on laisse ici simple
+        merged.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
         return merged;
       });
 
@@ -201,15 +194,12 @@ export function useLibraryGames() {
     removeGame,
     markPlayed,
     toggleInstalled,
-
-    toggleFavorite, // NEW
-    setFavorite, // NEW
+    toggleFavorite,
 
     exportToFile,
     importFromFile,
     addGameFromPicker,
 
-    // Steam scan
     scanPcSteam,
     isScanning,
     scanError,
