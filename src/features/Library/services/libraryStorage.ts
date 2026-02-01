@@ -1,11 +1,6 @@
-import type { Game, GamePlatform } from '../../types';
+import type { Game } from '../../types';
 
 const STORAGE_KEY = 'arctive.library.games.v1';
-const PLATFORMS: GamePlatform[] = ['Steam', 'Epic', 'GOG', 'Other'];
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
 
 function asString(v: unknown): string | null {
   return typeof v === 'string' ? v : null;

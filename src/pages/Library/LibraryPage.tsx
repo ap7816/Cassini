@@ -31,16 +31,10 @@ export function LibraryPage() {
     installedCount,
     favoritesCount,
     loadSamples,
-    clearLibrary,
     removeGame,
     toggleInstalled,
     toggleFavorite,
     markPlayed,
-    exportToFile,
-    importFromFile,
-    addGameFromPicker,
-    scanPcSteam,
-    isScanning,
     scanError,
   } = useLibraryGames();
 
@@ -67,32 +61,6 @@ export function LibraryPage() {
     markPlayed(game.id);
   }
 
-  async function handleExport() {
-    try {
-      await exportToFile();
-    } catch {
-      window.alert('Export failed.');
-    }
-  }
-
-  async function handleImport() {
-    try {
-      await importFromFile();
-    } catch {
-      window.alert('Import failed (invalid file).');
-    }
-  }
-
-  async function handleAddGame() {
-    const res = await addGameFromPicker();
-    if (!res.ok && res.message !== 'Cancelled.') window.alert(res.message);
-  }
-
-  async function handleScanSteam() {
-    const res = await scanPcSteam();
-    if (!res.ok) window.alert(res.message);
-  }
-
   const baseList = useMemo(() => {
     if (view === 'favorites') return games.filter((g) => Boolean(g.favorite));
     return games;
@@ -102,14 +70,12 @@ export function LibraryPage() {
     const list = q ? baseList.filter((g) => g.title.toLowerCase().includes(q)) : baseList;
 
     // tri: lastPlayed desc, puis alpha
-    return list
-      .slice()
-      .sort((a, b) => {
-        const tb = getTimestamp(b.lastPlayedAt);
-        const ta = getTimestamp(a.lastPlayedAt);
-        if (tb !== ta) return tb - ta;
-        return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
-      });
+    return list.slice().sort((a, b) => {
+      const tb = getTimestamp(b.lastPlayedAt);
+      const ta = getTimestamp(a.lastPlayedAt);
+      if (tb !== ta) return tb - ta;
+      return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+    });
   }, [baseList, q]);
 
   const showNoResults = baseList.length > 0 && q.length > 0 && filteredGames.length === 0;

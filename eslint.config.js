@@ -36,7 +36,7 @@ export default [
       // React hooks
       ...reactHooks.configs.recommended.rules,
 
-      'react-hooks/preserve-manual-memoization': 'off',*
+      'react-hooks/preserve-manual-memoization': 'off',
       // Vite / Fast refresh
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
