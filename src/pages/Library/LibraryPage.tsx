@@ -147,20 +147,6 @@ export function LibraryPage() {
         </div>
       ) : (
         <>
-          {/* In Favorites view: show titles list */}
-          {view === 'favorites' && filteredGames.length > 0 && (
-            <div className={css.favTitles}>
-              <div className={css.favTitlesLabel}>Favorite titles</div>
-              <ul className={css.favTitlesList}>
-                {filteredGames.map((g) => (
-                  <li key={`fav-title-${g.id}`} className={css.favTitleItem}>
-                    {g.title}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <div className={css.grid}>
             {filteredGames.map((g) => (
               <GameCard
