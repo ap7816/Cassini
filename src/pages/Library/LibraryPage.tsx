@@ -132,44 +132,6 @@ export function LibraryPage() {
                   : `${games.length} games • ${installedCount} installed`}
           </p>
         </div>
-
-        <div className={css.actions}>
-          <button type="button" className={css.primaryButton} onClick={handleAddGame}>
-            Add game
-          </button>
-
-          <button type="button" className={css.button} onClick={handleScanSteam} disabled={isScanning}>
-            {isScanning ? 'Scanning…' : 'Scan Steam'}
-          </button>
-
-          <button type="button" className={css.button} onClick={handleImport}>
-            Import
-          </button>
-
-          <button
-            type="button"
-            className={css.button}
-            onClick={handleExport}
-            disabled={isEmpty}
-            aria-disabled={isEmpty}
-          >
-            Export
-          </button>
-
-          <button type="button" className={css.button} onClick={loadSamples}>
-            Load samples
-          </button>
-
-          <button
-            type="button"
-            className={css.button}
-            onClick={clearLibrary}
-            disabled={isEmpty}
-            aria-disabled={isEmpty}
-          >
-            Clear
-          </button>
-        </div>
       </div>
 
       {/* Tabs */}
