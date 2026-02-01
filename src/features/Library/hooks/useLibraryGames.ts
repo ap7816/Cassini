@@ -56,14 +56,27 @@ export function useLibraryGames() {
       didMount.current = true;
       return;
     }
-    saveGamesToStorage(games);
+    const handle = window.setTimeout(() => {
+      saveGamesToStorage(games);
+    }, 250);
+    return () => {
+      window.clearTimeout(handle);
+    };
   }, [games]);
 
   const isEmpty = games.length === 0;
 
-  const installedCount = useMemo(() => games.filter((g) => g.installed).length, [games]);
+  const { installedCount, favoritesCount } = useMemo(() => {
+    let installed = 0;
+    let favorites = 0;
 
-  const favoritesCount = useMemo(() => games.filter((g) => Boolean(g.favorite)).length, [games]);
+    for (const g of games) {
+      if (g.installed) installed += 1;
+      if (g.favorite) favorites += 1;
+    }
+
+    return { installedCount: installed, favoritesCount: favorites };
+  }, [games]);
 
   function loadSamples() {
     // on garde les defaults pour éviter des undefined

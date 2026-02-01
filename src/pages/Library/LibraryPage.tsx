@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useDeferredValue, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
 import { useLibraryGames } from '../../features/library/hooks/useLibraryGames';
@@ -8,6 +8,8 @@ import { launchGame } from '../../features/library/services/launchGame';
 import type { Game } from '../../features/types';
 
 type ViewMode = 'all' | 'favorites';
+
+const titleCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 function getTimestamp(iso?: string | null): number {
   if (!iso) return -1;
@@ -21,6 +23,7 @@ export function LibraryPage() {
   // Search (URL param: q)
   const qRaw = searchParams.get('q') ?? '';
   const q = qRaw.trim().toLowerCase();
+  const deferredQ = useDeferredValue(q);
 
   // View mode (URL param: view=favorites)
   const view: ViewMode = searchParams.get('view') === 'favorites' ? 'favorites' : 'all';
@@ -61,24 +64,39 @@ export function LibraryPage() {
     markPlayed(game.id);
   }
 
+  const preparedGames = useMemo(
+    () =>
+      games.map((g) => ({
+        game: g,
+        titleLower: g.title.toLowerCase(),
+        lastPlayedTs: getTimestamp(g.lastPlayedAt),
+        favorite: Boolean(g.favorite),
+      })),
+    [games],
+  );
+
   const baseList = useMemo(() => {
-    if (view === 'favorites') return games.filter((g) => Boolean(g.favorite));
-    return games;
-  }, [games, view]);
+    if (view === 'favorites') return preparedGames.filter((g) => g.favorite);
+    return preparedGames;
+  }, [preparedGames, view]);
 
   const filteredGames = useMemo(() => {
-    const list = q ? baseList.filter((g) => g.title.toLowerCase().includes(q)) : baseList;
+    const list = deferredQ
+      ? baseList.filter((g) => g.titleLower.includes(deferredQ))
+      : baseList;
 
     // tri: lastPlayed desc, puis alpha
-    return list.slice().sort((a, b) => {
-      const tb = getTimestamp(b.lastPlayedAt);
-      const ta = getTimestamp(a.lastPlayedAt);
-      if (tb !== ta) return tb - ta;
-      return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
-    });
-  }, [baseList, q]);
+    return list
+      .slice()
+      .sort((a, b) => {
+        if (b.lastPlayedTs !== a.lastPlayedTs) return b.lastPlayedTs - a.lastPlayedTs;
+        return titleCollator.compare(a.game.title, b.game.title);
+      })
+      .map((g) => g.game);
+  }, [baseList, deferredQ]);
 
-  const showNoResults = baseList.length > 0 && q.length > 0 && filteredGames.length === 0;
+  const showNoResults =
+    baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
 
   // États vides
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;

@@ -10,11 +10,13 @@ type Props = {
   onToggleFavorite: (id: string) => void;
 };
 
+const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+
 function formatLastPlayed(iso?: string | null) {
   if (!iso) return 'Never played';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return 'Unknown';
-  return `Last played: ${d.toLocaleDateString()}`;
+  return `Last played: ${lastPlayedFormatter.format(d)}`;
 }
 
 function isLocalWindowsPath(input: string): boolean {
@@ -31,15 +33,13 @@ export function GameCard({
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
 
-  const initialCover = useMemo(() => game.coverUrl ?? null, [game.coverUrl]);
-
-  const [coverUrl, setCoverUrl] = useState<string | null>(initialCover);
+  const [coverUrl, setCoverUrl] = useState<string | null>(game.coverUrl ?? null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    setCoverUrl(initialCover);
+    setCoverUrl(game.coverUrl ?? null);
     setImgSrc(null);
-  }, [initialCover, game.id]);
+  }, [game.coverUrl, game.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +84,10 @@ export function GameCard({
   }
 
   const showLetter = !imgSrc;
+  const lastPlayedLabel = useMemo(
+    () => formatLastPlayed(game.lastPlayedAt),
+    [game.lastPlayedAt],
+  );
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
@@ -163,7 +167,7 @@ export function GameCard({
           </div>
         </div>
 
-        <div className={css.footer}>{formatLastPlayed(game.lastPlayedAt)}</div>
+        <div className={css.footer}>{lastPlayedLabel}</div>
       </div>
     </article>
   );
