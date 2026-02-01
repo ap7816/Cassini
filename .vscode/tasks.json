@@ -1,0 +1,72 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ArcHive: Dev (web)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run dev"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "ArcHive: Dev (tauri)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run tauri dev"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "ArcHive: Build (tauri)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run tauri build"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "ArcHive: Lint",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run lint"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ArcHive: Format (write)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run format"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ArcHive: Check (typecheck+lint+format:check)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run typecheck && npm run lint && npm run format:check"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
