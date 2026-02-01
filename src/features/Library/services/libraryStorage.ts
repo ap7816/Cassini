@@ -7,32 +7,42 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+function asString(v: unknown): string | null {
+  return typeof v === 'string' ? v : null;
+}
+function asBool(v: unknown): boolean | undefined {
+  return typeof v === 'boolean' ? v : undefined;
+}
+
 export function normalizeGames(input: unknown): Game[] {
   if (!Array.isArray(input)) return [];
 
-  return input
-    .filter(isRecord)
-    .map((g) => {
-      const id = typeof g.id === 'string' ? g.id : '';
-      const title = typeof g.title === 'string' ? g.title : '';
-      if (!id || !title) return null;
+  const out: Game[] = [];
 
-      const platformRaw = typeof g.platform === 'string' ? g.platform : 'Other';
-      const platform = (
-        PLATFORMS.includes(platformRaw as GamePlatform) ? platformRaw : 'Other'
-      ) as GamePlatform;
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') continue;
 
-      return {
-        id,
-        title,
-        platform,
-        coverUrl: typeof g.coverUrl === 'string' ? g.coverUrl : null,
-        installed: typeof g.installed === 'boolean' ? g.installed : false,
-        lastPlayedAt: typeof g.lastPlayedAt === 'string' ? g.lastPlayedAt : null,
-        launchUrl: typeof g.launchUrl === 'string' ? g.launchUrl : null,
-      } satisfies Game;
-    })
-    .filter(Boolean) as Game[];
+    const r = raw as Record<string, unknown>;
+
+    const id = asString(r.id);
+    const title = asString(r.title);
+    const platform = asString(r.platform);
+
+    if (!id || !title || !platform) continue;
+
+    out.push({
+      id,
+      title,
+      platform: platform as Game['platform'],
+      coverUrl: asString(r.coverUrl),
+      launchUrl: asString(r.launchUrl),
+      lastPlayedAt: asString(r.lastPlayedAt),
+      installed: asBool(r.installed) ?? false,
+      favorite: asBool(r.favorite) ?? false,
+    });
+  }
+
+  return out;
 }
 
 export function loadGamesFromStorage(): Game[] {

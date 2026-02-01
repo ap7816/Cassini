@@ -7,13 +7,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 export default [
   // Ignore ce qui n'est pas du front
   {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'src-tauri/**',
-      'coverage/**',
-      '*.min.*',
-    ],
+    ignores: ['dist/**', 'node_modules/**', 'src-tauri/**', 'coverage/**', '*.min.*'],
   },
 
   js.configs.recommended,
@@ -42,6 +36,7 @@ export default [
       // React hooks
       ...reactHooks.configs.recommended.rules,
 
+      'react-hooks/preserve-manual-memoization': 'off',*
       // Vite / Fast refresh
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
@@ -56,9 +51,7 @@ export default [
   // Important: évite que ESLint se batte avec Prettier
   {
     rules: {
-      ...(
-        await import('eslint-config-prettier')
-      ).default.rules,
+      ...(await import('eslint-config-prettier')).default.rules,
     },
   },
 ];

@@ -9,11 +9,9 @@ import { createGameFromPath } from '../services/createGameFromPath';
 type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  // 1) global (si présent) — cast propre sans any
   const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
   if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
 
-  // 2) Tauri v2 (recommandé)
   const mod = await import('@tauri-apps/api/core');
   const invoke = mod.invoke as unknown as TauriInvoke;
   return invoke<T>(cmd, args);
@@ -29,16 +27,12 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
       map.set(g.id, {
         ...existing,
         ...g,
-
-        // garde les champs "user" si le scan n'apporte rien
-        lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
+        // on ne perd jamais ces champs “user data”
         favorite: existing.favorite ?? g.favorite ?? false,
+        lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
       });
     } else {
-      map.set(g.id, {
-        ...g,
-        favorite: g.favorite ?? false,
-      });
+      map.set(g.id, { ...g, favorite: g.favorite ?? false });
     }
   }
 
@@ -55,7 +49,7 @@ export function useLibraryGames() {
     setGames(loadGamesFromStorage());
   }, []);
 
-  // Save (sans écraser le storage au tout premier render)
+  // Save (évite d’écraser le storage au tout premier render)
   const didMount = useRef(false);
   useEffect(() => {
     if (!didMount.current) {
@@ -72,7 +66,7 @@ export function useLibraryGames() {
   const favoritesCount = useMemo(() => games.filter((g) => Boolean(g.favorite)).length, [games]);
 
   function loadSamples() {
-    // s'assure que favorite existe sur les samples
+    // on garde les defaults pour éviter des undefined
     setGames(sampleGames.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
@@ -90,14 +84,15 @@ export function useLibraryGames() {
   }
 
   function toggleInstalled(id: string) {
-    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
+    setGames((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, installed: !Boolean(g.installed) } : g)),
+    );
   }
 
+  // ✅ IMPORTANT : pas de mutation, on retourne un nouvel objet
   function toggleFavorite(id: string) {
     setGames((prev) =>
-      prev.map((g) =>
-        g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g
-      )
+      prev.map((g) => (g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g)),
     );
   }
 
@@ -109,8 +104,7 @@ export function useLibraryGames() {
     const imported = await importLibraryFromFile();
     if (imported.length === 0) return;
 
-    // s'assure que favorite existe
-    setGames(imported.map((g) => ({ ...g, favorite: g.favorite ?? false })));
+    setGames((prev) => mergeById(prev, imported));
   }
 
   async function addGameFromPicker(): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -120,24 +114,20 @@ export function useLibraryGames() {
       return { ok: false, message: picked.message };
     }
 
-    const newGame = createGameFromPath(picked.path);
+    const newGame: Game = { ...createGameFromPath(picked.path), favorite: false };
 
     setGames((prev) => {
       const exists = prev.some((g) => g.id === newGame.id);
-      if (exists) {
-        return prev.map((g) =>
-          g.id === newGame.id
-            ? { ...g, ...newGame, favorite: g.favorite ?? false }
-            : g
-        );
-      }
-      return [{ ...newGame, favorite: false }, ...prev];
+      if (exists) return prev.map((g) => (g.id === newGame.id ? { ...g, ...newGame } : g));
+      return [newGame, ...prev];
     });
 
     return { ok: true };
   }
 
-  async function scanPcSteam(): Promise<{ ok: true; added: number } | { ok: false; message: string }> {
+  async function scanPcSteam(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
     setIsScanning(true);
     setScanError(null);
 
@@ -157,10 +147,7 @@ export function useLibraryGames() {
         const before = new Set(prev.map((g) => g.id));
         for (const g of normalized) if (!before.has(g.id)) added += 1;
 
-        const merged = mergeById(prev, normalized);
-        // tu peux changer le tri après, mais on laisse ici simple
-        merged.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
-        return merged;
+        return mergeById(prev, normalized);
       });
 
       return { ok: true, added };
