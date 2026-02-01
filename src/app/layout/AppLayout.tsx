@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
-import logo from '../../assets/favicon.png'
+import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout, type NavItem } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
@@ -78,7 +78,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          <div className={css.muted}>v0.4 (dev)</div>
+          <div className={css.muted}>v0.6.0</div>
         </div>
       </aside>
 
