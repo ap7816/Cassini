@@ -97,16 +97,11 @@ export function useLibraryGames() {
   }
 
   function toggleInstalled(id: string) {
-    setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, installed: !Boolean(g.installed) } : g)),
-    );
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
   }
 
-  // ✅ IMPORTANT : pas de mutation, on retourne un nouvel objet
   function toggleFavorite(id: string) {
-    setGames((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, favorite: !Boolean(g.favorite) } : g)),
-    );
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite: !g.favorite } : g)));
   }
 
   async function exportToFile() {

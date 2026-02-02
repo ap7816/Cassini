@@ -81,9 +81,7 @@ export function LibraryPage() {
   }, [preparedGames, view]);
 
   const filteredGames = useMemo(() => {
-    const list = deferredQ
-      ? baseList.filter((g) => g.titleLower.includes(deferredQ))
-      : baseList;
+    const list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
 
     // tri: lastPlayed desc, puis alpha
     return list
@@ -95,8 +93,7 @@ export function LibraryPage() {
       .map((g) => g.game);
   }, [baseList, deferredQ]);
 
-  const showNoResults =
-    baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
+  const showNoResults = baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
 
   // États vides
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;
