@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
+import { isTauri } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 type Props = {
   game: Game;
@@ -23,18 +25,36 @@ function isLocalWindowsPath(input: string): boolean {
   return /^[a-zA-Z]:\\/.test(input) || input.startsWith('\\\\');
 }
 
-export function GameCard({
-  game,
-  onRemove,
-  onPlay,
-  onToggleInstalled,
-  onToggleFavorite,
-}: Props) {
+function getSteamAppId(game: Game): string | null {
+  // 1) via id: "steam-12345"
+  if (game.id.startsWith('steam-')) {
+    const rest = game.id.slice('steam-'.length).trim();
+    if (/^\d+$/.test(rest)) return rest;
+  }
+
+  // 2) via launchUrl: steam://rungameid/12345
+  const url = game.launchUrl ?? '';
+  const m = url.match(/steam:\/\/rungameid\/(\d+)/i);
+  return m?.[1] ?? null;
+}
+
+async function openSteamUrl(url: string): Promise<void> {
+  // Desktop only (Tauri). En web preview, c’est souvent bloqué / ignoré.
+  if (!isTauri()) {
+    throw new Error('Steam actions are only available in the desktop app (Tauri).');
+  }
+  await openUrl(url);
+}
+
+export function GameCard({ game, onRemove, onPlay, onToggleInstalled, onToggleFavorite }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
 
   const [coverUrl, setCoverUrl] = useState<string | null>(game.coverUrl ?? null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
+
+  // NEW: état "busy" pour l'animation + disable du bouton install/uninstall
+  const [isInstallBusy, setIsInstallBusy] = useState(false);
 
   useEffect(() => {
     setCoverUrl(game.coverUrl ?? null);
@@ -70,7 +90,73 @@ export function GameCard({
     };
   }, [coverUrl]);
 
-  function handleToggleInstalled() {
+  async function handleToggleInstalled() {
+    if (isInstallBusy) return;
+
+    // Steam: on déclenche l’action réelle via steam://...
+    if (game.platform === 'Steam') {
+      const appid = getSteamAppId(game);
+      if (!appid) {
+        window.alert('Steam app id not found for this game.');
+        return;
+      }
+
+      if (game.installed) {
+        const ok = window.confirm(
+          `Uninstall "${game.title}"?\n\nSteam will open and ask you to confirm.`,
+        );
+        if (!ok) return;
+
+        setIsInstallBusy(true);
+        try {
+          await openSteamUrl(`steam://uninstall/${appid}`);
+
+          // Optimiste: on met à jour l’UI tout de suite.
+          // Si l’utilisateur annule dans Steam, il faudra rescan.
+          onToggleInstalled(game.id);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Failed to open Steam uninstall.';
+          window.alert(msg);
+        } finally {
+          // petit délai pour que l'utilisateur "voit" l'opening (sinon ça clignote)
+          window.setTimeout(() => setIsInstallBusy(false), 650);
+        }
+        return;
+      }
+
+      // Install
+      const ok = window.confirm(
+        `Install "${game.title}"?\n\nSteam will open and start the install.`,
+      );
+      if (!ok) return;
+
+      setIsInstallBusy(true);
+      try {
+        await openSteamUrl(`steam://install/${appid}`);
+
+        // Optimiste: on met à jour l’UI tout de suite.
+        onToggleInstalled(game.id);
+      } catch (e1) {
+        // Fallback: ouvrir la page store (mais on NE toggle PAS l’état ici)
+        try {
+          await openSteamUrl(`steam://store/${appid}`);
+        } catch (e2) {
+          const msg =
+            e2 instanceof Error
+              ? e2.message
+              : e1 instanceof Error
+                ? e1.message
+                : 'Failed to open Steam.';
+          window.alert(msg);
+        }
+      } finally {
+        window.setTimeout(() => setIsInstallBusy(false), 650);
+      }
+
+      return;
+    }
+
+    // Autres plateformes: pour l’instant on garde le toggle UI uniquement
     if (game.installed) {
       const ok = window.confirm(`Uninstall "${game.title}" ?`);
       if (!ok) return;
@@ -84,10 +170,32 @@ export function GameCard({
   }
 
   const showLetter = !imgSrc;
-  const lastPlayedLabel = useMemo(
-    () => formatLastPlayed(game.lastPlayedAt),
-    [game.lastPlayedAt],
-  );
+  const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
+
+  // NEW: style du bouton install/uninstall
+  const isSteam = game.platform === 'Steam';
+  const secondaryClassName = useMemo(() => {
+    const classes = [css.secondary];
+
+    if (isSteam) classes.push(css.secondarySteam);
+    if (game.installed) classes.push(css.secondaryDanger);
+    else classes.push(css.secondarySuccess);
+
+    if (isInstallBusy) classes.push(css.secondaryBusy);
+
+    return classes.join(' ');
+  }, [isSteam, game.installed, isInstallBusy]);
+
+  const secondaryLabel = useMemo(() => {
+    if (isInstallBusy) return 'Opening…';
+    return game.installed ? 'Uninstall' : 'Install';
+  }, [isInstallBusy, game.installed]);
+
+  const secondaryTitle = useMemo(() => {
+    if (isInstallBusy) return 'Opening Steam…';
+    if (isSteam) return game.installed ? 'Uninstall via Steam' : 'Install via Steam';
+    return game.installed ? 'Uninstall' : 'Install';
+  }, [isInstallBusy, isSteam, game.installed]);
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
@@ -112,7 +220,6 @@ export function GameCard({
             <div className={css.titleRow}>
               <div className={css.title}>{game.title}</div>
 
-              {/* ⭐ Favorite */}
               <button
                 type="button"
                 className={[css.fav, isFav ? css.favActive : ''].join(' ')}
@@ -138,11 +245,13 @@ export function GameCard({
           <div className={css.actions}>
             <button
               type="button"
-              className={css.secondary}
-              onClick={handleToggleInstalled}
-              title={game.installed ? 'Uninstall' : 'Install'}
+              className={secondaryClassName}
+              onClick={() => void handleToggleInstalled()}
+              title={secondaryTitle}
+              disabled={isInstallBusy}
+              aria-disabled={isInstallBusy}
             >
-              {game.installed ? 'Uninstall' : 'Install'}
+              {secondaryLabel}
             </button>
 
             <button

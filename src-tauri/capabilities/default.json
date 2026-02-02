@@ -9,7 +9,11 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         { "url": "steam://open/**" },
-        { "url": "steam://rungameid/**" }
+        { "url": "steam://rungameid/**" },
+
+        { "url": "steam://install/**" },
+        { "url": "steam://uninstall/**" },
+        { "url": "steam://store/**" }
       ]
     },
     {

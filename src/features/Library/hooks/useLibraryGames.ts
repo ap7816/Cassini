@@ -5,6 +5,8 @@ import { loadGamesFromStorage, saveGamesToStorage } from '../services/librarySto
 import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
 import { pickGameFile } from '../services/pickGameFile';
 import { createGameFromPath } from '../services/createGameFromPath';
+import { isTauri } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 
@@ -27,7 +29,7 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
       map.set(g.id, {
         ...existing,
         ...g,
-        // on ne perd jamais ces champs “user data”
+        // user data: jamais perdu
         favorite: existing.favorite ?? g.favorite ?? false,
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
       });
@@ -39,17 +41,40 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
   return Array.from(map.values());
 }
 
+function getSteamAppId(game: Game): string | null {
+  // id: "steam-123456"
+  if (game.id.startsWith('steam-')) return game.id.slice('steam-'.length);
+
+  // fallback: launchUrl "steam://rungameid/123456"
+  const m = game.launchUrl?.match(/rungameid\/(\d+)/);
+  return m?.[1] ?? null;
+}
+
+async function steamInstall(appId: string): Promise<void> {
+  await openUrl(`steam://install/${appId}`);
+}
+
+async function steamUninstall(appId: string): Promise<void> {
+  await openUrl(`steam://uninstall/${appId}`);
+}
+
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+
+  // ref toujours à jour pour lire la dernière liste dans des funcs async
+  const gamesRef = useRef<Game[]>([]);
+  useEffect(() => {
+    gamesRef.current = games;
+  }, [games]);
 
   // Load une fois
   useEffect(() => {
     setGames(loadGamesFromStorage());
   }, []);
 
-  // Save (évite d’écraser le storage au tout premier render)
+  // Save (évite d’écraser au 1er render)
   const didMount = useRef(false);
   useEffect(() => {
     if (!didMount.current) {
@@ -59,9 +84,7 @@ export function useLibraryGames() {
     const handle = window.setTimeout(() => {
       saveGamesToStorage(games);
     }, 250);
-    return () => {
-      window.clearTimeout(handle);
-    };
+    return () => window.clearTimeout(handle);
   }, [games]);
 
   const isEmpty = games.length === 0;
@@ -79,7 +102,6 @@ export function useLibraryGames() {
   }, [games]);
 
   function loadSamples() {
-    // on garde les defaults pour éviter des undefined
     setGames(sampleGames.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
@@ -96,10 +118,6 @@ export function useLibraryGames() {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, lastPlayedAt: nowIso } : g)));
   }
 
-  function toggleInstalled(id: string) {
-    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: !g.installed } : g)));
-  }
-
   function toggleFavorite(id: string) {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite: !g.favorite } : g)));
   }
@@ -111,7 +129,6 @@ export function useLibraryGames() {
   async function importFromFile() {
     const imported = await importLibraryFromFile();
     if (imported.length === 0) return;
-
     setGames((prev) => mergeById(prev, imported));
   }
 
@@ -154,7 +171,6 @@ export function useLibraryGames() {
       setGames((prev) => {
         const before = new Set(prev.map((g) => g.id));
         for (const g of normalized) if (!before.has(g.id)) added += 1;
-
         return mergeById(prev, normalized);
       });
 
@@ -166,6 +182,51 @@ export function useLibraryGames() {
     } finally {
       setIsScanning(false);
     }
+  }
+
+  // ⚠️ ICI: install/uninstall "réel" pour Steam via steam://
+  async function toggleInstalledAsync(id: string): Promise<void> {
+    const current = gamesRef.current.find((g) => g.id === id);
+    if (!current) return;
+
+    const nextInstalled = !current.installed;
+
+    // Steam => déclenche vraiment l'action côté Steam
+    if (current.platform === 'Steam') {
+      if (!isTauri()) {
+        window.alert('Steam install/uninstall is only available in the desktop app (Tauri).');
+        return;
+      }
+
+      const appId = getSteamAppId(current);
+      if (!appId) {
+        window.alert('Cannot determine Steam app id for this game.');
+        return;
+      }
+
+      try {
+        if (nextInstalled) await steamInstall(appId);
+        else await steamUninstall(appId);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to open Steam action.';
+        window.alert(msg);
+        return;
+      }
+
+      // update UI (optimiste)
+      setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: nextInstalled } : g)));
+
+      // petit rescan automatique pour recaler l’état réel (si l’uninstall prend du temps / cancel)
+      window.setTimeout(() => void scanPcSteam(), 6000);
+      return;
+    }
+
+    // Autres plateformes => comportement local (comme avant)
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: nextInstalled } : g)));
+  }
+
+  function toggleInstalled(id: string) {
+    void toggleInstalledAsync(id);
   }
 
   // Auto-scan 1 fois si la library est vide

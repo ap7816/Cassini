@@ -6,7 +6,9 @@
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
-  transition: background 140ms ease, border-color 140ms ease;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
 }
 
 .cardFavorite {
@@ -133,7 +135,10 @@
 
   opacity: 0.95;
   transform: translateZ(0);
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease,
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease,
     filter 120ms ease;
 }
 
@@ -153,12 +158,10 @@
 
 /* 🔥 Favori actif: gold + glow + pulse */
 .favActive {
-  /* couleur "gold" très visible */
   color: #ffd56a;
   border-color: rgba(255, 213, 106, 0.55);
-  background: rgba(255, 213, 106, 0.10);
+  background: rgba(255, 213, 106, 0.1);
 
-  /* glow */
   filter: drop-shadow(0 0 6px rgba(255, 213, 106, 0.55))
     drop-shadow(0 0 14px rgba(255, 213, 106, 0.25));
 
@@ -174,7 +177,7 @@
   }
   50% {
     transform: scale(1.14);
-    filter: drop-shadow(0 0 10px rgba(255, 213, 106, 0.70))
+    filter: drop-shadow(0 0 10px rgba(255, 213, 106, 0.7))
       drop-shadow(0 0 18px rgba(255, 213, 106, 0.35));
   }
   100% {
@@ -196,9 +199,99 @@
   display: grid;
   place-items: center;
   box-shadow: none;
+  position: relative;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease,
+    filter 120ms ease;
 }
+
 .secondary:hover {
   background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.secondary:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+.secondary:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.18);
+  outline-offset: 2px;
+}
+
+/* Variant Steam: plus clair que ça va ouvrir Steam */
+.secondarySteam {
+  border-color: rgba(120, 190, 255, 0.4);
+  background: rgba(120, 190, 255, 0.08);
+  filter: drop-shadow(0 0 8px rgba(120, 190, 255, 0.16));
+}
+
+.secondarySteam:hover {
+  background: rgba(120, 190, 255, 0.11);
+  border-color: rgba(120, 190, 255, 0.52);
+}
+
+/* petit indicateur "external" */
+.secondarySteam::before {
+  content: '↗';
+  font-size: 12px;
+  opacity: 0.85;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Install / Uninstall variants */
+.secondaryDanger {
+  border-color: rgba(255, 110, 110, 0.42);
+  background: rgba(255, 110, 110, 0.09);
+  filter: drop-shadow(0 0 10px rgba(255, 110, 110, 0.1));
+}
+
+.secondaryDanger:hover {
+  background: rgba(255, 110, 110, 0.12);
+  border-color: rgba(255, 110, 110, 0.55);
+}
+
+.secondarySuccess {
+  border-color: rgba(120, 255, 175, 0.4);
+  background: rgba(120, 255, 175, 0.08);
+  filter: drop-shadow(0 0 10px rgba(120, 255, 175, 0.1));
+}
+
+.secondarySuccess:hover {
+  background: rgba(120, 255, 175, 0.11);
+  border-color: rgba(120, 255, 175, 0.52);
+}
+
+/* Busy: spinner + disable interaction */
+.secondaryBusy {
+  cursor: progress;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.secondaryBusy::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
 /* Bouton Play */
@@ -213,10 +306,14 @@
   display: grid;
   place-items: center;
   box-shadow: none;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .play:hover {
   background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .play:disabled {
@@ -236,8 +333,28 @@
   place-items: center;
   padding: 0;
   box-shadow: none;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .remove:hover {
   background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+/* Accessibilité: coupe les animations si l'utilisateur le demande */
+@media (prefers-reduced-motion: reduce) {
+  .favActive {
+    animation: none;
+  }
+  .secondary,
+  .play,
+  .remove,
+  .fav {
+    transition: none;
+  }
+  .secondaryBusy::after {
+    animation: none;
+  }
 }
