@@ -8,6 +8,7 @@ pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
     let manifests_path = find_manifests_path()
         .ok_or_else(|| "Epic Games Launcher not found on this PC.".to_string())?;
 
+    let agent = ureq::Agent::new();
     let mut games: Vec<GameDto> = Vec::new();
     let mut seen_ids: HashSet<String> = HashSet::new();
 
@@ -26,7 +27,7 @@ pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
             continue;
         };
 
-        if let Some(game) = parse_item_file(&content) {
+        if let Some(game) = parse_item_file(&content, &agent) {
             if seen_ids.insert(game.id.clone()) {
                 games.push(game);
             }
@@ -37,7 +38,7 @@ pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
     Ok(games)
 }
 
-fn parse_item_file(content: &str) -> Option<GameDto> {
+fn parse_item_file(content: &str, agent: &ureq::Agent) -> Option<GameDto> {
     let v: Value = serde_json::from_str(content).ok()?;
 
     // Seulement les vraies applis (jeux), pas les outils/plugins
@@ -67,7 +68,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
     let cover_url = extract_cover_url(&v).or_else(|| {
         let namespace = v.get("CatalogNamespace").and_then(|n| n.as_str())?;
         let item_id = v.get("CatalogItemId").and_then(|i| i.as_str())?;
-        fetch_epic_cover_url(namespace, item_id)
+        fetch_epic_cover_url(agent, namespace, item_id)
     });
 
     Some(GameDto {
@@ -84,10 +85,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
     })
 }
 
-fn extract_cover_url(v: &Value) -> Option<String> {
-    let images = v.get("KeyImages")?.as_array()?;
-
-    // Ordre de préférence: poster tall (portrait) > thumbnail > n'importe quelle image
+fn pick_image_url(images: &[Value]) -> Option<String> {
     let preferred = ["DieselGameBoxTall", "Thumbnail", "DieselGameBox"];
 
     for kind in &preferred {
@@ -110,40 +108,25 @@ fn extract_cover_url(v: &Value) -> Option<String> {
     None
 }
 
-fn fetch_epic_cover_url(namespace: &str, item_id: &str) -> Option<String> {
+fn extract_cover_url(v: &Value) -> Option<String> {
+    pick_image_url(v.get("KeyImages")?.as_array()?)
+}
+
+fn fetch_epic_cover_url(agent: &ureq::Agent, namespace: &str, item_id: &str) -> Option<String> {
     let url = format!(
         "https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/namespace/{}/bulk/items?id={}&includeDLCDetails=false&includeMainGameDetails=false&country=US&locale=en-US",
         namespace, item_id
     );
 
-    let response = ureq::get(&url)
+    let response = agent
+        .get(&url)
         .timeout(std::time::Duration::from_secs(5))
         .call()
         .ok()?;
 
-    let json: serde_json::Value = response.into_json::<serde_json::Value>().ok()?;
-
-    let item = json.get(item_id)?;
-    let key_images = item.get("keyImages")?.as_array()?;
-
-    let preferred = ["DieselGameBoxTall", "Thumbnail", "DieselGameBox"];
-    for kind in &preferred {
-        for img in key_images {
-            if img.get("type").and_then(|t| t.as_str()) == Some(kind) {
-                if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-                    return Some(url.to_string());
-                }
-            }
-        }
-    }
-
-    for img in key_images {
-        if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-            return Some(url.to_string());
-        }
-    }
-
-    None
+    let json: serde_json::Value = response.into_json().ok()?;
+    let key_images = json.get(item_id)?.get("keyImages")?.as_array()?;
+    pick_image_url(key_images)
 }
 
 fn find_manifests_path() -> Option<PathBuf> {
