@@ -64,12 +64,6 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         return None;
     }
 
-    let cover_url = extract_cover_url(&v).or_else(|| {
-        let namespace = v.get("CatalogNamespace").and_then(|n| n.as_str())?;
-        let item_id = v.get("CatalogItemId").and_then(|i| i.as_str())?;
-        fetch_epic_cover_url(namespace, item_id)
-    });
-
     Some(GameDto {
         id: format!("epic-{}", app_name),
         title,
