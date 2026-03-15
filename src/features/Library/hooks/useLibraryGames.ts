@@ -150,6 +150,40 @@ export function useLibraryGames() {
     return { ok: true };
   }
 
+  async function scanPcEpic(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
+    setIsScanning(true);
+    setScanError(null);
+
+    try {
+      const detected = await tauriInvoke<Game[]>('scan_epic_games');
+
+      const normalized: Game[] = detected.map((g) => ({
+        ...g,
+        platform: 'Epic' as const,
+        installed: true,
+        favorite: g.favorite ?? false,
+      }));
+
+      let added = 0;
+
+      setGames((prev) => {
+        const before = new Set(prev.map((g) => g.id));
+        for (const g of normalized) if (!before.has(g.id)) added += 1;
+        return mergeById(prev, normalized);
+      });
+
+      return { ok: true, added };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Epic scan failed.';
+      setScanError(msg);
+      return { ok: false, message: msg };
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
   async function scanPcSteam(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -236,7 +270,7 @@ export function useLibraryGames() {
     if (games.length !== 0) return;
 
     didAutoScan.current = true;
-    void scanPcSteam();
+    void Promise.all([scanPcSteam(), scanPcEpic()]);
   }, [games.length]);
 
   return {
@@ -257,6 +291,7 @@ export function useLibraryGames() {
     addGameFromPicker,
 
     scanPcSteam,
+    scanPcEpic,
     isScanning,
     scanError,
   };
