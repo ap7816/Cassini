@@ -10,10 +10,11 @@
       "allow": [
         { "url": "steam://open/**" },
         { "url": "steam://rungameid/**" },
-
         { "url": "steam://install/**" },
         { "url": "steam://uninstall/**" },
-        { "url": "steam://store/**" }
+        { "url": "steam://store/**" },
+
+        { "url": "com.epicgames.launcher://**" }
       ]
     },
     {
