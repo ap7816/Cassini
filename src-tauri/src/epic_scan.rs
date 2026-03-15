@@ -94,6 +94,7 @@ fn extract_cover_url(v: &Value) -> Option<String> {
         for img in images {
             if img.get("type").and_then(|t| t.as_str()) == Some(kind) {
                 if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
+                    let url: &str = url;
                     return Some(url.to_string());
                 }
             }
@@ -121,7 +122,7 @@ fn fetch_epic_cover_url(namespace: &str, item_id: &str) -> Option<String> {
         .call()
         .ok()?;
 
-    let json: serde_json::Value = response.into_json().ok()?;
+    let json: serde_json::Value = serde_json::from_reader(response.into_reader()).ok()?;
 
     let item = json.get(item_id)?;
     let key_images = item.get("keyImages")?.as_array()?;
