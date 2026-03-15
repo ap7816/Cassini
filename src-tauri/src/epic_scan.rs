@@ -64,6 +64,12 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         return None;
     }
 
+    let cover_url = extract_cover_url(&v).or_else(|| {
+        let namespace = v.get("CatalogNamespace").and_then(|n| n.as_str())?;
+        let item_id = v.get("CatalogItemId").and_then(|i| i.as_str())?;
+        fetch_epic_cover_url(namespace, item_id)
+    });
+
     Some(GameDto {
         id: format!("epic-{}", app_name),
         title,
@@ -74,7 +80,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
             "com.epicgames.launcher://apps/{}?action=launch&silent=true",
             app_name
         )),
-        cover_url: extract_cover_url(&v),
+        cover_url,
     })
 }
 
@@ -96,6 +102,42 @@ fn extract_cover_url(v: &Value) -> Option<String> {
 
     // Fallback: première image disponible
     for img in images {
+        if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
+            return Some(url.to_string());
+        }
+    }
+
+    None
+}
+
+fn fetch_epic_cover_url(namespace: &str, item_id: &str) -> Option<String> {
+    let url = format!(
+        "https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/namespace/{}/bulk/items?id={}&includeDLCDetails=false&includeMainGameDetails=false&country=US&locale=en-US",
+        namespace, item_id
+    );
+
+    let response = ureq::get(&url)
+        .timeout(std::time::Duration::from_secs(5))
+        .call()
+        .ok()?;
+
+    let json: serde_json::Value = response.into_json().ok()?;
+
+    let item = json.get(item_id)?;
+    let key_images = item.get("keyImages")?.as_array()?;
+
+    let preferred = ["DieselGameBoxTall", "Thumbnail", "DieselGameBox"];
+    for kind in &preferred {
+        for img in key_images {
+            if img.get("type").and_then(|t| t.as_str()) == Some(kind) {
+                if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
+                    return Some(url.to_string());
+                }
+            }
+        }
+    }
+
+    for img in key_images {
         if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
             return Some(url.to_string());
         }
