@@ -35,7 +35,6 @@ export function LibraryPage() {
     favoritesCount,
     loadSamples,
     removeGame,
-    toggleInstalled,
     toggleFavorite,
     markPlayed,
     scanPcSteam,
@@ -185,7 +184,6 @@ export function LibraryPage() {
                 game={g}
                 onRemove={removeGame}
                 onPlay={handlePlay}
-                onToggleInstalled={toggleInstalled}
                 onToggleFavorite={toggleFavorite}
               />
             ))}
