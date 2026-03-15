@@ -38,8 +38,15 @@ export function LibraryPage() {
     toggleInstalled,
     toggleFavorite,
     markPlayed,
+    scanPcSteam,
+    scanPcEpic,
+    isScanning,
     scanError,
   } = useLibraryGames();
+
+  async function handleRefresh() {
+    await Promise.all([scanPcSteam(), scanPcEpic()]);
+  }
 
   function setView(next: ViewMode) {
     const p = new URLSearchParams(searchParams);
@@ -113,6 +120,15 @@ export function LibraryPage() {
                   : `${games.length} games • ${installedCount} installed`}
           </p>
         </div>
+        <button
+          type="button"
+          className={css.button}
+          onClick={() => void handleRefresh()}
+          disabled={isScanning}
+          title="Rescan Steam & Epic games"
+        >
+          {isScanning ? 'Scanning…' : '↻ Refresh'}
+        </button>
       </div>
 
       {/* Tabs */}
