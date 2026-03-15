@@ -50,12 +50,25 @@ function getSteamAppId(game: Game): string | null {
   return m?.[1] ?? null;
 }
 
+function getEpicAppName(game: Game): string | null {
+  // id: "epic-{AppName}"
+  if (game.id.startsWith('epic-')) return game.id.slice('epic-'.length);
+
+  // fallback: launchUrl "com.epicgames.launcher://apps/{AppName}?action=..."
+  const m = game.launchUrl?.match(/apps\/([^?]+)/);
+  return m?.[1] ?? null;
+}
+
 async function steamInstall(appId: string): Promise<void> {
   await openUrl(`steam://install/${appId}`);
 }
 
 async function steamUninstall(appId: string): Promise<void> {
   await openUrl(`steam://uninstall/${appId}`);
+}
+
+async function epicUninstall(appName: string): Promise<void> {
+  await openUrl(`com.epicgames.launcher://apps/${appName}?action=uninstall`);
 }
 
 export function useLibraryGames() {
@@ -252,6 +265,32 @@ export function useLibraryGames() {
 
       // petit rescan automatique pour recaler l’état réel (si l’uninstall prend du temps / cancel)
       window.setTimeout(() => void scanPcSteam(), 6000);
+      return;
+    }
+
+    // Epic => déclenche l'action via le launcher Epic
+    if (current.platform === 'Epic') {
+      if (!isTauri()) {
+        window.alert('Epic install/uninstall is only available in the desktop app (Tauri).');
+        return;
+      }
+
+      const appName = getEpicAppName(current);
+      if (!appName) {
+        window.alert('Cannot determine Epic app name for this game.');
+        return;
+      }
+
+      try {
+        if (!nextInstalled) await epicUninstall(appName);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to open Epic action.';
+        window.alert(msg);
+        return;
+      }
+
+      setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: nextInstalled } : g)));
+      window.setTimeout(() => void scanPcEpic(), 6000);
       return;
     }
 
