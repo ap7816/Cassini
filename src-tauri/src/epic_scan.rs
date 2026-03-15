@@ -121,7 +121,7 @@ fn fetch_epic_cover_url(namespace: &str, item_id: &str) -> Option<String> {
         .call()
         .ok()?;
 
-    let json: serde_json::Value = response.into_json().ok()?;
+    let json: serde_json::Value = response.into_json::<serde_json::Value>().ok()?;
 
     let item = json.get(item_id)?;
     let key_images = item.get("keyImages")?.as_array()?;
