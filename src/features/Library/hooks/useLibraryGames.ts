@@ -5,8 +5,6 @@ import { loadGamesFromStorage, saveGamesToStorage } from '../services/librarySto
 import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
 import { pickGameFile } from '../services/pickGameFile';
 import { createGameFromPath } from '../services/createGameFromPath';
-import { isTauri } from '@tauri-apps/api/core';
-import { openUrl } from '@tauri-apps/plugin-opener';
 
 type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 
@@ -41,36 +39,6 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
   return Array.from(map.values());
 }
 
-function getSteamAppId(game: Game): string | null {
-  // id: "steam-123456"
-  if (game.id.startsWith('steam-')) return game.id.slice('steam-'.length);
-
-  // fallback: launchUrl "steam://rungameid/123456"
-  const m = game.launchUrl?.match(/rungameid\/(\d+)/);
-  return m?.[1] ?? null;
-}
-
-function getEpicAppName(game: Game): string | null {
-  // id: "epic-{AppName}"
-  if (game.id.startsWith('epic-')) return game.id.slice('epic-'.length);
-
-  // fallback: launchUrl "com.epicgames.launcher://apps/{AppName}?action=..."
-  const m = game.launchUrl?.match(/apps\/([^?]+)/);
-  return m?.[1] ?? null;
-}
-
-async function steamInstall(appId: string): Promise<void> {
-  await openUrl(`steam://install/${appId}`);
-}
-
-async function steamUninstall(appId: string): Promise<void> {
-  await openUrl(`steam://uninstall/${appId}`);
-}
-
-async function epicOpenGamePage(appName: string): Promise<void> {
-  // Ouvre la page du jeu dans le launcher Epic (sans le lancer).
-  await openUrl(`com.epicgames.launcher://apps/${appName}`);
-}
 
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
@@ -246,83 +214,6 @@ export function useLibraryGames() {
     }
   }
 
-  // ⚠️ ICI: install/uninstall "réel" pour Steam via steam://
-  async function toggleInstalledAsync(id: string): Promise<void> {
-    const current = gamesRef.current.find((g) => g.id === id);
-    if (!current) return;
-
-    const nextInstalled = !current.installed;
-
-    // Steam => déclenche vraiment l'action côté Steam
-    if (current.platform === 'Steam') {
-      if (!isTauri()) {
-        window.alert('Steam install/uninstall is only available in the desktop app (Tauri).');
-        return;
-      }
-
-      const appId = getSteamAppId(current);
-      if (!appId) {
-        window.alert('Cannot determine Steam app id for this game.');
-        return;
-      }
-
-      try {
-        if (nextInstalled) await steamInstall(appId);
-        else await steamUninstall(appId);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Failed to open Steam action.';
-        window.alert(msg);
-        return;
-      }
-
-      // update UI (optimiste)
-      setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: nextInstalled } : g)));
-
-      // petit rescan automatique pour recaler l’état réel (si l’uninstall prend du temps / cancel)
-      window.setTimeout(() => void scanPcSteam(), 6000);
-      return;
-    }
-
-    // Epic => déclenche l'action via le launcher Epic
-    if (current.platform === 'Epic') {
-      if (!isTauri()) {
-        window.alert('Epic install/uninstall is only available in the desktop app (Tauri).');
-        return;
-      }
-
-      const appName = getEpicAppName(current);
-      if (!appName) {
-        window.alert('Cannot determine Epic app name for this game.');
-        return;
-      }
-
-      try {
-        if (!nextInstalled) {
-          await epicOpenGamePage(appName);
-          window.alert(
-            'Epic Games Launcher ouvert sur la page du jeu.\nFais un clic droit sur le jeu et clique sur "Désinstaller".',
-          );
-        }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Failed to open Epic Games Launcher.';
-        window.alert(msg);
-        return;
-      }
-
-      // On ne change PAS l'état installed ici — l'utilisateur doit désinstaller manuellement
-      // Un rescan recalera l'état réel après désinstallation
-      window.setTimeout(() => void scanPcEpic(), 10000);
-      return;
-    }
-
-    // Autres plateformes => comportement local (comme avant)
-    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, installed: nextInstalled } : g)));
-  }
-
-  function toggleInstalled(id: string) {
-    void toggleInstalledAsync(id);
-  }
-
   // Auto-scan 1 fois si la library est vide
   const didAutoScan = useRef(false);
   useEffect(() => {
@@ -343,7 +234,6 @@ export function useLibraryGames() {
     clearLibrary,
     removeGame,
     markPlayed,
-    toggleInstalled,
     toggleFavorite,
 
     exportToFile,
