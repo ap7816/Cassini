@@ -18,7 +18,7 @@ function formatLastPlayed(iso?: string | null) {
 }
 
 function isLocalWindowsPath(input: string): boolean {
-  return /^[a-zA-Z]:\\/.test(input) || input.startsWith(‘\\\\’);
+  return /^[a-zA-Z]:\\/.test(input) || input.startsWith('\\\\');
 }
 
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite }: Props) {
