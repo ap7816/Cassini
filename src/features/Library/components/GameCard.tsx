@@ -156,7 +156,25 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled, onToggleFa
       return;
     }
 
-    // Autres plateformes: pour l’instant on garde le toggle UI uniquement
+    // Epic => ouvre le launcher sur la page du jeu
+    if (game.platform === ‘Epic’) {
+      if (game.installed) {
+        const ok = window.confirm(
+          `Uninstall "${game.title}"?\n\nEpic Games Launcher will open. Right-click the game and select "Uninstall".`,
+        );
+        if (!ok) return;
+      }
+
+      setIsInstallBusy(true);
+      try {
+        onToggleInstalled(game.id);
+      } finally {
+        window.setTimeout(() => setIsInstallBusy(false), 650);
+      }
+      return;
+    }
+
+    // Autres plateformes: toggle UI uniquement
     if (game.installed) {
       const ok = window.confirm(`Uninstall "${game.title}" ?`);
       if (!ok) return;
@@ -192,10 +210,11 @@ export function GameCard({ game, onRemove, onPlay, onToggleInstalled, onToggleFa
   }, [isInstallBusy, game.installed]);
 
   const secondaryTitle = useMemo(() => {
-    if (isInstallBusy) return 'Opening Steam…';
+    if (isInstallBusy) return 'Opening…';
     if (isSteam) return game.installed ? 'Uninstall via Steam' : 'Install via Steam';
+    if (game.platform === 'Epic') return game.installed ? 'Uninstall via Epic' : 'Install via Epic';
     return game.installed ? 'Uninstall' : 'Install';
-  }, [isInstallBusy, isSteam, game.installed]);
+  }, [isInstallBusy, isSteam, game.installed, game.platform]);
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>

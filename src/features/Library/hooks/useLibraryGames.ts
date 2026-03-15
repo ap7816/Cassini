@@ -67,10 +67,9 @@ async function steamUninstall(appId: string): Promise<void> {
   await openUrl(`steam://uninstall/${appId}`);
 }
 
-async function epicOpenInLauncher(appName: string): Promise<void> {
-  // Epic ne supporte pas ?action=uninstall via URL.
-  // On ouvre le launcher sur la page du jeu — l'utilisateur peut ensuite faire clic droit > Désinstaller.
-  await openUrl(`com.epicgames.launcher://apps/${appName}?action=launch`);
+async function epicOpenGamePage(appName: string): Promise<void> {
+  // Ouvre la page du jeu dans le launcher Epic (sans le lancer).
+  await openUrl(`com.epicgames.launcher://apps/${appName}`);
 }
 
 export function useLibraryGames() {
@@ -182,11 +181,18 @@ export function useLibraryGames() {
       }));
 
       let added = 0;
+      const incomingIds = new Set(normalized.map((g) => g.id));
 
       setGames((prev) => {
         const before = new Set(prev.map((g) => g.id));
         for (const g of normalized) if (!before.has(g.id)) added += 1;
-        return mergeById(prev, normalized);
+
+        // Les jeux Epic absents du rescan ne sont plus installés
+        const updated = prev.map((g) =>
+          g.platform === 'Epic' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
+        );
+
+        return mergeById(updated, normalized);
       });
 
       return { ok: true, added };
@@ -216,11 +222,18 @@ export function useLibraryGames() {
       }));
 
       let added = 0;
+      const incomingIdsSteam = new Set(normalized.map((g) => g.id));
 
       setGames((prev) => {
         const before = new Set(prev.map((g) => g.id));
         for (const g of normalized) if (!before.has(g.id)) added += 1;
-        return mergeById(prev, normalized);
+
+        // Les jeux Steam absents du rescan ne sont plus installés
+        const updated = prev.map((g) =>
+          g.platform === 'Steam' && !incomingIdsSteam.has(g.id) ? { ...g, installed: false } : g,
+        );
+
+        return mergeById(updated, normalized);
       });
 
       return { ok: true, added };
@@ -285,13 +298,13 @@ export function useLibraryGames() {
 
       try {
         if (!nextInstalled) {
-          await epicOpenInLauncher(appName);
+          await epicOpenGamePage(appName);
           window.alert(
-            'Le launcher Epic Games a été ouvert.\nFais un clic droit sur le jeu puis clique sur "Désinstaller".',
+            'Epic Games Launcher ouvert sur la page du jeu.\nFais un clic droit sur le jeu et clique sur "Désinstaller".',
           );
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Failed to open Epic launcher.';
+        const msg = e instanceof Error ? e.message : 'Failed to open Epic Games Launcher.';
         window.alert(msg);
         return;
       }
