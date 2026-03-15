@@ -71,7 +71,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         installed: true,
         last_played_at: None,
         launch_url: Some(format!(
-            "com.epicgames.launcher://apps/{}?action=launch&silent=true",
+            "com.epicgames.launcher://apps/{}?action=launch",
             app_name
         )),
         cover_url: extract_cover_url(&v),
