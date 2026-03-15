@@ -67,10 +67,10 @@ async function steamUninstall(appId: string): Promise<void> {
   await openUrl(`steam://uninstall/${appId}`);
 }
 
-async function epicOpenInLauncher(appName: string): Promise<void> {
+async function epicOpenLauncher(): Promise<void> {
   // Epic ne supporte pas ?action=uninstall via URL.
-  // On ouvre le launcher sur la page du jeu — l'utilisateur peut ensuite faire clic droit > Désinstaller.
-  await openUrl(`com.epicgames.launcher://apps/${appName}?action=launch`);
+  // On ouvre simplement le launcher — l'utilisateur peut ensuite désinstaller depuis la bibliothèque.
+  await openUrl('com.epicgames.launcher://');
 }
 
 export function useLibraryGames() {
@@ -285,9 +285,9 @@ export function useLibraryGames() {
 
       try {
         if (!nextInstalled) {
-          await epicOpenInLauncher(appName);
+          await epicOpenLauncher();
           window.alert(
-            'Le launcher Epic Games a été ouvert.\nFais un clic droit sur le jeu puis clique sur "Désinstaller".',
+            'Le launcher Epic Games a été ouvert.\nTrouve le jeu dans ta bibliothèque, fais un clic droit puis clique sur "Désinstaller".',
           );
         }
       } catch (e) {
