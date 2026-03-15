@@ -74,71 +74,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
             "com.epicgames.launcher://apps/{}?action=launch&silent=true",
             app_name
         )),
-        cover_url,
     })
-}
-
-fn extract_cover_url(v: &Value) -> Option<String> {
-    let images = v.get("KeyImages")?.as_array()?;
-
-    // Ordre de préférence: poster tall (portrait) > thumbnail > n'importe quelle image
-    let preferred = ["DieselGameBoxTall", "Thumbnail", "DieselGameBox"];
-
-    for kind in &preferred {
-        for img in images {
-            if img.get("type").and_then(|t| t.as_str()) == Some(kind) {
-                if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-                    let url: &str = url;
-                    return Some(url.to_string());
-                }
-            }
-        }
-    }
-
-    // Fallback: première image disponible
-    for img in images {
-        if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-            return Some(url.to_string());
-        }
-    }
-
-    None
-}
-
-fn fetch_epic_cover_url(namespace: &str, item_id: &str) -> Option<String> {
-    let url = format!(
-        "https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/namespace/{}/bulk/items?id={}&includeDLCDetails=false&includeMainGameDetails=false&country=US&locale=en-US",
-        namespace, item_id
-    );
-
-    let response = ureq::get(&url)
-        .timeout(std::time::Duration::from_secs(5))
-        .call()
-        .ok()?;
-
-    let json: serde_json::Value = serde_json::from_reader(response.into_reader()).ok()?;
-
-    let item = json.get(item_id)?;
-    let key_images = item.get("keyImages")?.as_array()?;
-
-    let preferred = ["DieselGameBoxTall", "Thumbnail", "DieselGameBox"];
-    for kind in &preferred {
-        for img in key_images {
-            if img.get("type").and_then(|t| t.as_str()) == Some(kind) {
-                if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-                    return Some(url.to_string());
-                }
-            }
-        }
-    }
-
-    for img in key_images {
-        if let Some(url) = img.get("url").and_then(|u| u.as_str()) {
-            return Some(url.to_string());
-        }
-    }
-
-    None
 }
 
 fn find_manifests_path() -> Option<PathBuf> {
