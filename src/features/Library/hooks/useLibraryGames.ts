@@ -30,8 +30,6 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
         // user data: jamais perdu
         favorite: existing.favorite ?? g.favorite ?? false,
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
-        // conserver le coverUrl existant si le nouveau scan n'en a pas
-        coverUrl: g.coverUrl ?? existing.coverUrl ?? null,
       });
     } else {
       map.set(g.id, { ...g, favorite: g.favorite ?? false });

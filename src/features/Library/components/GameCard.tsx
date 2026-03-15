@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
 type Props = {
@@ -17,74 +17,15 @@ function formatLastPlayed(iso?: string | null) {
   return `Last played: ${lastPlayedFormatter.format(d)}`;
 }
 
-function isLocalWindowsPath(input: string): boolean {
-  return /^[a-zA-Z]:\\/.test(input) || input.startsWith('\\\\');
-}
-
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
-
-  const [coverUrl, setCoverUrl] = useState<string | null>(game.coverUrl ?? null);
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCoverUrl(game.coverUrl ?? null);
-    setImgSrc(null);
-  }, [game.coverUrl, game.id]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      if (!coverUrl) {
-        if (!cancelled) setImgSrc(null);
-        return;
-      }
-
-      if (!isLocalWindowsPath(coverUrl)) {
-        if (!cancelled) setImgSrc(coverUrl);
-        return;
-      }
-
-      try {
-        const mod = await import('@tauri-apps/api/core');
-        const converted = mod.convertFileSrc(coverUrl);
-        if (!cancelled) setImgSrc(converted);
-      } catch {
-        if (!cancelled) setImgSrc(coverUrl);
-      }
-    }
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [coverUrl]);
-
-  function handleImageError() {
-    setCoverUrl(null);
-    setImgSrc(null);
-  }
-
-  const showLetter = !imgSrc;
   const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
       <div className={css.cover} aria-hidden="true">
-        {!showLetter ? (
-          <img
-            className={css.coverImg}
-            src={imgSrc}
-            alt=""
-            loading="lazy"
-            draggable={false}
-            onError={handleImageError}
-          />
-        ) : (
-          game.title.slice(0, 1).toUpperCase()
-        )}
+        {game.title.slice(0, 1).toUpperCase()}
       </div>
 
       <div className={css.body}>
