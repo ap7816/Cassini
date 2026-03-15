@@ -57,6 +57,13 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         .unwrap_or(&app_name)
         .to_string();
 
+    // Vérifier que le dossier d'installation existe vraiment sur le disque
+    // (les .item restent après désinstallation)
+    let install_location = v.get("InstallLocation")?.as_str()?;
+    if !std::path::Path::new(install_location).is_dir() {
+        return None;
+    }
+
     Some(GameDto {
         id: format!("epic-{}", app_name),
         title,
