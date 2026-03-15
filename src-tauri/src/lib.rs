@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod steam_scan;
 mod epic_scan;
+mod battlenet_scan;
 mod launcher_scan;
 mod icon_extract;
 
@@ -25,6 +26,11 @@ fn scan_epic_games() -> Result<Vec<steam_scan::GameDto>, String> {
 }
 
 #[tauri::command]
+fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    battlenet_scan::scan_battlenet_games()
+}
+
+#[tauri::command]
 fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
     launcher_scan::scan_launchers()
 }
@@ -34,7 +40,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_launchers, get_file_icon_data_url])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

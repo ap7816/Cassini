@@ -39,12 +39,13 @@ export function LibraryPage() {
     markPlayed,
     scanPcSteam,
     scanPcEpic,
+    scanPcBattlenet,
     isScanning,
     scanError,
   } = useLibraryGames();
 
   async function handleRefresh() {
-    await Promise.all([scanPcSteam(), scanPcEpic()]);
+    await Promise.all([scanPcSteam(), scanPcEpic(), scanPcBattlenet()]);
   }
 
   function setView(next: ViewMode) {
@@ -124,7 +125,7 @@ export function LibraryPage() {
           className={css.button}
           onClick={() => void handleRefresh()}
           disabled={isScanning}
-          title="Rescan Steam & Epic games"
+          title="Rescan Steam, Epic & Battle.net games"
         >
           {isScanning ? 'Scanning…' : '↻ Refresh'}
         </button>

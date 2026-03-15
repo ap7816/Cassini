@@ -132,6 +132,46 @@ export function useLibraryGames() {
     return { ok: true };
   }
 
+  async function scanPcBattlenet(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
+    setIsScanning(true);
+    setScanError(null);
+
+    try {
+      const detected = await tauriInvoke<Game[]>('scan_battlenet_games');
+
+      const normalized: Game[] = detected.map((g) => ({
+        ...g,
+        platform: 'BattleNet' as const,
+        installed: true,
+        favorite: g.favorite ?? false,
+      }));
+
+      let added = 0;
+      const incomingIds = new Set(normalized.map((g) => g.id));
+
+      setGames((prev) => {
+        const before = new Set(prev.map((g) => g.id));
+        for (const g of normalized) if (!before.has(g.id)) added += 1;
+
+        const updated = prev.map((g) =>
+          g.platform === 'BattleNet' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
+        );
+
+        return mergeById(updated, normalized);
+      });
+
+      return { ok: true, added };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Battle.net scan failed.';
+      setScanError(msg);
+      return { ok: false, message: msg };
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
   async function scanPcEpic(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -221,7 +261,7 @@ export function useLibraryGames() {
     if (games.length !== 0) return;
 
     didAutoScan.current = true;
-    void Promise.all([scanPcSteam(), scanPcEpic()]);
+    void Promise.all([scanPcSteam(), scanPcEpic(), scanPcBattlenet()]);
   }, [games.length]);
 
   return {
@@ -242,6 +282,7 @@ export function useLibraryGames() {
 
     scanPcSteam,
     scanPcEpic,
+    scanPcBattlenet,
     isScanning,
     scanError,
   };
