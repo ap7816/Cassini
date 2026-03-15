@@ -34,4 +34,3 @@ windows = { version = "0.58", features = [
   "Win32_Storage_FileSystem"
 ] }
 chrono = "0.4"
-ureq = { version = "2", features = ["tls"] }
