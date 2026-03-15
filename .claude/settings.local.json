@@ -3,7 +3,9 @@
     "allow": [
       "Bash(ls -la /c/Users/anton/Desktop/ArcHive/.claude/worktrees/bold-pasteur/src/pages/*/)",
       "Bash(wc -l /c/Users/anton/Desktop/ArcHive/.claude/worktrees/bold-pasteur/src-tauri/src/*.rs)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(find C:UsersantonDesktopArcHive.claudeworktreesbold-pasteur -name *.tsx -type f)",
+      "Bash(gh auth:*)"
     ]
   }
 }
