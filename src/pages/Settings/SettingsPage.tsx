@@ -11,8 +11,19 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+const ACCENT_COLORS: { label: string; value: string }[] = [
+  { label: 'Neutre', value: '#e5e7eb' },
+  { label: 'Violet', value: '#8b5cf6' },
+  { label: 'Bleu', value: '#3b82f6' },
+  { label: 'Cyan', value: '#06b6d4' },
+  { label: 'Vert', value: '#22c55e' },
+  { label: 'Orange', value: '#f97316' },
+  { label: 'Rouge', value: '#ef4444' },
+];
+
 export function SettingsPage() {
-  const { settings, setBackgroundImageDataUrl, clearBackgroundImage } = useAppSettings();
+  const { settings, setBackgroundImageDataUrl, clearBackgroundImage, setAccentColor, setBgOverlayOpacity } =
+    useAppSettings();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,6 +52,7 @@ export function SettingsPage() {
       <p className={css.subtitle}>Customize ArcHive (background, theme, etc.).</p>
 
       <div className={css.card}>
+        {/* Image de fond */}
         <div className={css.row}>
           <div>
             <div className={css.label}>Background image</div>
@@ -83,6 +95,60 @@ export function SettingsPage() {
         ) : (
           <div className={css.empty}>No background selected.</div>
         )}
+
+        <div className={css.divider} />
+
+        {/* Opacité de l'overlay */}
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>Overlay opacity</div>
+            <div className={css.hint}>Darkens the background image for better readability.</div>
+          </div>
+
+          <div className={css.sliderRow}>
+            <input
+              type="range"
+              className={css.slider}
+              min={0}
+              max={0.8}
+              step={0.05}
+              value={settings.bgOverlayOpacity}
+              onChange={(e) => setBgOverlayOpacity(Number(e.target.value))}
+              disabled={!settings.backgroundImageDataUrl}
+              aria-label="Overlay opacity"
+            />
+            <span className={css.sliderValue}>
+              {Math.round(settings.bgOverlayOpacity * 100)}%
+            </span>
+          </div>
+        </div>
+
+        <div className={css.divider} />
+
+        {/* Couleur d'accent */}
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>Accent color</div>
+            <div className={css.hint}>Main tint used on buttons and active navigation.</div>
+          </div>
+
+          <div className={css.swatches}>
+            {ACCENT_COLORS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className={[css.swatch, settings.accentColor === c.value ? css.swatchActive : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                style={{ backgroundColor: c.value }}
+                title={c.label}
+                onClick={() => setAccentColor(c.value)}
+                aria-label={c.label}
+                aria-pressed={settings.accentColor === c.value}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -43,12 +43,18 @@ export function AppLayout() {
 
   const { settings } = useAppSettings();
 
-  type CSSVarStyle = React.CSSProperties & { ['--app-bg-image']?: string };
+  type CSSVarStyle = React.CSSProperties & {
+    ['--app-bg-image']?: string;
+    ['--accent']?: string;
+    ['--bg-overlay-opacity']?: number;
+  };
 
   const bgStyle: CSSVarStyle = {
     '--app-bg-image': settings.backgroundImageDataUrl
       ? `url("${settings.backgroundImageDataUrl}")`
       : 'none',
+    '--accent': settings.accentColor,
+    '--bg-overlay-opacity': settings.bgOverlayOpacity,
   };
 
   return (
