@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
+
 type Props = {
   game: Game;
   onRemove: (id: string) => void;
   onPlay: (game: Game) => void;
   onToggleFavorite: (id: string) => void;
+  onSetImageUrl: (id: string, url: string | null) => void;
 };
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
@@ -23,31 +25,62 @@ function getSteamAppId(launchUrl?: string | null): string | null {
   return match ? match[1] : null;
 }
 
-export function GameCard({ game, onRemove, onPlay, onToggleFavorite }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
   const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
   const steamAppId = useMemo(() => getSteamAppId(game.launchUrl), [game.launchUrl]);
   const [imgFailed, setImgFailed] = useState(false);
 
-  const bannerUrl = steamAppId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
-    : null;
+  // Priorité : customImageUrl > CDN Steam > fallback lettre
+  const bannerUrl = game.customImageUrl
+    ? game.customImageUrl
+    : steamAppId
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
+      : null;
+
+  const showFallback = !bannerUrl || imgFailed;
+
+  function handleSetImage() {
+    const current = game.customImageUrl ?? '';
+    const url = window.prompt('URL de l\'image :', current);
+    if (url === null) return; // annulé
+    onSetImageUrl(game.id, url.trim() || null);
+    setImgFailed(false);
+  }
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
-      {bannerUrl && !imgFailed ? (
-        <div className={css.banner} aria-hidden="true">
+      {!showFallback ? (
+        <div className={css.banner}>
           <img
             className={css.bannerImg}
-            src={bannerUrl}
+            src={bannerUrl!}
             alt=""
             onError={() => setImgFailed(true)}
           />
+          {game.customImageUrl && (
+            <button
+              type="button"
+              className={css.bannerEdit}
+              onClick={handleSetImage}
+              title="Modifier l'image"
+            >
+              ✎
+            </button>
+          )}
         </div>
       ) : (
-        <div className={css.bannerFallback} aria-hidden="true">
-          {game.title.slice(0, 1).toUpperCase()}
+        <div className={css.bannerFallback}>
+          <span>{game.title.slice(0, 1).toUpperCase()}</span>
+          <button
+            type="button"
+            className={css.bannerEditFallback}
+            onClick={handleSetImage}
+            title="Définir une image"
+          >
+            + image
+          </button>
         </div>
       )}
 

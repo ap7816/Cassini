@@ -10,6 +10,7 @@ export type Game = {
 
   // NEW
   favorite?: boolean;
+  customImageUrl?: string | null;
 };
 
 export type AppSettings = {

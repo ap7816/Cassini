@@ -103,6 +103,10 @@ export function useLibraryGames() {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite: !g.favorite } : g)));
   }
 
+  function setGameImageUrl(id: string, url: string | null) {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, customImageUrl: url } : g)));
+  }
+
   async function exportToFile() {
     await exportLibraryToFile(games);
   }
@@ -274,6 +278,7 @@ export function useLibraryGames() {
     removeGame,
     markPlayed,
     toggleFavorite,
+    setGameImageUrl,
 
     exportToFile,
     importFromFile,

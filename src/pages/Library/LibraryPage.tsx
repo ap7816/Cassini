@@ -36,6 +36,7 @@ export function LibraryPage() {
     loadSamples,
     removeGame,
     toggleFavorite,
+    setGameImageUrl,
     markPlayed,
     scanPcSteam,
     scanPcEpic,
@@ -186,6 +187,7 @@ export function LibraryPage() {
                 onRemove={removeGame}
                 onPlay={handlePlay}
                 onToggleFavorite={toggleFavorite}
+                onSetImageUrl={setGameImageUrl}
               />
             ))}
           </div>

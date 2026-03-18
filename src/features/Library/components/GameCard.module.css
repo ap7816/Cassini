@@ -21,6 +21,7 @@
   width: 100%;
   aspect-ratio: 3 / 1;
   overflow: hidden;
+  position: relative;
 }
 
 .bannerImg {
@@ -31,17 +32,61 @@
   display: block;
 }
 
+.bannerEdit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.banner:hover .bannerEdit {
+  opacity: 1;
+}
+
 /* ── Fallback lettre si pas d'image Steam ── */
 .bannerFallback {
   width: 100%;
   aspect-ratio: 3 / 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background: rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-weight: 800;
   font-size: 36px;
   opacity: 0.6;
+}
+
+.bannerEditFallback {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  box-shadow: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.bannerFallback:hover .bannerEditFallback {
+  opacity: 1;
 }
 
 .body {
