@@ -22,8 +22,13 @@ const ACCENT_COLORS: { label: string; value: string }[] = [
 ];
 
 export function SettingsPage() {
-  const { settings, setBackgroundImageDataUrl, clearBackgroundImage, setAccentColor, setBgOverlayOpacity } =
-    useAppSettings();
+  const {
+    settings,
+    setBackgroundImageDataUrl,
+    clearBackgroundImage,
+    setAccentColor,
+    setBgOverlayOpacity,
+  } = useAppSettings();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -110,16 +115,14 @@ export function SettingsPage() {
               type="range"
               className={css.slider}
               min={0}
-              max={0.8}
+              max={1}
               step={0.05}
               value={settings.bgOverlayOpacity}
               onChange={(e) => setBgOverlayOpacity(Number(e.target.value))}
               disabled={!settings.backgroundImageDataUrl}
               aria-label="Overlay opacity"
             />
-            <span className={css.sliderValue}>
-              {Math.round(settings.bgOverlayOpacity * 100)}%
-            </span>
+            <span className={css.sliderValue}>{Math.round(settings.bgOverlayOpacity * 100)}%</span>
           </div>
         </div>
 
