@@ -1,4 +1,4 @@
-import { useRef, useId } from 'react';
+import { useRef } from 'react';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
@@ -32,7 +32,6 @@ export function SettingsPage() {
     setBgOverlayOpacity,
   } = useAppSettings();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const colorPickerId = useId();
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -154,30 +153,30 @@ export function SettingsPage() {
               />
             ))}
 
-            <label
-              htmlFor={colorPickerId}
-              className={[
-                css.swatch,
-                css.swatchCustom,
-                !isPresetColor(settings.accentColor) ? css.swatchActive : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              title="Custom color"
-              style={
-                !isPresetColor(settings.accentColor)
-                  ? { backgroundColor: settings.accentColor }
-                  : undefined
-              }
-            />
-            <input
-              id={colorPickerId}
-              type="color"
-              className={css.colorInput}
-              value={settings.accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
-              aria-label="Custom accent color"
-            />
+            <div className={css.swatchCustomWrapper}>
+              <div
+                className={[
+                  css.swatch,
+                  css.swatchCustom,
+                  !isPresetColor(settings.accentColor) ? css.swatchActive : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={
+                  !isPresetColor(settings.accentColor)
+                    ? { backgroundColor: settings.accentColor }
+                    : undefined
+                }
+                title="Custom color"
+              />
+              <input
+                type="color"
+                className={css.colorInput}
+                value={settings.accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                aria-label="Custom accent color"
+              />
+            </div>
           </div>
         </div>
       </div>
