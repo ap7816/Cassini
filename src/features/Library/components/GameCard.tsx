@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
 type Props = {
@@ -17,16 +17,39 @@ function formatLastPlayed(iso?: string | null) {
   return `Last played: ${lastPlayedFormatter.format(d)}`;
 }
 
+function getSteamAppId(launchUrl?: string | null): string | null {
+  if (!launchUrl) return null;
+  const match = launchUrl.match(/^steam:\/\/(?:rungameid|run|launch)\/(\d+)/i);
+  return match ? match[1] : null;
+}
+
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
   const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
+  const steamAppId = useMemo(() => getSteamAppId(game.launchUrl), [game.launchUrl]);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const bannerUrl = steamAppId
+    ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
+    : null;
 
   return (
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
-      <div className={css.cover} aria-hidden="true">
-        {game.title.slice(0, 1).toUpperCase()}
-      </div>
+      {bannerUrl && !imgFailed ? (
+        <div className={css.banner} aria-hidden="true">
+          <img
+            className={css.bannerImg}
+            src={bannerUrl}
+            alt=""
+            onError={() => setImgFailed(true)}
+          />
+        </div>
+      ) : (
+        <div className={css.bannerFallback} aria-hidden="true">
+          {game.title.slice(0, 1).toUpperCase()}
+        </div>
+      )}
 
       <div className={css.body}>
         <div className={css.topRow}>
