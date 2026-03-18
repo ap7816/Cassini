@@ -125,6 +125,10 @@
   flex: 1;
   accent-color: var(--accent, #e5e7eb);
   cursor: pointer;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .slider:disabled {
