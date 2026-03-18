@@ -8,15 +8,7 @@ import {
   storeLauncherIcons,
 } from '../../features/launchers/services/launcherIconCache';
 
-import {
-  warn,
-  debug,
-  trace,
-  info,
-  error,
-  attachConsole,
-  attachLogger,
-} from '@tauri-apps/plugin-log';
+import { info } from '@tauri-apps/plugin-log';
 
 type LauncherDto = {
   id: string;
