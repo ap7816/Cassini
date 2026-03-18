@@ -42,6 +42,10 @@ export function LaunchersPage() {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [openStatus, setOpenStatus] = useState<OpenStatus>('idle');
 
+  // Folder UI state (par carte)
+  const [folderOpeningId, setFolderOpeningId] = useState<string | null>(null);
+  const [folderStatus, setFolderStatus] = useState<OpenStatus>('idle');
+
   // Icons (dataUrl) par launcher id (pour l'UI)
   const [iconsById, setIconsById] = useState<Record<string, string>>({});
 
@@ -147,11 +151,30 @@ export function LaunchersPage() {
     }
   }
 
-  async function OpenFolder(l: LauncherDto) {
-    const path = l.iconPath ?? l.launchTarget;
-    const folderPath = path.includes('\\') ? path.substring(0, path.lastIndexOf('\\')) : path;
-    info(`Opening folder for path: ${folderPath}`);
-    await invoke('open_folder', { path: folderPath });
+  async function handleOpenFolder(l: LauncherDto) {
+    setFolderOpeningId(l.id);
+    setFolderStatus('opening');
+
+    try {
+      const path = l.iconPath ?? l.launchTarget;
+      const folderPath = path.includes('\\') ? path.substring(0, path.lastIndexOf('\\')) : path;
+      info(`Opening folder for path: ${folderPath}`);
+      await invoke('open_folder', { path: folderPath });
+      setFolderStatus('done');
+
+      window.setTimeout(() => {
+        setFolderStatus('idle');
+        setFolderOpeningId(null);
+      }, 900);
+    } catch (e) {
+      setFolderStatus('error');
+      const msg = e instanceof Error ? e.message : 'Failed to open folder.';
+      window.setTimeout(() => {
+        setFolderStatus('idle');
+        setFolderOpeningId(null);
+      }, 1200);
+      window.alert(msg);
+    }
   }
 
   const isEmpty = !loading && launchers.length === 0;
@@ -196,8 +219,8 @@ export function LaunchersPage() {
         <div className={css.grid}>
           {launchers.map((l) => {
             const isThisOpening = openingId === l.id && openStatus !== 'idle';
-            const isFolderOpening = openingId === l.id && openStatus !== 'idle';
-            const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id);
+            const isFolderOpening = folderOpeningId === l.id && folderStatus !== 'idle';
+            const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id) || (folderOpeningId !== null && folderOpeningId !== l.id);
 
             const icon = iconsById[l.id] ?? null;
 
@@ -234,12 +257,12 @@ export function LaunchersPage() {
                   <button
                     type="button"
                     className={css.primaryButton}
-                    onClick={() => OpenFolder(l)}
+                    onClick={() => void handleOpenFolder(l)}
                     disabled={disabled}
                     title={!l.installed ? 'Not installed' : 'Folder'}
                   >
-                    {isFolderOpening && openStatus === 'opening' ? 'Opening…' : 'Folder'}
-                  </button>{' '}
+                    {isFolderOpening && folderStatus === 'opening' ? 'Opening…' : 'Folder'}
+                  </button>
                 </div>
 
                 {isThisOpening && (
@@ -257,6 +280,29 @@ export function LaunchersPage() {
                         openStatus === 'opening'
                           ? css.progressIndeterminate
                           : openStatus === 'done'
+                            ? css.progressDone
+                            : css.progressError,
+                      ].join(' ')}
+                    >
+                      <div className={css.progressFill} />
+                    </div>
+                  </div>
+                )}
+                {isFolderOpening && (
+                  <div className={css.opening}>
+                    <div className={css.openingLabel}>
+                      {folderStatus === 'opening'
+                        ? 'Opening folder…'
+                        : folderStatus === 'done'
+                          ? 'Folder opened'
+                          : 'Failed to open'}
+                    </div>
+                    <div
+                      className={[
+                        css.progressTrack,
+                        folderStatus === 'opening'
+                          ? css.progressIndeterminate
+                          : folderStatus === 'done'
                             ? css.progressDone
                             : css.progressError,
                       ].join(' ')}
