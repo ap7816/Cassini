@@ -34,6 +34,7 @@ export function normalizeGames(input: unknown): Game[] {
       lastPlayedAt: asString(r.lastPlayedAt),
       installed: asBool(r.installed) ?? false,
       favorite: asBool(r.favorite) ?? false,
+      customImageUrl: asString(r.customImageUrl),
     });
   }
 
