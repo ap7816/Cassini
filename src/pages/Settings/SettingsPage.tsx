@@ -115,10 +115,10 @@ export function SettingsPage() {
               type="range"
               className={css.slider}
               min={0}
-              max={1}
-              step={0.05}
-              value={settings.bgOverlayOpacity}
-              onChange={(e) => setBgOverlayOpacity(Number(e.target.value))}
+              max={100}
+              step={5}
+              value={100 - Math.round(settings.bgOverlayOpacity * 100)}
+              onChange={(e) => setBgOverlayOpacity((100 - Number(e.target.value)) / 100)}
               disabled={!settings.backgroundImageDataUrl}
               aria-label="Overlay opacity"
             />
