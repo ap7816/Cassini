@@ -114,10 +114,9 @@ export function SettingsPage() {
             <input
               type="range"
               className={css.slider}
-              dir="rtl"
               min={0}
               max={100}
-              step={5}
+              step={1}
               value={Math.round(settings.bgOverlayOpacity * 100)}
               onChange={(e) => setBgOverlayOpacity(Number(e.target.value) / 100)}
               disabled={!settings.backgroundImageDataUrl}
