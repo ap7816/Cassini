@@ -18,8 +18,22 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, backgroundImageDataUrl: null }));
   }
 
+  function setAccentColor(color: string) {
+    setSettings((prev) => ({ ...prev, accentColor: color }));
+  }
+
+  function setBgOverlayOpacity(opacity: number) {
+    setSettings((prev) => ({ ...prev, bgOverlayOpacity: opacity }));
+  }
+
   const value = useMemo(
-    () => ({ settings, setBackgroundImageDataUrl, clearBackgroundImage }),
+    () => ({
+      settings,
+      setBackgroundImageDataUrl,
+      clearBackgroundImage,
+      setAccentColor,
+      setBgOverlayOpacity,
+    }),
     [settings],
   );
 

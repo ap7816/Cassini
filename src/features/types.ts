@@ -14,4 +14,6 @@ export type Game = {
 
 export type AppSettings = {
   backgroundImageDataUrl: string | null;
+  accentColor: string;
+  bgOverlayOpacity: number;
 };

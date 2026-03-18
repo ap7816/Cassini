@@ -4,6 +4,8 @@ const STORAGE_KEY = 'arctive.settings.v1';
 
 const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
+  accentColor: '#e5e7eb',
+  bgOverlayOpacity: 0.55,
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -22,9 +24,17 @@ export function loadSettings(): AppSettings {
 
     const bg =
       typeof parsed.backgroundImageDataUrl === 'string' ? parsed.backgroundImageDataUrl : null;
+    const accentColor =
+      typeof parsed.accentColor === 'string' ? parsed.accentColor : DEFAULT_SETTINGS.accentColor;
+    const bgOverlayOpacity =
+      typeof parsed.bgOverlayOpacity === 'number'
+        ? parsed.bgOverlayOpacity
+        : DEFAULT_SETTINGS.bgOverlayOpacity;
 
     return {
       backgroundImageDataUrl: bg,
+      accentColor,
+      bgOverlayOpacity,
     };
   } catch {
     return DEFAULT_SETTINGS;
