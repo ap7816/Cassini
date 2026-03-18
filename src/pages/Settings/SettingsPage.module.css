@@ -170,3 +170,21 @@
   border-color: rgba(255, 255, 255, 0.85);
   transform: scale(1.15);
 }
+
+.swatchCustom {
+  background: conic-gradient(
+    hsl(0 100% 60%),
+    hsl(45 100% 60%),
+    hsl(90 100% 50%),
+    hsl(135 100% 45%),
+    hsl(180 100% 50%),
+    hsl(225 100% 60%),
+    hsl(270 100% 65%),
+    hsl(315 100% 60%),
+    hsl(360 100% 60%)
+  );
+}
+
+.colorInput {
+  display: none;
+}

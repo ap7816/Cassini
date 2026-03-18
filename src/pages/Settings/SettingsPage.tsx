@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useId } from 'react';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
@@ -21,6 +21,8 @@ const ACCENT_COLORS: { label: string; value: string }[] = [
   { label: 'Rouge', value: '#ef4444' },
 ];
 
+const isPresetColor = (color: string) => ACCENT_COLORS.some((c) => c.value === color);
+
 export function SettingsPage() {
   const {
     settings,
@@ -30,6 +32,7 @@ export function SettingsPage() {
     setBgOverlayOpacity,
   } = useAppSettings();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const colorPickerId = useId();
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -150,6 +153,31 @@ export function SettingsPage() {
                 aria-pressed={settings.accentColor === c.value}
               />
             ))}
+
+            <label
+              htmlFor={colorPickerId}
+              className={[
+                css.swatch,
+                css.swatchCustom,
+                !isPresetColor(settings.accentColor) ? css.swatchActive : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              title="Custom color"
+              style={
+                !isPresetColor(settings.accentColor)
+                  ? { backgroundColor: settings.accentColor }
+                  : undefined
+              }
+            />
+            <input
+              id={colorPickerId}
+              type="color"
+              className={css.colorInput}
+              value={settings.accentColor}
+              onChange={(e) => setAccentColor(e.target.value)}
+              aria-label="Custom accent color"
+            />
           </div>
         </div>
       </div>
