@@ -8,6 +8,16 @@ import {
   storeLauncherIcons,
 } from '../../features/launchers/services/launcherIconCache';
 
+import {
+  warn,
+  debug,
+  trace,
+  info,
+  error,
+  attachConsole,
+  attachLogger,
+} from '@tauri-apps/plugin-log';
+
 type LauncherDto = {
   id: string;
   name: string;
@@ -82,7 +92,7 @@ export function LaunchersPage() {
     void (async () => {
       // 1) cache hits
       const { byId: cachedById, missing } = getCachedLauncherIconsById(
-        launchers.map((l) => ({ id: l.id, iconPath: l.iconPath }))
+        launchers.map((l) => ({ id: l.id, iconPath: l.iconPath })),
       );
 
       if (!cancelled) setIconsById(cachedById);
@@ -100,7 +110,7 @@ export function LaunchersPage() {
           } catch {
             // ignore failures -> fallback letter
           }
-        })
+        }),
       );
 
       if (fetched.length === 0) return;
@@ -143,6 +153,13 @@ export function LaunchersPage() {
       }, 1200);
       window.alert(msg);
     }
+  }
+
+  async function OpenFolder(l: LauncherDto) {
+    const path = l.iconPath ?? l.launchTarget;
+    const folderPath = path.includes('\\') ? path.substring(0, path.lastIndexOf('\\')) : path;
+    info(`Opening folder for path: ${folderPath}`);
+    await invoke('open_folder', { path: folderPath });
   }
 
   const isEmpty = !loading && launchers.length === 0;
@@ -221,6 +238,15 @@ export function LaunchersPage() {
                   >
                     {isThisOpening && openStatus === 'opening' ? 'Opening…' : 'Open'}
                   </button>
+                  <button
+                    type="button"
+                    className={css.primaryButton}
+                    onClick={() => OpenFolder(l)}
+                    disabled={disabled}
+                    title={!l.installed ? 'Not installed' : 'Open Folder'}
+                  >
+                    {isThisOpening && openStatus === 'opening' ? 'Opening…' : 'Open'}
+                  </button>{' '}
                 </div>
 
                 {isThisOpening && (

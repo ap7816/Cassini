@@ -191,7 +191,6 @@ fn make_exe_launcher(id: &str, name: &str, exe: PathBuf) -> LauncherDto {
     }
 }
 
-
 /* ---------------- Steam ---------------- */
 
 fn detect_steam() -> Option<LauncherDto> {
@@ -281,7 +280,6 @@ fn detect_riot() -> Option<LauncherDto> {
     })
 }
 
-
 /* ---------------- Rockstar Games Launcher ---------------- */
 
 fn detect_rockstar_launcher() -> Option<LauncherDto> {
@@ -327,9 +325,7 @@ fn detect_ubisoft_connect() -> Option<LauncherDto> {
 
 fn detect_hytale() -> Option<LauncherDto> {
     // Chemin connu chez toi
-    let known = [
-        r"C:\Program Files\Hypixel Studios\Hytale Launcher\hytale-launcher.exe",
-    ];
+    let known = [r"C:\Program Files\Hypixel Studios\Hytale Launcher\hytale-launcher.exe"];
 
     if let Some(p) = first_existing_path(&known) {
         return Some(make_exe_launcher("hytale", "Hytale", p));
@@ -337,7 +333,12 @@ fn detect_hytale() -> Option<LauncherDto> {
 
     if let Some(exe) = find_exe_from_uninstall(
         &["Hytale"],
-        &["hytale-launcher.exe", "Hytale Launcher.exe", "HytaleLauncher.exe", "Launcher.exe"],
+        &[
+            "hytale-launcher.exe",
+            "Hytale Launcher.exe",
+            "HytaleLauncher.exe",
+            "Launcher.exe",
+        ],
     ) {
         return Some(make_exe_launcher("hytale", "Hytale", exe));
     }

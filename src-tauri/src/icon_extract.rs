@@ -43,7 +43,9 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
 
     let screen_dc = unsafe { GetDC(hwnd) };
     if screen_dc.0.is_null() {
-        unsafe { let _ = DestroyIcon(hicon); }
+        unsafe {
+            let _ = DestroyIcon(hicon);
+        }
         return Err("GetDC failed.".to_string());
     }
 
@@ -75,12 +77,13 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     };
 
     let mut bits_ptr: *mut core::ffi::c_void = std::ptr::null_mut();
-    let hbitmap = unsafe { CreateDIBSection(screen_dc, &bmi, DIB_RGB_COLORS, &mut bits_ptr, None, 0) }
-        .map_err(|e| format!("CreateDIBSection failed: {e}"))?;
+    let hbitmap =
+        unsafe { CreateDIBSection(screen_dc, &bmi, DIB_RGB_COLORS, &mut bits_ptr, None, 0) }
+            .map_err(|e| format!("CreateDIBSection failed: {e}"))?;
 
     if hbitmap.0.is_null() || bits_ptr.is_null() {
         unsafe {
-            let _ =DeleteDC(mem_dc);
+            let _ = DeleteDC(mem_dc);
             ReleaseDC(hwnd, screen_dc);
             let _ = DestroyIcon(hicon);
         }
@@ -88,7 +91,6 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     }
 
     let old = unsafe { SelectObject(mem_dc, hbitmap) };
-
 
     // 4) Dessine l’icône dans le bitmap
     unsafe { DrawIconEx(mem_dc, 0, 0, hicon, size, size, 0, None, DI_NORMAL) }
@@ -119,7 +121,8 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     // 6) Encode PNG
     let mut png_bytes: Vec<u8> = Vec::new();
     let enc = PngEncoder::new(&mut png_bytes);
-    enc.write_image(&rgba, size as u32, size as u32, ColorType::Rgba8.into()).map_err(|e| format!("PNG encode failed: {e}"))?;
+    enc.write_image(&rgba, size as u32, size as u32, ColorType::Rgba8.into())
+        .map_err(|e| format!("PNG encode failed: {e}"))?;
     let b64 = general_purpose::STANDARD.encode(png_bytes);
     Ok(format!("data:image/png;base64,{}", b64))
 }

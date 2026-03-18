@@ -1,10 +1,10 @@
+use chrono::{TimeZone, Utc};
 use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use winreg::enums::*;
 use winreg::RegKey;
-use chrono::{TimeZone, Utc};
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
