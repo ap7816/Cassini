@@ -114,7 +114,6 @@ export function SettingsPage() {
             <input
               type="range"
               className={css.slider}
-              dir="rtl"
               min={0}
               max={100}
               step={1}
