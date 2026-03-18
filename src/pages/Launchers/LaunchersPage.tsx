@@ -196,6 +196,7 @@ export function LaunchersPage() {
         <div className={css.grid}>
           {launchers.map((l) => {
             const isThisOpening = openingId === l.id && openStatus !== 'idle';
+            const isFolderOpening = openingId === l.id && openStatus !== 'idle';
             const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id);
 
             const icon = iconsById[l.id] ?? null;
@@ -235,9 +236,9 @@ export function LaunchersPage() {
                     className={css.primaryButton}
                     onClick={() => OpenFolder(l)}
                     disabled={disabled}
-                    title={!l.installed ? 'Not installed' : 'Open Folder'}
+                    title={!l.installed ? 'Not installed' : 'Folder'}
                   >
-                    {isThisOpening && openStatus === 'opening' ? 'Opening…' : 'Open'}
+                    {isFolderOpening && openStatus === 'opening' ? 'Opening…' : 'Folder'}
                   </button>{' '}
                 </div>
 
@@ -250,7 +251,6 @@ export function LaunchersPage() {
                           ? 'Launcher opened'
                           : 'Failed to open'}
                     </div>
-
                     <div
                       className={[
                         css.progressTrack,

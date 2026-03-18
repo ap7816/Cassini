@@ -29,7 +29,6 @@ export function createGameFromPath(path: string): Game {
     platform: 'Other',
     installed: true,
     lastPlayedAt: null,
-    launchUrl: path, // on stocke le chemin brut (Tauri shell.open le gère)
-    coverUrl: null,
+    launchUrl: path,
   };
 }

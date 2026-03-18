@@ -1,10 +1,10 @@
 import { useDeferredValue, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
-import { useLibraryGames } from '../../features/library/hooks/useLibraryGames';
-import { EmptyState } from '../../features/library/components/EmptyState';
-import { GameCard } from '../../features/library/components/GameCard';
-import { launchGame } from '../../features/library/services/launchGame';
+import { useLibraryGames } from '../../features/Library/hooks/useLibraryGames';
+import { EmptyState } from '../../features/Library/components/EmptyState';
+import { GameCard } from '../../features/Library/components/GameCard';
+import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
 
 type ViewMode = 'all' | 'favorites';

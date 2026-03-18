@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Game } from '../../types';
-import { sampleGames } from '../data/sampleGames';
+import { sampleGames } from '../Data/sampleGames';
 import { loadGamesFromStorage, saveGamesToStorage } from '../services/libraryStorage';
 import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
 import { pickGameFile } from '../services/pickGameFile';
@@ -38,7 +38,6 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
 
   return Array.from(map.values());
 }
-
 
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
