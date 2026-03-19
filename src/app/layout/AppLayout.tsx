@@ -14,12 +14,10 @@ export function AppLayout() {
     { to: '/settings', label: t('nav.settings') },
   ];
 
-  const { pathname, isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(
+  const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(
     navItems,
     900,
   );
-
-  const isLibraryRoute = pathname === '/library' || pathname.startsWith('/library/');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get('q') ?? '';
