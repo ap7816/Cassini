@@ -1,6 +1,5 @@
 const CACHE_KEY = 'arctive.rawg.cache.v2';
 
-// Cache en mémoire pour la session courante
 const memoryCache = new Map<string, string | null>();
 
 function loadCache(): Map<string, string | null> {
@@ -16,41 +15,48 @@ function loadCache(): Map<string, string | null> {
 
 function saveCache(cache: Map<string, string | null>) {
   try {
-    const obj = Object.fromEntries(cache);
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify(obj));
-  } catch {
-    // localStorage plein — on ignore
-  }
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(cache)));
+  } catch { /* ignore */ }
 }
 
-// Charge le cache persistant au démarrage
 if (typeof window !== 'undefined') {
-  for (const [k, v] of loadCache()) {
-    memoryCache.set(k, v);
-  }
+  for (const [k, v] of loadCache()) memoryCache.set(k, v);
 }
 
-/**
- * Récupère l'URL de cover d'un jeu via RAWG.
- * Retourne null si introuvable ou si pas de clé API.
- * Met en cache le résultat dans localStorage.
- */
+export function clearRawgCache() {
+  memoryCache.clear();
+  try { window.localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+}
+
+function normalize(s: string): string {
+  return s.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+}
+
+function isTitleMatch(searched: string, found: string): boolean {
+  const a = normalize(searched);
+  const b = normalize(found);
+  return a === b || b.startsWith(a) || a.startsWith(b);
+}
+
 export async function fetchRawgImage(title: string, apiKey: string): Promise<string | null> {
   if (!apiKey) return null;
 
-  const cacheKey = `${title.toLowerCase()}`;
-
-  if (memoryCache.has(cacheKey)) {
-    return memoryCache.get(cacheKey) ?? null;
-  }
+  const cacheKey = title.toLowerCase();
+  if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
 
   try {
-    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=1`;
+    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=5&search_exact=true`;
     const res = await fetch(url);
     if (!res.ok) return null;
 
-    const data = (await res.json()) as { results?: { background_image?: string | null }[] };
-    const imageUrl = data.results?.[0]?.background_image ?? null;
+    const data = (await res.json()) as {
+      results?: { name?: string; background_image?: string | null }[];
+    };
+
+    const match = data.results?.find(
+      (r) => r.name && isTitleMatch(title, r.name),
+    );
+    const imageUrl = match?.background_image ?? null;
 
     memoryCache.set(cacheKey, imageUrl);
     saveCache(memoryCache);

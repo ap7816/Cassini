@@ -204,6 +204,32 @@
   border-radius: 50%;
 }
 
+/* Langue */
+.langRow {
+  display: flex;
+  gap: 8px;
+}
+
+.langBtn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.langBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.langBtnActive {
+  background: color-mix(in srgb, var(--accent, #e5e7eb) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #e5e7eb) 35%, transparent);
+}
+
 /* Integrations */
 .sectionTitle {
   font-weight: 700;

@@ -20,9 +20,11 @@
     "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2",
     "format": "^0.2.2",
+    "i18next": "^25.8.19",
     "lint": "^0.8.19",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-i18next": "^16.5.8",
     "react-router-dom": "^7.12.0",
     "typecheck": "^0.1.2"
   },

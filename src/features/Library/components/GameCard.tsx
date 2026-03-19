@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
 import { fetchRawgImage } from '../services/rawgService';
@@ -14,25 +15,25 @@ type Props = {
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
-function formatLastPlayed(iso?: string | null) {
-  if (!iso) return 'Never played';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return 'Unknown';
-  return `Last played: ${lastPlayedFormatter.format(d)}`;
-}
-
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey }: Props) {
+  const { t } = useTranslation();
+
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
-  const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
+
+  const lastPlayedLabel = useMemo(() => {
+    if (!game.lastPlayedAt) return t('gameCard.neverPlayed');
+    const d = new Date(game.lastPlayedAt);
+    if (Number.isNaN(d.getTime())) return t('gameCard.unknownDate');
+    return t('gameCard.lastPlayed', { date: lastPlayedFormatter.format(d) });
+  }, [game.lastPlayedAt, t]);
+
   const [imgFailed, setImgFailed] = useState(false);
   const [rawgUrl, setRawgUrl] = useState<string | null>(null);
 
-  // Priorité : customImageUrl > RAWG > fallback lettre
   const bannerUrl = game.customImageUrl ?? rawgUrl;
   const showFallback = !bannerUrl || imgFailed;
 
-  // Fetch RAWG pour tous les jeux sans image custom
   useEffect(() => {
     if (game.customImageUrl || !rawgApiKey) return;
     setRawgUrl(null);
@@ -44,7 +45,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   function handleSetImage() {
     const current = game.customImageUrl ?? '';
-    const url = window.prompt("URL de l'image :", current);
+    const url = window.prompt(t('gameCard.imageUrlPrompt'), current);
     if (url === null) return;
     onSetImageUrl(game.id, url.trim() || null);
     setImgFailed(false);
@@ -65,7 +66,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
               type="button"
               className={css.bannerEdit}
               onClick={handleSetImage}
-              title="Modifier l'image"
+              title={t('gameCard.editImage')}
             >
               ✎
             </button>
@@ -78,9 +79,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             type="button"
             className={css.bannerEditFallback}
             onClick={handleSetImage}
-            title="Définir une image"
+            title={t('gameCard.setImage')}
           >
-            + image
+            {t('gameCard.imageButton')}
           </button>
         </div>
       )}
@@ -95,9 +96,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
                 type="button"
                 className={[css.fav, isFav ? css.favActive : ''].join(' ')}
                 onClick={() => onToggleFavorite(game.id)}
-                aria-label={isFav ? `Unfavorite ${game.title}` : `Favorite ${game.title}`}
+                aria-label={isFav ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
                 aria-pressed={isFav}
-                title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                title={isFav ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
               >
                 {isFav ? '★' : '☆'}
               </button>
@@ -105,11 +106,11 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
             <div className={css.meta}>
               <span className={css.badge}>{game.platform}</span>
-              {isFav && <span className={css.favPill}>Favorite</span>}
-              <span className={css.dot} aria-hidden="true">
-                •
+              {isFav && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
+              <span className={css.dot} aria-hidden="true">•</span>
+              <span className={css.muted}>
+                {game.installed ? t('gameCard.installed') : t('gameCard.notInstalled')}
               </span>
-              <span className={css.muted}>{game.installed ? 'Installed' : 'Not installed'}</span>
             </div>
           </div>
 
@@ -119,17 +120,17 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
               className={css.play}
               onClick={() => onPlay(game)}
               disabled={!canPlay}
-              title={!canPlay ? 'Not available' : 'Launch'}
+              title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
             >
-              Play
+              {t('gameCard.play')}
             </button>
 
             <button
               type="button"
               className={css.remove}
               onClick={() => onRemove(game.id)}
-              aria-label={`Remove ${game.title}`}
-              title="Remove"
+              aria-label={t('gameCard.remove')}
+              title={t('gameCard.remove')}
             >
               ✕
             </button>

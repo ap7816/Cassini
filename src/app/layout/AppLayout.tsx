@@ -1,16 +1,19 @@
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
-import { useAppLayout, type NavItem } from './useAppLayout';
+import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
-const navItems: NavItem[] = [
-  { to: '/library', label: 'Library' },
-  { to: '/launchers', label: 'Launchers' },
-  { to: '/settings', label: 'Settings' },
-];
-
 export function AppLayout() {
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: '/library', label: t('nav.library') },
+    { to: '/launchers', label: t('nav.launchers') },
+    { to: '/settings', label: t('nav.settings') },
+  ];
+
   const { pathname, isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(
     navItems,
     900,
@@ -66,7 +69,7 @@ export function AppLayout() {
       <aside className={sidebarClassName}>
         <div className={css.brand}>
           <img src={logo} alt="ArcHive logo" className={css.logo} />
-          <div className={css.brandSubtitle}>Game Hub</div>
+          <div className={css.brandSubtitle}>{t('nav.gameHub')}</div>
         </div>
 
         <nav className={css.nav}>
@@ -96,8 +99,8 @@ export function AppLayout() {
                 type="button"
                 className={css.burger}
                 onClick={openSidebar}
-                aria-label="Open menu"
-                title="Menu"
+                aria-label={t('nav.openMenu')}
+                title={t('nav.openMenu')}
               >
                 <span className={css.burgerIcon} aria-hidden="true">
                   ☰
@@ -109,11 +112,11 @@ export function AppLayout() {
 
           <input
             className={css.search}
-            placeholder={isLibraryRoute ? 'Search games...' : 'Search (Library)'}
+            placeholder={isLibraryRoute ? t('nav.searchPlaceholder') : t('nav.searchLabel')}
             value={isLibraryRoute ? q : ''}
             onChange={(e) => handleSearchChange(e.target.value)}
             disabled={!isLibraryRoute}
-            aria-label="Search"
+            aria-label={t('nav.searchLabel')}
           />
         </header>
 

@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
 import { useLibraryGames } from '../../features/Library/hooks/useLibraryGames';
@@ -8,7 +9,7 @@ import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
-type ViewMode = 'all' | 'favorites';
+type ViewMode = 'games' | 'favorites';
 
 const titleCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -19,16 +20,15 @@ function getTimestamp(iso?: string | null): number {
 }
 
 export function LibraryPage() {
+  const { t } = useTranslation();
   const { settings } = useAppSettings();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Search (URL param: q)
   const qRaw = searchParams.get('q') ?? '';
   const q = qRaw.trim().toLowerCase();
   const deferredQ = useDeferredValue(q);
 
-  // View mode (URL param: view=favorites)
-  const view: ViewMode = searchParams.get('view') === 'favorites' ? 'favorites' : 'all';
+  const view: ViewMode = searchParams.get('view') === 'favorites' ? 'favorites' : 'games';
 
   const {
     games,
@@ -66,11 +66,7 @@ export function LibraryPage() {
 
   async function handlePlay(game: Game) {
     const res = await launchGame(game);
-    if (!res.ok) {
-      window.alert(res.message);
-      return;
-    }
-    // update UI instantly
+    if (!res.ok) { window.alert(res.message); return; }
     markPlayed(game.id);
   }
 
@@ -92,8 +88,6 @@ export function LibraryPage() {
 
   const filteredGames = useMemo(() => {
     const list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
-
-    // tri: lastPlayed desc, puis alpha
     return list
       .slice()
       .sort((a, b) => {
@@ -104,46 +98,42 @@ export function LibraryPage() {
   }, [baseList, deferredQ]);
 
   const showNoResults = baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
-
-  // États vides
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;
+
+  const subtitleText = isEmpty
+    ? t('library.subtitleEmpty')
+    : view === 'favorites'
+      ? t('library.subtitleFavorites', { count: favoritesCount, total: games.length })
+      : q
+        ? t('library.subtitleSearch', { count: filteredGames.length, total: games.length })
+        : t('library.subtitleDefault', { count: games.length, installed: installedCount });
 
   return (
     <div className={css.page}>
       <div className={css.headerRow}>
         <div>
-          <h1 className={css.title}>Library</h1>
-          <p className={css.subtitle}>
-            {isEmpty
-              ? 'Your games will appear here.'
-              : view === 'favorites'
-                ? `${favoritesCount} favorite(s) • ${games.length} total`
-                : q
-                  ? `${filteredGames.length} result(s) • ${games.length} total`
-                  : `${games.length} games • ${installedCount} installed`}
-          </p>
+          <h1 className={css.title}>{t('library.title')}</h1>
+          <p className={css.subtitle}>{subtitleText}</p>
         </div>
         <button
           type="button"
           className={css.button}
           onClick={() => void handleRefresh()}
           disabled={isScanning}
-          title="Rescan Steam, Epic & Battle.net games"
         >
-          {isScanning ? 'Scanning…' : '↻ Refresh'}
+          {isScanning ? t('library.scanning') : t('library.refresh')}
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className={css.tabs} role="tablist" aria-label="Library view">
+      <div className={css.tabs} role="tablist" aria-label={t('library.title')}>
         <button
           type="button"
-          className={[css.tab, view === 'all' ? css.tabActive : ''].join(' ')}
-          onClick={() => setView('all')}
+          className={[css.tab, view === 'games' ? css.tabActive : ''].join(' ')}
+          onClick={() => setView('games')}
           role="tab"
-          aria-selected={view === 'all'}
+          aria-selected={view === 'games'}
         >
-          All <span className={css.count}>{games.length}</span>
+          {t('library.tabGames')} <span className={css.count}>{games.length}</span>
         </button>
 
         <button
@@ -153,7 +143,7 @@ export function LibraryPage() {
           role="tab"
           aria-selected={view === 'favorites'}
         >
-          Favorites <span className={css.count}>{favoritesCount}</span>
+          {t('library.tabFavorites')} <span className={css.count}>{favoritesCount}</span>
         </button>
       </div>
 
@@ -163,38 +153,36 @@ export function LibraryPage() {
         <EmptyState onLoadSamples={loadSamples} />
       ) : isFavoritesEmpty ? (
         <div className={css.empty}>
-          <div className={css.emptyTitle}>No favorites yet</div>
-          <div className={css.emptyText}>Click ★ on a game to add it to favorites.</div>
-          <button type="button" className={css.button} onClick={() => setView('all')}>
-            Go to all games
+          <div className={css.emptyTitle}>{t('library.noFavoritesTitle')}</div>
+          <div className={css.emptyText}>{t('library.noFavoritesText')}</div>
+          <button type="button" className={css.button} onClick={() => setView('games')}>
+            {t('library.goToGames')}
           </button>
         </div>
       ) : showNoResults ? (
         <div className={css.noResults}>
-          <div className={css.noResultsTitle}>No results</div>
+          <div className={css.noResultsTitle}>{t('library.noResultsTitle')}</div>
           <div className={css.noResultsText}>
-            Nothing matches <span className={css.query}>"{qRaw.trim()}"</span>
+            {t('library.noResultsText')} <span className={css.query}>"{qRaw.trim()}"</span>
           </div>
           <button type="button" className={css.button} onClick={clearSearch}>
-            Clear search
+            {t('library.clearSearch')}
           </button>
         </div>
       ) : (
-        <>
-          <div className={css.grid}>
-            {filteredGames.map((g) => (
-              <GameCard
-                key={g.id}
-                game={g}
-                onRemove={removeGame}
-                onPlay={handlePlay}
-                onToggleFavorite={toggleFavorite}
-                onSetImageUrl={setGameImageUrl}
-                rawgApiKey={settings.rawgApiKey}
-              />
-            ))}
-          </div>
-        </>
+        <div className={css.grid}>
+          {filteredGames.map((g) => (
+            <GameCard
+              key={g.id}
+              game={g}
+              onRemove={removeGame}
+              onPlay={handlePlay}
+              onToggleFavorite={toggleFavorite}
+              onSetImageUrl={setGameImageUrl}
+              rawgApiKey={settings.rawgApiKey}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
@@ -14,8 +15,8 @@ type LauncherDto = {
   id: string;
   name: string;
   installed: boolean;
-  launchTarget: string; // steam://... ou chemin exe
-  iconPath?: string | null; // chemin exe (pour extraire l'icône Windows)
+  launchTarget: string;
+  iconPath?: string | null;
 };
 
 type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
@@ -33,20 +34,18 @@ async function openTarget(target: string): Promise<void> {
 }
 
 export function LaunchersPage() {
+  const { t } = useTranslation();
   const [desktop, setDesktop] = useState(false);
   const [launchers, setLaunchers] = useState<LauncherDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Opening UI state (par carte)
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [openStatus, setOpenStatus] = useState<OpenStatus>('idle');
 
-  // Folder UI state (par carte)
   const [folderOpeningId, setFolderOpeningId] = useState<string | null>(null);
   const [folderStatus, setFolderStatus] = useState<OpenStatus>('idle');
 
-  // Icons (dataUrl) par launcher id (pour l'UI)
   const [iconsById, setIconsById] = useState<Record<string, string>>({});
 
   async function refresh() {
@@ -71,11 +70,9 @@ export function LaunchersPage() {
     if (ok) void refresh();
   }, []);
 
-  // Load icons with local cache (desktop only)
   useEffect(() => {
     if (!desktop) return;
 
-    // 0) prune cache
     pruneLauncherIconCache();
 
     if (launchers.length === 0) {
@@ -86,14 +83,12 @@ export function LaunchersPage() {
     let cancelled = false;
 
     void (async () => {
-      // 1) cache hits
       const { byId: cachedById, missing } = getCachedLauncherIconsById(
         launchers.map((l) => ({ id: l.id, iconPath: l.iconPath })),
       );
 
       if (!cancelled) setIconsById(cachedById);
 
-      // 2) fetch missing
       if (missing.length === 0) return;
 
       const fetched: Array<{ id: string; iconPath: string; dataUrl: string }> = [];
@@ -103,18 +98,14 @@ export function LaunchersPage() {
           try {
             const dataUrl = await invoke<string>('get_file_icon_data_url', { path: m.iconPath });
             fetched.push({ id: m.id, iconPath: m.iconPath, dataUrl });
-          } catch {
-            // ignore failures -> fallback letter
-          }
+          } catch { /* ignore */ }
         }),
       );
 
       if (fetched.length === 0) return;
 
-      // 3) store batch in cache
       storeLauncherIcons(fetched.map((f) => ({ iconPath: f.iconPath, dataUrl: f.dataUrl })));
 
-      // 4) update UI
       if (cancelled) return;
       setIconsById((prev) => {
         const next = { ...prev };
@@ -123,9 +114,7 @@ export function LaunchersPage() {
       });
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [launchers, desktop]);
 
   async function handleOpen(l: LauncherDto) {
@@ -135,18 +124,11 @@ export function LaunchersPage() {
     try {
       await openTarget(l.launchTarget);
       setOpenStatus('done');
-
-      window.setTimeout(() => {
-        setOpenStatus('idle');
-        setOpeningId(null);
-      }, 900);
+      window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 900);
     } catch (e) {
       setOpenStatus('error');
       const msg = e instanceof Error ? e.message : 'Failed to open launcher.';
-      window.setTimeout(() => {
-        setOpenStatus('idle');
-        setOpeningId(null);
-      }, 1200);
+      window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 1200);
       window.alert(msg);
     }
   }
@@ -161,18 +143,11 @@ export function LaunchersPage() {
       info(`Opening folder for path: ${folderPath}`);
       await invoke('open_folder', { path: folderPath });
       setFolderStatus('done');
-
-      window.setTimeout(() => {
-        setFolderStatus('idle');
-        setFolderOpeningId(null);
-      }, 900);
+      window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 900);
     } catch (e) {
       setFolderStatus('error');
       const msg = e instanceof Error ? e.message : 'Failed to open folder.';
-      window.setTimeout(() => {
-        setFolderStatus('idle');
-        setFolderOpeningId(null);
-      }, 1200);
+      window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 1200);
       window.alert(msg);
     }
   }
@@ -183,9 +158,9 @@ export function LaunchersPage() {
     <div className={css.page}>
       <div className={css.header}>
         <div>
-          <h1 className={css.title}>Launchers</h1>
+          <h1 className={css.title}>{t('launchers.title')}</h1>
           <p className={css.subtitle}>
-            {loading ? 'Scanning installed launchers…' : 'Detected launchers on this PC.'}
+            {loading ? t('launchers.subtitleScanning') : t('launchers.subtitleDetected')}
           </p>
         </div>
 
@@ -195,32 +170,31 @@ export function LaunchersPage() {
             className={css.button}
             onClick={refresh}
             disabled={loading || !desktop}
-            title={!desktop ? 'Desktop only' : 'Refresh'}
           >
-            Refresh
+            {t('launchers.refresh')}
           </button>
         </div>
       </div>
 
-      {!desktop && (
-        <div className={css.note}>
-          Desktop only: launcher detection works in the Tauri app (not in the web preview).
-        </div>
-      )}
+      {!desktop && <div className={css.note}>{t('launchers.desktopOnly')}</div>}
 
       {error && <div className={css.error}>{error}</div>}
 
       {isEmpty ? (
         <div className={css.empty}>
-          <div className={css.emptyTitle}>No launchers detected</div>
-          <div className={css.emptyText}>Install launchers then click Refresh.</div>
+          <div className={css.emptyTitle}>{t('launchers.emptyTitle')}</div>
+          <div className={css.emptyText}>{t('launchers.emptyText')}</div>
         </div>
       ) : (
         <div className={css.grid}>
           {launchers.map((l) => {
             const isThisOpening = openingId === l.id && openStatus !== 'idle';
             const isFolderOpening = folderOpeningId === l.id && folderStatus !== 'idle';
-            const disabled = !l.installed || loading || (openingId !== null && openingId !== l.id) || (folderOpeningId !== null && folderOpeningId !== l.id);
+            const disabled =
+              !l.installed ||
+              loading ||
+              (openingId !== null && openingId !== l.id) ||
+              (folderOpeningId !== null && folderOpeningId !== l.id);
 
             const icon = iconsById[l.id] ?? null;
 
@@ -235,12 +209,11 @@ export function LaunchersPage() {
                         <div className={css.iconFallback}>{l.name.slice(0, 1).toUpperCase()}</div>
                       )}
                     </div>
-
                     <div className={css.cardTitle}>{l.name}</div>
                   </div>
 
                   <div className={css.cardSubtitle}>
-                    {l.installed ? 'Installed' : 'Not installed'}
+                    {l.installed ? t('launchers.installed') : t('launchers.notInstalled')}
                   </div>
                 </div>
 
@@ -250,18 +223,20 @@ export function LaunchersPage() {
                     className={css.primaryButton}
                     onClick={() => handleOpen(l)}
                     disabled={disabled}
-                    title={!l.installed ? 'Not installed' : 'Open'}
                   >
-                    {isThisOpening && openStatus === 'opening' ? 'Opening…' : 'Open'}
+                    {isThisOpening && openStatus === 'opening'
+                      ? t('launchers.opening')
+                      : t('launchers.open')}
                   </button>
                   <button
                     type="button"
                     className={css.primaryButton}
                     onClick={() => void handleOpenFolder(l)}
                     disabled={disabled}
-                    title={!l.installed ? 'Not installed' : 'Folder'}
                   >
-                    {isFolderOpening && folderStatus === 'opening' ? 'Opening…' : 'Folder'}
+                    {isFolderOpening && folderStatus === 'opening'
+                      ? t('launchers.opening')
+                      : t('launchers.folder')}
                   </button>
                 </div>
 
@@ -269,21 +244,17 @@ export function LaunchersPage() {
                   <div className={css.opening}>
                     <div className={css.openingLabel}>
                       {openStatus === 'opening'
-                        ? 'Opening launcher…'
+                        ? t('launchers.openingLauncher')
                         : openStatus === 'done'
-                          ? 'Launcher opened'
-                          : 'Failed to open'}
+                          ? t('launchers.launcherOpened')
+                          : t('launchers.failedToOpen')}
                     </div>
-                    <div
-                      className={[
-                        css.progressTrack,
-                        openStatus === 'opening'
-                          ? css.progressIndeterminate
-                          : openStatus === 'done'
-                            ? css.progressDone
-                            : css.progressError,
-                      ].join(' ')}
-                    >
+                    <div className={[
+                      css.progressTrack,
+                      openStatus === 'opening' ? css.progressIndeterminate
+                        : openStatus === 'done' ? css.progressDone
+                        : css.progressError,
+                    ].join(' ')}>
                       <div className={css.progressFill} />
                     </div>
                   </div>
@@ -292,21 +263,17 @@ export function LaunchersPage() {
                   <div className={css.opening}>
                     <div className={css.openingLabel}>
                       {folderStatus === 'opening'
-                        ? 'Opening folder…'
+                        ? t('launchers.openingFolder')
                         : folderStatus === 'done'
-                          ? 'Folder opened'
-                          : 'Failed to open'}
+                          ? t('launchers.folderOpened')
+                          : t('launchers.failedToOpen')}
                     </div>
-                    <div
-                      className={[
-                        css.progressTrack,
-                        folderStatus === 'opening'
-                          ? css.progressIndeterminate
-                          : folderStatus === 'done'
-                            ? css.progressDone
-                            : css.progressError,
-                      ].join(' ')}
-                    >
+                    <div className={[
+                      css.progressTrack,
+                      folderStatus === 'opening' ? css.progressIndeterminate
+                        : folderStatus === 'done' ? css.progressDone
+                        : css.progressError,
+                    ].join(' ')}>
                       <div className={css.progressFill} />
                     </div>
                   </div>
