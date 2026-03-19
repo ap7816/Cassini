@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Game } from '../../types';
-import { sampleGames } from '../Data/sampleGames';
+import { sampleGames } from '../data/sampleGames';
 import { loadGamesFromStorage, saveGamesToStorage } from '../services/libraryStorage';
 import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
 import { pickGameFile } from '../services/pickGameFile';

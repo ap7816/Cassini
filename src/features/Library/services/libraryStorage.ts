@@ -29,7 +29,6 @@ export function normalizeGames(input: unknown): Game[] {
       id,
       title,
       platform: platform as Game['platform'],
-      coverUrl: asString(r.coverUrl),
       launchUrl: asString(r.launchUrl),
       lastPlayedAt: asString(r.lastPlayedAt),
       installed: asBool(r.installed) ?? false,
