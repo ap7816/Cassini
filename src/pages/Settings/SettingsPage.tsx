@@ -102,6 +102,16 @@ export function SettingsPage() {
     setTimeout(() => setCacheCleared(false), 2000);
   }
 
+  function handleClearAllData() {
+    if (!window.confirm(t('settings.clearAllConfirm'))) return;
+    const rawgKey = settings.rawgApiKey;
+    window.localStorage.clear();
+    if (rawgKey) {
+      window.localStorage.setItem('arctive.settings.v1', JSON.stringify({ rawgApiKey: rawgKey }));
+    }
+    window.location.reload();
+  }
+
   function handleLanguageChange(lang: 'fr' | 'en') {
     setLanguage(lang);
     setCurrentLang(lang);
@@ -262,6 +272,26 @@ export function SettingsPage() {
           </select>
         </div>
         )}
+      </div>
+      )}
+
+      {/* Zone de danger */}
+      {matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.clearAllLabel')}</div>
+            <div className={css.hint}>{t('settings.clearAllHint')}</div>
+          </div>
+          <button
+            type="button"
+            className={css.danger}
+            onClick={handleClearAllData}
+          >
+            {t('settings.clearAllButton')}
+          </button>
+        </div>
       </div>
       )}
 

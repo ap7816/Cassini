@@ -100,6 +100,11 @@
     "rawgClearCache": "Vider le cache",
     "rawgCleared": "Vidé ✓",
     "languageLabel": "Langue",
-    "languageHint": "Choisissez la langue de l'application."
+    "languageHint": "Choisissez la langue de l'application.",
+    "dangerTitle": "Zone de danger",
+    "clearAllLabel": "Réinitialiser l'application",
+    "clearAllHint": "Supprime toutes les données locales : bibliothèque, paramètres, cache. L'application redémarre.",
+    "clearAllButton": "Tout effacer",
+    "clearAllConfirm": "Es-tu sûr ? Toutes les données locales seront supprimées définitivement."
   }
 }

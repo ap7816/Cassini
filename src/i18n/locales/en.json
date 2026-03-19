@@ -100,6 +100,11 @@
     "rawgClearCache": "Clear cache",
     "rawgCleared": "Cleared ✓",
     "languageLabel": "Language",
-    "languageHint": "Choose the app language."
+    "languageHint": "Choose the app language.",
+    "dangerTitle": "Danger zone",
+    "clearAllLabel": "Reset application",
+    "clearAllHint": "Deletes all local data: library, settings, cache. The app will restart.",
+    "clearAllButton": "Clear everything",
+    "clearAllConfirm": "Are you sure? All local data will be permanently deleted."
   }
 }
