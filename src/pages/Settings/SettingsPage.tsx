@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
@@ -102,8 +103,9 @@ export function SettingsPage() {
     setTimeout(() => setCacheCleared(false), 2000);
   }
 
-  function handleClearAllData() {
-    if (!window.confirm(t('settings.clearAllConfirm'))) return;
+  async function handleClearAllData() {
+    const ok = await confirm(t('settings.clearAllConfirm'));
+    if (!ok) return;
     const rawgKey = settings.rawgApiKey;
     window.localStorage.clear();
     if (rawgKey) {
@@ -147,7 +149,7 @@ export function SettingsPage() {
             <button
               type="button"
               className={css.button}
-              onClick={clearBackgroundImage}
+              onClick={() => { void confirm(t('settings.bgRemoveConfirm')).then((ok) => { if (ok) clearBackgroundImage(); }); }}
               disabled={!settings.backgroundImageDataUrl}
             >
               {t('settings.bgRemove')}

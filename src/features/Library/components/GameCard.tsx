@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
 import { fetchRawgImage } from '../services/rawgService';
@@ -128,7 +129,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             <button
               type="button"
               className={css.remove}
-              onClick={() => onRemove(game.id)}
+              onClick={() => { void confirm(t('gameCard.removeConfirm', { name: game.title })).then((ok) => { if (ok) onRemove(game.id); }); }}
               aria-label={t('gameCard.remove')}
               title={t('gameCard.remove')}
             >

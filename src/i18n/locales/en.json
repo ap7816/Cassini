@@ -41,7 +41,8 @@
     "setImage": "Set image",
     "editImage": "Edit image",
     "imageUrlPrompt": "Image URL:",
-    "imageButton": "+ image"
+    "imageButton": "+ image",
+    "removeConfirm": "Remove \"{{name}}\" from your library?"
   },
   "emptyState": {
     "title": "Your library is empty",
@@ -105,6 +106,7 @@
     "clearAllLabel": "Reset application",
     "clearAllHint": "Deletes all local data: library, settings, cache. The app will restart.",
     "clearAllButton": "Clear everything",
+    "bgRemoveConfirm": "Remove the background image?",
     "clearAllConfirm": "Are you sure? All local data will be permanently deleted."
   }
 }

@@ -74,6 +74,8 @@
         }
       ]
     },
-    "log:default"
+    "log:default",
+    "dialog:allow-open",
+    "dialog:allow-confirm"
   ]
 }
