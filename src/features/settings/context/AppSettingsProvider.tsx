@@ -26,6 +26,10 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, bgOverlayOpacity: opacity }));
   }
 
+  function setRawgApiKey(key: string) {
+    setSettings((prev) => ({ ...prev, rawgApiKey: key }));
+  }
+
   const value = useMemo(
     () => ({
       settings,
@@ -33,6 +37,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       clearBackgroundImage,
       setAccentColor,
       setBgOverlayOpacity,
+      setRawgApiKey,
     }),
     [settings],
   );

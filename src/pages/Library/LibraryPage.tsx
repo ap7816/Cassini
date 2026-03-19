@@ -6,6 +6,7 @@ import { EmptyState } from '../../features/Library/components/EmptyState';
 import { GameCard } from '../../features/Library/components/GameCard';
 import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
+import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
 type ViewMode = 'all' | 'favorites';
 
@@ -18,6 +19,7 @@ function getTimestamp(iso?: string | null): number {
 }
 
 export function LibraryPage() {
+  const { settings } = useAppSettings();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Search (URL param: q)
@@ -188,6 +190,7 @@ export function LibraryPage() {
                 onPlay={handlePlay}
                 onToggleFavorite={toggleFavorite}
                 onSetImageUrl={setGameImageUrl}
+                rawgApiKey={settings.rawgApiKey}
               />
             ))}
           </div>

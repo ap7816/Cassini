@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 
@@ -30,14 +30,16 @@ export function SettingsPage() {
     clearBackgroundImage,
     setAccentColor,
     setBgOverlayOpacity,
+    setRawgApiKey,
   } = useAppSettings();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [rawgKeyInput, setRawgKeyInput] = useState(settings.rawgApiKey);
+  const [rawgKeySaved, setRawgKeySaved] = useState(false);
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // reset pour pouvoir re-choisir le même fichier
     e.target.value = '';
 
     if (!file.type.startsWith('image/')) {
@@ -51,6 +53,12 @@ export function SettingsPage() {
     } catch {
       window.alert('Could not load image.');
     }
+  }
+
+  function handleSaveRawgKey() {
+    setRawgApiKey(rawgKeyInput.trim());
+    setRawgKeySaved(true);
+    setTimeout(() => setRawgKeySaved(false), 2000);
   }
 
   return (
@@ -177,6 +185,50 @@ export function SettingsPage() {
                 aria-label="Custom accent color"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Intégrations */}
+      <div className={css.card}>
+        <div className={css.sectionTitle}>Integrations</div>
+
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>RAWG API key</div>
+            <div className={css.hint}>
+              Used to fetch cover images for Epic &amp; Battle.net games.{' '}
+              <a
+                href="https://rawg.io/apidocs"
+                target="_blank"
+                rel="noreferrer"
+                className={css.link}
+              >
+                Get a free key →
+              </a>
+            </div>
+          </div>
+
+          <div className={css.apiKeyRow}>
+            <input
+              type="password"
+              className={css.apiKeyInput}
+              placeholder="Paste your RAWG API key…"
+              value={rawgKeyInput}
+              onChange={(e) => {
+                setRawgKeyInput(e.target.value);
+                setRawgKeySaved(false);
+              }}
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              className={css.primary}
+              onClick={handleSaveRawgKey}
+              disabled={rawgKeyInput.trim() === settings.rawgApiKey}
+            >
+              {rawgKeySaved ? 'Saved ✓' : 'Save'}
+            </button>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
   accentColor: '#e5e7eb',
   bgOverlayOpacity: 0.55,
+  rawgApiKey: '',
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -30,11 +31,14 @@ export function loadSettings(): AppSettings {
       typeof parsed.bgOverlayOpacity === 'number'
         ? parsed.bgOverlayOpacity
         : DEFAULT_SETTINGS.bgOverlayOpacity;
+    const rawgApiKey =
+      typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
 
     return {
       backgroundImageDataUrl: bg,
       accentColor,
       bgOverlayOpacity,
+      rawgApiKey,
     };
   } catch {
     return DEFAULT_SETTINGS;

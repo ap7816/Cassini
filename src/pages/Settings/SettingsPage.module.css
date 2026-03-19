@@ -203,3 +203,43 @@
   border: none;
   border-radius: 50%;
 }
+
+/* Integrations */
+.sectionTitle {
+  font-weight: 700;
+  font-size: 14px;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.apiKeyRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 280px;
+}
+
+.apiKeyInput {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.apiKeyInput::placeholder {
+  opacity: 0.4;
+}
+
+.link {
+  color: color-mix(in srgb, var(--accent, #e5e7eb) 90%, white);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

@@ -17,4 +17,5 @@ export type AppSettings = {
   backgroundImageDataUrl: string | null;
   accentColor: string;
   bgOverlayOpacity: number;
+  rawgApiKey: string;
 };

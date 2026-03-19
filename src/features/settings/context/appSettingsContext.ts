@@ -7,6 +7,7 @@ export type AppSettingsContextValue = {
   clearBackgroundImage: () => void;
   setAccentColor: (color: string) => void;
   setBgOverlayOpacity: (opacity: number) => void;
+  setRawgApiKey: (key: string) => void;
 };
 
 export const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);

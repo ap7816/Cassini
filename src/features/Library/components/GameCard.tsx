@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
+import { fetchRawgImage } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -8,6 +9,7 @@ type Props = {
   onPlay: (game: Game) => void;
   onToggleFavorite: (id: string) => void;
   onSetImageUrl: (id: string, url: string | null) => void;
+  rawgApiKey: string;
 };
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
@@ -19,32 +21,31 @@ function formatLastPlayed(iso?: string | null) {
   return `Last played: ${lastPlayedFormatter.format(d)}`;
 }
 
-function getSteamAppId(launchUrl?: string | null): string | null {
-  if (!launchUrl) return null;
-  const match = launchUrl.match(/^steam:\/\/(?:rungameid|run|launch)\/(\d+)/i);
-  return match ? match[1] : null;
-}
-
-export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey }: Props) {
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
   const lastPlayedLabel = useMemo(() => formatLastPlayed(game.lastPlayedAt), [game.lastPlayedAt]);
-  const steamAppId = useMemo(() => getSteamAppId(game.launchUrl), [game.launchUrl]);
   const [imgFailed, setImgFailed] = useState(false);
+  const [rawgUrl, setRawgUrl] = useState<string | null>(null);
 
-  // Priorité : customImageUrl > CDN Steam > fallback lettre
-  const bannerUrl = game.customImageUrl
-    ? game.customImageUrl
-    : steamAppId
-      ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
-      : null;
-
+  // Priorité : customImageUrl > RAWG > fallback lettre
+  const bannerUrl = game.customImageUrl ?? rawgUrl;
   const showFallback = !bannerUrl || imgFailed;
+
+  // Fetch RAWG pour tous les jeux sans image custom
+  useEffect(() => {
+    if (game.customImageUrl || !rawgApiKey) return;
+    setRawgUrl(null);
+    setImgFailed(false);
+    fetchRawgImage(game.title, rawgApiKey).then((url) => {
+      if (url) setRawgUrl(url);
+    });
+  }, [game.title, game.customImageUrl, rawgApiKey]);
 
   function handleSetImage() {
     const current = game.customImageUrl ?? '';
-    const url = window.prompt('URL de l\'image :', current);
-    if (url === null) return; // annulé
+    const url = window.prompt("URL de l'image :", current);
+    if (url === null) return;
     onSetImageUrl(game.id, url.trim() || null);
     setImgFailed(false);
   }
