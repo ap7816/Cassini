@@ -1,15 +1,37 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
 
-function readFileAsDataUrl(file: File): Promise<string> {
+const MAX_DIM = 1920;
+const JPEG_QUALITY = 0.85;
+
+function compressImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.onload = () => resolve(String(reader.result));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to decode image'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width >= height) { height = Math.round(height * MAX_DIM / width); width = MAX_DIM; }
+          else { width = Math.round(width * MAX_DIM / height); height = MAX_DIM; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas not available')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+      };
+      img.src = String(reader.result);
+    };
     reader.readAsDataURL(file);
   });
 }
@@ -27,7 +49,14 @@ const ACCENT_COLORS: { labelKey: string; value: string }[] = [
 const isPresetColor = (color: string) => ACCENT_COLORS.some((c) => c.value === color);
 
 export function SettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const q = (searchParams.get('q') ?? '').trim().toLowerCase();
+
+  function matches(...keys: string[]): boolean {
+    if (!q) return true;
+    return keys.some((k) => t(k).toLowerCase().includes(q));
+  }
   const {
     settings,
     setBackgroundImageDataUrl,
@@ -54,7 +83,7 @@ export function SettingsPage() {
     }
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await compressImageFile(file);
       setBackgroundImageDataUrl(dataUrl);
     } catch {
       window.alert(t('settings.bgErrorLoad'));
@@ -84,8 +113,10 @@ export function SettingsPage() {
       <p className={css.subtitle}>{t('settings.subtitle')}</p>
 
       {/* Apparence */}
+      {matches('settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
       <div className={css.card}>
         {/* Image de fond */}
+        {matches('settings.bgLabel', 'settings.bgHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.bgLabel')}</div>
@@ -113,23 +144,27 @@ export function SettingsPage() {
             </button>
           </div>
         </div>
-
-        {settings.backgroundImageDataUrl ? (
-          <div className={css.previewWrap}>
-            <div className={css.previewLabel}>{t('settings.bgPreview')}</div>
-            <img
-              className={css.preview}
-              src={settings.backgroundImageDataUrl}
-              alt={t('settings.bgPreview')}
-            />
-          </div>
-        ) : (
-          <div className={css.empty}>{t('settings.bgEmpty')}</div>
         )}
 
-        <div className={css.divider} />
+        {matches('settings.bgLabel', 'settings.bgHint') && (
+          settings.backgroundImageDataUrl ? (
+            <div className={css.previewWrap}>
+              <div className={css.previewLabel}>{t('settings.bgPreview')}</div>
+              <img
+                className={css.preview}
+                src={settings.backgroundImageDataUrl}
+                alt={t('settings.bgPreview')}
+              />
+            </div>
+          ) : (
+            <div className={css.empty}>{t('settings.bgEmpty')}</div>
+          )
+        )}
+
+        {matches('settings.bgLabel', 'settings.bgHint') && matches('settings.overlayLabel', 'settings.overlayHint') && <div className={css.divider} />}
 
         {/* Opacité */}
+        {matches('settings.overlayLabel', 'settings.overlayHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.overlayLabel')}</div>
@@ -151,10 +186,12 @@ export function SettingsPage() {
             <span className={css.sliderValue}>{Math.round(settings.bgOverlayOpacity * 100)}%</span>
           </div>
         </div>
+        )}
 
-        <div className={css.divider} />
+        {matches('settings.overlayLabel', 'settings.overlayHint') && matches('settings.accentLabel', 'settings.accentHint') && <div className={css.divider} />}
 
         {/* Couleur d'accent */}
+        {matches('settings.accentLabel', 'settings.accentHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.accentLabel')}</div>
@@ -203,39 +240,37 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
+        )}
 
-        <div className={css.divider} />
+        {matches('settings.accentLabel', 'settings.accentHint') && matches('settings.languageLabel', 'settings.languageHint') && <div className={css.divider} />}
 
         {/* Langue */}
+        {matches('settings.languageLabel', 'settings.languageHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.languageLabel')}</div>
             <div className={css.hint}>{t('settings.languageHint')}</div>
           </div>
 
-          <div className={css.langRow}>
-            <button
-              type="button"
-              className={[css.langBtn, currentLang === 'fr' ? css.langBtnActive : ''].join(' ')}
-              onClick={() => handleLanguageChange('fr')}
-            >
-              🇫🇷 Français
-            </button>
-            <button
-              type="button"
-              className={[css.langBtn, currentLang === 'en' ? css.langBtnActive : ''].join(' ')}
-              onClick={() => handleLanguageChange('en')}
-            >
-              🇬🇧 English
-            </button>
-          </div>
+          <select
+            className={css.langSelect}
+            value={currentLang}
+            onChange={(e) => handleLanguageChange(e.target.value as 'fr' | 'en')}
+          >
+            <option value="fr">🇫🇷 Français</option>
+            <option value="en">🇬🇧 English</option>
+          </select>
         </div>
+        )}
       </div>
+      )}
 
       {/* Intégrations */}
+      {matches('settings.integrationsTitle', 'settings.rawgLabel', 'settings.rawgHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
 
+        {matches('settings.rawgLabel', 'settings.rawgHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.rawgLabel')}</div>
@@ -282,7 +317,9 @@ export function SettingsPage() {
             </button>
           </div>
         </div>
+        )}
       </div>
+      )}
     </div>
   );
 }

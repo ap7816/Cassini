@@ -30,15 +30,15 @@
 .button {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 20, 26, 0.55);
+  backdrop-filter: blur(8px);
   color: inherit;
   cursor: pointer;
-
   box-shadow: none;
 }
 .button:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(15, 20, 26, 0.72);
 }
 .button:disabled {
   opacity: 0.5;
@@ -123,8 +123,9 @@
   height: 34px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 20, 26, 0.55);
+  backdrop-filter: blur(8px);
   color: inherit;
   cursor: pointer;
   box-shadow: none;
@@ -134,12 +135,12 @@
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(15, 20, 26, 0.72);
 }
 
 .tabActive {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(15, 20, 26, 0.75);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .count {

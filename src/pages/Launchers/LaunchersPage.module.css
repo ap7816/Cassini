@@ -134,15 +134,16 @@
   height: 34px;
   padding: 0 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 20, 26, 0.55);
+  backdrop-filter: blur(8px);
   color: inherit;
   cursor: pointer;
   box-shadow: none;
 }
 
 .button:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(15, 20, 26, 0.72);
 }
 
 .button:disabled {

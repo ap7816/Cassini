@@ -130,6 +130,8 @@
   justify-content: space-between;
   gap: 12px;
   box-sizing: border-box;
+  background: rgba(10, 14, 20, 0.55);
+  backdrop-filter: blur(16px);
 }
 
 .headerLeft {
@@ -184,6 +186,7 @@
   padding: 16px;
   overflow: auto;
   min-width: 0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
 @media (max-width: 900px) {

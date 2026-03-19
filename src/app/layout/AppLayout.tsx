@@ -25,8 +25,6 @@ export function AppLayout() {
   const q = searchParams.get('q') ?? '';
 
   function handleSearchChange(nextValue: string) {
-    if (!isLibraryRoute) return;
-
     const next = new URLSearchParams(searchParams);
     const trimmed = nextValue.trim();
 
@@ -87,7 +85,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          <div className={css.muted}>v0.6.0</div>
+          <div className={css.muted}>v0.7.0</div>
         </div>
       </aside>
 
@@ -112,10 +110,9 @@ export function AppLayout() {
 
           <input
             className={css.search}
-            placeholder={isLibraryRoute ? t('nav.searchPlaceholder') : t('nav.searchLabel')}
-            value={isLibraryRoute ? q : ''}
+            placeholder={t('nav.searchPlaceholder')}
+            value={q}
             onChange={(e) => handleSearchChange(e.target.value)}
-            disabled={!isLibraryRoute}
             aria-label={t('nav.searchLabel')}
           />
         </header>

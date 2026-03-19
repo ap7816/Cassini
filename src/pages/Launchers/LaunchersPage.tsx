@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
@@ -35,6 +36,8 @@ async function openTarget(target: string): Promise<void> {
 
 export function LaunchersPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const q = (searchParams.get('q') ?? '').trim().toLowerCase();
   const [desktop, setDesktop] = useState(false);
   const [launchers, setLaunchers] = useState<LauncherDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -152,6 +155,10 @@ export function LaunchersPage() {
     }
   }
 
+  const filteredLaunchers = q
+    ? launchers.filter((l) => l.name.toLowerCase().includes(q))
+    : launchers;
+
   const isEmpty = !loading && launchers.length === 0;
 
   return (
@@ -187,7 +194,7 @@ export function LaunchersPage() {
         </div>
       ) : (
         <div className={css.grid}>
-          {launchers.map((l) => {
+          {filteredLaunchers.map((l) => {
             const isThisOpening = openingId === l.id && openStatus !== 'idle';
             const isFolderOpening = folderOpeningId === l.id && folderStatus !== 'idle';
             const disabled =
