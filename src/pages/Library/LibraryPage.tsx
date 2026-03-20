@@ -65,16 +65,21 @@ export function LibraryPage() {
   }
 
   const [launchingId, setLaunchingId] = useState<string | null>(null);
-  const [launchToast, setLaunchToast] = useState<string | null>(null);
+  const [launchOverlay, setLaunchOverlay] = useState<{ title: string; phase: 'opening' | 'launched' } | null>(null);
 
   async function handlePlay(game: Game) {
     setLaunchingId(game.id);
+    setLaunchOverlay({ title: game.title, phase: 'opening' });
     const res = await launchGame(game);
     setLaunchingId(null);
-    if (!res.ok) { window.alert(res.message); return; }
+    if (!res.ok) {
+      setLaunchOverlay(null);
+      window.alert(res.message);
+      return;
+    }
     markPlayed(game.id);
-    setLaunchToast(game.title);
-    setTimeout(() => setLaunchToast(null), 3000);
+    setLaunchOverlay({ title: game.title, phase: 'launched' });
+    setTimeout(() => setLaunchOverlay(null), 2500);
   }
 
   const preparedGames = useMemo(
@@ -192,10 +197,23 @@ export function LibraryPage() {
           ))}
         </div>
       )}
-      {launchToast && (
-        <div className={css.toast}>
-          <span className={css.toastIcon}>▶</span>
-          <span><span className={css.toastTitle}>{launchToast}</span> lancé</span>
+      {launchOverlay && (
+        <div className={css.launchOverlay}>
+          <div className={css.launchCard}>
+            {launchOverlay.phase === 'opening' ? (
+              <>
+                <div className={css.launchSpinner} />
+                <div className={css.launchText}>Ouverture de</div>
+                <div className={css.launchTitle}>{launchOverlay.title}</div>
+              </>
+            ) : (
+              <>
+                <div className={css.launchCheck}>✓</div>
+                <div className={css.launchTitle}>{launchOverlay.title}</div>
+                <div className={css.launchText}>lancé</div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
