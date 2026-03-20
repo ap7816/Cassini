@@ -62,6 +62,26 @@ fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
     launcher_scan::scan_launchers()
 }
 
+#[tauri::command]
+fn launch_battlenet_game(uid: String) -> Result<(), String> {
+    let candidates = [
+        r"C:\Program Files (x86)\Battle.net\Battle.net.exe",
+        r"C:\Program Files\Battle.net\Battle.net.exe",
+    ];
+
+    let exe = candidates
+        .iter()
+        .find(|p| std::path::Path::new(p).exists())
+        .ok_or_else(|| "Battle.net.exe introuvable".to_string())?;
+
+    std::process::Command::new(exe)
+        .arg(format!("--exec=launch {uid}"))
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -75,7 +95,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

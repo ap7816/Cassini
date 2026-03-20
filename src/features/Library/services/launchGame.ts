@@ -1,5 +1,5 @@
 import type { Game } from '../../types';
-import { isTauri } from '@tauri-apps/api/core';
+import { isTauri, invoke } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
 
 export type LaunchResult =
@@ -19,6 +19,13 @@ function isLocalWindowsPath(input: string): boolean {
 async function openExternal(target: string): Promise<void> {
   // Desktop (Tauri)
   if (isTauri()) {
+    // Battle.net : lancer via Battle.net.exe --game=<uid>
+    const battlenetMatch = target.match(/^battlenet:\/\/([^/]+)$/);
+    if (battlenetMatch) {
+      await invoke('launch_battlenet_game', { uid: battlenetMatch[1] });
+      return;
+    }
+
     if (isUrlTarget(target)) {
       await openUrl(target);
       return;
