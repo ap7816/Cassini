@@ -12,11 +12,12 @@ type Props = {
   onToggleFavorite: (id: string) => void;
   onSetImageUrl: (id: string, url: string | null) => void;
   rawgApiKey: string;
+  isLaunching?: boolean;
 };
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
-export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey, isLaunching = false }: Props) {
   const { t } = useTranslation();
 
   const canPlay = Boolean(game.installed && game.launchUrl);
@@ -118,12 +119,12 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
           <div className={css.actions}>
             <button
               type="button"
-              className={css.play}
+              className={[css.play, isLaunching ? css.playLaunching : ''].join(' ')}
               onClick={() => onPlay(game)}
-              disabled={!canPlay}
+              disabled={!canPlay || isLaunching}
               title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
             >
-              {t('gameCard.play')}
+              {isLaunching ? 'Opening...' : t('gameCard.play')}
             </button>
 
             <button

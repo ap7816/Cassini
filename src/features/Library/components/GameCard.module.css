@@ -358,6 +358,7 @@
   display: grid;
   place-items: center;
   box-shadow: none;
+  position: relative;
   transition:
     background 120ms ease,
     transform 120ms ease;
@@ -371,6 +372,31 @@
 .play:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.playLaunching {
+  cursor: progress;
+  pointer-events: none;
+  opacity: 0.85;
+  padding-left: 28px;
+}
+
+.playLaunching::before {
+  content: '';
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: spinPlay 700ms linear infinite;
+}
+
+@keyframes spinPlay {
+  to { transform: translateY(-50%) rotate(360deg); }
 }
 
 .remove {

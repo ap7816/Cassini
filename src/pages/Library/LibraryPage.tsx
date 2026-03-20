@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
@@ -64,10 +64,17 @@ export function LibraryPage() {
     setSearchParams(next, { replace: true });
   }
 
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [launchToast, setLaunchToast] = useState<string | null>(null);
+
   async function handlePlay(game: Game) {
+    setLaunchingId(game.id);
     const res = await launchGame(game);
+    setLaunchingId(null);
     if (!res.ok) { window.alert(res.message); return; }
     markPlayed(game.id);
+    setLaunchToast(game.title);
+    setTimeout(() => setLaunchToast(null), 3000);
   }
 
   const preparedGames = useMemo(
@@ -180,8 +187,15 @@ export function LibraryPage() {
               onToggleFavorite={toggleFavorite}
               onSetImageUrl={setGameImageUrl}
               rawgApiKey={settings.rawgApiKey}
+              isLaunching={launchingId === g.id}
             />
           ))}
+        </div>
+      )}
+      {launchToast && (
+        <div className={css.toast}>
+          <span className={css.toastIcon}>▶</span>
+          <span><span className={css.toastTitle}>{launchToast}</span> lancé</span>
         </div>
       )}
     </div>
