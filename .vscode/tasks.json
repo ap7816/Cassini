@@ -67,6 +67,27 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "ArcHive: Release (tag + push)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "TAG=${input:releaseTag} && git tag $TAG && git push origin $TAG && echo \"Release $TAG pushed — build en cours sur GitHub Actions\""
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "releaseTag",
+      "type": "promptString",
+      "description": "Nom du tag de release (ex: v0.8.0)",
+      "default": "v0.8.0"
     }
   ]
 }
