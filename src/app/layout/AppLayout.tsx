@@ -4,6 +4,7 @@ import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
+import { useUpdater } from '../../features/updater/useUpdater';
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -41,6 +42,7 @@ export function AppLayout() {
     .join(' ');
 
   const { settings } = useAppSettings();
+  useUpdater();
 
   type CSSVarStyle = React.CSSProperties & {
     ['--app-bg-image']?: string;

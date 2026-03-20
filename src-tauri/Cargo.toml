@@ -35,3 +35,5 @@ windows = { version = "0.58", features = [
 ] }
 chrono = "0.4"
 tauri-plugin-log = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"

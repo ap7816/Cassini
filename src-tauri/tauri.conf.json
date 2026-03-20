@@ -21,6 +21,14 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERCRTg5RkEzNEIxRjFEMkQKUldRdEhSOUxvNS9vMncxOFNNVjdwcGZmZFpKNGQxODNGWmtsejY0ampPQjdIbStNUWtXV2RuVmkK",
+      "endpoints": [
+        "https://github.com/apoumier/ArcHive/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
