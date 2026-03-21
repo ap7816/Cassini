@@ -50,15 +50,31 @@ jobs:
           prerelease: false
           updaterJsonKeepUniversal: true
 
-      - name: Push latest.json to ArcHive-updates
+      - name: Publish to ArcHive-updates
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          gh release download ${{ github.ref_name }} --repo apoumier/ArcHive --pattern "latest.json" --output latest.json
-          $bytes = [System.IO.File]::ReadAllBytes("latest.json")
+          $tag = "${{ github.ref_name }}"
+
+          # Télécharger les artefacts depuis la release privée
+          gh release download $tag --repo apoumier/ArcHive --pattern "*.msi" --pattern "*.msi.sig" --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
+
+          # Créer une release publique dans ArcHive-updates
+          gh release create $tag --repo apoumier/ArcHive-updates --title "ArcHive $tag" --notes "Voir les commits pour les changements." artifacts/*
+
+          # Mettre à jour les URLs dans latest.json pour pointer vers ArcHive-updates
+          $json = Get-Content artifacts/latest.json | ConvertFrom-Json
+          $json.platforms.PSObject.Properties | ForEach-Object {
+            $_.Value.url = $_.Value.url -replace "apoumier/ArcHive/releases/download", "apoumier/ArcHive-updates/releases/download"
+          }
+          $updated = $json | ConvertTo-Json -Depth 10
+          Set-Content -Path latest_public.json -Value $updated
+
+          # Uploader latest.json dans le repo ArcHive-updates
+          $bytes = [System.IO.File]::ReadAllBytes("latest_public.json")
           $base64 = [System.Convert]::ToBase64String($bytes)
           $sha = gh api repos/apoumier/ArcHive-updates/contents/latest.json --jq '.sha' 2>$null
-          $body = @{ message = "chore: update latest.json for ${{ github.ref_name }}"; content = $base64 }
+          $body = @{ message = "chore: update latest.json for $tag"; content = $base64 }
           if ($sha) { $body.sha = $sha.Trim() }
           $body | ConvertTo-Json | gh api repos/apoumier/ArcHive-updates/contents/latest.json --method PUT --input -

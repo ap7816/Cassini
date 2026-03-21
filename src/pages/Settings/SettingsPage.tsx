@@ -75,7 +75,8 @@ export function SettingsPage() {
   const [rawgKeySaved, setRawgKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'error'>('idle');
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
@@ -93,7 +94,21 @@ export function SettingsPage() {
         { title: 'Mise à jour disponible', kind: 'info', okLabel: 'Mettre à jour', cancelLabel: 'Plus tard' },
       );
       if (!yes) return;
-      await update.downloadAndInstall();
+      setUpdateStatus('downloading');
+      setDownloadProgress(0);
+      let downloaded = 0;
+      let total = 0;
+      await update.downloadAndInstall((event) => {
+        if (event.event === 'Started') {
+          total = event.data.contentLength ?? 0;
+          console.info('[updater] download started, size:', total);
+        } else if (event.event === 'Progress') {
+          downloaded += event.data.chunkLength;
+          if (total > 0) setDownloadProgress(Math.round((downloaded / total) * 100));
+        } else if (event.event === 'Finished') {
+          console.info('[updater] download finished');
+        }
+      });
       await relaunch();
     } catch (e) {
       console.error('[update] erreur:', e);
@@ -319,9 +334,10 @@ export function SettingsPage() {
             type="button"
             className={updateStatus === 'error' ? css.danger : css.primary}
             onClick={() => { void handleCheckUpdate(); }}
-            disabled={updateStatus === 'checking'}
+            disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
           >
             {updateStatus === 'checking' ? t('settings.updateChecking')
+              : updateStatus === 'downloading' ? `Téléchargement... ${downloadProgress}%`
               : updateStatus === 'upToDate' ? t('settings.updateUpToDate')
               : updateStatus === 'error' ? t('settings.updateError')
               : t('settings.updateCheck')}
