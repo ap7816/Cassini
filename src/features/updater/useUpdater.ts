@@ -8,6 +8,7 @@ export function useUpdater() {
     async function checkUpdate() {
       try {
         const update = await check();
+        console.info('[updater] check result:', update);
         if (!update?.available) return;
 
         const yes = await ask(
@@ -19,8 +20,8 @@ export function useUpdater() {
 
         await update.downloadAndInstall();
         await relaunch();
-      } catch {
-        // Silently ignore update errors (offline, etc.)
+      } catch (e) {
+        console.error('[updater] error:', e);
       }
     }
 
