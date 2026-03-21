@@ -94,7 +94,8 @@ export function SettingsPage() {
       if (!yes) return;
       await update.downloadAndInstall();
       await relaunch();
-    } catch {
+    } catch (e) {
+      console.error('[update] erreur:', e);
       setUpdateStatus('error');
       setTimeout(() => setUpdateStatus('idle'), 3000);
     }
