@@ -79,6 +79,7 @@
     },
     "log:default",
     "dialog:allow-open",
-    "dialog:allow-confirm"
+    "dialog:allow-confirm",
+    "updater:default"
   ]
 }
