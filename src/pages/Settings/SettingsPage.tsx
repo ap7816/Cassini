@@ -77,6 +77,7 @@ export function SettingsPage() {
   const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
@@ -111,9 +112,11 @@ export function SettingsPage() {
       });
       await relaunch();
     } catch (e) {
-      console.error('[update] erreur:', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('[update] erreur:', msg);
+      setUpdateError(msg);
       setUpdateStatus('error');
-      setTimeout(() => setUpdateStatus('idle'), 3000);
+      setTimeout(() => { setUpdateStatus('idle'); setUpdateError(null); }, 6000);
     }
   }
 
@@ -342,6 +345,9 @@ export function SettingsPage() {
               : updateStatus === 'error' ? t('settings.updateError')
               : t('settings.updateCheck')}
           </button>
+          {updateError && (
+            <div className={css.updateErrorMsg}>{updateError}</div>
+          )}
         </div>
       </div>
       )}
