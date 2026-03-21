@@ -85,7 +85,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          <div className={css.muted}>v0.8.9</div>
+          <div className={css.muted}>v0.9.0</div>
         </div>
       </aside>
 
