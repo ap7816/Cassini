@@ -23,7 +23,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE3MzA3Nzk1MzM4NzEyREEKUldUYUVvY3psWGN3RnpYczJnWWtQZFloSVNBdWltUjZDS2N1Wjg2aVVzNVNCVkVlMHp6Z0FCVmoK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU3QjgwQjRGNDJERENDRkEKUldUNnpOMUNUd3U0NTlQSWIwajVOd2FFUGI5Um1oUXIycWhNTzh2ck9hcHFQVmsvcUVaeTZSK3YK",
       "endpoints": [
         "https://raw.githubusercontent.com/apoumier/ArcHive-updates/main/latest.json"
       ]
