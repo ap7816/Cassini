@@ -7,7 +7,8 @@ export function useUpdater() {
   useEffect(() => {
     async function checkUpdate() {
       try {
-        const update = await check();
+        const token = import.meta.env.VITE_UPDATER_TOKEN as string | undefined;
+        const update = await check(token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
         console.info('[updater] check result:', update);
         if (!update?.available) return;
 

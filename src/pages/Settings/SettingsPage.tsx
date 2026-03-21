@@ -80,7 +80,8 @@ export function SettingsPage() {
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
     try {
-      const update = await check();
+      const token = import.meta.env.VITE_UPDATER_TOKEN as string | undefined;
+      const update = await check(token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
       if (!update?.available) {
         setUpdateStatus('upToDate');
         setTimeout(() => setUpdateStatus('idle'), 3000);
