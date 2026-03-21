@@ -2,6 +2,9 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { confirm } from '@tauri-apps/plugin-dialog';
+import { check } from '@tauri-apps/plugin-updater';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { relaunch } from '@tauri-apps/plugin-process';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
@@ -72,6 +75,30 @@ export function SettingsPage() {
   const [rawgKeySaved, setRawgKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'error'>('idle');
+
+  async function handleCheckUpdate() {
+    setUpdateStatus('checking');
+    try {
+      const update = await check();
+      if (!update?.available) {
+        setUpdateStatus('upToDate');
+        setTimeout(() => setUpdateStatus('idle'), 3000);
+        return;
+      }
+      setUpdateStatus('idle');
+      const yes = await ask(
+        `Une nouvelle version est disponible : ${update.version}\n\n${update.body ?? ''}\n\nVoulez-vous mettre à jour maintenant ?`,
+        { title: 'Mise à jour disponible', kind: 'info', okLabel: 'Mettre à jour', cancelLabel: 'Plus tard' },
+      );
+      if (!yes) return;
+      await update.downloadAndInstall();
+      await relaunch();
+    } catch {
+      setUpdateStatus('error');
+      setTimeout(() => setUpdateStatus('idle'), 3000);
+    }
+  }
 
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -274,6 +301,30 @@ export function SettingsPage() {
           </select>
         </div>
         )}
+      </div>
+      )}
+
+      {/* Mises à jour */}
+      {matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.updateLabel')}</div>
+            <div className={css.hint}>{t('settings.updateHint')}</div>
+          </div>
+          <button
+            type="button"
+            className={updateStatus === 'error' ? css.danger : css.primary}
+            onClick={() => { void handleCheckUpdate(); }}
+            disabled={updateStatus === 'checking'}
+          >
+            {updateStatus === 'checking' ? t('settings.updateChecking')
+              : updateStatus === 'upToDate' ? t('settings.updateUpToDate')
+              : updateStatus === 'error' ? t('settings.updateError')
+              : t('settings.updateCheck')}
+          </button>
+        </div>
       </div>
       )}
 
