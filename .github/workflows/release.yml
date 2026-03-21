@@ -49,3 +49,16 @@ jobs:
           releaseDraft: false
           prerelease: false
           updaterJsonKeepUniversal: true
+
+      - name: Push latest.json to ArcHive-updates
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          gh release download ${{ github.ref_name }} --repo apoumier/ArcHive --pattern "latest.json" --output latest.json
+          $bytes = [System.IO.File]::ReadAllBytes("latest.json")
+          $base64 = [System.Convert]::ToBase64String($bytes)
+          $sha = gh api repos/apoumier/ArcHive-updates/contents/latest.json --jq '.sha' 2>$null
+          $body = @{ message = "chore: update latest.json for ${{ github.ref_name }}"; content = $base64 }
+          if ($sha) { $body.sha = $sha.Trim() }
+          $body | ConvertTo-Json | gh api repos/apoumier/ArcHive-updates/contents/latest.json --method PUT --input -
