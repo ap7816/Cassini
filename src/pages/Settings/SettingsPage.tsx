@@ -146,6 +146,8 @@ export function SettingsPage() {
 
   function handleClearCache() {
     clearRawgCache();
+    setRawgApiKey('');
+    setRawgKeyInput('');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 2000);
   }
