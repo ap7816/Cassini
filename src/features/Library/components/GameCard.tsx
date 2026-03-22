@@ -37,24 +37,25 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   const isSteam = game.platform === 'Steam';
 
-  // Ref pour accéder à rawgApiKey dans l'effet Steam sans l'ajouter aux deps
+  // Ref pour rawgApiKey : permet au fallback Steam (sans steamAppId) de lire la clé
+  // sans l'ajouter aux deps de l'effet Steam
   const rawgApiKeyRef = useRef(rawgApiKey);
   useEffect(() => { rawgApiKeyRef.current = rawgApiKey; }, [rawgApiKey]);
 
-  // Jeux Steam : CDN en priorité, RAWG en fallback si placeholder — rawgApiKey hors deps
+  // Jeux Steam :
+  //  - steamAppId présent → CDN Steam, si 404 → placeholder (jamais RAWG)
+  //  - steamAppId absent  → placeholder, RAWG via ref si clé dispo
   useEffect(() => {
     if (game.customImageUrl || !isSteam) return;
-    fetchRawgImage(game.title, '', game.steamAppId ?? undefined).then((url) => {
-      if (url) {
-        setImgSrc(url);
-      } else if (rawgApiKeyRef.current) {
-        fetchRawgImage(game.title, rawgApiKeyRef.current).then((rawgUrl) => {
-          setImgSrc(rawgUrl ?? null);
-        });
-      } else {
-        setImgSrc(null);
-      }
-    });
+    if (game.steamAppId) {
+      fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
+        setImgSrc(url ?? null);
+      });
+    } else if (rawgApiKeyRef.current) {
+      fetchRawgImage(game.title, rawgApiKeyRef.current).then((url) => {
+        setImgSrc(url ?? null);
+      });
+    }
   }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
 
   // Jeux Epic / Battle.net : RAWG avec clé API
@@ -67,7 +68,12 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   function handleImgError() {
     if (!imgSrc) return;
-    // CDN Steam 404 → RAWG si clé dispo, sinon placeholder
+    // Steam avec steamAppId : CDN 404 → placeholder uniquement (pas de RAWG)
+    if (isSteam) {
+      setImgSrc(null);
+      return;
+    }
+    // Epic/Battle.net : fallback RAWG si clé dispo
     if (rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
         setImgSrc(url ?? null);
