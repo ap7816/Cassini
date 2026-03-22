@@ -64,18 +64,31 @@ function convertNumerals(title: string): string | null {
 
 type RawgResult = { name?: string; background_image?: string | null };
 
+function isAllCaps(s: string): boolean {
+  return s === s.toUpperCase() && s !== s.toLowerCase();
+}
+
 function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean): string | null {
   if (!results.length) return null;
   const a = normalize(title);
 
+  // Déprioritiser les noms ALL_CAPS (ex: "FORTNITE" après "Fortnite")
+  const sorted = [...results].sort((x, y) => {
+    const xCaps = x.name ? isAllCaps(x.name) : false;
+    const yCaps = y.name ? isAllCaps(y.name) : false;
+    if (xCaps && !yCaps) return 1;
+    if (!xCaps && yCaps) return -1;
+    return 0;
+  });
+
   // 1. Exact normalized match
-  const exact = results.find((r) => r.name && normalize(r.name) === a);
+  const exact = sorted.find((r) => r.name && normalize(r.name) === a);
   if (exact) return exact.background_image ?? null;
 
   // 2. All significant words of the searched title are present in the found title
   const words = a.split(' ').filter((w) => w.length > 2);
   if (words.length > 0) {
-    const wordMatch = results.find((r) => {
+    const wordMatch = sorted.find((r) => {
       if (!r.name) return false;
       const b = normalize(r.name);
       return words.every((w) => b.includes(w));
@@ -83,8 +96,8 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
     if (wordMatch) return wordMatch.background_image ?? null;
   }
 
-  // 3. RAWG already filtered by search_exact — trust its first result
-  if (trustFirst) return results[0].background_image ?? null;
+  // 3. RAWG already filtered by search_exact — trust its first non-all-caps result
+  if (trustFirst) return sorted[0].background_image ?? null;
 
   return null;
 }
