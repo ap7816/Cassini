@@ -32,6 +32,36 @@ function normalize(s: string): string {
   return s.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
 }
 
+const ARABIC_TO_ROMAN: [number, string][] = [
+  [10, 'X'], [9, 'IX'], [8, 'VIII'], [7, 'VII'], [6, 'VI'],
+  [5, 'V'], [4, 'IV'], [3, 'III'], [2, 'II'], [1, 'I'],
+];
+const ROMAN_TO_ARABIC: [RegExp, string][] = [
+  [/\bXI\b/gi, '11'], [/\bX\b/gi, '10'], [/\bIX\b/gi, '9'],
+  [/\bVIII\b/gi, '8'], [/\bVII\b/gi, '7'], [/\bVI\b/gi, '6'],
+  [/\bV\b/gi, '5'], [/\bIV\b/gi, '4'], [/\bIII\b/gi, '3'],
+  [/\bII\b/gi, '2'], [/\bI\b/gi, '1'],
+];
+
+function convertNumerals(title: string): string | null {
+  // Arabic → Roman
+  const withRoman = title.replace(/\b(\d+)\b/g, (_, n) => {
+    const num = parseInt(n, 10);
+    const pair = ARABIC_TO_ROMAN.find(([v]) => v === num);
+    return pair ? pair[1] : n;
+  });
+  if (withRoman !== title) return withRoman;
+
+  // Roman → Arabic
+  let withArabic = title;
+  for (const [regex, arabic] of ROMAN_TO_ARABIC) {
+    withArabic = withArabic.replace(regex, arabic);
+  }
+  if (withArabic !== title) return withArabic;
+
+  return null;
+}
+
 type RawgResult = { name?: string; background_image?: string | null };
 
 function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean): string | null {
@@ -92,6 +122,23 @@ export async function fetchRawgImage(title: string, apiKey: string): Promise<str
         console.log(`[RAWG] "${title}" — pass 2 (sans search_exact) → ${results2.length} résultat(s)`, results2.map((r) => r.name));
         imageUrl = pickBestMatch(title, results2, false);
         console.log(`[RAWG] "${title}" — image choisie (pass 2):`, imageUrl ?? 'aucune');
+      }
+    }
+
+    // Third pass: retry with numeral conversion (3 ↔ III)
+    if (imageUrl === null) {
+      const altTitle = convertNumerals(title);
+      if (altTitle) {
+        console.log(`[RAWG] "${title}" — pass 3 (numéraux convertis: "${altTitle}")`);
+        const url3 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(altTitle)}&page_size=10&search_exact=true&ordering=-added`;
+        const res3 = await fetch(url3);
+        if (res3.ok) {
+          const data3 = (await res3.json()) as { results?: RawgResult[] };
+          const results3 = data3.results ?? [];
+          console.log(`[RAWG] "${altTitle}" — pass 3 → ${results3.length} résultat(s)`, results3.map((r) => r.name));
+          imageUrl = pickBestMatch(altTitle, results3, results3.length > 0);
+          console.log(`[RAWG] "${altTitle}" — image choisie (pass 3):`, imageUrl ?? 'aucune');
+        }
       }
     }
 
