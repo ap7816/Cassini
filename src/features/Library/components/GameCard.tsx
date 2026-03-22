@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
-import { fetchRawgImage } from '../services/rawgService';
+import { fetchRawgImage, steamHeaderUrl } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -30,27 +30,36 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     return t('gameCard.lastPlayed', { date: lastPlayedFormatter.format(d) });
   }, [game.lastPlayedAt, t]);
 
-  const [imgFailed, setImgFailed] = useState(false);
-  const [rawgUrl, setRawgUrl] = useState<string | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
 
-  const bannerUrl = game.customImageUrl ?? rawgUrl;
-  const showFallback = !bannerUrl || imgFailed;
+  const bannerUrl = game.customImageUrl ?? imgSrc;
+  const showFallback = !bannerUrl;
 
   useEffect(() => {
-    if (game.customImageUrl || !rawgApiKey) return;
-    setRawgUrl(null);
-    setImgFailed(false);
+    if (game.customImageUrl) return;
+    setImgSrc(null);
     fetchRawgImage(game.title, rawgApiKey, game.steamAppId).then((url) => {
-      if (url) setRawgUrl(url);
+      if (url) setImgSrc(url);
     });
   }, [game.title, game.customImageUrl, game.steamAppId, rawgApiKey]);
+
+  function handleImgError() {
+    if (!imgSrc) return;
+    // library_600x900.jpg introuvable → essayer header.jpg
+    if (imgSrc.includes('library_600x900') && game.steamAppId) {
+      setImgSrc(steamHeaderUrl(game.steamAppId));
+      return;
+    }
+    // Tout a échoué → placeholder
+    setImgSrc(null);
+  }
 
   function handleSetImage() {
     const current = game.customImageUrl ?? '';
     const url = window.prompt(t('gameCard.imageUrlPrompt'), current);
     if (url === null) return;
     onSetImageUrl(game.id, url.trim() || null);
-    setImgFailed(false);
+    setImgSrc(null);
   }
 
   return (
@@ -61,7 +70,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             className={css.bannerImg}
             src={bannerUrl!}
             alt=""
-            onError={() => setImgFailed(true)}
+            onError={handleImgError}
           />
           {game.customImageUrl && (
             <button

@@ -139,19 +139,12 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   return null;
 }
 
-async function fetchSteamCdnImage(appId: string): Promise<string | null> {
-  // Essaye d'abord le portrait portrait (600x900), puis le header (460x215)
-  const candidates = [
-    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`,
-    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`,
-  ];
-  for (const url of candidates) {
-    try {
-      const res = await fetch(url, { method: 'HEAD' });
-      if (res.ok) return url;
-    } catch { /* essayer le suivant */ }
-  }
-  return null;
+export function steamCdnUrl(appId: string): string {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
+}
+
+export function steamHeaderUrl(appId: string): string {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
 }
 
 export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
@@ -159,15 +152,14 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
   if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
 
-  // Pour les jeux Steam : CDN Steam en priorité (image officielle, sans API key)
+  // Pour les jeux Steam : CDN Steam en priorité — pas de HEAD check (bloqué par CORS)
+  // Le fallback header.jpg est géré côté UI (onError dans GameCard)
   if (steamAppId) {
-    const steamUrl = await fetchSteamCdnImage(steamAppId);
-    if (steamUrl) {
-      console.log(`[Steam CDN] "${title}" → ${steamUrl}`);
-      memoryCache.set(cacheKey, steamUrl);
-      saveCache(memoryCache);
-      return steamUrl;
-    }
+    const steamUrl = steamCdnUrl(steamAppId);
+    console.log(`[Steam CDN] "${title}" → ${steamUrl}`);
+    memoryCache.set(cacheKey, steamUrl);
+    saveCache(memoryCache);
+    return steamUrl;
   }
 
   if (!apiKey) return null;
