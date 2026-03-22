@@ -19,7 +19,7 @@
 /* ── Bannière Steam header.jpg ── */
 .banner {
   width: 100%;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   position: relative;
 }
@@ -59,7 +59,7 @@
 /* ── Fallback lettre si pas d'image Steam ── */
 .bannerFallback {
   width: 100%;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
