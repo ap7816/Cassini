@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
-import { fetchRawgImage } from '../services/rawgService';
+import { fetchRawgImage, setRawgCacheEntry } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -37,18 +37,20 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   useEffect(() => {
     if (game.customImageUrl) return;
-    setImgSrc(null);
+    // Ne pas reset à null : garder l'image actuelle pendant le chargement
     fetchRawgImage(game.title, rawgApiKey, game.steamAppId).then((url) => {
-      if (url) setImgSrc(url);
+      setImgSrc(url ?? null);
     });
   }, [game.title, game.customImageUrl, game.steamAppId, rawgApiKey]);
 
   function handleImgError() {
     if (!imgSrc) return;
-    // header.jpg introuvable → essayer RAWG en dernier recours
+    // header.jpg Steam introuvable → RAWG en fallback
     if (imgSrc.includes('header.jpg') && game.steamAppId && rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
-        setImgSrc(url);
+        // Stocker sous la clé steam: pour éviter de retenter le CDN à chaque fois
+        if (game.steamAppId) setRawgCacheEntry(`steam:${game.steamAppId}`, url ?? null);
+        setImgSrc(url ?? null);
       });
       return;
     }

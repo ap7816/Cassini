@@ -28,6 +28,11 @@ export function clearRawgCache() {
   try { window.localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
 }
 
+export function setRawgCacheEntry(key: string, value: string | null) {
+  memoryCache.set(key, value);
+  saveCache(memoryCache);
+}
+
 function normalize(s: string): string {
   return s.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
 }
