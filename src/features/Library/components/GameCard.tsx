@@ -68,12 +68,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   function handleImgError() {
     if (!imgSrc) return;
-    // Steam avec steamAppId : CDN 404 → placeholder uniquement (pas de RAWG)
-    if (isSteam) {
-      setImgSrc(null);
-      return;
-    }
-    // Epic/Battle.net : fallback RAWG si clé dispo
+    // CDN 404 (Steam ou autre) → RAWG si clé dispo, sinon placeholder
     if (rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
         setImgSrc(url ?? null);
