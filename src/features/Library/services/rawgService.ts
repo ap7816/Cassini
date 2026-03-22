@@ -1,4 +1,4 @@
-const CACHE_KEY = 'arctive.rawg.cache.v3';
+const CACHE_KEY = 'arctive.rawg.cache.v4';
 
 const memoryCache = new Map<string, string | null>();
 
@@ -83,8 +83,8 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   const a = normalize(title);
   const titleIsAllCaps = isAllCaps(title);
 
-  // Trier : si le titre cherché n'est PAS all-caps, déprioritiser les résultats ALL_CAPS
-  // et préférer ceux dont la casse ressemble le plus au titre cherché
+  // Trier : déprioritiser ALL_CAPS si le titre ne l'est pas, puis par score de casse,
+  // puis par longueur du nom (plus court = plus proche)
   const sorted = [...results].sort((x, y) => {
     if (!titleIsAllCaps) {
       const xCaps = x.name ? isAllCaps(x.name) : false;
@@ -92,17 +92,37 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
       if (xCaps && !yCaps) return 1;
       if (!xCaps && yCaps) return -1;
     }
-    // Préférer le résultat dont la casse ressemble le plus au titre
     const scoreX = x.name ? casingScore(title, x.name) : 0;
     const scoreY = y.name ? casingScore(title, y.name) : 0;
-    return scoreY - scoreX;
+    if (scoreY !== scoreX) return scoreY - scoreX;
+    // À score égal, préférer le nom le plus court (ex: "Deadlock (Valve)" avant "Deadlock II: Shrine Wars")
+    return (x.name?.length ?? 999) - (y.name?.length ?? 999);
   });
 
-  // 1. Exact normalized match
-  const exact = sorted.find((r) => r.name && normalize(r.name) === a);
+  // 1. Match exact sensible à la casse (ex: "Deadlock" === "Deadlock")
+  const caseSensitive = sorted.find((r) => r.name === title);
+  if (caseSensitive) return caseSensitive.background_image ?? null;
+
+  // 2. Match exact normalisé — en ignorant les ALL_CAPS si le titre ne l'est pas
+  // (évite de prendre "DEADLOCK" quand on cherche "Deadlock")
+  const exact = sorted.find((r) => {
+    if (!r.name) return false;
+    if (!titleIsAllCaps && isAllCaps(r.name)) return false;
+    return normalize(r.name) === a;
+  });
   if (exact) return exact.background_image ?? null;
 
-  // 2. All significant words of the searched title are present in the found title
+  // 3. Le nom du résultat COMMENCE par le titre cherché
+  // (ex: "Deadlock (Valve)" commence par "Deadlock")
+  const startsWith = sorted.find((r) => {
+    if (!r.name) return false;
+    if (!titleIsAllCaps && isAllCaps(r.name)) return false;
+    const b = normalize(r.name);
+    return b === a || b.startsWith(a + ' ');
+  });
+  if (startsWith) return startsWith.background_image ?? null;
+
+  // 4. Tous les mots significatifs du titre cherché sont présents dans le résultat
   const words = a.split(' ').filter((w) => w.length > 2);
   if (words.length > 0) {
     const wordMatch = sorted.find((r) => {
@@ -113,7 +133,7 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
     if (wordMatch) return wordMatch.background_image ?? null;
   }
 
-  // 3. RAWG already filtered by search_exact — trust its first non-all-caps result
+  // 5. En dernier recours, prendre le premier résultat non-ALL_CAPS
   if (trustFirst) return sorted[0].background_image ?? null;
 
   return null;
