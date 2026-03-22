@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
@@ -31,34 +31,32 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
   }, [game.lastPlayedAt, t]);
 
   const [imgSrc, setImgSrc] = useState<string | null>(null);
+  // Ref toujours synchronisée avec imgSrc — utilisée dans les effets sans les déclencher
+  const imgSrcRef = useRef<string | null>(null);
+  imgSrcRef.current = imgSrc;
 
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
   const isSteam = game.platform === 'Steam';
 
-  // Effet 1 — Steam avec steamAppId : CDN uniquement, si 404 → placeholder (jamais RAWG)
+  // Steam avec steamAppId → CDN Steam uniquement, jamais RAWG
   useEffect(() => {
     if (game.customImageUrl || !isSteam || !game.steamAppId) return;
-    fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
-      setImgSrc(url ?? null);
-    });
+    if (imgSrcRef.current !== null) return; // image déjà présente, on ne touche pas
+    fetchRawgImage(game.title, '', game.steamAppId).then((url) => setImgSrc(url ?? null));
   }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
 
-  // Effet 2 — RAWG : Epic/BN + Steam en placeholder (sans steamAppId)
-  // Ne se déclenche QUE si imgSrc est null (pas d'image existante → on ne touche rien)
+  // Epic/BN + Steam sans steamAppId → RAWG uniquement si placeholder (imgSrc = null)
+  // La ref évite de mettre imgSrc dans les deps (pas de re-fetch quand imgSrc change)
   useEffect(() => {
-    if (game.customImageUrl) return;
-    if (imgSrc !== null) return;          // image déjà présente → on ne touche pas
-    if (isSteam && game.steamAppId) return; // Steam avec CDN → jamais RAWG
-    if (!rawgApiKey) return;
-    fetchRawgImage(game.title, rawgApiKey).then((url) => {
-      setImgSrc(url ?? null);
-    });
-  }, [game.title, game.customImageUrl, imgSrc, isSteam, game.steamAppId, rawgApiKey]);
+    if (game.customImageUrl || (isSteam && game.steamAppId) || !rawgApiKey) return;
+    if (imgSrcRef.current !== null) return; // image existante → on ne touche pas
+    fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+  }, [game.title, game.customImageUrl, game.steamAppId, isSteam, rawgApiKey]);
 
   function handleImgError() {
-    // Steam CDN 404 → placeholder (pas de fallback RAWG)
+    // CDN 404 → placeholder (pas de fallback RAWG pour Steam)
     setImgSrc(null);
   }
 
