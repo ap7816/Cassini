@@ -68,17 +68,34 @@ function isAllCaps(s: string): boolean {
   return s === s.toUpperCase() && s !== s.toLowerCase();
 }
 
+function casingScore(title: string, result: string): number {
+  // Score de 0 à 1 : proportion de caractères avec la même casse
+  let matches = 0;
+  const len = Math.min(title.length, result.length);
+  for (let i = 0; i < len; i++) {
+    if (title[i] === result[i]) matches++;
+  }
+  return len > 0 ? matches / len : 0;
+}
+
 function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean): string | null {
   if (!results.length) return null;
   const a = normalize(title);
+  const titleIsAllCaps = isAllCaps(title);
 
-  // Déprioritiser les noms ALL_CAPS (ex: "FORTNITE" après "Fortnite")
+  // Trier : si le titre cherché n'est PAS all-caps, déprioritiser les résultats ALL_CAPS
+  // et préférer ceux dont la casse ressemble le plus au titre cherché
   const sorted = [...results].sort((x, y) => {
-    const xCaps = x.name ? isAllCaps(x.name) : false;
-    const yCaps = y.name ? isAllCaps(y.name) : false;
-    if (xCaps && !yCaps) return 1;
-    if (!xCaps && yCaps) return -1;
-    return 0;
+    if (!titleIsAllCaps) {
+      const xCaps = x.name ? isAllCaps(x.name) : false;
+      const yCaps = y.name ? isAllCaps(y.name) : false;
+      if (xCaps && !yCaps) return 1;
+      if (!xCaps && yCaps) return -1;
+    }
+    // Préférer le résultat dont la casse ressemble le plus au titre
+    const scoreX = x.name ? casingScore(title, x.name) : 0;
+    const scoreY = y.name ? casingScore(title, y.name) : 0;
+    return scoreY - scoreX;
   });
 
   // 1. Exact normalized match
@@ -102,51 +119,45 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   return null;
 }
 
-function toTitleCase(s: string): string {
-  return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 export async function fetchRawgImage(title: string, apiKey: string): Promise<string | null> {
   if (!apiKey) return null;
 
-  // Normalise la casse pour RAWG (ex: "DEADLOCK" → "Deadlock")
-  const searchTitle = toTitleCase(title);
   const cacheKey = title.toLowerCase();
   if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
 
   try {
-    // First pass: strict exact search
-    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(searchTitle)}&page_size=10&search_exact=true&ordering=-added`;
+    // First pass: strict exact search with original title
+    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=10&search_exact=true&ordering=-added`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn(`[RAWG] "${searchTitle}" → HTTP ${res.status}`);
+      console.warn(`[RAWG] "${title}" → HTTP ${res.status}`);
       return null;
     }
 
     const data = (await res.json()) as { results?: RawgResult[] };
     const results = data.results ?? [];
 
-    console.log(`[RAWG] "${searchTitle}" — pass 1 (search_exact) → ${results.length} résultat(s)`, results.map((r) => r.name));
+    console.log(`[RAWG] "${title}" — pass 1 (search_exact) → ${results.length} résultat(s)`, results.map((r) => r.name));
 
-    let imageUrl = pickBestMatch(searchTitle, results, results.length > 0);
-    console.log(`[RAWG] "${searchTitle}" — image choisie (pass 1):`, imageUrl ?? 'aucune');
+    let imageUrl = pickBestMatch(title, results, results.length > 0);
+    console.log(`[RAWG] "${title}" — image choisie (pass 1):`, imageUrl ?? 'aucune');
 
     // Second pass: if exact search returned nothing, retry without search_exact
     if (imageUrl === null && results.length === 0) {
-      const url2 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(searchTitle)}&page_size=5`;
+      const url2 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=5`;
       const res2 = await fetch(url2);
       if (res2.ok) {
         const data2 = (await res2.json()) as { results?: RawgResult[] };
         const results2 = data2.results ?? [];
-        console.log(`[RAWG] "${searchTitle}" — pass 2 (sans search_exact) → ${results2.length} résultat(s)`, results2.map((r) => r.name));
-        imageUrl = pickBestMatch(searchTitle, results2, false);
-        console.log(`[RAWG] "${searchTitle}" — image choisie (pass 2):`, imageUrl ?? 'aucune');
+        console.log(`[RAWG] "${title}" — pass 2 (sans search_exact) → ${results2.length} résultat(s)`, results2.map((r) => r.name));
+        imageUrl = pickBestMatch(title, results2, false);
+        console.log(`[RAWG] "${title}" — image choisie (pass 2):`, imageUrl ?? 'aucune');
       }
     }
 
     // Third pass: retry with numeral conversion (3 ↔ III)
     if (imageUrl === null) {
-      const altTitle = convertNumerals(searchTitle);
+      const altTitle = convertNumerals(title);
       if (altTitle) {
         console.log(`[RAWG] "${title}" — pass 3 (numéraux convertis: "${altTitle}")`);
         const url3 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(altTitle)}&page_size=10&search_exact=true&ordering=-added`;
