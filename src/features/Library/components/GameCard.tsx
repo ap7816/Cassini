@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
-import { fetchRawgImage, setRawgCacheEntry } from '../services/rawgService';
+import { fetchRawgImage } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -37,44 +37,28 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   const isSteam = game.platform === 'Steam';
 
-  // Ref pour rawgApiKey : permet au fallback Steam (sans steamAppId) de lire la clé
-  // sans l'ajouter aux deps de l'effet Steam
-  const rawgApiKeyRef = useRef(rawgApiKey);
-  useEffect(() => { rawgApiKeyRef.current = rawgApiKey; }, [rawgApiKey]);
-
-  // Jeux Steam :
-  //  - steamAppId présent → CDN Steam, si 404 → placeholder (jamais RAWG)
-  //  - steamAppId absent  → placeholder, RAWG via ref si clé dispo
+  // Effet 1 — Steam avec steamAppId : CDN uniquement, si 404 → placeholder (jamais RAWG)
   useEffect(() => {
-    if (game.customImageUrl || !isSteam) return;
-    if (game.steamAppId) {
-      fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
-        setImgSrc(url ?? null);
-      });
-    } else if (rawgApiKeyRef.current) {
-      fetchRawgImage(game.title, rawgApiKeyRef.current).then((url) => {
-        setImgSrc(url ?? null);
-      });
-    }
+    if (game.customImageUrl || !isSteam || !game.steamAppId) return;
+    fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
+      setImgSrc(url ?? null);
+    });
   }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
 
-  // Jeux Epic / Battle.net : RAWG avec clé API
+  // Effet 2 — RAWG : Epic/BN + Steam en placeholder (sans steamAppId)
+  // Ne se déclenche QUE si imgSrc est null (pas d'image existante → on ne touche rien)
   useEffect(() => {
-    if (game.customImageUrl || isSteam) return;
+    if (game.customImageUrl) return;
+    if (imgSrc !== null) return;          // image déjà présente → on ne touche pas
+    if (isSteam && game.steamAppId) return; // Steam avec CDN → jamais RAWG
+    if (!rawgApiKey) return;
     fetchRawgImage(game.title, rawgApiKey).then((url) => {
       setImgSrc(url ?? null);
     });
-  }, [game.title, game.customImageUrl, isSteam, rawgApiKey]);
+  }, [game.title, game.customImageUrl, imgSrc, isSteam, game.steamAppId, rawgApiKey]);
 
   function handleImgError() {
-    if (!imgSrc) return;
-    // CDN 404 (Steam ou autre) → RAWG si clé dispo, sinon placeholder
-    if (rawgApiKey) {
-      fetchRawgImage(game.title, rawgApiKey).then((url) => {
-        setImgSrc(url ?? null);
-      });
-      return;
-    }
+    // Steam CDN 404 → placeholder (pas de fallback RAWG)
     setImgSrc(null);
   }
 
