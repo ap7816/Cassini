@@ -50,6 +50,13 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
       setImgSrc(steamHeaderUrl(game.steamAppId));
       return;
     }
+    // header.jpg introuvable → essayer RAWG en dernier recours
+    if (imgSrc.includes('header.jpg') && game.steamAppId && rawgApiKey) {
+      fetchRawgImage(game.title, rawgApiKey).then((url) => {
+        setImgSrc(url);
+      });
+      return;
+    }
     // Tout a échoué → placeholder
     setImgSrc(null);
   }
