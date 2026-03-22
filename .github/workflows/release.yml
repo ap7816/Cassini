@@ -59,14 +59,14 @@ jobs:
 
           # Télécharger les artefacts depuis la release privée
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          gh release download $tag --repo apoumier/ArcHive --pattern "*.msi" --pattern "*.msi.sig" --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
+          gh release download $tag --repo apoumier/ArcHive --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
 
           # Créer ou mettre à jour la release publique dans ArcHive-updates
           $releaseExists = gh release view $tag --repo apoumier/ArcHive-updates 2>$null
           if (-not $releaseExists) {
             gh release create $tag --repo apoumier/ArcHive-updates --title "ArcHive $tag" --notes "Voir les commits pour les changements."
           }
-          gh release upload $tag --repo apoumier/ArcHive-updates artifacts/*.msi artifacts/*.msi.sig artifacts/*.exe artifacts/*.exe.sig --clobber
+          gh release upload $tag --repo apoumier/ArcHive-updates (Get-ChildItem artifacts/*.exe,artifacts/*.exe.sig | Select-Object -ExpandProperty FullName) --clobber
 
           # Mettre à jour les URLs dans latest.json pour pointer vers ArcHive-updates
           $json = Get-Content artifacts/latest.json -Raw | ConvertFrom-Json
