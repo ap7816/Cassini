@@ -32,29 +32,33 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
+  // Steam → CDN uniquement, pas de clé RAWG. Epic/Battle.net → RAWG avec clé.
+  const effectiveApiKey = game.steamAppId ? '' : rawgApiKey;
+
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
   useEffect(() => {
     if (game.customImageUrl) return;
-    // Ne pas reset à null : garder l'image actuelle pendant le chargement
-    fetchRawgImage(game.title, rawgApiKey, game.steamAppId).then((url) => {
+    fetchRawgImage(game.title, effectiveApiKey, game.steamAppId).then((url) => {
       setImgSrc(url ?? null);
     });
-  }, [game.title, game.customImageUrl, game.steamAppId, rawgApiKey]);
+  }, [game.title, game.customImageUrl, game.steamAppId, effectiveApiKey]);
 
   function handleImgError() {
     if (!imgSrc) return;
-    // header.jpg Steam introuvable → RAWG en fallback
-    if (imgSrc.includes('header.jpg') && game.steamAppId && rawgApiKey) {
-      fetchRawgImage(game.title, rawgApiKey).then((url) => {
-        // Stocker sous la clé steam: pour éviter de retenter le CDN à chaque fois
-        if (game.steamAppId) setRawgCacheEntry(`steam:${game.steamAppId}`, url ?? null);
+    // Steam CDN 404 → placeholder uniquement (pas de fallback RAWG pour Steam)
+    if (imgSrc.includes('header.jpg') && game.steamAppId) {
+      setImgSrc(null);
+      return;
+    }
+    // Epic/Battle.net : fallback RAWG si clé dispo
+    if (effectiveApiKey) {
+      fetchRawgImage(game.title, effectiveApiKey).then((url) => {
         setImgSrc(url ?? null);
       });
       return;
     }
-    // Tout a échoué → placeholder
     setImgSrc(null);
   }
 
