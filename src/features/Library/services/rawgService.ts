@@ -140,11 +140,11 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
 }
 
 export function steamCdnUrl(appId: string): string {
-  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
 }
 
-export function steamHeaderUrl(appId: string): string {
-  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
+export function steamPortraitUrl(appId: string): string {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
 }
 
 export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {

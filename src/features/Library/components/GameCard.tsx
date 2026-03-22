@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
-import { fetchRawgImage, steamHeaderUrl } from '../services/rawgService';
+import { fetchRawgImage } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -45,11 +45,6 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   function handleImgError() {
     if (!imgSrc) return;
-    // library_600x900.jpg introuvable → essayer header.jpg
-    if (imgSrc.includes('library_600x900') && game.steamAppId) {
-      setImgSrc(steamHeaderUrl(game.steamAppId));
-      return;
-    }
     // header.jpg introuvable → essayer RAWG en dernier recours
     if (imgSrc.includes('header.jpg') && game.steamAppId && rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
