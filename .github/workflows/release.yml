@@ -83,3 +83,11 @@ jobs:
           $body = @{ message = "chore: update latest.json for $tag"; content = $base64 }
           if ($sha) { $body.sha = $sha.Trim() }
           $body | ConvertTo-Json | gh api repos/apoumier/ArcHive-updates/contents/latest.json --method PUT --input -
+
+          # Nettoyer la release ArcHive : supprimer .sig et latest.json, garder uniquement le .exe
+          $assets = gh release view $tag --repo apoumier/ArcHive --json assets --jq '.assets[].name' 2>$null
+          foreach ($asset in $assets) {
+            if ($asset -match '\.sig$' -or $asset -eq 'latest.json') {
+              gh release delete-asset $tag $asset --repo apoumier/ArcHive --yes 2>$null
+            }
+          }
