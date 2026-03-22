@@ -1,6 +1,5 @@
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
 import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
@@ -45,11 +44,6 @@ export function AppLayout() {
   const { settings } = useAppSettings();
   useUpdater();
 
-  const [appVersion, setAppVersion] = useState<string>('');
-  useEffect(() => {
-    import('@tauri-apps/api/app').then(({ getVersion }) => getVersion()).then(setAppVersion).catch(() => {});
-  }, []);
-
   type CSSVarStyle = React.CSSProperties & {
     ['--app-bg-image']?: string;
     ['--accent']?: string;
@@ -91,7 +85,7 @@ export function AppLayout() {
         </nav>
 
         <div className={css.sidebarFooter}>
-          {appVersion && <div className={css.muted}>v{appVersion}</div>}
+          <div className={css.muted}>v{__APP_VERSION__}</div>
         </div>
       </aside>
 
