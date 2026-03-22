@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
@@ -37,11 +37,23 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   const isSteam = game.platform === 'Steam';
 
-  // Jeux Steam : CDN uniquement, rawgApiKey JAMAIS dans les deps
+  // Ref pour accéder à rawgApiKey dans l'effet Steam sans l'ajouter aux deps
+  const rawgApiKeyRef = useRef(rawgApiKey);
+  useEffect(() => { rawgApiKeyRef.current = rawgApiKey; }, [rawgApiKey]);
+
+  // Jeux Steam : CDN en priorité, RAWG en fallback si placeholder — rawgApiKey hors deps
   useEffect(() => {
     if (game.customImageUrl || !isSteam) return;
     fetchRawgImage(game.title, '', game.steamAppId ?? undefined).then((url) => {
-      setImgSrc(url ?? null);
+      if (url) {
+        setImgSrc(url);
+      } else if (rawgApiKeyRef.current) {
+        fetchRawgImage(game.title, rawgApiKeyRef.current).then((rawgUrl) => {
+          setImgSrc(rawgUrl ?? null);
+        });
+      } else {
+        setImgSrc(null);
+      }
     });
   }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
 
@@ -55,12 +67,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   function handleImgError() {
     if (!imgSrc) return;
-    // Steam CDN 404 → placeholder (pas de fallback RAWG pour Steam)
-    if (isSteam) {
-      setImgSrc(null);
-      return;
-    }
-    // Epic/Battle.net : fallback RAWG si clé dispo
+    // CDN Steam 404 → RAWG si clé dispo, sinon placeholder
     if (rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
         setImgSrc(url ?? null);
