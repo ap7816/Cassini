@@ -1,4 +1,4 @@
-const CACHE_KEY = 'arctive.rawg.cache.v2';
+const CACHE_KEY = 'arctive.rawg.cache.v3';
 
 const memoryCache = new Map<string, string | null>();
 
