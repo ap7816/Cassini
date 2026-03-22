@@ -139,12 +139,38 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   return null;
 }
 
-export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
-  if (!apiKey) return null;
+async function fetchSteamCdnImage(appId: string): Promise<string | null> {
+  // Essaye d'abord le portrait portrait (600x900), puis le header (460x215)
+  const candidates = [
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`,
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`,
+  ];
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      if (res.ok) return url;
+    } catch { /* essayer le suivant */ }
+  }
+  return null;
+}
 
+export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
   // La clé de cache inclut la plateforme pour éviter les collisions
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
   if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
+
+  // Pour les jeux Steam : CDN Steam en priorité (image officielle, sans API key)
+  if (steamAppId) {
+    const steamUrl = await fetchSteamCdnImage(steamAppId);
+    if (steamUrl) {
+      console.log(`[Steam CDN] "${title}" → ${steamUrl}`);
+      memoryCache.set(cacheKey, steamUrl);
+      saveCache(memoryCache);
+      return steamUrl;
+    }
+  }
+
+  if (!apiKey) return null;
 
   // Filtre Steam : &stores=1 si on a un appid Steam (store 1 = Steam sur RAWG)
   const storeFilter = steamAppId ? '&stores=1' : '';

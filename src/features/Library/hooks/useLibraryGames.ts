@@ -17,6 +17,39 @@ async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Prom
   return invoke<T>(cmd, args);
 }
 
+const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2 };
+
+function normalizeName(title: string): string {
+  return title.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+}
+
+// Déduplique les jeux par nom normalisé, priorité Steam > Epic > BattleNet
+// Fusionne les données utilisateur (favori, lastPlayedAt, image custom)
+function deduplicateGames(games: Game[]): Game[] {
+  const groups = new Map<string, Game[]>();
+  for (const g of games) {
+    const key = normalizeName(g.title);
+    const group = groups.get(key) ?? [];
+    group.push(g);
+    groups.set(key, group);
+  }
+
+  const result: Game[] = [];
+  for (const group of groups.values()) {
+    if (group.length === 1) { result.push(group[0]); continue; }
+
+    group.sort((a, b) => (PLATFORM_PRIORITY[a.platform] ?? 99) - (PLATFORM_PRIORITY[b.platform] ?? 99));
+    const winner = { ...group[0] };
+    for (const g of group.slice(1)) {
+      if (!winner.favorite && g.favorite) winner.favorite = true;
+      if (!winner.lastPlayedAt && g.lastPlayedAt) winner.lastPlayedAt = g.lastPlayedAt;
+      if (!winner.customImageUrl && g.customImageUrl) winner.customImageUrl = g.customImageUrl;
+    }
+    result.push(winner);
+  }
+  return result;
+}
+
 function mergeById(prev: Game[], incoming: Game[]): Game[] {
   const map = new Map<string, Game>();
   for (const g of prev) map.set(g.id, g);
@@ -52,7 +85,7 @@ export function useLibraryGames() {
 
   // Load une fois
   useEffect(() => {
-    setGames(loadGamesFromStorage());
+    setGames(deduplicateGames(loadGamesFromStorage()));
   }, []);
 
   // Save (évite d’écraser au 1er render)
@@ -162,7 +195,7 @@ export function useLibraryGames() {
           g.platform === 'BattleNet' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
         );
 
-        return mergeById(updated, normalized);
+        return deduplicateGames(mergeById(updated, normalized));
       });
 
       return { ok: true, added };
@@ -203,7 +236,7 @@ export function useLibraryGames() {
           g.platform === 'Epic' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
         );
 
-        return mergeById(updated, normalized);
+        return deduplicateGames(mergeById(updated, normalized));
       });
 
       return { ok: true, added };
@@ -244,7 +277,7 @@ export function useLibraryGames() {
           g.platform === 'Steam' && !incomingIdsSteam.has(g.id) ? { ...g, installed: false } : g,
         );
 
-        return mergeById(updated, normalized);
+        return deduplicateGames(mergeById(updated, normalized));
       });
 
       return { ok: true, added };
