@@ -35,31 +35,33 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
-  // Jeux Steam : CDN uniquement, rawgApiKey absent des deps → jamais retriggeré par la clé
+  const isSteam = game.platform === 'Steam';
+
+  // Jeux Steam : CDN uniquement, rawgApiKey JAMAIS dans les deps
   useEffect(() => {
-    if (game.customImageUrl || !game.steamAppId) return;
-    fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
+    if (game.customImageUrl || !isSteam) return;
+    fetchRawgImage(game.title, '', game.steamAppId ?? undefined).then((url) => {
       setImgSrc(url ?? null);
     });
-  }, [game.title, game.customImageUrl, game.steamAppId]);
+  }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
 
   // Jeux Epic / Battle.net : RAWG avec clé API
   useEffect(() => {
-    if (game.customImageUrl || game.steamAppId) return;
+    if (game.customImageUrl || isSteam) return;
     fetchRawgImage(game.title, rawgApiKey).then((url) => {
       setImgSrc(url ?? null);
     });
-  }, [game.title, game.customImageUrl, game.steamAppId, rawgApiKey]);
+  }, [game.title, game.customImageUrl, isSteam, rawgApiKey]);
 
   function handleImgError() {
     if (!imgSrc) return;
     // Steam CDN 404 → placeholder (pas de fallback RAWG pour Steam)
-    if (imgSrc.includes('header.jpg') && game.steamAppId) {
+    if (isSteam) {
       setImgSrc(null);
       return;
     }
     // Epic/Battle.net : fallback RAWG si clé dispo
-    if (rawgApiKey && !game.steamAppId) {
+    if (rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
         setImgSrc(url ?? null);
       });
