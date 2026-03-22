@@ -82,6 +82,7 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 installed: true,
                 last_played_at: None,
                 launch_url,
+                steam_app_id: None,
             });
         }
     }
@@ -125,6 +126,7 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
             installed: true,
             last_played_at: None,
             launch_url,
+            steam_app_id: None,
         });
     }
 }

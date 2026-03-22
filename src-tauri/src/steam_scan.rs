@@ -15,6 +15,7 @@ pub struct GameDto {
     pub installed: bool,
     pub last_played_at: Option<String>,
     pub launch_url: Option<String>,
+    pub steam_app_id: Option<String>,
 }
 
 pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
@@ -107,6 +108,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
             .and_then(|ts| Utc.timestamp_opt(ts, 0).single())
             .map(|dt| dt.to_rfc3339()),
         launch_url: Some(format!("steam://rungameid/{}", appid)),
+        steam_app_id: Some(appid.clone()),
     })
 }
 

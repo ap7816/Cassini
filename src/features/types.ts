@@ -11,6 +11,7 @@ export type Game = {
   // NEW
   favorite?: boolean;
   customImageUrl?: string | null;
+  steamAppId?: string | null;
 };
 
 export type AppSettings = {

@@ -40,10 +40,10 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     if (game.customImageUrl || !rawgApiKey) return;
     setRawgUrl(null);
     setImgFailed(false);
-    fetchRawgImage(game.title, rawgApiKey).then((url) => {
+    fetchRawgImage(game.title, rawgApiKey, game.steamAppId).then((url) => {
       if (url) setRawgUrl(url);
     });
-  }, [game.title, game.customImageUrl, rawgApiKey]);
+  }, [game.title, game.customImageUrl, game.steamAppId, rawgApiKey]);
 
   function handleSetImage() {
     const current = game.customImageUrl ?? '';

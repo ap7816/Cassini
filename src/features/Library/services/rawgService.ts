@@ -1,4 +1,4 @@
-const CACHE_KEY = 'arctive.rawg.cache.v4';
+const CACHE_KEY = 'arctive.rawg.cache.v5';
 
 const memoryCache = new Map<string, string | null>();
 
@@ -139,15 +139,19 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   return null;
 }
 
-export async function fetchRawgImage(title: string, apiKey: string): Promise<string | null> {
+export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
   if (!apiKey) return null;
 
-  const cacheKey = title.toLowerCase();
+  // La clé de cache inclut la plateforme pour éviter les collisions
+  const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
   if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
+
+  // Filtre Steam : &stores=1 si on a un appid Steam (store 1 = Steam sur RAWG)
+  const storeFilter = steamAppId ? '&stores=1' : '';
 
   try {
     // First pass: strict exact search with original title
-    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=10&search_exact=true&ordering=-added`;
+    const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=10&search_exact=true&ordering=-added${storeFilter}`;
     const res = await fetch(url);
     if (!res.ok) {
       console.warn(`[RAWG] "${title}" → HTTP ${res.status}`);
@@ -164,7 +168,7 @@ export async function fetchRawgImage(title: string, apiKey: string): Promise<str
 
     // Second pass: if exact search returned nothing, retry without search_exact
     if (imageUrl === null && results.length === 0) {
-      const url2 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=5`;
+      const url2 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=5${storeFilter}`;
       const res2 = await fetch(url2);
       if (res2.ok) {
         const data2 = (await res2.json()) as { results?: RawgResult[] };
@@ -180,7 +184,7 @@ export async function fetchRawgImage(title: string, apiKey: string): Promise<str
       const altTitle = convertNumerals(title);
       if (altTitle) {
         console.log(`[RAWG] "${title}" — pass 3 (numéraux convertis: "${altTitle}")`);
-        const url3 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(altTitle)}&page_size=10&search_exact=true&ordering=-added`;
+        const url3 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(altTitle)}&page_size=10&search_exact=true&ordering=-added${storeFilter}`;
         const res3 = await fetch(url3);
         if (res3.ok) {
           const data3 = (await res3.json()) as { results?: RawgResult[] };

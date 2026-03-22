@@ -74,6 +74,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
             "com.epicgames.launcher://apps/{}?action=launch&silent=true",
             app_name
         )),
+        steam_app_id: None,
     })
 }
 
