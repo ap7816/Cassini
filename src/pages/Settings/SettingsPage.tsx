@@ -5,6 +5,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 import { check } from '@tauri-apps/plugin-updater';
 import { ask } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
@@ -78,6 +79,7 @@ export function SettingsPage() {
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
 
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
@@ -150,6 +152,12 @@ export function SettingsPage() {
     setRawgKeyInput('');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 2000);
+  }
+
+  async function handleClearWebviewCache() {
+    await getCurrentWebviewWindow().clearAllBrowsingData();
+    setWebviewCacheCleared(true);
+    setTimeout(() => setWebviewCacheCleared(false), 2000);
   }
 
   async function handleClearAllData() {
@@ -355,9 +363,29 @@ export function SettingsPage() {
       )}
 
       {/* Zone de danger */}
-      {matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint') && (
+      {matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint', 'settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
+
+        {matches('settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.clearWebviewCacheLabel')}</div>
+            <div className={css.hint}>{t('settings.clearWebviewCacheHint')}</div>
+          </div>
+          <button
+            type="button"
+            className={css.button}
+            onClick={() => { void handleClearWebviewCache(); }}
+          >
+            {webviewCacheCleared ? t('settings.clearWebviewCacheCleared') : t('settings.clearWebviewCacheButton')}
+          </button>
+        </div>
+        )}
+
+        {matches('settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && matches('settings.clearAllLabel', 'settings.clearAllHint') && <div className={css.divider} />}
+
+        {matches('settings.clearAllLabel', 'settings.clearAllHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.clearAllLabel')}</div>
@@ -371,6 +399,7 @@ export function SettingsPage() {
             {t('settings.clearAllButton')}
           </button>
         </div>
+        )}
       </div>
       )}
 

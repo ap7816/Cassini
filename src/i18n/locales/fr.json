@@ -113,6 +113,10 @@
     "clearAllLabel": "Réinitialiser l'application",
     "clearAllHint": "Supprime toutes les données locales : bibliothèque, paramètres, cache. L'application redémarre.",
     "clearAllButton": "Tout effacer",
+    "clearWebviewCacheLabel": "Vider le cache WebView",
+    "clearWebviewCacheHint": "Supprime le cache d'images et de ressources du navigateur intégré (n'affecte pas ton navigateur web).",
+    "clearWebviewCacheButton": "Vider le cache",
+    "clearWebviewCacheCleared": "Vidé ✓",
     "bgRemoveConfirm": "Supprimer l'image de fond ?",
     "clearAllConfirm": "Es-tu sûr ? Toutes les données locales seront supprimées définitivement."
   }

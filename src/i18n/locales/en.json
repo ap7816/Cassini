@@ -113,6 +113,10 @@
     "clearAllLabel": "Reset application",
     "clearAllHint": "Deletes all local data: library, settings, cache. The app will restart.",
     "clearAllButton": "Clear everything",
+    "clearWebviewCacheLabel": "Clear WebView cache",
+    "clearWebviewCacheHint": "Clears the image and resource cache of the built-in browser (does not affect your web browser).",
+    "clearWebviewCacheButton": "Clear cache",
+    "clearWebviewCacheCleared": "Cleared ✓",
     "bgRemoveConfirm": "Remove the background image?",
     "clearAllConfirm": "Are you sure? All local data will be permanently deleted."
   }
