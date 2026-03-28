@@ -35,29 +35,34 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
   const imgSrcRef = useRef<string | null>(null);
   imgSrcRef.current = imgSrc;
 
+  // Évite de retenter RAWG si on a déjà essayé pour ce jeu
+  const rawgTriedRef = useRef(false);
+
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
   const isSteam = game.platform === 'Steam';
 
-  // Steam avec steamAppId → CDN Steam uniquement, jamais RAWG
+  // CDN Steam pour les jeux Steam, RAWG pour les autres
   useEffect(() => {
-    if (game.customImageUrl || !isSteam || !game.steamAppId) return;
-    if (imgSrcRef.current !== null) return; // image déjà présente, on ne touche pas
-    fetchRawgImage(game.title, '', game.steamAppId).then((url) => setImgSrc(url ?? null));
-  }, [game.title, game.customImageUrl, game.steamAppId, isSteam]);
+    if (game.customImageUrl) return;
+    if (imgSrcRef.current !== null) return;
 
-  // Epic/BN + Steam sans steamAppId → RAWG uniquement si placeholder (imgSrc = null)
-  // La ref évite de mettre imgSrc dans les deps (pas de re-fetch quand imgSrc change)
-  useEffect(() => {
-    if (game.customImageUrl || (isSteam && game.steamAppId) || !rawgApiKey) return;
-    if (imgSrcRef.current !== null) return; // image existante → on ne touche pas
-    fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+    if (isSteam && game.steamAppId) {
+      // fetchRawgImage construit l'URL CDN directement — la validité est vérifiée via onError
+      fetchRawgImage(game.title, '', game.steamAppId).then((url) => setImgSrc(url ?? null));
+    } else if (!isSteam && rawgApiKey) {
+      fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+    }
   }, [game.title, game.customImageUrl, game.steamAppId, isSteam, rawgApiKey]);
 
   function handleImgError() {
-    // CDN 404 → placeholder (pas de fallback RAWG pour Steam)
     setImgSrc(null);
+    // CDN Steam 404 → fallback RAWG si clé disponible et pas déjà tenté
+    if (isSteam && rawgApiKey && !game.customImageUrl && !rawgTriedRef.current) {
+      rawgTriedRef.current = true;
+      fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+    }
   }
 
   function handleSetImage() {
