@@ -81,6 +81,7 @@
     "dialog:allow-open",
     "dialog:allow-confirm",
     "dialog:allow-ask",
-    "updater:default"
+    "updater:default",
+    "core:webview:allow-clear-all-browsing-data"
   ]
 }
