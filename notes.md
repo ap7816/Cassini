@@ -77,6 +77,8 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 
 ### Fonctionnalités
 
+- **Taille des jeux** — afficher la taille sur disque sur chaque carte (ex: `42.3 GB`, `890 MB`). Côté Rust, calculer la taille du dossier d'installation via le chemin récupéré lors du scan. Afficher dans la carte sous le badge plateforme. Ajouter un tri "par taille" pour identifier les jeux qui prennent le plus de place
+- **Vue Système Solaire** — vue alternative à la grille où chaque jeu est une planète en orbite autour d'un soleil central. La taille de la planète pourrait refléter le temps joué. Au survol (hover), le nom du jeu + l'image apparaissent en tooltip ou dans un panneau latéral. Cliquer sur une planète ouvre la fiche du jeu ou le lance directement. Animation CSS des orbites en continu, avec vitesse variable par planète
 - **Statistiques de jeu** — temps total joué par jeu, graphiques d'activité par semaine/mois
 - **Catégories / tags** — pouvoir organiser les jeux par genre, état ("en cours", "terminé", "abandonné")
 - **Tri avancé** — par temps joué, par date d'ajout, par plateforme
