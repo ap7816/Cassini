@@ -92,6 +92,7 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 - **Raccourcis clavier**: naviguer, lancer un jeu, basculer les favoris au clavier
 - **Vue liste**: alternative à la grille de cartes (plus compact)
 - **Notes par jeu**: ajouter un commentaire ou une note personnel sur un jeu
+- **Lecteur MP3**: intégrer un lecteur de musique directement dans l'app. Sélectionner un dossier de fichiers `.mp3`, afficher la liste des pistes, lecture/pause/suivant/précédent, barre de progression, volume. La musique joue en fond pendant que tu navigues dans ta bibliothèque ou lances un jeu
 
 ### Technique
 
