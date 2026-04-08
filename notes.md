@@ -92,6 +92,7 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 - **Raccourcis clavier**: naviguer, lancer un jeu, basculer les favoris au clavier
 - **Vue liste**: alternative à la grille de cartes (plus compact)
 - **Notes par jeu**: ajouter un commentaire ou une note personnel sur un jeu
+- **Mini-jeu intégré (Unity WebGL)**: intégrer un jeu Unity directement dans l'app comme easter egg ou section dédiée, à la manière du dino de Chrome. Unity exporte en WebGL (HTML + JS + WebAssembly), les fichiers sont placés dans `public/` et affichés via une route React ou un iframe. Supporte la 3D complète via WebGL2 (supporté par WebView2). Accessible via un bouton discret, raccourci clavier ou easter egg dans l'UI
 - **Lecteur MP3**: intégrer un lecteur de musique directement dans l'app. Sélectionner un dossier de fichiers `.mp3`, afficher la liste des pistes, lecture/pause/suivant/précédent, barre de progression, volume. La musique joue en fond pendant que tu navigues dans ta bibliothèque ou lances un jeu
 
 ### Technique
