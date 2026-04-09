@@ -3,6 +3,7 @@ import { AppLayout } from './layout/AppLayout';
 import { LibraryPage } from '../pages/Library/LibraryPage';
 import { LaunchersPage } from '../pages/Launchers/LaunchersPage';
 import { SettingsPage } from '../pages/Settings/SettingsPage';
+import { GamePage } from '../pages/Game/GamePage';
 
 export function AppRouter() {
   return (
@@ -11,6 +12,7 @@ export function AppRouter() {
         <Route path="/" element={<Navigate to="/library" replace />} />
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/launchers" element={<LaunchersPage />} />
+        <Route path="/game" element={<GamePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/library" replace />} />
       </Route>
