@@ -1,6 +1,6 @@
 import css from './GamePage.module.css';
 
-const GAME_URL = 'https://antoninpoumier.itch.io/space';
+const GAME_URL = 'https://html-classic.itch.zone/html/17106031/ArcHive-games/index.html';
 
 export function GamePage() {
   return (
