@@ -5,8 +5,13 @@ export function GamePage() {
   const [ready, setReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch('/game/index.html', { method: 'HEAD' })
-      .then((r) => setReady(r.ok))
+    fetch('/game/index.html')
+      .then((r) => r.text())
+      .then((html) => {
+        // Si Vite sert le fallback SPA, le HTML contient id="root" — ce n'est pas Unity
+        const isFallback = html.includes('id="root"') || html.includes("id='root'");
+        setReady(!isFallback);
+      })
       .catch(() => setReady(false));
   }, []);
 
