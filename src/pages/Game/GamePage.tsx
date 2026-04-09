@@ -1,6 +1,6 @@
 import css from './GamePage.module.css';
 
-const GAME_URL = 'https://html-classic.itch.zone/html/17106031/ArcHive-games/index.html';
+const GAME_URL = 'https://loquacious-basbousa-6f6753.netlify.app/';
 
 export function GamePage() {
   return (
