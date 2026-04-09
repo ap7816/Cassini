@@ -3,15 +3,18 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRouter } from './app/AppRouter';
 import { AppSettingsProvider } from './features/settings/context/AppSettingsProvider';
+import { MusicProvider } from './features/music/MusicContext';
 import './i18n';
 import './App.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <AppSettingsProvider>
-      <BrowserRouter>
-        <AppRouter />
-      </BrowserRouter>
+      <MusicProvider>
+        <BrowserRouter>
+          <AppRouter />
+        </BrowserRouter>
+      </MusicProvider>
     </AppSettingsProvider>
   </React.StrictMode>,
 );

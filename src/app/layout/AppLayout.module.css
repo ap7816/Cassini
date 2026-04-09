@@ -197,3 +197,145 @@
     width: min(420px, 60vw);
   }
 }
+
+/* ─── Mini Player ─────────────────────────────────────────── */
+.miniPlayer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: rgba(8, 12, 18, 0.97);
+  border-top: 1px solid rgba(108, 142, 251, 0.25);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  min-height: 52px;
+  position: relative;
+  z-index: 10;
+}
+
+.miniTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 140px;
+  max-width: 200px;
+  font-size: 0.8rem;
+  color: rgba(224, 230, 240, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.miniFolderTag {
+  font-size: 0.7rem;
+  background: rgba(108, 142, 251, 0.2);
+  color: var(--accent, #6c8efb);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.miniControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.miniBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  color: #e0e6f0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 9px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.miniBtn:hover:not(:disabled) {
+  background: rgba(108, 142, 251, 0.2);
+  color: var(--accent, #6c8efb);
+}
+
+.miniBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.miniPlayBtn {
+  background: rgba(108, 142, 251, 0.18);
+  border-color: var(--accent, #6c8efb);
+  color: var(--accent, #6c8efb);
+}
+
+.miniPlayBtn:hover:not(:disabled) {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+}
+
+.miniProgress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 100px;
+}
+
+.miniTime {
+  font-size: 0.7rem;
+  color: rgba(224, 230, 240, 0.6);
+  white-space: nowrap;
+  min-width: 28px;
+}
+
+.miniProgressBar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.miniVolume {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.miniVolumeIcon {
+  font-size: 0.8rem;
+  color: rgba(224, 230, 240, 0.7);
+}
+
+.miniVolumeBar {
+  width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  cursor: ew-resize;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.miniStopBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: rgba(224, 230, 240, 0.5);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+}
+
+.miniStopBtn:hover {
+  background: rgba(220, 60, 60, 0.18);
+  border-color: rgba(220, 60, 60, 0.4);
+  color: #ff7a7a;
+}

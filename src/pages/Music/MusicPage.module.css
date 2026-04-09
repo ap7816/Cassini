@@ -36,13 +36,20 @@
   color: #0f141a;
 }
 
-.folderName {
+.selectedFolderName {
   font-size: 0.82rem;
   color: rgba(224, 230, 240, 0.55);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 300px;
+}
+
+.trackCount {
+  font-size: 0.78rem;
+  color: rgba(224, 230, 240, 0.4);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .loadingText {
@@ -69,7 +76,8 @@
   overflow-y: auto;
   padding: 8px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(108, 142, 251, 0.3) transparent;
+  scrollbar-color: rgba(108, 142, 251, 0.5) rgba(255, 255, 255, 0.05);
+  background: rgba(10, 14, 20, 0.45);
 }
 
 .trackList::-webkit-scrollbar {
@@ -88,6 +96,72 @@
   font-size: 0.9rem;
 }
 
+/* ─── Folder group ──────────────────────────────────────── */
+.folderGroup {
+  margin-bottom: 4px;
+}
+
+.folderHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(224, 230, 240, 0.75);
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 2px solid rgba(255, 255, 255, 0.12);
+  margin: 3px 8px 1px;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.folderHeader:hover {
+  background: rgba(108, 142, 251, 0.1);
+  border-color: var(--accent, #6c8efb);
+  color: rgba(224, 230, 240, 0.95);
+}
+
+.folderHeaderActive {
+  border-color: var(--accent, #6c8efb);
+  color: var(--accent, #6c8efb);
+}
+
+.folderChevron {
+  font-size: 0.7rem;
+  width: 10px;
+  flex-shrink: 0;
+  color: rgba(224, 230, 240, 0.4);
+}
+
+.folderIcon {
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.folderName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderCount {
+  font-size: 0.7rem;
+  color: rgba(224, 230, 240, 0.35);
+  flex-shrink: 0;
+}
+
+.folderPlayingDot {
+  font-size: 0.5rem;
+  color: var(--accent, #6c8efb);
+  flex-shrink: 0;
+  animation: pulse 1.2s infinite;
+}
+
+/* ─── Track item ─────────────────────────────────────────── */
 .trackItem {
   display: flex;
   align-items: center;
@@ -96,22 +170,23 @@
   cursor: pointer;
   transition: background 0.12s;
   border-radius: 6px;
-  margin: 1px 8px;
+  margin: 2px 8px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .trackItem:hover {
-  background: rgba(108, 142, 251, 0.1);
+  background: rgba(108, 142, 251, 0.15);
 }
 
 .trackItemActive {
-  background: rgba(108, 142, 251, 0.18) !important;
+  background: rgba(108, 142, 251, 0.25) !important;
   border-left: 3px solid var(--accent, #6c8efb);
   padding-left: 17px;
 }
 
 .trackIndex {
   font-size: 0.75rem;
-  color: rgba(224, 230, 240, 0.3);
+  color: rgba(224, 230, 240, 0.5);
   min-width: 24px;
   text-align: right;
 }
@@ -119,6 +194,7 @@
 .trackTitle {
   flex: 1;
   font-size: 0.88rem;
+  color: rgba(224, 230, 240, 0.92);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -133,149 +209,4 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-
-/* ─── Player bar ─────────────────────────────────────────── */
-.player {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 20px;
-  background: rgba(15, 20, 26, 0.88);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.playerTitle {
-  min-width: 160px;
-  max-width: 220px;
-  font-size: 0.82rem;
-  color: rgba(224, 230, 240, 0.75);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.playerControls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.controlBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: #e0e6f0;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 5px 10px;
-  line-height: 1;
-  transition: background 0.12s, color 0.12s;
-}
-
-.controlBtn:hover:not(:disabled) {
-  background: rgba(108, 142, 251, 0.2);
-  color: var(--accent, #6c8efb);
-}
-
-.controlBtn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.playPauseBtn {
-  font-size: 1rem;
-  padding: 6px 14px;
-  background: rgba(108, 142, 251, 0.18);
-  border-color: var(--accent, #6c8efb);
-  color: var(--accent, #6c8efb);
-}
-
-.playPauseBtn:hover:not(:disabled) {
-  background: var(--accent, #6c8efb);
-  color: #0f141a;
-}
-
-/* ─── Progress ──────────────────────────────────────────── */
-.playerProgress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 120px;
-}
-
-.timeLabel {
-  font-size: 0.75rem;
-  color: rgba(224, 230, 240, 0.45);
-  white-space: nowrap;
-  min-width: 32px;
-}
-
-.progressBar {
-  flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.progressBar:hover {
-  height: 6px;
-}
-
-.progressFill {
-  height: 100%;
-  background: var(--accent, #6c8efb);
-  border-radius: 2px;
-  transition: width 0.1s linear;
-  pointer-events: none;
-}
-
-/* ─── Volume ─────────────────────────────────────────────── */
-.playerVolume {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.volumeIcon {
-  font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.45);
-}
-
-.volumeSlider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 80px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  outline: none;
-  cursor: pointer;
-}
-
-.volumeSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent, #6c8efb);
-  cursor: pointer;
-}
-
-.volumeSlider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent, #6c8efb);
-  cursor: pointer;
-  border: none;
 }

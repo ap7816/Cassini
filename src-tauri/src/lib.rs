@@ -10,6 +10,7 @@ use tauri_plugin_log;
 pub struct TrackDto {
     pub path: String,
     pub title: String,
+    pub folder: String,
 }
 
 #[tauri::command]
@@ -17,15 +18,18 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
     let audio_exts = ["mp3", "flac", "wav", "ogg", "m4a"];
     let mut tracks: Vec<TrackDto> = Vec::new();
 
-    fn walk_dir(dir: &std::path::Path, audio_exts: &[&str], tracks: &mut Vec<TrackDto>) {
+    fn walk_dir(root: &std::path::Path, dir: &std::path::Path, audio_exts: &[&str], tracks: &mut Vec<TrackDto>) {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(_) => return,
         };
+        let folder = dir.strip_prefix(root)
+            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_default();
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                walk_dir(&path, audio_exts, tracks);
+                walk_dir(root, &path, audio_exts, tracks);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if audio_exts.contains(&ext.to_lowercase().as_str()) {
                     let title = path
@@ -38,7 +42,7 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
                         .unwrap_or(path.clone())
                         .to_string_lossy()
                         .to_string();
-                    tracks.push(TrackDto { path: abs_path, title });
+                    tracks.push(TrackDto { path: abs_path, title, folder: folder.clone() });
                 }
             }
         }
@@ -48,8 +52,11 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
     if !root.is_dir() {
         return Err(format!("Not a directory: {path}"));
     }
-    walk_dir(root, &audio_exts, &mut tracks);
-    tracks.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
+    walk_dir(root, root, &audio_exts, &mut tracks);
+    tracks.sort_by(|a, b| {
+        a.folder.to_lowercase().cmp(&b.folder.to_lowercase())
+            .then(a.title.to_lowercase().cmp(&b.title.to_lowercase()))
+    });
     Ok(tracks)
 }
 
