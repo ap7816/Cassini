@@ -1,8 +1,7 @@
 import css from './GamePage.module.css';
 
 // URL du jeu hébergé sur GitHub Pages
-// Remplacer par l'URL réelle une fois le repo GitHub Pages créé
-const GAME_URL = '';
+const GAME_URL = 'https://apoumier.github.io/ArcHive-games/';
 
 export function GamePage() {
   if (!GAME_URL) {
