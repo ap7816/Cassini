@@ -48,32 +48,57 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 
 ---
 
-## Fonctionnalités implémentées
+## Tableau des fonctionnalités
 
-- Scan automatique Steam / Epic Games / Battle.net
-- Déduplication intelligente des jeux multi-plateformes
-- Lancement de jeux avec overlay d'animation
-- Historique de dernière session par jeu
-- Système de favoris
-- Images : CDN Steam + RAWG fallback + image personnalisée par URL
-- Cache RAWG en localStorage (évite les appels répétés)
-- Recherche temps réel par titre
-- Onglet Favoris
-- Ajout manuel d'un jeu via un sélecteur de fichier `.exe`
-- Export / import de la bibliothèque en JSON
-- Onglet Launchers avec ouverture directe et accès au dossier
-- Mise à jour automatique intégrée (tauri-plugin-updater + GitHub Releases)
-- Interface multilingue FR / EN
-- Couleur d'accent personnalisable (palettes + color picker)
-- Image de fond personnalisée avec opacité réglable
-- Vider le cache RAWG (paramètres)
-- Vider le cache WebView (images mises en cache par le navigateur intégré)
-- Réinitialisation complète de l'appli (efface tout le localStorage)
-- Architecture deux-repos : `.exe` privé + `latest.json` public pour les mises à jour
+| Fonctionnalité | Statut |
+|---|---|
+| Scan automatique Steam / Epic Games / Battle.net | ✅ Done |
+| Déduplication intelligente des jeux multi-plateformes | ✅ Done |
+| Lancement de jeux avec overlay d'animation | ✅ Done |
+| Historique de dernière session par jeu | ✅ Done |
+| Système de favoris | ✅ Done |
+| Images: CDN Steam + RAWG fallback + image personnalisée | ✅ Done |
+| Cache RAWG en localStorage | ✅ Done |
+| Vider le cache RAWG | ✅ Done |
+| Vider le cache WebView | ✅ Done |
+| Recherche temps réel par titre | ✅ Done |
+| Onglet Favoris | ✅ Done |
+| Ajout manuel d'un jeu via sélecteur de fichier `.exe` | ✅ Done |
+| Export / import de la bibliothèque en JSON | ✅ Done |
+| Onglet Launchers avec ouverture directe et accès au dossier | ✅ Done |
+| Mise à jour automatique (tauri-plugin-updater + GitHub Releases) | ✅ Done |
+| Interface multilingue FR / EN | ✅ Done |
+| Couleur d'accent personnalisable (palettes + color picker) | ✅ Done |
+| Image de fond personnalisée avec opacité réglable | ✅ Done |
+| Réinitialisation complète de l'appli | ✅ Done |
+| Architecture deux-repos (`.exe` privé + `latest.json` public) | ✅ Done |
+| Page Mini-jeu avec intégration Unity WebGL | ✅ Done |
+| Taille des jeux sur disque | ❌ À faire |
+| Vue Système Solaire | ❌ À faire |
+| Statistiques de jeu (temps joué, graphiques) | ❌ À faire |
+| Catégories / tags par genre ou état | ❌ À faire |
+| Tri avancé (taille, temps joué, date d'ajout) | ❌ À faire |
+| Notifications (jeu prêt à jouer) | ❌ À faire |
+| Mode sombre / clair | ❌ À faire |
+| Support GOG Galaxy | ❌ À faire |
+| Support Ubisoft Connect | ❌ À faire |
+| Support Riot Games | ❌ À faire |
+| Support Rockstar Games Launcher | ❌ À faire |
+| Support Xbox / Microsoft Store (Game Pass) | ❌ À faire |
+| Raccourcis clavier | ❌ À faire |
+| Vue liste (alternative à la grille) | ❌ À faire |
+| Notes par jeu | ❌ À faire |
+| Lecteur MP3 intégré | ❌ À faire |
+| Mini-jeu Unity (build WebGL à intégrer) | 🚧 En cours |
+| Scan en arrière-plan automatique | ❌ À faire |
+| Mise à jour du statut installé en temps réel | ❌ À faire |
+| Cache RAWG avec TTL (expiration automatique) | ❌ À faire |
+| Compression des images personnalisées de jeux | ❌ À faire |
+| Tests unitaires (déduplication, tri, scans) | ❌ À faire |
 
 ---
 
-## Idées à venir
+## Détail des idées à venir
 
 ### Fonctionnalités
 
@@ -92,7 +117,7 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 - **Raccourcis clavier**: naviguer, lancer un jeu, basculer les favoris au clavier
 - **Vue liste**: alternative à la grille de cartes (plus compact)
 - **Notes par jeu**: ajouter un commentaire ou une note personnel sur un jeu
-- **Mini-jeu intégré (Unity WebGL)**: intégrer un jeu Unity directement dans l'app comme easter egg ou section dédiée, à la manière du dino de Chrome. Unity exporte en WebGL (HTML + JS + WebAssembly), les fichiers sont placés dans `public/` et affichés via une route React ou un iframe. Supporte la 3D complète via WebGL2 (supporté par WebView2). Accessible via un bouton discret, raccourci clavier ou easter egg dans l'UI
+- **Mini-jeu intégré (Unity WebGL)**: intégrer un jeu Unity directement dans l'app. La page est prête, il reste à créer le jeu Unity et exporter le build WebGL dans `public/game/`
 - **Lecteur MP3**: intégrer un lecteur de musique directement dans l'app. Sélectionner un dossier de fichiers `.mp3`, afficher la liste des pistes, lecture/pause/suivant/précédent, barre de progression, volume. La musique joue en fond pendant que tu navigues dans ta bibliothèque ou lances un jeu
 
 ### Technique
