@@ -1,0 +1,281 @@
+/* ─── Layout ─────────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  color: #e0e6f0;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(15, 20, 26, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.chooseBtn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent, #6c8efb);
+  background: rgba(108, 142, 251, 0.12);
+  color: var(--accent, #6c8efb);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.chooseBtn:hover {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+}
+
+.folderName {
+  font-size: 0.82rem;
+  color: rgba(224, 230, 240, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.loadingText {
+  font-size: 0.8rem;
+  color: var(--accent, #6c8efb);
+  opacity: 0.8;
+}
+
+/* ─── Error ───────────────────────────────────────────────── */
+.errorMsg {
+  margin: 10px 20px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(220, 60, 60, 0.15);
+  border: 1px solid rgba(220, 60, 60, 0.35);
+  color: #ff7a7a;
+  font-size: 0.83rem;
+  flex-shrink: 0;
+}
+
+/* ─── Track list ─────────────────────────────────────────── */
+.trackList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(108, 142, 251, 0.3) transparent;
+}
+
+.trackList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.trackList::-webkit-scrollbar-thumb {
+  background: rgba(108, 142, 251, 0.3);
+  border-radius: 3px;
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(224, 230, 240, 0.35);
+  font-size: 0.9rem;
+}
+
+.trackItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-radius: 6px;
+  margin: 1px 8px;
+}
+
+.trackItem:hover {
+  background: rgba(108, 142, 251, 0.1);
+}
+
+.trackItemActive {
+  background: rgba(108, 142, 251, 0.18) !important;
+  border-left: 3px solid var(--accent, #6c8efb);
+  padding-left: 17px;
+}
+
+.trackIndex {
+  font-size: 0.75rem;
+  color: rgba(224, 230, 240, 0.3);
+  min-width: 24px;
+  text-align: right;
+}
+
+.trackTitle {
+  flex: 1;
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playingIndicator {
+  font-size: 0.65rem;
+  color: var(--accent, #6c8efb);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Player bar ─────────────────────────────────────────── */
+.player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: rgba(15, 20, 26, 0.88);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.playerTitle {
+  min-width: 160px;
+  max-width: 220px;
+  font-size: 0.82rem;
+  color: rgba(224, 230, 240, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.controlBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e0e6f0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 5px 10px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.controlBtn:hover:not(:disabled) {
+  background: rgba(108, 142, 251, 0.2);
+  color: var(--accent, #6c8efb);
+}
+
+.controlBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.playPauseBtn {
+  font-size: 1rem;
+  padding: 6px 14px;
+  background: rgba(108, 142, 251, 0.18);
+  border-color: var(--accent, #6c8efb);
+  color: var(--accent, #6c8efb);
+}
+
+.playPauseBtn:hover:not(:disabled) {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+}
+
+/* ─── Progress ──────────────────────────────────────────── */
+.playerProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.timeLabel {
+  font-size: 0.75rem;
+  color: rgba(224, 230, 240, 0.45);
+  white-space: nowrap;
+  min-width: 32px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.progressBar:hover {
+  height: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent, #6c8efb);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+/* ─── Volume ─────────────────────────────────────────────── */
+.playerVolume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.volumeIcon {
+  font-size: 0.8rem;
+  color: rgba(224, 230, 240, 0.45);
+}
+
+.volumeSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent, #6c8efb);
+  cursor: pointer;
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent, #6c8efb);
+  cursor: pointer;
+  border: none;
+}

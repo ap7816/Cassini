@@ -12,6 +12,7 @@ export function AppLayout() {
   const navItems = [
     { to: '/library', label: t('nav.library') },
     { to: '/launchers', label: t('nav.launchers') },
+    { to: '/music', label: t('nav.music') },
     { to: '/game', label: t('nav.game') },
     { to: '/settings', label: t('nav.settings') },
   ];
