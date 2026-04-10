@@ -8,7 +8,7 @@ import { GameCard } from '../../features/Library/components/GameCard';
 import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
-import { FilterBar, FilterChipGroup } from '../../components/FilterChips/FilterChips';
+import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Other';
@@ -185,34 +185,34 @@ export function LibraryPage() {
       {scanError && <div className={css.error}>{scanError}</div>}
 
       <FilterBar>
-        <FilterChipGroup<PlatformFilter>
-          label="Plateforme"
+        <FilterSelect<PlatformFilter>
+          label={t('filters.platform')}
           options={[
-            { value: 'all', label: 'Tous' },
+            { value: 'all', label: t('filters.all') },
             { value: 'Steam', label: 'Steam' },
             { value: 'Epic', label: 'Epic' },
-            { value: 'BattleNet', label: 'Battle.net' },
-            { value: 'Other', label: 'Autre' },
+            { value: 'BattleNet', label: t('filters.battlenet') },
+            { value: 'Other', label: t('filters.other') },
           ]}
           value={platformFilter}
           onChange={(v) => setParam('platform', v, 'all')}
         />
-        <FilterChipGroup<InstalledFilter>
-          label="Statut"
+        <FilterSelect<InstalledFilter>
+          label={t('filters.status')}
           options={[
-            { value: 'all', label: 'Tous' },
-            { value: 'yes', label: 'Installés' },
-            { value: 'no', label: 'Non installés' },
+            { value: 'all', label: t('filters.all') },
+            { value: 'yes', label: t('filters.installedOnly') },
+            { value: 'no', label: t('filters.notInstalled') },
           ]}
           value={installedFilter}
           onChange={(v) => setParam('installed', v, 'all')}
         />
-        <FilterChipGroup<SortMode>
-          label="Tri"
+        <FilterSelect<SortMode>
+          label={t('filters.sort')}
           options={[
-            { value: 'recent', label: 'Récent' },
-            { value: 'az', label: 'A → Z' },
-            { value: 'za', label: 'Z → A' },
+            { value: 'recent', label: t('filters.recent') },
+            { value: 'az', label: t('filters.az') },
+            { value: 'za', label: t('filters.za') },
           ]}
           value={sortMode}
           onChange={(v) => setParam('sort', v, 'recent')}

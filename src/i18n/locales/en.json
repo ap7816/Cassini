@@ -70,6 +70,30 @@
     "emptyTitle": "No launchers detected",
     "emptyText": "Install launchers then click Refresh."
   },
+  "filters": {
+    "platform": "Platform",
+    "status": "Status",
+    "sort": "Sort",
+    "all": "All",
+    "installedOnly": "Installed",
+    "notInstalled": "Not installed",
+    "recent": "Recent",
+    "az": "A → Z",
+    "za": "Z → A",
+    "default": "Default",
+    "byFolder": "By folder",
+    "battlenet": "Battle.net",
+    "other": "Other",
+    "collapseAll": "Collapse all"
+  },
+  "music": {
+    "chooseFolder": "Choose folder",
+    "scanning": "Scanning…",
+    "trackCount": "{{count}} track(s)",
+    "noAudio": "No audio files found.",
+    "chooseFirst": "Choose a folder to get started.",
+    "noResults": "No results for « {{query}} »"
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Customize ArcHive (background, theme, etc.).",

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { FilterBar, FilterChipGroup } from '../../components/FilterChips/FilterChips';
+import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import css from './MusicPage.module.css';
 
 type SortMode = 'folder' | 'az' | 'za';
@@ -212,6 +213,7 @@ function FolderNodeView({
 
 /* ─── Main page ────────────────────────────────────────────── */
 export function MusicPage() {
+  const { t } = useTranslation();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get('q') ?? '').toLowerCase().trim();
@@ -291,17 +293,17 @@ export function MusicPage() {
       {/* Header */}
       <div className={css.header}>
         <button className={css.chooseBtn} onClick={handleChooseFolder}>
-          Choisir un dossier
+          {t('music.chooseFolder')}
         </button>
         {folderName && (
           <span className={css.selectedFolderName} title={music.folderPath}>
             {folderName}
           </span>
         )}
-        {music.loading && <span className={css.loadingText}>Scan en cours…</span>}
+        {music.loading && <span className={css.loadingText}>{t('music.scanning')}</span>}
         {!music.loading && music.tracks.length > 0 && (
           <span className={css.trackCount}>
-            {music.tracks.length} piste{music.tracks.length > 1 ? 's' : ''}
+            {t('music.trackCount', { count: music.tracks.length })}
           </span>
         )}
       </div>
@@ -313,15 +315,15 @@ export function MusicPage() {
           <FilterBar>
             {useGroups && (
               <button className={css.collapseBtn} onClick={() => setExpandedFolders(new Set())}>
-                Tout réduire
+                {t('filters.collapseAll')}
               </button>
             )}
-            <FilterChipGroup<SortMode>
-              label="Tri"
+            <FilterSelect<SortMode>
+              label={t('filters.sort')}
               options={[
-                { value: 'folder', label: 'Par dossier' },
-                { value: 'az', label: 'A → Z' },
-                { value: 'za', label: 'Z → A' },
+                { value: 'folder', label: t('filters.byFolder') },
+                { value: 'az', label: t('filters.az') },
+                { value: 'za', label: t('filters.za') },
               ]}
               value={sortMode}
               onChange={setSortMode}
@@ -333,11 +335,11 @@ export function MusicPage() {
       <div className={css.trackList}>
         {music.tracks.length === 0 && !music.loading && (
           <div className={css.emptyState}>
-            {music.folderPath ? 'Aucun fichier audio trouvé.' : 'Choisissez un dossier pour commencer.'}
+            {music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}
           </div>
         )}
         {query && filtered.length === 0 && music.tracks.length > 0 && (
-          <div className={css.emptyState}>Aucun résultat pour « {query} »</div>
+          <div className={css.emptyState}>{t('music.noResults', { query })}</div>
         )}
 
         {/* Flat A-Z / Z-A */}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { FilterBar, FilterChipGroup } from '../../components/FilterChips/FilterChips';
+import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
@@ -205,20 +205,20 @@ export function LaunchersPage() {
       {error && <div className={css.error}>{error}</div>}
 
       <FilterBar>
-        <FilterChipGroup<InstalledFilter>
-          label="Statut"
+        <FilterSelect<InstalledFilter>
+          label={t('filters.status')}
           options={[
-            { value: 'all', label: 'Tous' },
-            { value: 'yes', label: 'Installés' },
+            { value: 'all', label: t('filters.all') },
+            { value: 'yes', label: t('filters.installedOnly') },
           ]}
           value={installedFilter}
           onChange={(v) => setParam('installed', v, 'all')}
         />
-        <FilterChipGroup<SortMode>
-          label="Tri"
+        <FilterSelect<SortMode>
+          label={t('filters.sort')}
           options={[
-            { value: 'default', label: 'Défaut' },
-            { value: 'az', label: 'A → Z' },
+            { value: 'default', label: t('filters.default') },
+            { value: 'az', label: t('filters.az') },
           ]}
           value={sortMode}
           onChange={(v) => setParam('sort', v, 'default')}

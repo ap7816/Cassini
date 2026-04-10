@@ -70,6 +70,30 @@
     "emptyTitle": "Aucun lanceur détecté",
     "emptyText": "Installez des lanceurs puis cliquez sur Actualiser."
   },
+  "filters": {
+    "platform": "Plateforme",
+    "status": "Statut",
+    "sort": "Tri",
+    "all": "Tous",
+    "installedOnly": "Installés",
+    "notInstalled": "Non installés",
+    "recent": "Récent",
+    "az": "A → Z",
+    "za": "Z → A",
+    "default": "Défaut",
+    "byFolder": "Par dossier",
+    "battlenet": "Battle.net",
+    "other": "Autre",
+    "collapseAll": "Tout réduire"
+  },
+  "music": {
+    "chooseFolder": "Choisir un dossier",
+    "scanning": "Scan en cours…",
+    "trackCount": "{{count}} piste(s)",
+    "noAudio": "Aucun fichier audio trouvé.",
+    "chooseFirst": "Choisissez un dossier pour commencer.",
+    "noResults": "Aucun résultat pour « {{query}} »"
+  },
   "settings": {
     "title": "Paramètres",
     "subtitle": "Personnalisez ArcHive (fond d'écran, thème, etc.).",
