@@ -54,8 +54,12 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
     }
     walk_dir(root, root, &audio_exts, &mut tracks);
     tracks.sort_by(|a, b| {
-        a.folder.to_lowercase().cmp(&b.folder.to_lowercase())
-            .then(a.title.to_lowercase().cmp(&b.title.to_lowercase()))
+        match (a.folder.is_empty(), b.folder.is_empty()) {
+            (true, false) => std::cmp::Ordering::Greater,
+            (false, true) => std::cmp::Ordering::Less,
+            _ => a.folder.to_lowercase().cmp(&b.folder.to_lowercase())
+                .then(a.title.to_lowercase().cmp(&b.title.to_lowercase())),
+        }
     });
     Ok(tracks)
 }

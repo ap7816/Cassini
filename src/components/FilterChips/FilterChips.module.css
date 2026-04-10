@@ -1,0 +1,50 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.groupLabel {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.chip {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chipActive {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent);
+  border-color: var(--accent, #6c8efb);
+  color: var(--accent, #6c8efb);
+}
+
+.chipActive:hover {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 26%, transparent);
+}

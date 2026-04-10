@@ -225,6 +225,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.miniTitle:hover {
+  color: var(--accent, #6c8efb);
 }
 
 .miniFolderTag {

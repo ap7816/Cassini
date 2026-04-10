@@ -52,6 +52,24 @@
   flex-shrink: 0;
 }
 
+.collapseBtn {
+  padding: 4px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(224, 230, 240, 0.6);
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.collapseBtn:hover {
+  background: rgba(108, 142, 251, 0.15);
+  border-color: var(--accent, #6c8efb);
+  color: var(--accent, #6c8efb);
+}
+
 .loadingText {
   font-size: 0.8rem;
   color: var(--accent, #6c8efb);
@@ -67,6 +85,14 @@
   border: 1px solid rgba(220, 60, 60, 0.35);
   color: #ff7a7a;
   font-size: 0.83rem;
+  flex-shrink: 0;
+}
+
+/* ─── Filter row ─────────────────────────────────────────── */
+.filterRow {
+  padding: 6px 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 20, 26, 0.5);
   flex-shrink: 0;
 }
 
@@ -200,10 +226,80 @@
   white-space: nowrap;
 }
 
+.trackFolderTag {
+  font-size: 0.68rem;
+  color: rgba(224, 230, 240, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .playingIndicator {
   font-size: 0.65rem;
   color: var(--accent, #6c8efb);
   animation: pulse 1.2s infinite;
+}
+
+.trackDuration {
+  font-size: 0.72rem;
+  color: rgba(224, 230, 240, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+.trackDurationPlaceholder {
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+/* ─── Folder cover ────────────────────────────────────────── */
+.folderCover {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ─── Folder content (indent wrapper) ────────────────────── */
+.folderContent {
+  padding-left: 0;
+}
+
+/* ─── Equalizer animation ─────────────────────────────────── */
+.equalizer {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.eqBar {
+  display: block;
+  width: 3px;
+  border-radius: 1px;
+  background: var(--accent, #6c8efb);
+  animation: eqBounce 0.8s ease-in-out infinite alternate;
+}
+
+.eqBar:nth-child(1) { height: 60%; }
+.eqBar:nth-child(2) { height: 100%; }
+.eqBar:nth-child(3) { height: 40%; }
+
+@keyframes eqBounce {
+  0%   { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
 }
 
 @keyframes pulse {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { FilterBar, FilterChipGroup } from '../../components/FilterChips/FilterChips';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { openPath, openUrl } from '@tauri-apps/plugin-opener';
@@ -21,6 +22,8 @@ type LauncherDto = {
 };
 
 type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
+type InstalledFilter = 'all' | 'yes';
+type SortMode = 'default' | 'az';
 
 function isUrlTarget(target: string): boolean {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
@@ -36,8 +39,17 @@ async function openTarget(target: string): Promise<void> {
 
 export function LaunchersPage() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const q = (searchParams.get('q') ?? '').trim().toLowerCase();
+  const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
+  const sortMode = (searchParams.get('sort') ?? 'default') as SortMode;
+
+  function setParam(key: string, value: string, defaultValue: string) {
+    const p = new URLSearchParams(searchParams);
+    if (value === defaultValue) p.delete(key);
+    else p.set(key, value);
+    setSearchParams(p, { replace: true });
+  }
   const [desktop, setDesktop] = useState(false);
   const [launchers, setLaunchers] = useState<LauncherDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -155,9 +167,14 @@ export function LaunchersPage() {
     }
   }
 
-  const filteredLaunchers = q
-    ? launchers.filter((l) => l.name.toLowerCase().includes(q))
-    : launchers;
+  const filteredLaunchers = launchers
+    .filter((l) => !q || l.name.toLowerCase().includes(q))
+    .filter((l) => installedFilter === 'all' || l.installed)
+    .slice()
+    .sort((a, b) => {
+      if (sortMode === 'az') return a.name.localeCompare(b.name);
+      return 0;
+    });
 
   const isEmpty = !loading && launchers.length === 0;
 
@@ -186,6 +203,27 @@ export function LaunchersPage() {
       {!desktop && <div className={css.note}>{t('launchers.desktopOnly')}</div>}
 
       {error && <div className={css.error}>{error}</div>}
+
+      <FilterBar>
+        <FilterChipGroup<InstalledFilter>
+          label="Statut"
+          options={[
+            { value: 'all', label: 'Tous' },
+            { value: 'yes', label: 'Installés' },
+          ]}
+          value={installedFilter}
+          onChange={(v) => setParam('installed', v, 'all')}
+        />
+        <FilterChipGroup<SortMode>
+          label="Tri"
+          options={[
+            { value: 'default', label: 'Défaut' },
+            { value: 'az', label: 'A → Z' },
+          ]}
+          value={sortMode}
+          onChange={(v) => setParam('sort', v, 'default')}
+        />
+      </FilterBar>
 
       {isEmpty ? (
         <div className={css.empty}>

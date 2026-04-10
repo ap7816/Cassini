@@ -8,8 +8,12 @@ import { GameCard } from '../../features/Library/components/GameCard';
 import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
+import { FilterBar, FilterChipGroup } from '../../components/FilterChips/FilterChips';
 
 type ViewMode = 'games' | 'favorites';
+type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Other';
+type InstalledFilter = 'all' | 'yes' | 'no';
+type SortMode = 'recent' | 'az' | 'za';
 
 const titleCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -29,6 +33,17 @@ export function LibraryPage() {
   const deferredQ = useDeferredValue(q);
 
   const view: ViewMode = searchParams.get('view') === 'favorites' ? 'favorites' : 'games';
+
+  const platformFilter = (searchParams.get('platform') ?? 'all') as PlatformFilter;
+  const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
+  const sortMode = (searchParams.get('sort') ?? 'recent') as SortMode;
+
+  function setParam(key: string, value: string, defaultValue: string) {
+    const p = new URLSearchParams(searchParams);
+    if (value === defaultValue) p.delete(key);
+    else p.set(key, value);
+    setSearchParams(p, { replace: true });
+  }
 
   const {
     games,
@@ -99,15 +114,23 @@ export function LibraryPage() {
   }, [preparedGames, view]);
 
   const filteredGames = useMemo(() => {
-    const list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
+    let list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
+    if (platformFilter !== 'all')
+      list = list.filter((g) => g.game.platform === platformFilter);
+    if (installedFilter === 'yes')
+      list = list.filter((g) => g.game.installed !== false);
+    if (installedFilter === 'no')
+      list = list.filter((g) => g.game.installed === false);
     return list
       .slice()
       .sort((a, b) => {
+        if (sortMode === 'az') return titleCollator.compare(a.game.title, b.game.title);
+        if (sortMode === 'za') return titleCollator.compare(b.game.title, a.game.title);
         if (b.lastPlayedTs !== a.lastPlayedTs) return b.lastPlayedTs - a.lastPlayedTs;
         return titleCollator.compare(a.game.title, b.game.title);
       })
       .map((g) => g.game);
-  }, [baseList, deferredQ]);
+  }, [baseList, deferredQ, platformFilter, installedFilter, sortMode]);
 
   const showNoResults = baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;
@@ -160,6 +183,41 @@ export function LibraryPage() {
       </div>
 
       {scanError && <div className={css.error}>{scanError}</div>}
+
+      <FilterBar>
+        <FilterChipGroup<PlatformFilter>
+          label="Plateforme"
+          options={[
+            { value: 'all', label: 'Tous' },
+            { value: 'Steam', label: 'Steam' },
+            { value: 'Epic', label: 'Epic' },
+            { value: 'BattleNet', label: 'Battle.net' },
+            { value: 'Other', label: 'Autre' },
+          ]}
+          value={platformFilter}
+          onChange={(v) => setParam('platform', v, 'all')}
+        />
+        <FilterChipGroup<InstalledFilter>
+          label="Statut"
+          options={[
+            { value: 'all', label: 'Tous' },
+            { value: 'yes', label: 'Installés' },
+            { value: 'no', label: 'Non installés' },
+          ]}
+          value={installedFilter}
+          onChange={(v) => setParam('installed', v, 'all')}
+        />
+        <FilterChipGroup<SortMode>
+          label="Tri"
+          options={[
+            { value: 'recent', label: 'Récent' },
+            { value: 'az', label: 'A → Z' },
+            { value: 'za', label: 'Z → A' },
+          ]}
+          value={sortMode}
+          onChange={(v) => setParam('sort', v, 'recent')}
+        />
+      </FilterBar>
 
       {isEmpty ? (
         <EmptyState onLoadSamples={loadSamples} />

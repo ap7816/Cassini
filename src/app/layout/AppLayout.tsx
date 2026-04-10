@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
+import { NavLink, Outlet, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useRef, useEffect } from 'react';
 import logo from '../../assets/favicon.png';
@@ -38,6 +38,7 @@ export function AppLayout() {
   ].filter(Boolean).join(' ');
 
   const { settings } = useAppSettings();
+  const navigate = useNavigate();
   useUpdater();
 
   // Minimize to tray instead of closing when runInBackground is enabled
@@ -171,9 +172,13 @@ export function AppLayout() {
         {/* Persistent mini-player */}
         {currentTrack && (
           <div className={css.miniPlayer}>
-            <div className={css.miniTitle} title={currentTrack.title}>
+            <button
+              className={css.miniTitle}
+              title={`Aller à "${currentTrack.title}"`}
+              onClick={() => navigate('/music')}
+            >
               {currentTrack.title}
-            </div>
+            </button>
 
             <div className={css.miniControls}>
               <button
