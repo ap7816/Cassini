@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   accentColor: '#e5e7eb',
   bgOverlayOpacity: 0.55,
   rawgApiKey: '',
+  autostart: false,
+  runInBackground: false,
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -33,12 +35,18 @@ export function loadSettings(): AppSettings {
         : DEFAULT_SETTINGS.bgOverlayOpacity;
     const rawgApiKey =
       typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
+    const autostart =
+      typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
+    const runInBackground =
+      typeof parsed.runInBackground === 'boolean' ? parsed.runInBackground : false;
 
     return {
       backgroundImageDataUrl: bg,
       accentColor,
       bgOverlayOpacity,
       rawgApiKey,
+      autostart,
+      runInBackground,
     };
   } catch {
     return DEFAULT_SETTINGS;

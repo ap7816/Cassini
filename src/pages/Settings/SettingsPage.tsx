@@ -6,6 +6,7 @@ import { check } from '@tauri-apps/plugin-updater';
 import { ask } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { invoke } from '@tauri-apps/api/core';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
@@ -69,6 +70,8 @@ export function SettingsPage() {
     setAccentColor,
     setBgOverlayOpacity,
     setRawgApiKey,
+    setAutostart,
+    setRunInBackground,
   } = useAppSettings();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -359,6 +362,53 @@ export function SettingsPage() {
             <div className={css.updateErrorMsg}>{updateError}</div>
           )}
         </div>
+      </div>
+      )}
+
+      {/* Système */}
+      {matches('settings.systemTitle', 'settings.autostartLabel', 'settings.autostartHint', 'settings.runInBgLabel', 'settings.runInBgHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.systemTitle')}</div>
+
+        {matches('settings.autostartLabel', 'settings.autostartHint') && (
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.autostartLabel')}</div>
+            <div className={css.hint}>{t('settings.autostartHint')}</div>
+          </div>
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.autostart}
+              onChange={async (e) => {
+                const enabled = e.target.checked;
+                setAutostart(enabled);
+                try { await invoke('set_autostart', { enabled }); } catch { /* desktop only */ }
+              }}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </div>
+        )}
+
+        {matches('settings.autostartLabel', 'settings.autostartHint') && matches('settings.runInBgLabel', 'settings.runInBgHint') && <div className={css.divider} />}
+
+        {matches('settings.runInBgLabel', 'settings.runInBgHint') && (
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.runInBgLabel')}</div>
+            <div className={css.hint}>{t('settings.runInBgHint')}</div>
+          </div>
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.runInBackground}
+              onChange={(e) => setRunInBackground(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </div>
+        )}
       </div>
       )}
 

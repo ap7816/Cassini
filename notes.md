@@ -46,6 +46,15 @@ La barre de recherche globale (en haut de l'app) filtre en temps réel par titre
 
 Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.) détectés par Tauri. On peut les ouvrir directement ou ouvrir leur dossier d'installation. Les icônes sont extraites du `.exe` et mises en cache.
 
+### Lecteur de musique
+
+Un lecteur MP3/FLAC/WAV/OGG/M4A complet intégré dans l'app. On choisit un dossier, l'app scanne récursivement les sous-dossiers (côté Rust) et affiche la liste groupée par dossier. Les dossiers sont repliés par défaut. La barre de recherche filtre les pistes en temps réel. Un mini-player persistant reste visible en bas de l'écran sur toutes les pages, avec titre, contrôles, barre de progression et volume. La dernière piste jouée et le volume sont mémorisés en localStorage.
+
+### Système
+
+- **Lancement au démarrage**: écrit une clé dans `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` via Rust/winreg pour démarrer ArcHive avec Windows
+- **Arrière-plan / tray**: quand activé, fermer la fenêtre cache l'app dans la barre des tâches système (tray). Un clic sur l'icône rouvre la fenêtre, le menu tray permet de quitter proprement
+
 ---
 
 ## Tableau des fonctionnalités
@@ -72,7 +81,12 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 | Image de fond personnalisée avec opacité réglable | ✅ Done |
 | Réinitialisation complète de l'appli | ✅ Done |
 | Architecture deux-repos (`.exe` privé + `latest.json` public) | ✅ Done |
-| Page Mini-jeu avec intégration Unity WebGL | ✅ Done |
+| Page Mini-jeu avec intégration Unity WebGL (Netlify) | ✅ Done |
+| Lecteur de musique MP3 avec scan récursif des sous-dossiers | ✅ Done |
+| Lecteur: dossiers repliables, recherche, mini-player persistant | ✅ Done |
+| Lecteur: mémorisation dernière piste + volume | ✅ Done |
+| Lancement automatique au démarrage de Windows | ✅ Done |
+| Rester en arrière-plan (icône tray) | ✅ Done |
 | Taille des jeux sur disque | ❌ À faire |
 | Vue Système Solaire | ❌ À faire |
 | Statistiques de jeu (temps joué, graphiques) | ❌ À faire |
@@ -88,12 +102,11 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 | Raccourcis clavier | ❌ À faire |
 | Vue liste (alternative à la grille) | ❌ À faire |
 | Notes par jeu | ❌ À faire |
-| Lecteur MP3 intégré | ❌ À faire |
-| Mini-jeu Unity (build WebGL à intégrer) | 🚧 En cours |
 | Scan en arrière-plan automatique | ❌ À faire |
 | Mise à jour du statut installé en temps réel | ❌ À faire |
 | Cache RAWG avec TTL (expiration automatique) | ❌ À faire |
-| Compression des images personnalisées de jeux | ❌ À faire |
+| Lecteur: mode aléatoire / répétition | ❌ À faire |
+| Lecteur: affichage pochette d'album (ID3 tags) | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans) | ❌ À faire |
 
 ---
@@ -102,8 +115,8 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 
 ### Fonctionnalités
 
-- **Taille des jeux**: afficher la taille sur disque sur chaque carte (ex: `42.3 GB`, `890 MB`). Côté Rust, calculer la taille du dossier d'installation via le chemin récupéré lors du scan. Afficher dans la carte sous le badge plateforme. Ajouter un tri "par taille" pour identifier les jeux qui prennent le plus de place
-- **Vue Système Solaire**: vue alternative à la grille où chaque jeu est une planète en orbite autour d'un soleil central. La taille de la planète pourrait refléter le temps joué. Au survol (hover), le nom du jeu + l'image apparaissent en tooltip ou dans un panneau latéral. Cliquer sur une planète ouvre la fiche du jeu ou le lance directement. Animation CSS des orbites en continu, avec vitesse variable par planète
+- **Taille des jeux**: afficher la taille sur disque sur chaque carte (ex: `42.3 GB`, `890 MB`). Côté Rust, calculer la taille du dossier d'installation via le chemin récupéré lors du scan. Ajouter un tri "par taille" pour identifier les jeux qui prennent le plus de place
+- **Vue Système Solaire**: vue alternative à la grille où chaque jeu est une planète en orbite autour d'un soleil central. La taille de la planète pourrait refléter le temps joué. Animation CSS des orbites en continu
 - **Statistiques de jeu**: temps total joué par jeu, graphiques d'activité par semaine/mois
 - **Catégories / tags**: pouvoir organiser les jeux par genre, état ("en cours", "terminé", "abandonné")
 - **Tri avancé**: par temps joué, par date d'ajout, par plateforme
@@ -117,13 +130,12 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 - **Raccourcis clavier**: naviguer, lancer un jeu, basculer les favoris au clavier
 - **Vue liste**: alternative à la grille de cartes (plus compact)
 - **Notes par jeu**: ajouter un commentaire ou une note personnel sur un jeu
-- **Mini-jeu intégré (Unity WebGL)**: intégrer un jeu Unity directement dans l'app. La page est prête, il reste à créer le jeu Unity et exporter le build WebGL dans `public/game/`
-- **Lecteur MP3**: intégrer un lecteur de musique directement dans l'app. Sélectionner un dossier de fichiers `.mp3`, afficher la liste des pistes, lecture/pause/suivant/précédent, barre de progression, volume. La musique joue en fond pendant que tu navigues dans ta bibliothèque ou lances un jeu
+- **Lecteur: mode shuffle / repeat**: lire dans un ordre aléatoire ou en boucle
+- **Lecteur: pochette d'album**: lire les tags ID3 des fichiers MP3 pour afficher l'artwork
 
 ### Technique
 
 - **Scan en arrière-plan**: relancer le scan automatiquement à intervalle ou à la mise au point de la fenêtre
 - **Mise à jour du statut installé en temps réel**: détecter quand un jeu est désinstallé sans avoir à rescanner manuellement
 - **Cache RAWG avec TTL**: expiration automatique des images après X jours pour rester à jour
-- **Compression des images personnalisées**: déjà fait pour le fond d'écran, à appliquer aussi aux images de jeux
 - **Tests**: ajouter des tests unitaires sur la déduplication, le tri et le parsing des scans

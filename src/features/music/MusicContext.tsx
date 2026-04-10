@@ -31,6 +31,7 @@ interface MusicContextType {
 const MusicContext = createContext<MusicContextType | null>(null);
 const LS_KEY = 'music_folder';
 const LS_LAST_TRACK = 'music_last_track';
+const LS_VOLUME = 'music_volume';
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [folderPath, setFolderPath] = useState<string>(() => localStorage.getItem(LS_KEY) ?? '');
@@ -39,12 +40,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolumeState] = useState(1);
+  const [volume, setVolumeState] = useState<number>(() => {
+    const saved = parseFloat(localStorage.getItem(LS_VOLUME) ?? '');
+    return isNaN(saved) ? 0.5 : saved;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(new Audio());
   const tracksRef = useRef<TrackDto[]>([]);
+
+  // Apply saved volume to audio element on mount
+  useEffect(() => {
+    const saved = parseFloat(localStorage.getItem(LS_VOLUME) ?? '');
+    audioRef.current.volume = isNaN(saved) ? 0.5 : saved;
+  }, []);
 
   useEffect(() => { tracksRef.current = tracks; }, [tracks]);
 
@@ -159,6 +169,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   function setVolume(v: number) {
     setVolumeState(v);
     audioRef.current.volume = v;
+    localStorage.setItem(LS_VOLUME, String(v));
   }
 
   function seekTo(ratio: number) {

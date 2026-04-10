@@ -8,6 +8,8 @@ export type AppSettingsContextValue = {
   setAccentColor: (color: string) => void;
   setBgOverlayOpacity: (opacity: number) => void;
   setRawgApiKey: (key: string) => void;
+  setAutostart: (enabled: boolean) => void;
+  setRunInBackground: (enabled: boolean) => void;
 };
 
 export const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);

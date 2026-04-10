@@ -120,6 +120,11 @@
     "clearWebviewCacheButton": "Clear cache",
     "clearWebviewCacheCleared": "Cleared ✓",
     "bgRemoveConfirm": "Remove the background image?",
-    "clearAllConfirm": "Are you sure? All local data will be permanently deleted."
+    "clearAllConfirm": "Are you sure? All local data will be permanently deleted.",
+    "systemTitle": "System",
+    "autostartLabel": "Launch on startup",
+    "autostartHint": "Automatically start ArcHive when Windows boots.",
+    "runInBgLabel": "Run in background",
+    "runInBgHint": "When closing the window, ArcHive keeps running in the system tray."
   }
 }

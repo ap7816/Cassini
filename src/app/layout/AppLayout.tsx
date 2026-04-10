@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
@@ -39,6 +39,23 @@ export function AppLayout() {
 
   const { settings } = useAppSettings();
   useUpdater();
+
+  // Minimize to tray instead of closing when runInBackground is enabled
+  useEffect(() => {
+    if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
+    let unlisten: (() => void) | undefined;
+    import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+      getCurrentWindow()
+        .onCloseRequested(async (event) => {
+          if (settings.runInBackground) {
+            event.preventDefault();
+            await getCurrentWindow().hide();
+          }
+        })
+        .then((fn) => { unlisten = fn; });
+    });
+    return () => { unlisten?.(); };
+  }, [settings.runInBackground]);
 
   // Music player
   const music = useMusicPlayer();

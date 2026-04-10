@@ -19,4 +19,6 @@ export type AppSettings = {
   accentColor: string;
   bgOverlayOpacity: number;
   rawgApiKey: string;
+  autostart: boolean;
+  runInBackground: boolean;
 };

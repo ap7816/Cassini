@@ -117,6 +117,47 @@ fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
 }
 
 #[tauri::command]
+fn get_autostart() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        match hkcu.open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run") {
+            Ok(key) => key.get_value::<String, _>("ArcHive").is_ok(),
+            Err(_) => false,
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    { false }
+}
+
+#[tauri::command]
+fn set_autostart(enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let (run, _) = hkcu
+            .create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
+            .map_err(|e| e.to_string())?;
+        if enabled {
+            let exe_path = std::env::current_exe()
+                .map_err(|e| e.to_string())?
+                .to_string_lossy()
+                .to_string();
+            run.set_value("ArcHive", &exe_path).map_err(|e| e.to_string())?;
+        } else {
+            let _ = run.delete_value("ArcHive");
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    { let _ = enabled; }
+    Ok(())
+}
+
+#[tauri::command]
 fn launch_battlenet_game(uid: String) -> Result<(), String> {
     let candidates = [
         r"C:\Program Files (x86)\Battle.net\Battle.net.exe",
@@ -140,6 +181,45 @@ fn launch_battlenet_game(uid: String) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            #[cfg(desktop)]
+            {
+                use tauri::menu::{Menu, MenuItem};
+                use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+                use tauri::Manager;
+                let show_i = MenuItem::with_id(app, "show", "Ouvrir ArcHive", true, None::<&str>)?;
+                let quit_i = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+                TrayIconBuilder::new()
+                    .menu(&menu)
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "quit" => app.exit(0),
+                        "show" => {
+                            if let Some(w) = app.get_webview_window("main") {
+                                let _ = w.show();
+                                let _ = w.set_focus();
+                            }
+                        }
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event {
+                            let app = tray.app_handle();
+                            if let Some(w) = app.get_webview_window("main") {
+                                let _ = w.show();
+                                let _ = w.set_focus();
+                            }
+                        }
+                    })
+                    .build(app)?;
+            }
+            Ok(())
+        })
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
@@ -149,7 +229,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

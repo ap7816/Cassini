@@ -30,6 +30,14 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, rawgApiKey: key }));
   }
 
+  function setAutostart(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, autostart: enabled }));
+  }
+
+  function setRunInBackground(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, runInBackground: enabled }));
+  }
+
   const value = useMemo(
     () => ({
       settings,
@@ -38,6 +46,8 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setAccentColor,
       setBgOverlayOpacity,
       setRawgApiKey,
+      setAutostart,
+      setRunInBackground,
     }),
     [settings],
   );
