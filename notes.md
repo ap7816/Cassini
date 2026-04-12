@@ -59,55 +59,58 @@ Un lecteur MP3/FLAC/WAV/OGG/M4A complet intégré dans l'app. On choisit un doss
 
 ## Tableau des fonctionnalités
 
-| Fonctionnalité | Statut |
-|---|---|
-| Scan automatique Steam / Epic Games / Battle.net | ✅ Done |
-| Déduplication intelligente des jeux multi-plateformes | ✅ Done |
-| Lancement de jeux avec overlay d'animation | ✅ Done |
-| Historique de dernière session par jeu | ✅ Done |
-| Système de favoris | ✅ Done |
-| Images: CDN Steam + RAWG fallback + image personnalisée | ✅ Done |
-| Cache RAWG en localStorage | ✅ Done |
-| Vider le cache RAWG | ✅ Done |
-| Vider le cache WebView | ✅ Done |
-| Recherche temps réel par titre | ✅ Done |
-| Onglet Favoris | ✅ Done |
-| Ajout manuel d'un jeu via sélecteur de fichier `.exe` | ✅ Done |
-| Export / import de la bibliothèque en JSON | ✅ Done |
-| Onglet Launchers avec ouverture directe et accès au dossier | ✅ Done |
-| Mise à jour automatique (tauri-plugin-updater + GitHub Releases) | ✅ Done |
-| Interface multilingue FR / EN | ✅ Done |
-| Couleur d'accent personnalisable (palettes + color picker) | ✅ Done |
-| Image de fond personnalisée avec opacité réglable | ✅ Done |
-| Réinitialisation complète de l'appli | ✅ Done |
-| Architecture deux-repos (`.exe` privé + `latest.json` public) | ✅ Done |
-| Page Mini-jeu avec intégration Unity WebGL (Netlify) | ✅ Done |
-| Lecteur de musique MP3 avec scan récursif des sous-dossiers | ✅ Done |
-| Lecteur: dossiers repliables, recherche, mini-player persistant | ✅ Done |
-| Lecteur: mémorisation dernière piste + volume | ✅ Done |
-| Lancement automatique au démarrage de Windows | ✅ Done |
-| Rester en arrière-plan (icône tray) | ✅ Done |
-| Taille des jeux sur disque | ❌ À faire |
-| Vue Système Solaire | ❌ À faire |
-| Statistiques de jeu (temps joué, graphiques) | ❌ À faire |
-| Catégories / tags par genre ou état | ❌ À faire |
-| Tri avancé (taille, temps joué, date d'ajout) | ❌ À faire |
-| Notifications (jeu prêt à jouer) | ❌ À faire |
-| Mode sombre / clair | ❌ À faire |
-| Support GOG Galaxy | ❌ À faire |
-| Support Ubisoft Connect | ❌ À faire |
-| Support Riot Games | ❌ À faire |
-| Support Rockstar Games Launcher | ❌ À faire |
-| Support Xbox / Microsoft Store (Game Pass) | ❌ À faire |
-| Raccourcis clavier | ❌ À faire |
-| Vue liste (alternative à la grille) | ❌ À faire |
-| Notes par jeu | ❌ À faire |
-| Scan en arrière-plan automatique | ❌ À faire |
-| Mise à jour du statut installé en temps réel | ❌ À faire |
-| Cache RAWG avec TTL (expiration automatique) | ❌ À faire |
-| Lecteur: mode aléatoire / répétition | ❌ À faire |
-| Lecteur: affichage pochette d'album (ID3 tags) | ❌ À faire |
-| Tests unitaires (déduplication, tri, scans) | ❌ À faire |
+| Fonctionnalité                                                   | Statut     |
+| ---------------------------------------------------------------- | ---------- |
+| Scan automatique Steam / Epic Games / Battle.net                 | ✅ Done    |
+| Déduplication intelligente des jeux multi-plateformes            | ✅ Done    |
+| Lancement de jeux avec overlay d'animation                       | ✅ Done    |
+| Historique de dernière session par jeu                           | ✅ Done    |
+| Système de favoris                                               | ✅ Done    |
+| Images: CDN Steam + RAWG fallback + image personnalisée          | ✅ Done    |
+| Cache RAWG en localStorage                                       | ✅ Done    |
+| Vider le cache RAWG                                              | ✅ Done    |
+| Vider le cache WebView                                           | ✅ Done    |
+| Recherche temps réel par titre                                   | ✅ Done    |
+| Onglet Favoris                                                   | ✅ Done    |
+| Ajout manuel d'un jeu via sélecteur de fichier `.exe`            | ✅ Done    |
+| Export / import de la bibliothèque en JSON                       | ✅ Done    |
+| Onglet Launchers avec ouverture directe et accès au dossier      | ✅ Done    |
+| Mise à jour automatique (tauri-plugin-updater + GitHub Releases) | ✅ Done    |
+| Interface multilingue FR / EN                                    | ✅ Done    |
+| Couleur d'accent personnalisable (palettes + color picker)       | ✅ Done    |
+| Image de fond personnalisée avec opacité réglable                | ✅ Done    |
+| Réinitialisation complète de l'appli                             | ✅ Done    |
+| Architecture deux-repos (`.exe` privé + `latest.json` public)    | ✅ Done    |
+| Page Mini-jeu avec intégration Unity WebGL (Netlify)             | ✅ Done    |
+| Lecteur de musique MP3 avec scan récursif des sous-dossiers      | ✅ Done    |
+| Lecteur: dossiers repliables, recherche, mini-player persistant  | ✅ Done    |
+| Lecteur: mémorisation dernière piste + volume                    | ✅ Done    |
+| Lancement automatique au démarrage de Windows                    | ✅ Done    |
+| Rester en arrière-plan (icône tray)                              | ✅ Done    |
+| Taille des jeux sur disque                                       | ❌ À faire |
+| Vue Système Solaire                                              | ❌ À faire |
+| Statistiques de jeu (temps joué, graphiques)                     | ❌ À faire |
+| Catégories / tags par genre ou état                              | ❌ À faire |
+| Tri avancé (taille, temps joué, date d'ajout)                    | ❌ À faire |
+| Notifications (jeu prêt à jouer)                                 | ❌ À faire |
+| Mode sombre / clair                                              | ❌ À faire |
+| Support GOG Galaxy                                               | ❌ À faire |
+| Support Ubisoft Connect                                          | ❌ À faire |
+| Support Riot Games                                               | ❌ À faire |
+| Support Rockstar Games Launcher                                  | ❌ À faire |
+| Support Xbox / Microsoft Store (Game Pass)                       | ❌ À faire |
+| Raccourcis clavier                                               | ❌ À faire |
+| Vue liste (alternative à la grille)                              | ❌ À faire |
+| Notes par jeu                                                    | ❌ À faire |
+| Scan en arrière-plan automatique                                 | ❌ À faire |
+| Mise à jour du statut installé en temps réel                     | ❌ À faire |
+| Cache RAWG avec TTL (expiration automatique)                     | ❌ À faire |
+| Lecteur: mode aléatoire / répétition                             | ❌ À faire |
+| Lecteur: affichage pochette d'album (ID3 tags)                   | ❌ À faire |
+| Tests unitaires (déduplication, tri, scans)                      | ❌ À faire |
+| Musique : Zoom/Dezoom                                            | ❌ À faire |
+| Musique : arborescence de fichiers / grandes icônes de dossier   | ❌ À faire |
+| Musique : bouton random et boucle                                | ❌ À faire |
 
 ---
 
