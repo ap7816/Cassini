@@ -60,9 +60,10 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
       map.set(g.id, {
         ...existing,
         ...g,
-        // user data: jamais perdu
+        // user data: jamais perdu lors d'un rescan
         favorite: existing.favorite ?? g.favorite ?? false,
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
+        customImageUrl: existing.customImageUrl ?? g.customImageUrl ?? null,
       });
     } else {
       map.set(g.id, { ...g, favorite: g.favorite ?? false });

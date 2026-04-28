@@ -1,36 +1,54 @@
 const CACHE_KEY = 'arctive.rawg.cache.v5';
 
-const memoryCache = new Map<string, string | null>();
+// URLs trouvées → persistées en localStorage
+const persistentCache = new Map<string, string>();
+// Jeux sans résultat → mémoire seulement (retente à chaque session)
+const notFoundCache = new Set<string>();
 
-function loadCache(): Map<string, string | null> {
+function loadCache(): Map<string, string> {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
     if (!raw) return new Map();
     const parsed = JSON.parse(raw) as Record<string, string | null>;
-    return new Map(Object.entries(parsed));
+    const result = new Map<string, string>();
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v) result.set(k, v); // ignore les null sauvegardés par l'ancienne version
+    }
+    return result;
   } catch {
     return new Map();
   }
 }
 
-function saveCache(cache: Map<string, string | null>) {
+function saveCache() {
   try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(cache)));
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(persistentCache)));
   } catch { /* ignore */ }
 }
 
 if (typeof window !== 'undefined') {
-  for (const [k, v] of loadCache()) memoryCache.set(k, v);
+  for (const [k, v] of loadCache()) persistentCache.set(k, v);
 }
 
 export function clearRawgCache() {
-  memoryCache.clear();
+  persistentCache.clear();
+  notFoundCache.clear();
   try { window.localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
 }
 
+export function clearRawgCacheEntry(key: string) {
+  persistentCache.delete(key);
+  notFoundCache.delete(key);
+  saveCache();
+}
+
 export function setRawgCacheEntry(key: string, value: string | null) {
-  memoryCache.set(key, value);
-  saveCache(memoryCache);
+  if (value) {
+    persistentCache.set(key, value);
+    saveCache();
+  } else {
+    notFoundCache.add(key);
+  }
 }
 
 function normalize(s: string): string {
@@ -155,15 +173,16 @@ export function steamPortraitUrl(appId: string): string {
 export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
   // La clé de cache inclut la plateforme pour éviter les collisions
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
-  if (memoryCache.has(cacheKey)) return memoryCache.get(cacheKey) ?? null;
+  if (persistentCache.has(cacheKey)) return persistentCache.get(cacheKey)!;
+  if (notFoundCache.has(cacheKey)) return null;
 
   // Pour les jeux Steam : CDN Steam en priorité — pas de HEAD check (bloqué par CORS)
   // Le fallback header.jpg est géré côté UI (onError dans GameCard)
   if (steamAppId) {
     const steamUrl = steamCdnUrl(steamAppId);
     console.log(`[Steam CDN] "${title}" → ${steamUrl}`);
-    memoryCache.set(cacheKey, steamUrl);
-    saveCache(memoryCache);
+    persistentCache.set(cacheKey, steamUrl);
+    saveCache();
     return steamUrl;
   }
 
@@ -219,8 +238,12 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
       }
     }
 
-    memoryCache.set(cacheKey, imageUrl);
-    saveCache(memoryCache);
+    if (imageUrl) {
+      persistentCache.set(cacheKey, imageUrl);
+      saveCache();
+    } else {
+      notFoundCache.add(cacheKey); // pas de résultat → retente à la prochaine session
+    }
     return imageUrl;
   } catch (err) {
     console.error(`[RAWG] "${title}" — erreur:`, err);
