@@ -121,6 +121,82 @@ fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
 }
 
 #[tauri::command]
+fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
+    let root_path = std::path::Path::new(&root);
+    if !root_path.is_dir() {
+        return Err(format!("Not a directory: {root}"));
+    }
+    let mut dirs: Vec<String> = Vec::new();
+
+    fn walk(root: &std::path::Path, dir: &std::path::Path, dirs: &mut Vec<String>) {
+        let Ok(entries) = std::fs::read_dir(dir) else { return };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if let Ok(rel) = path.strip_prefix(root) {
+                    let rel_str = rel.to_string_lossy().replace('\\', "/");
+                    if !rel_str.is_empty() {
+                        dirs.push(rel_str);
+                    }
+                }
+                walk(root, &path, dirs);
+            }
+        }
+    }
+
+    walk(root_path, root_path, &mut dirs);
+    dirs.sort();
+    Ok(dirs)
+}
+
+#[tauri::command]
+fn create_music_folder(path: String) -> Result<(), String> {
+    std::fs::create_dir_all(&path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_music_folder(path: String) -> Result<(), String> {
+    std::fs::remove_dir_all(&path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
+    use std::path::Path;
+    let src_path = Path::new(&src);
+    let filename = src_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Fichier source invalide".to_string())?;
+
+    let dst_dir = Path::new(&dst_folder);
+    std::fs::create_dir_all(dst_dir).map_err(|e| e.to_string())?;
+
+    let mut dst_path = dst_dir.join(filename);
+
+    // Gérer les conflits de noms
+    if dst_path.exists() {
+        let stem = src_path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
+        let ext = src_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        let mut i = 1u32;
+        loop {
+            let name = if ext.is_empty() {
+                format!("{} ({})", stem, i)
+            } else {
+                format!("{} ({}).{}", stem, i, ext)
+            };
+            let candidate = dst_dir.join(&name);
+            if !candidate.exists() {
+                dst_path = candidate;
+                break;
+            }
+            i += 1;
+        }
+    }
+
+    std::fs::rename(&src, &dst_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn get_autostart() -> bool {
     #[cfg(target_os = "windows")]
     {
@@ -233,7 +309,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, move_music_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

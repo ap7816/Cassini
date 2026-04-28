@@ -228,7 +228,7 @@
   left: 2px;
   width: 26px;
   height: 10px;
-  background: hsl(var(--fhue), 48%, 42%);
+  background: color-mix(in srgb, var(--fc, #e6a817) 85%, #fff);
   border-radius: 5px 5px 0 0;
   z-index: 1;
 }
@@ -239,7 +239,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: hsl(var(--fhue), 50%, 36%);
+  background: color-mix(in srgb, var(--fc, #e6a817) 88%, #000);
   border-radius: 3px 8px 8px 8px;
   display: flex;
   align-items: center;
@@ -430,4 +430,116 @@
 @keyframes eqBounce {
   0%   { transform: scaleY(0.3); }
   100% { transform: scaleY(1); }
+}
+
+/* ─── Drop target ─────────────────────────────────────────── */
+.gridItemDropTarget {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent) !important;
+  border-color: var(--accent, #6c8efb) !important;
+  outline: 2px dashed var(--accent, #6c8efb);
+  outline-offset: -2px;
+}
+
+/* ─── Drop hint (+ inside folder on hover) ────────────────── */
+.dropHint {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent, #6c8efb);
+  line-height: 1;
+  z-index: 1;
+}
+
+/* ─── New folder button ───────────────────────────────────── */
+.newFolderBtn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(224, 230, 240, 0.7);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.newFolderBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(224, 230, 240, 1);
+}
+
+/* ─── Context menu ────────────────────────────────────────── */
+.ctxMenu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 185px;
+  background: #161a28;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ctxItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: rgba(224, 230, 240, 0.88);
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 7px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s;
+}
+
+.ctxItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ctxItemDanger {
+  color: #ff7a7a;
+}
+
+.ctxItemDanger:hover {
+  background: rgba(220, 60, 60, 0.15);
+  color: #ff9999;
+}
+
+.ctxDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 3px 6px;
+}
+
+/* ─── Color palette (inside context menu) ─────────────────── */
+.ctxPalette {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 10px 8px;
+}
+
+.ctxColorSwatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  display: block;
+}
+
+.ctxColorSwatch:hover {
+  transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
 }
