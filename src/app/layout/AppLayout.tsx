@@ -175,7 +175,11 @@ export function AppLayout() {
             <button
               className={css.miniTitle}
               title={`Aller à "${currentTrack.title}"`}
-              onClick={() => navigate('/music')}
+              onClick={() => {
+                const folder = music.tracks[music.currentIndex]?.folder;
+                const params = folder ? `?navTo=${encodeURIComponent(folder)}` : '';
+                navigate('/music' + params);
+              }}
             >
               {currentTrack.title}
             </button>

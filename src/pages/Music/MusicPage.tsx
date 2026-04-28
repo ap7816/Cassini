@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
+import { FilterSelect } from '../../components/FilterChips/FilterChips';
 import css from './MusicPage.module.css';
 
-type SortMode = 'folder' | 'az' | 'za';
+type SortMode = 'az' | 'za';
 type TrackWithIdx = TrackDto & { originalIndex: number };
 
-/* ─── Tree ─────────────────────────────────────────────────── */
+/* ─── Tree ──────────────────────────────────────────────────── */
 interface FolderNode {
   name: string;
   fullPath: string;
@@ -41,8 +41,14 @@ function buildTree(tracks: TrackWithIdx[]): FolderNode {
   return root;
 }
 
-function countAllTracks(node: FolderNode): number {
-  return node.tracks.length + node.children.reduce((s, c) => s + countAllTracks(c), 0);
+function getNodeAtPath(tree: FolderNode, path: string[]): FolderNode {
+  let node = tree;
+  for (const segment of path) {
+    const child = node.children.find(c => c.name === segment);
+    if (!child) return node;
+    node = child;
+  }
+  return node;
 }
 
 function hasActive(node: FolderNode, idx: number): boolean {
@@ -50,7 +56,7 @@ function hasActive(node: FolderNode, idx: number): boolean {
   return node.children.some(c => hasActive(c, idx));
 }
 
-/* ─── Helpers ──────────────────────────────────────────────── */
+/* ─── Helpers ───────────────────────────────────────────────── */
 function folderHue(name: string): number {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
@@ -64,7 +70,7 @@ function fmt(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-/* ─── Durations hook ───────────────────────────────────────── */
+/* ─── Durations hook ────────────────────────────────────────── */
 function useDurations(tracks: TrackDto[]) {
   const [dur, setDur] = useState<Record<string, number>>({});
 
@@ -79,21 +85,18 @@ function useDurations(tracks: TrackDto[]) {
       const slice = tracks.slice(i, i + BATCH);
       i += BATCH;
       await Promise.all(
-        slice.map(
-          t =>
-            new Promise<void>(res => {
-              const a = new Audio();
-              a.preload = 'metadata';
-              a.src = convertFileSrc(t.path);
-              const done = () => {
-                if (!cancelled && isFinite(a.duration) && a.duration > 0)
-                  setDur(prev => ({ ...prev, [t.path]: a.duration }));
-                res();
-              };
-              a.addEventListener('loadedmetadata', done, { once: true });
-              a.addEventListener('error', done, { once: true });
-            }),
-        ),
+        slice.map(t => new Promise<void>(res => {
+          const a = new Audio();
+          a.preload = 'metadata';
+          a.src = convertFileSrc(t.path);
+          const done = () => {
+            if (!cancelled && isFinite(a.duration) && a.duration > 0)
+              setDur(prev => ({ ...prev, [t.path]: a.duration }));
+            res();
+          };
+          a.addEventListener('loadedmetadata', done, { once: true });
+          a.addEventListener('error', done, { once: true });
+        }))
       );
       next();
     }
@@ -104,7 +107,7 @@ function useDurations(tracks: TrackDto[]) {
   return dur;
 }
 
-/* ─── Equalizer component ──────────────────────────────────── */
+/* ─── Equalizer ─────────────────────────────────────────────── */
 function Equalizer() {
   return (
     <span className={css.equalizer} aria-hidden="true">
@@ -115,151 +118,141 @@ function Equalizer() {
   );
 }
 
-/* ─── Folder node view (recursive) ────────────────────────── */
-interface FolderNodeViewProps {
-  node: FolderNode;
-  depth: number;
-  currentIndex: number;
-  isPlaying: boolean;
-  expandedFolders: Set<string>;
-  toggleFolder: (p: string) => void;
-  onSelect: (i: number) => void;
-  activeRef: React.MutableRefObject<HTMLDivElement | null>;
-  durations: Record<string, number>;
-  query: string;
-}
-
-function FolderNodeView({
-  node, depth, currentIndex, isPlaying,
-  expandedFolders, toggleFolder, onSelect,
-  activeRef, durations, query,
-}: FolderNodeViewProps) {
-  const isExpanded = !!query || expandedFolders.has(node.fullPath);
-  const active = hasActive(node, currentIndex);
-  const hue = folderHue(node.name);
-  const total = countAllTracks(node);
-  const indent = depth * 18;
-
+/* ─── Breadcrumb ────────────────────────────────────────────── */
+function Breadcrumb({ rootName, path, onNavigate }: {
+  rootName: string;
+  path: string[];
+  onNavigate: (idx: number) => void;
+}) {
+  const segments = [rootName, ...path];
   return (
-    <div className={css.folderGroup}>
-      <div
-        className={`${css.folderHeader} ${active ? css.folderHeaderActive : ''}`}
-        style={{ paddingLeft: 12 + indent }}
-        onClick={() => toggleFolder(node.fullPath)}
-      >
-        <span className={css.folderChevron}>{isExpanded ? '▾' : '▸'}</span>
-        <span
-          className={css.folderCover}
-          style={{
-            background: `hsl(${hue}, 42%, 26%)`,
-            color: `hsl(${hue}, 75%, 72%)`,
-            borderColor: `hsl(${hue}, 45%, 38%)`,
-          }}
-        >
-          {node.name[0]?.toUpperCase() ?? '?'}
+    <nav className={css.breadcrumb}>
+      {segments.map((seg, i) => (
+        <span key={i} className={css.breadcrumbItem}>
+          {i > 0 && <span className={css.breadcrumbSep} aria-hidden="true">›</span>}
+          <button
+            className={`${css.breadcrumbBtn} ${i === segments.length - 1 ? css.breadcrumbCurrent : ''}`}
+            onClick={() => onNavigate(i - 1)}
+            disabled={i === segments.length - 1}
+            title={seg}
+          >
+            {seg}
+          </button>
         </span>
-        <span className={css.folderName}>{node.name}</span>
-        <span className={css.folderCount}>{total}</span>
-        {active && !isExpanded && (
-          <span className={css.folderPlayingDot} title="Piste en cours dans ce dossier">●</span>
-        )}
-      </div>
-
-      {isExpanded && (
-        <div className={css.folderContent} style={{ '--indent': `${indent + 18}px` } as React.CSSProperties}>
-          {node.children.map(child => (
-            <FolderNodeView
-              key={child.fullPath}
-              node={child}
-              depth={depth + 1}
-              currentIndex={currentIndex}
-              isPlaying={isPlaying}
-              expandedFolders={expandedFolders}
-              toggleFolder={toggleFolder}
-              onSelect={onSelect}
-              activeRef={activeRef}
-              durations={durations}
-              query={query}
-            />
-          ))}
-          {node.tracks.map((track, relIdx) => {
-            const isActive = track.originalIndex === currentIndex;
-            return (
-              <div
-                key={track.path}
-                ref={isActive ? activeRef : undefined}
-                className={`${css.trackItem} ${isActive ? css.trackItemActive : ''}`}
-                style={{ paddingLeft: `calc(var(--indent) + 20px)` }}
-                onClick={() => onSelect(track.originalIndex)}
-                title={track.path}
-              >
-                {isActive && isPlaying
-                  ? <Equalizer />
-                  : <span className={css.trackIndex}>{relIdx + 1}</span>
-                }
-                <span className={css.trackTitle}>{track.title}</span>
-                {durations[track.path]
-                  ? <span className={css.trackDuration}>{fmt(durations[track.path])}</span>
-                  : <span className={css.trackDurationPlaceholder} />
-                }
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+      ))}
+    </nav>
   );
 }
 
-/* ─── Main page ────────────────────────────────────────────── */
+/* ─── Folder card ───────────────────────────────────────────── */
+function FolderCard({ folder, currentIndex, isPlaying, onClick }: {
+  folder: FolderNode;
+  currentIndex: number;
+  isPlaying: boolean;
+  onClick: () => void;
+}) {
+  const hue = folderHue(folder.name);
+  const active = hasActive(folder, currentIndex);
+  const total = folder.tracks.length + folder.children.reduce((s, c) => s + c.tracks.length, 0);
+
+  return (
+    <button
+      className={`${css.gridItem} ${active ? css.gridItemFolderActive : ''}`}
+      onClick={onClick}
+      title={folder.name}
+    >
+      <div
+        className={css.folderShape}
+        style={{ '--fhue': hue } as React.CSSProperties}
+      >
+        <div className={css.folderShapeTab} />
+        <div className={css.folderShapeBody}>
+          {active && isPlaying
+            ? <Equalizer />
+            : active
+              ? <span className={css.folderActiveDot} />
+              : <span className={css.folderCount}>{total}</span>
+          }
+        </div>
+      </div>
+      <span className={css.gridLabel}>{folder.name}</span>
+    </button>
+  );
+}
+
+/* ─── Track card ────────────────────────────────────────────── */
+function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, activeRef }: {
+  track: TrackWithIdx;
+  index: number;
+  isActive: boolean;
+  isPlaying: boolean;
+  onSelect: () => void;
+  duration: number | undefined;
+  activeRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return (
+    <button
+      ref={isActive ? activeRef : undefined}
+      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''}`}
+      onClick={onSelect}
+      title={track.title}
+    >
+      <div className={css.trackShape}>
+        {isActive && isPlaying
+          ? <Equalizer />
+          : <span className={css.trackNum}>{index + 1}</span>
+        }
+        {duration != null && (
+          <span className={css.trackDurationGrid}>{fmt(duration)}</span>
+        )}
+      </div>
+      <span className={css.gridLabel}>{track.title}</span>
+    </button>
+  );
+}
+
+/* ─── Main page ─────────────────────────────────────────────── */
 export function MusicPage() {
   const { t } = useTranslation();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get('q') ?? '').toLowerCase().trim();
-  const sortMode = (searchParams.get('sort') ?? 'folder') as SortMode;
+  const sortMode = (searchParams.get('sort') ?? 'az') as SortMode;
   const durations = useDurations(music.tracks);
+  const activeRef = useRef<HTMLButtonElement>(null);
 
-  function setSortMode(v: SortMode) {
-    const p = new URLSearchParams(searchParams);
-    if (v === 'folder') p.delete('sort');
-    else p.set('sort', v);
-    setSearchParams(p, { replace: true });
-  }
+  const [currentPath, setCurrentPath] = useState<string[]>([]);
 
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const activeRef = useRef<HTMLDivElement>(null);
-
-  const toggleFolder = useCallback((path: string) => {
-    setExpandedFolders(prev => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  }, []);
-
-  // Expand all ancestor folders of current track
+  // Reset path when folder root changes
   useEffect(() => {
-    if (music.currentIndex < 0 || music.tracks.length === 0) return;
-    const folder = music.tracks[music.currentIndex].folder;
-    if (!folder) return;
-    const parts = folder.split('/');
-    const paths = parts.map((_, i) => parts.slice(0, i + 1).join('/'));
-    setExpandedFolders(prev => {
-      if (paths.every(p => prev.has(p))) return prev;
-      return new Set([...prev, ...paths]);
-    });
-  }, [music.currentIndex, music.tracks]);
+    setCurrentPath([]);
+  }, [music.folderPath]);
 
-  // Scroll to active track after folder expansion
+  // Handle ?navTo=folder/path from mini-player click
+  useEffect(() => {
+    const navTo = searchParams.get('navTo');
+    if (!navTo) return;
+    setCurrentPath(navTo.split('/').filter(Boolean));
+    const p = new URLSearchParams(searchParams);
+    p.delete('navTo');
+    setSearchParams(p, { replace: true });
+  }, [searchParams]);
+
+  // Scroll to active track card after navigation
   useEffect(() => {
     if (music.currentIndex < 0) return;
     const t = setTimeout(() => {
       activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 60);
+    }, 80);
     return () => clearTimeout(t);
-  }, [music.currentIndex, expandedFolders]);
+  }, [currentPath, music.currentIndex]);
+
+  function setSortMode(v: SortMode) {
+    const p = new URLSearchParams(searchParams);
+    if (v === 'az') p.delete('sort');
+    else p.set('sort', v);
+    setSearchParams(p, { replace: true });
+  }
 
   async function handleChooseFolder() {
     const selected = await open({ directory: true, multiple: false });
@@ -269,28 +262,45 @@ export function MusicPage() {
     }
   }
 
-  // Filter
-  let filtered: TrackWithIdx[] = music.tracks.map((t, i) => ({ ...t, originalIndex: i }));
-  if (query) {
-    filtered = filtered.filter(t =>
-      t.title.toLowerCase().includes(query) ||
-      t.folder.toLowerCase().includes(query),
-    );
-  }
+  // Build tree
+  const allTracks = useMemo(
+    () => music.tracks.map((t, i) => ({ ...t, originalIndex: i })),
+    [music.tracks],
+  );
+  const tree = useMemo(() => buildTree(allTracks), [allTracks]);
+  const currentNode = useMemo(() => getNodeAtPath(tree, currentPath), [tree, currentPath]);
 
-  const useGroups = sortMode === 'folder';
-  const tree = useGroups ? buildTree(filtered) : null;
-  const flatSorted = useGroups
-    ? []
-    : [...filtered].sort((a, b) =>
-        sortMode === 'az' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title),
-      );
+  // Sort contents
+  const sortFn = (a: string, b: string) =>
+    sortMode === 'za' ? b.localeCompare(a) : a.localeCompare(b);
+
+  const sortedFolders = useMemo(
+    () => [...currentNode.children].sort((a, b) => sortFn(a.name, b.name)),
+    [currentNode.children, sortMode],
+  );
+  const sortedTracks = useMemo(
+    () => [...currentNode.tracks].sort((a, b) => sortFn(a.title, b.title)),
+    [currentNode.tracks, sortMode],
+  );
+
+  // Flat search results
+  const searchResults = useMemo(() => {
+    if (!query) return [];
+    return allTracks
+      .filter(t =>
+        t.title.toLowerCase().includes(query) ||
+        t.folder.toLowerCase().includes(query),
+      )
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [allTracks, query]);
 
   const folderName = music.folderPath ? music.folderPath.split(/[\\/]/).pop() : null;
+  const isEmpty = !music.loading && music.tracks.length === 0;
 
   return (
     <div className={css.page}>
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className={css.header}>
         <button className={css.chooseBtn} onClick={handleChooseFolder}>
           {t('music.chooseFolder')}
@@ -310,108 +320,109 @@ export function MusicPage() {
 
       {music.error && <div className={css.errorMsg}>{music.error}</div>}
 
-      {music.tracks.length > 0 && (
-        <div className={css.filterRow}>
-          <FilterBar>
-            {useGroups && (
-              <button className={css.collapseBtn} onClick={() => setExpandedFolders(new Set())}>
-                {t('filters.collapseAll')}
-              </button>
-            )}
-            <FilterSelect<SortMode>
-              label={t('filters.sort')}
-              options={[
-                { value: 'folder', label: t('filters.byFolder') },
-                { value: 'az', label: t('filters.az') },
-                { value: 'za', label: t('filters.za') },
-              ]}
-              value={sortMode}
-              onChange={setSortMode}
-            />
-          </FilterBar>
+      {/* ── Nav bar (breadcrumb + back + sort) ── */}
+      {music.tracks.length > 0 && folderName && (
+        <div className={css.navBar}>
+          <button
+            className={css.backBtn}
+            onClick={() => setCurrentPath(p => p.slice(0, -1))}
+            disabled={currentPath.length === 0}
+            aria-label="Retour"
+          >
+            ←
+          </button>
+          <Breadcrumb
+            rootName={folderName}
+            path={currentPath}
+            onNavigate={(idx) => {
+              if (idx < 0) setCurrentPath([]);
+              else setCurrentPath(currentPath.slice(0, idx + 1));
+            }}
+          />
+          <FilterSelect<SortMode>
+            label={t('filters.sort')}
+            options={[
+              { value: 'az', label: t('filters.az') },
+              { value: 'za', label: t('filters.za') },
+            ]}
+            value={sortMode}
+            onChange={setSortMode}
+          />
         </div>
       )}
 
-      <div className={css.trackList}>
-        {music.tracks.length === 0 && !music.loading && (
-          <div className={css.emptyState}>
-            {music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}
-          </div>
-        )}
-        {query && filtered.length === 0 && music.tracks.length > 0 && (
-          <div className={css.emptyState}>{t('music.noResults', { query })}</div>
-        )}
+      {/* ── Empty state ── */}
+      {isEmpty && (
+        <div className={css.emptyState}>
+          {music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}
+        </div>
+      )}
 
-        {/* Flat A-Z / Z-A */}
-        {!useGroups && flatSorted.map(track => {
-          const isActive = track.originalIndex === music.currentIndex;
-          return (
-            <div
-              key={track.path}
-              ref={isActive ? activeRef : undefined}
-              className={`${css.trackItem} ${isActive ? css.trackItemActive : ''}`}
-              onClick={() => music.selectTrack(track.originalIndex)}
-              title={track.path}
-            >
-              {isActive && music.isPlaying
-                ? <Equalizer />
-                : <span className={css.trackIndex}>{track.originalIndex + 1}</span>
-              }
-              <span className={css.trackTitle}>{track.title}</span>
-              {track.folder && (
-                <span className={css.trackFolderTag}>{track.folder.split('/').pop()}</span>
-              )}
-              {durations[track.path]
-                ? <span className={css.trackDuration}>{fmt(durations[track.path])}</span>
-                : <span className={css.trackDurationPlaceholder} />
-              }
-            </div>
-          );
-        })}
-
-        {/* Tree grouped */}
-        {useGroups && tree && (
-          <>
-            {tree.children.map(node => (
-              <FolderNodeView
-                key={node.fullPath}
-                node={node}
-                depth={0}
-                currentIndex={music.currentIndex}
-                isPlaying={music.isPlaying}
-                expandedFolders={expandedFolders}
-                toggleFolder={toggleFolder}
-                onSelect={music.selectTrack}
-                activeRef={activeRef}
-                durations={durations}
-                query={query}
-              />
-            ))}
-            {tree.tracks.map((track, relIdx) => {
+      {/* ── Search results (flat list) ── */}
+      {!isEmpty && query && (
+        <div className={css.trackList}>
+          {searchResults.length === 0 ? (
+            <div className={css.emptyState}>{t('music.noResults', { query })}</div>
+          ) : (
+            searchResults.map((track, idx) => {
               const isActive = track.originalIndex === music.currentIndex;
               return (
                 <div
                   key={track.path}
-                  ref={isActive ? activeRef : undefined}
                   className={`${css.trackItem} ${isActive ? css.trackItemActive : ''}`}
                   onClick={() => music.selectTrack(track.originalIndex)}
                   title={track.path}
                 >
                   {isActive && music.isPlaying
                     ? <Equalizer />
-                    : <span className={css.trackIndex}>{relIdx + 1}</span>
+                    : <span className={css.trackIndex}>{idx + 1}</span>
                   }
                   <span className={css.trackTitle}>{track.title}</span>
+                  {track.folder && (
+                    <span className={css.trackFolderTag}>{track.folder.split('/').pop()}</span>
+                  )}
                   {durations[track.path]
                     ? <span className={css.trackDuration}>{fmt(durations[track.path])}</span>
                     : <span className={css.trackDurationPlaceholder} />
                   }
                 </div>
               );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ── Grid browser ── */}
+      {!isEmpty && !query && (
+        <div className={css.gridScroll}>
+          <div className={css.fileGrid}>
+            {sortedFolders.map(folder => (
+              <FolderCard
+                key={folder.fullPath}
+                folder={folder}
+                currentIndex={music.currentIndex}
+                isPlaying={music.isPlaying}
+                onClick={() => setCurrentPath([...currentPath, folder.name])}
+              />
+            ))}
+            {sortedTracks.map((track, idx) => {
+              const isActive = track.originalIndex === music.currentIndex;
+              return (
+                <TrackCard
+                  key={track.path}
+                  track={track}
+                  index={idx}
+                  isActive={isActive}
+                  isPlaying={music.isPlaying}
+                  onSelect={() => music.selectTrack(track.originalIndex)}
+                  duration={durations[track.path]}
+                  activeRef={activeRef}
+                />
+              );
             })}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
