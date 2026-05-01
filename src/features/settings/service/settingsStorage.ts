@@ -1,6 +1,5 @@
 import type { AppSettings } from '../../types';
-
-const STORAGE_KEY = 'arctive.settings.v1';
+import { readSettingsRaw, writeSettingsRaw } from '../../../services/storage';
 
 const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
@@ -16,9 +15,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 export function loadSettings(): AppSettings {
-  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
-
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readSettingsRaw();
   if (!raw) return DEFAULT_SETTINGS;
 
   try {
@@ -54,6 +51,5 @@ export function loadSettings(): AppSettings {
 }
 
 export function saveSettings(settings: AppSettings): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  writeSettingsRaw(JSON.stringify(settings));
 }

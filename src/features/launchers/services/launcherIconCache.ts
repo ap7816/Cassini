@@ -6,33 +6,23 @@ export type LauncherIconInput = {
 type IconCacheEntry = { dataUrl: string; updatedAt: number };
 type IconCache = Record<string, IconCacheEntry>; // key = iconPath
 
-const ICON_CACHE_KEY = 'arctive.launcherIcons.v1';
+import { readLauncherIconsRaw, writeLauncherIconsRaw } from '../../../services/storage';
+
 const ICON_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
 
-function canUseStorage(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.localStorage);
-}
-
 function readCache(): IconCache {
-  if (!canUseStorage()) return {};
   try {
-    const raw = window.localStorage.getItem(ICON_CACHE_KEY);
+    const raw = readLauncherIconsRaw();
     if (!raw) return {};
     const parsed = JSON.parse(raw) as IconCache;
-    if (!parsed || typeof parsed !== 'object') return {};
-    return parsed;
+    return parsed && typeof parsed === 'object' ? parsed : {};
   } catch {
     return {};
   }
 }
 
 function writeCache(cache: IconCache): void {
-  if (!canUseStorage()) return;
-  try {
-    window.localStorage.setItem(ICON_CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // ignore (quota/disabled)
-  }
+  writeLauncherIconsRaw(JSON.stringify(cache));
 }
 
 function pruneCache(cache: IconCache): IconCache {

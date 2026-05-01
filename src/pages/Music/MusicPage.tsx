@@ -24,16 +24,7 @@ const PALETTE = [
   '#6b7280', // Gris
 ];
 
-const COLORS_KEY = 'music_folder_colors';
-
-function loadFolderColors(): Record<string, string> {
-  try { return JSON.parse(localStorage.getItem(COLORS_KEY) ?? '{}'); }
-  catch { return {}; }
-}
-
-function saveFolderColors(c: Record<string, string>) {
-  localStorage.setItem(COLORS_KEY, JSON.stringify(c));
-}
+import { readMusicFolderColors, writeMusicFolderColors, writeMusicFolder as storageWriteMusicFolder } from '../../services/storage';
 
 /* ─── Tree ──────────────────────────────────────────────────── */
 interface FolderNode {
@@ -154,59 +145,57 @@ function Breadcrumb({ rootName, path, onNavigate }: {
 }
 
 /* ─── Context menu ──────────────────────────────────────────── */
-type CtxMenu =
-  | { kind: 'folder'; x: number; y: number; node: FolderNode }
-  | { kind: 'color'; x: number; y: number; folderPath: string };
+type CtxMenu = { x: number; y: number; node: FolderNode };
 
-function ContextMenu({ menu, onClose, onDelete, onRename, onColorPick }: {
+function ContextMenu({ menu, currentColor, onClose, onDelete, onColorPreview, onColorSave }: {
   menu: CtxMenu;
+  currentColor: string;
   onClose: () => void;
   onDelete?: (node: FolderNode) => void;
-  onRename?: (node: FolderNode) => void;
-  onColorPick: (path: string, color: string) => void;
+  onColorPreview: (path: string, color: string) => void; // live, no localStorage
+  onColorSave: (path: string, color: string) => void;    // on picker close, writes localStorage
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const colorRef = useRef<HTMLInputElement>(null);
+
+  // Close when clicking outside
   useEffect(() => {
-    const h = () => onClose();
-    window.addEventListener('mousedown', h, true);
-    return () => window.removeEventListener('mousedown', h, true);
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    window.addEventListener('mousedown', h);
+    return () => window.removeEventListener('mousedown', h);
   }, [onClose]);
 
-  const stopBoth = (e: React.MouseEvent) => { e.stopPropagation(); e.preventDefault(); };
-
-  if (menu.kind === 'color') {
-    return (
-      <div className={css.ctxMenu} style={{ left: menu.x, top: menu.y }} onMouseDown={stopBoth} onClick={stopBoth}>
-        <div className={css.ctxPalette}>
-          {PALETTE.map(c => (
-            <button
-              key={c}
-              className={css.ctxColorSwatch}
-              style={{ background: c }}
-              onClick={(e) => { e.stopPropagation(); onColorPick(menu.folderPath, c); onClose(); }}
-              title={c}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Native 'change' fires only when the picker is dismissed → save then
+  useEffect(() => {
+    const input = colorRef.current;
+    if (!input) return;
+    const h = () => onColorSave(menu.node.fullPath, input.value);
+    input.addEventListener('change', h);
+    return () => input.removeEventListener('change', h);
+  }, [menu.node.fullPath, onColorSave]);
 
   return (
-    <div className={css.ctxMenu} style={{ left: menu.x, top: menu.y }} onMouseDown={stopBoth} onClick={stopBoth}>
-      <button className={css.ctxItem} onClick={(e) => {
-        e.stopPropagation();
-        onColorPick(menu.node.fullPath, '');
-      }}>
-        🎨 Changer la couleur
-      </button>
-      {onRename && (
-        <button className={css.ctxItem} onClick={(e) => { e.stopPropagation(); onClose(); onRename(menu.node); }}>
-          ✏️ Renommer
-        </button>
-      )}
+    <div ref={menuRef} className={css.ctxMenu} style={{ left: menu.x, top: menu.y }}
+      onClick={e => e.stopPropagation()}>
+
+      <label className={css.ctxColorRow}>
+        <span className={css.ctxColorLabel}>🎨 Couleur</span>
+        <input
+          ref={colorRef}
+          type="color"
+          className={css.ctxColorInput}
+          value={currentColor}
+          onChange={e => onColorPreview(menu.node.fullPath, e.target.value)}
+        />
+      </label>
+
       <div className={css.ctxDivider} />
+
       {onDelete && (
-        <button className={`${css.ctxItem} ${css.ctxItemDanger}`} onClick={(e) => { e.stopPropagation(); onClose(); onDelete(menu.node); }}>
+        <button className={`${css.ctxItem} ${css.ctxItemDanger}`}
+          onClick={() => { onClose(); onDelete(menu.node); }}>
           🗑️ Supprimer
         </button>
       )}
@@ -292,7 +281,7 @@ export function MusicPage() {
   const activeRef = useRef<HTMLButtonElement>(null);
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
-  const [folderColors, setFolderColors] = useState<Record<string, string>>(loadFolderColors);
+  const [folderColors, setFolderColors] = useState<Record<string, string>>(readMusicFolderColors);
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const [allDirs, setAllDirs] = useState<string[]>([]);
@@ -333,7 +322,7 @@ export function MusicPage() {
   async function handleChooseFolder() {
     const selected = await open({ directory: true, multiple: false });
     if (selected && typeof selected === 'string') {
-      localStorage.setItem('music_folder', selected);
+      storageWriteMusicFolder(selected);
       await music.loadFolder(selected);
     }
   }
@@ -344,11 +333,18 @@ export function MusicPage() {
     [folderColors],
   );
 
-  function applyFolderColor(folderPath: string, color: string) {
-    const next = { ...folderColors, [folderPath]: color };
-    setFolderColors(next);
-    saveFolderColors(next);
-    setCtxMenu(null);
+  // Live preview while dragging: update React state only (no localStorage write)
+  function previewFolderColor(folderPath: string, color: string) {
+    setFolderColors(prev => ({ ...prev, [folderPath]: color }));
+  }
+
+  // Called when the native picker is dismissed: persist to storage
+  function saveFolderColor(folderPath: string, color: string) {
+    setFolderColors(prev => {
+      const next = { ...prev, [folderPath]: color };
+      writeMusicFolderColors(next);
+      return next;
+    });
   }
 
   // ── Create folder ─────────────────────────────────────────────
@@ -489,7 +485,7 @@ export function MusicPage() {
                 isPlaying={music.isPlaying}
                 isDragOver={dragOverPath === folder.fullPath}
                 onClick={() => setCurrentPath([...currentPath, folder.name])}
-                onContextMenu={e => setCtxMenu({ kind: 'folder', x: e.clientX, y: e.clientY, node: folder })}
+                onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
                 onDragOver={() => setDragOverPath(folder.fullPath)}
                 onDragLeave={() => setDragOverPath(null)}
                 onDrop={e => handleDropOnFolder(folder, e)}
@@ -518,13 +514,11 @@ export function MusicPage() {
       {ctxMenu && (
         <ContextMenu
           menu={ctxMenu}
+          currentColor={getFolderColor(ctxMenu.node.fullPath)}
           onClose={() => setCtxMenu(null)}
-          onDelete={ctxMenu.kind === 'folder' ? handleDeleteFolder : undefined}
-          onColorPick={
-            ctxMenu.kind === 'color'
-              ? applyFolderColor
-              : (path) => setCtxMenu(prev => prev ? { kind: 'color', x: prev.x, y: prev.y, folderPath: path } : null)
-          }
+          onDelete={handleDeleteFolder}
+          onColorPreview={previewFolderColor}
+          onColorSave={saveFolderColor}
         />
       )}
     </div>

@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import {
+  readMusicFolder, writeMusicFolder,
+  readMusicVolume, writeMusicVolume,
+  readMusicLastTrack, writeMusicLastTrack,
+} from '../../services/storage';
 
 export interface TrackDto {
   path: string;
@@ -29,21 +34,15 @@ interface MusicContextType {
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
-const LS_KEY = 'music_folder';
-const LS_LAST_TRACK = 'music_last_track';
-const LS_VOLUME = 'music_volume';
 
 export function MusicProvider({ children }: { children: ReactNode }) {
-  const [folderPath, setFolderPath] = useState<string>(() => localStorage.getItem(LS_KEY) ?? '');
+  const [folderPath, setFolderPath] = useState<string>(readMusicFolder);
   const [tracks, setTracks] = useState<TrackDto[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolumeState] = useState<number>(() => {
-    const saved = parseFloat(localStorage.getItem(LS_VOLUME) ?? '');
-    return isNaN(saved) ? 0.5 : saved;
-  });
+  const [volume, setVolumeState] = useState<number>(readMusicVolume);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,8 +51,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Apply saved volume to audio element on mount
   useEffect(() => {
-    const saved = parseFloat(localStorage.getItem(LS_VOLUME) ?? '');
-    audioRef.current.volume = isNaN(saved) ? 0.5 : saved;
+    audioRef.current.volume = readMusicVolume();
   }, []);
 
   useEffect(() => { tracksRef.current = tracks; }, [tracks]);
@@ -81,7 +79,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         const ts = tracksRef.current;
         const next = i + 1;
         if (next < ts.length) {
-          localStorage.setItem(LS_LAST_TRACK, String(next));
+          writeMusicLastTrack(next);
           setTimeout(() => {
             audio.src = convertFileSrc(ts[next].path);
             audio.load();
@@ -115,7 +113,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setTracks(result);
 
       // Restore last played track (without auto-playing)
-      const saved = parseInt(localStorage.getItem(LS_LAST_TRACK) ?? '-1', 10);
+      const saved = readMusicLastTrack();
       if (saved >= 0 && saved < result.length) {
         setCurrentIndex(saved);
         const audio = audioRef.current;
@@ -135,7 +133,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const ts = tracksRef.current;
     if (index < 0 || index >= ts.length) return;
     setCurrentIndex(index);
-    localStorage.setItem(LS_LAST_TRACK, String(index));
+    writeMusicLastTrack(index);
     audio.src = convertFileSrc(ts[index].path);
     audio.load();
     audio.play().catch(() => {});
@@ -169,7 +167,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   function setVolume(v: number) {
     setVolumeState(v);
     audioRef.current.volume = v;
-    localStorage.setItem(LS_VOLUME, String(v));
+    writeMusicVolume(v);
   }
 
   function seekTo(ratio: number) {

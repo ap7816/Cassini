@@ -7,6 +7,7 @@ import { ask } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
+import { clearAllStorage, writeSettingsRaw } from '../../services/storage';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
@@ -167,9 +168,9 @@ export function SettingsPage() {
     const ok = await confirm(t('settings.clearAllConfirm'));
     if (!ok) return;
     const rawgKey = settings.rawgApiKey;
-    window.localStorage.clear();
+    clearAllStorage();
     if (rawgKey) {
-      window.localStorage.setItem('arctive.settings.v1', JSON.stringify({ rawgApiKey: rawgKey }));
+      writeSettingsRaw(JSON.stringify({ rawgApiKey: rawgKey }));
     }
     window.location.reload();
   }

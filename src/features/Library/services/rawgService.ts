@@ -1,4 +1,4 @@
-const CACHE_KEY = 'arctive.rawg.cache.v5';
+import { readRawgCacheRaw, writeRawgCacheRaw, removeRawgCache as storageRemoveRawgCache } from '../../../services/storage';
 
 // URLs trouvées → persistées en localStorage
 const persistentCache = new Map<string, string>();
@@ -7,12 +7,12 @@ const notFoundCache = new Set<string>();
 
 function loadCache(): Map<string, string> {
   try {
-    const raw = window.localStorage.getItem(CACHE_KEY);
+    const raw = readRawgCacheRaw();
     if (!raw) return new Map();
     const parsed = JSON.parse(raw) as Record<string, string | null>;
     const result = new Map<string, string>();
     for (const [k, v] of Object.entries(parsed)) {
-      if (v) result.set(k, v); // ignore les null sauvegardés par l'ancienne version
+      if (v) result.set(k, v);
     }
     return result;
   } catch {
@@ -21,9 +21,7 @@ function loadCache(): Map<string, string> {
 }
 
 function saveCache() {
-  try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(persistentCache)));
-  } catch { /* ignore */ }
+  writeRawgCacheRaw(JSON.stringify(Object.fromEntries(persistentCache)));
 }
 
 if (typeof window !== 'undefined') {
@@ -33,7 +31,7 @@ if (typeof window !== 'undefined') {
 export function clearRawgCache() {
   persistentCache.clear();
   notFoundCache.clear();
-  try { window.localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+  storageRemoveRawgCache();
 }
 
 export function clearRawgCacheEntry(key: string) {

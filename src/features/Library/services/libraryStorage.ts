@@ -1,6 +1,5 @@
 import type { Game } from '../../types';
-
-const STORAGE_KEY = 'arctive.library.games.v1';
+import { readGamesRaw, writeGamesRaw } from '../../../services/storage';
 
 function asString(v: unknown): string | null {
   return typeof v === 'string' ? v : null;
@@ -41,8 +40,7 @@ export function normalizeGames(input: unknown): Game[] {
 }
 
 export function loadGamesFromStorage(): Game[] {
-  if (typeof window === 'undefined') return [];
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readGamesRaw();
   if (!raw) return [];
 
   try {
@@ -54,6 +52,5 @@ export function loadGamesFromStorage(): Game[] {
 }
 
 export function saveGamesToStorage(games: Game[]): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+  writeGamesRaw(JSON.stringify(games));
 }

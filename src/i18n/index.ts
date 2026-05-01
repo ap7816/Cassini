@@ -2,15 +2,11 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import fr from './locales/fr.json';
 import en from './locales/en.json';
-
-const LANG_KEY = 'arctive.language';
+import { readLanguage, writeLanguage } from '../services/storage';
 
 function getInitialLanguage(): string {
-  try {
-    const saved = window.localStorage.getItem(LANG_KEY);
-    if (saved === 'fr' || saved === 'en') return saved;
-  } catch { /* ignore */ }
-  return 'fr';
+  const saved = readLanguage();
+  return saved === 'fr' || saved === 'en' ? saved : 'fr';
 }
 
 void i18n.use(initReactI18next).init({
@@ -25,7 +21,7 @@ void i18n.use(initReactI18next).init({
 
 export function setLanguage(lang: 'fr' | 'en') {
   void i18n.changeLanguage(lang);
-  try { window.localStorage.setItem(LANG_KEY, lang); } catch { /* ignore */ }
+  writeLanguage(lang);
 }
 
 export function getCurrentLanguage(): 'fr' | 'en' {

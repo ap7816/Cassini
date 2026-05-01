@@ -179,8 +179,8 @@
 /* ─── File grid ───────────────────────────────────────────── */
 .fileGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 8px;
 }
 
 /* ─── Grid item (shared) ──────────────────────────────────── */
@@ -190,28 +190,34 @@
   align-items: center;
   gap: 7px;
   padding: 10px 6px 9px;
-  border-radius: 9px;
-  border: 1px solid transparent;
-  background: none;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(12, 16, 26, 0.38);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
   text-align: center;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   width: 100%;
   color: inherit;
 }
 
 .gridItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.13);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .gridItemFolderActive {
-  background: color-mix(in srgb, var(--accent, #6c8efb) 8%, transparent);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 12%, rgba(12, 16, 26, 0.45));
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 30%, transparent);
 }
 
 .gridItemTrackActive {
-  background: color-mix(in srgb, var(--accent, #6c8efb) 14%, transparent);
-  border-color: color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, rgba(12, 16, 26, 0.5));
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 55%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent, #6c8efb) 25%, transparent);
 }
 
 /* ─── Folder shape ────────────────────────────────────────── */
@@ -220,6 +226,13 @@
   height: 58px;
   position: relative;
   flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+  transition: filter 0.15s, transform 0.15s;
+}
+
+.gridItem:hover .folderShape {
+  filter: drop-shadow(0 7px 16px rgba(0, 0, 0, 0.55));
+  transform: translateY(-1px) scale(1.05);
 }
 
 .folderShapeTab {
@@ -228,7 +241,7 @@
   left: 2px;
   width: 26px;
   height: 10px;
-  background: color-mix(in srgb, var(--fc, #e6a817) 85%, #fff);
+  background: color-mix(in srgb, var(--fc, #e6a817) 80%, #fff);
   border-radius: 5px 5px 0 0;
   z-index: 1;
 }
@@ -245,6 +258,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .folderShapeBody::after {
@@ -253,8 +268,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 45%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, transparent 100%);
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -263,14 +278,15 @@
   height: 9px;
   border-radius: 50%;
   background: var(--accent, #6c8efb);
-  box-shadow: 0 0 8px var(--accent, #6c8efb);
+  box-shadow: 0 0 10px var(--accent, #6c8efb);
   z-index: 1;
 }
 
 .folderCount {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   z-index: 1;
 }
 
@@ -280,39 +296,69 @@
   height: 58px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
   transition: background 0.12s, border-color 0.12s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Music note watermark */
+.trackShape::before {
+  content: '♪';
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.gridItem:hover .trackShape {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .gridItemTrackActive .trackShape {
   border-color: var(--accent, #6c8efb);
-  background: color-mix(in srgb, var(--accent, #6c8efb) 14%, transparent);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+              0 0 12px color-mix(in srgb, var(--accent, #6c8efb) 30%, transparent);
 }
 
 .trackNum {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: rgba(224, 230, 240, 0.25);
+  color: rgba(224, 230, 240, 0.3);
   line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.gridItemTrackActive .trackNum {
+  color: var(--accent, #6c8efb);
+  opacity: 0.9;
 }
 
 .trackDurationGrid {
-  font-size: 0.62rem;
-  color: rgba(224, 230, 240, 0.38);
+  font-size: 0.6rem;
+  color: rgba(224, 230, 240, 0.4);
   line-height: 1;
+  letter-spacing: 0.02em;
 }
 
 /* ─── Grid label ──────────────────────────────────────────── */
 .gridLabel {
   font-size: 0.72rem;
   line-height: 1.3;
-  color: rgba(224, 230, 240, 0.82);
+  color: rgba(224, 230, 240, 0.88);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
   width: 100%;
   text-align: center;
   display: -webkit-box;
@@ -352,19 +398,27 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 9px 20px;
+  padding: 9px 16px;
   cursor: pointer;
-  transition: background 0.12s;
-  border-radius: 6px;
+  transition: background 0.12s, border-color 0.12s;
+  border-radius: 8px;
   margin: 2px 8px;
+  border: 1px solid transparent;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.trackItem:hover { background: rgba(108, 142, 251, 0.12); }
+.trackItem:hover {
+  background: rgba(108, 142, 251, 0.1);
+  border-color: rgba(108, 142, 251, 0.15);
+}
 
 .trackItemActive {
-  background: rgba(108, 142, 251, 0.22) !important;
-  border-left: 3px solid var(--accent, #6c8efb);
-  padding-left: 17px;
+  background: rgba(108, 142, 251, 0.2) !important;
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 50%, transparent) !important;
+  border-left-width: 3px;
+  padding-left: 14px;
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent, #6c8efb) 20%, transparent);
 }
 
 .trackIndex {
@@ -484,6 +538,40 @@
   flex-direction: column;
   gap: 1px;
 }
+
+/* ─── Colour picker row ───────────────────────────────────── */
+.ctxColorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: background 0.1s;
+}
+
+.ctxColorRow:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ctxColorLabel {
+  font-size: 0.85rem;
+  color: rgba(224, 230, 240, 0.88);
+  pointer-events: none;
+}
+
+.ctxColorInput {
+  width: 34px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px 3px;
+  background: none;
+}
+
+.ctxColorInput::-webkit-color-swatch-wrapper { padding: 0; border-radius: 4px; }
+.ctxColorInput::-webkit-color-swatch { border: none; border-radius: 4px; }
 
 .ctxItem {
   display: flex;
