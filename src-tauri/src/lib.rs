@@ -160,6 +160,18 @@ fn delete_music_folder(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn rename_music_folder(path: String, new_name: String) -> Result<(), String> {
+    use std::path::Path;
+    let src = Path::new(&path);
+    let parent = src.parent().ok_or_else(|| "Dossier sans parent".to_string())?;
+    let dst = parent.join(&new_name);
+    if dst.exists() {
+        return Err(format!("Un dossier « {} » existe déjà", new_name));
+    }
+    std::fs::rename(&path, &dst).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
     use std::path::Path;
     let src_path = Path::new(&src);
@@ -310,7 +322,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, move_music_file])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

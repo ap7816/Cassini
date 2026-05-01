@@ -5,10 +5,10 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { FilterSelect } from '../../components/FilterChips/FilterChips';
 import css from './MusicPage.module.css';
 
-type SortMode = 'az' | 'za';
+type SortBy  = 'name' | 'dur' | 'ext';
+type SortDir = 'asc'  | 'desc';
 type TrackWithIdx = TrackDto & { originalIndex: number };
 
 /* ─── Color palette ─────────────────────────────────────────── */
@@ -147,10 +147,11 @@ function Breadcrumb({ rootName, path, onNavigate }: {
 /* ─── Context menu ──────────────────────────────────────────── */
 type CtxMenu = { x: number; y: number; node: FolderNode };
 
-function ContextMenu({ menu, currentColor, onClose, onDelete, onColorPreview, onColorSave }: {
+function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorPreview, onColorSave }: {
   menu: CtxMenu;
   currentColor: string;
   onClose: () => void;
+  onRename?: (node: FolderNode) => void;
   onDelete?: (node: FolderNode) => void;
   onColorPreview: (path: string, color: string) => void; // live, no localStorage
   onColorSave: (path: string, color: string) => void;    // on picker close, writes localStorage
@@ -192,6 +193,13 @@ function ContextMenu({ menu, currentColor, onClose, onDelete, onColorPreview, on
       </label>
 
       <div className={css.ctxDivider} />
+
+      {onRename && (
+        <button className={css.ctxItem}
+          onClick={() => { onClose(); onRename(menu.node); }}>
+          ✏️ Renommer
+        </button>
+      )}
 
       {onDelete && (
         <button className={`${css.ctxItem} ${css.ctxItemDanger}`}
@@ -270,13 +278,66 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, acti
   );
 }
 
+/* ─── Sort dropdown (style Explorateur Windows) ─────────────── */
+const SORT_BY_LABELS: Record<SortBy, string>  = { name: 'Nom', dur: 'Durée', ext: 'Type' };
+const SORT_DIR_LABELS: Record<SortDir, string> = { asc: 'Croissant', desc: 'Décroissant' };
+
+function SortDropdown({ sortBy, sortDir, onChange }: {
+  sortBy: SortBy; sortDir: SortDir;
+  onChange: (by: SortBy, dir: SortDir) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener('mousedown', h);
+    return () => window.removeEventListener('mousedown', h);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={css.sortRoot}>
+      <button
+        className={`${css.sortBtn} ${open ? css.sortBtnOpen : ''}`}
+        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
+      >
+        Trier <span className={css.sortArrow}>↕</span>
+      </button>
+
+      {open && (
+        <div className={css.sortPanel} onClick={e => e.stopPropagation()}>
+          {/* Critère */}
+          {(['name', 'dur', 'ext'] as SortBy[]).map(v => (
+            <button key={v} className={css.sortOption} onClick={() => onChange(v, sortDir)}>
+              <span className={css.sortCheck}>{sortBy === v ? '●' : ''}</span>
+              {SORT_BY_LABELS[v]}
+            </button>
+          ))}
+          <div className={css.sortPanelDivider} />
+          {/* Direction */}
+          {(['asc', 'desc'] as SortDir[]).map(v => (
+            <button key={v} className={css.sortOption} onClick={() => onChange(sortBy, v)}>
+              <span className={css.sortCheck}>{sortDir === v ? '●' : ''}</span>
+              {SORT_DIR_LABELS[v]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main page ─────────────────────────────────────────────── */
 export function MusicPage() {
   const { t } = useTranslation();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = (searchParams.get('q') ?? '').toLowerCase().trim();
-  const sortMode = (searchParams.get('sort') ?? 'az') as SortMode;
+  const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
+  const sortBy  = (searchParams.get('sb')  ?? 'name') as SortBy;
+  const sortDir = (searchParams.get('sd')  ?? 'asc')  as SortDir;
   const durations = useDurations(music.tracks);
   const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -313,9 +374,10 @@ export function MusicPage() {
     return () => clearTimeout(t);
   }, [currentPath, music.currentIndex]);
 
-  function setSortMode(v: SortMode) {
+  function setSort(by: SortBy, dir: SortDir) {
     const p = new URLSearchParams(searchParams);
-    if (v === 'az') p.delete('sort'); else p.set('sort', v);
+    if (by  === 'name') p.delete('sb'); else p.set('sb', by);
+    if (dir === 'asc')  p.delete('sd'); else p.set('sd', dir);
     setSearchParams(p, { replace: true });
   }
 
@@ -360,6 +422,28 @@ export function MusicPage() {
     } catch (e) { window.alert('Erreur : ' + e); }
   }
 
+  // ── Rename folder ─────────────────────────────────────────────
+  async function handleRenameFolder(node: FolderNode) {
+    const newName = window.prompt('Renommer le dossier :', node.name);
+    if (!newName?.trim() || newName.trim() === node.name) return;
+    const root = music.folderPath;
+    if (!root) return;
+    try {
+      await invoke('rename_music_folder', { path: absPath(root, node.fullPath), newName: newName.trim() });
+
+      // Update navigation path if the renamed folder is an ancestor of currentPath
+      const nodeSegs = node.fullPath ? node.fullPath.split('/') : [];
+      const matchesPrefix = nodeSegs.length > 0 && nodeSegs.every((seg, i) => currentPath[i] === seg);
+      if (matchesPrefix) {
+        const updated = [...currentPath];
+        updated[nodeSegs.length - 1] = newName.trim();
+        setCurrentPath(updated);
+      }
+
+      await music.loadFolder(root);
+    } catch (e) { window.alert('Erreur : ' + e); }
+  }
+
   // ── Delete folder ─────────────────────────────────────────────
   async function handleDeleteFolder(node: FolderNode) {
     const n = countTracks(node);
@@ -393,18 +477,31 @@ export function MusicPage() {
   const tree = useMemo(() => buildTree(allTracks, allDirs), [allTracks, allDirs]);
   const currentNode = useMemo(() => getNodeAtPath(tree, currentPath), [tree, currentPath]);
 
-  const sortFn = useCallback(
-    (a: string, b: string) => sortMode === 'za' ? b.localeCompare(a) : a.localeCompare(b),
-    [sortMode],
-  );
-  const sortedFolders = useMemo(
-    () => [...currentNode.children].sort((a, b) => sortFn(a.name, b.name)),
-    [currentNode.children, sortFn],
-  );
-  const sortedTracks = useMemo(
-    () => [...currentNode.tracks].sort((a, b) => sortFn(a.title, b.title)),
-    [currentNode.tracks, sortFn],
-  );
+  // Helpers d'extraction
+  const trackExt = (path: string) => path.split('.').pop()?.toLowerCase() ?? '';
+
+  const sortedFolders = useMemo(() => {
+    const dir = sortDir === 'desc' ? -1 : 1;
+    return [...currentNode.children].sort((a, b) =>
+      dir * a.name.localeCompare(b.name)  // dossiers toujours par nom
+    );
+  }, [currentNode.children, sortDir]);
+
+  const sortedTracks = useMemo(() => {
+    const dir = sortDir === 'desc' ? -1 : 1;
+    return [...currentNode.tracks].sort((a, b) => {
+      if (sortBy === 'dur') {
+        const da = durations[a.path] ?? 0;
+        const db = durations[b.path] ?? 0;
+        return dir * (da - db);
+      }
+      if (sortBy === 'ext') {
+        const ea = trackExt(a.path), eb = trackExt(b.path);
+        return dir * (ea.localeCompare(eb) || a.title.localeCompare(b.title));
+      }
+      return dir * a.title.localeCompare(b.title); // 'name' (défaut)
+    });
+  }, [currentNode.tracks, sortBy, sortDir, durations]);
 
   const searchResults = useMemo(() => {
     if (!query) return [];
@@ -441,12 +538,7 @@ export function MusicPage() {
             onNavigate={idx => idx < 0 ? setCurrentPath([]) : setCurrentPath(currentPath.slice(0, idx + 1))}
           />
           <button className={css.newFolderBtn} onClick={handleCreateFolder} title="Nouveau dossier">+ Dossier</button>
-          <FilterSelect<SortMode>
-            label={t('filters.sort')}
-            options={[{ value: 'az', label: t('filters.az') }, { value: 'za', label: t('filters.za') }]}
-            value={sortMode}
-            onChange={setSortMode}
-          />
+          <SortDropdown sortBy={sortBy} sortDir={sortDir} onChange={setSort} />
         </div>
       )}
 
@@ -516,6 +608,7 @@ export function MusicPage() {
           menu={ctxMenu}
           currentColor={getFolderColor(ctxMenu.node.fullPath)}
           onClose={() => setCtxMenu(null)}
+          onRename={handleRenameFolder}
           onDelete={handleDeleteFolder}
           onColorPreview={previewFolderColor}
           onColorSave={saveFolderColor}
