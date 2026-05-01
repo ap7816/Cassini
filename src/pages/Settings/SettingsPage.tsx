@@ -168,7 +168,7 @@ export function SettingsPage() {
     const ok = await confirm(t('settings.clearAllConfirm'));
     if (!ok) return;
     const rawgKey = settings.rawgApiKey;
-    clearAllStorage();
+    await clearAllStorage();
     if (rawgKey) {
       writeSettingsRaw(JSON.stringify({ rawgApiKey: rawgKey }));
     }

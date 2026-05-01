@@ -4,23 +4,28 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppRouter } from './app/AppRouter';
 import { AppSettingsProvider } from './features/settings/context/AppSettingsProvider';
 import { MusicProvider } from './features/music/MusicContext';
+import { initStorage } from './services/storage';
 import './i18n';
 import './App.css';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <AppSettingsProvider>
-      <MusicProvider>
-        <BrowserRouter>
-          <AppRouter />
-        </BrowserRouter>
-      </MusicProvider>
-    </AppSettingsProvider>
-  </React.StrictMode>,
-);
+// Initialiser le store de persistance avant le premier rendu
+// pour que tous les useState() lisent déjà les bonnes valeurs.
+initStorage().then(() => {
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <React.StrictMode>
+      <AppSettingsProvider>
+        <MusicProvider>
+          <BrowserRouter>
+            <AppRouter />
+          </BrowserRouter>
+        </MusicProvider>
+      </AppSettingsProvider>
+    </React.StrictMode>,
+  );
 
-const pre = document.getElementById('app-preloader');
-if (pre) {
-  pre.classList.add('preloader--done');
-  window.setTimeout(() => pre.remove(), 260);
-}
+  const pre = document.getElementById('app-preloader');
+  if (pre) {
+    pre.classList.add('preloader--done');
+    window.setTimeout(() => pre.remove(), 260);
+  }
+});
