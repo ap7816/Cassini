@@ -38,7 +38,7 @@ let store: Store | null = null;
 let ready = false;
 
 function isTauri(): boolean {
-  return !!(window as Record<string, unknown>).__TAURI_INTERNALS__;
+  return !!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export async function initStorage(): Promise<void> {
   }
 
   try {
-    store = await load('archive.json', { autoSave: true });
+    store = await load('archive.json', { autoSave: true, defaults: {} });
 
     // Charger toutes les clés connues en mémoire
     let hasData = false;
