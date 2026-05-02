@@ -213,28 +213,76 @@
   z-index: 10;
 }
 
-.miniTitle {
+.miniTrackInfo {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-width: 140px;
-  max-width: 200px;
-  font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.85);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  gap: 8px;
+  min-width: 150px;
+  max-width: 220px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.miniArt {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.miniArtPlaceholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: rgba(224, 230, 240, 0.3);
+  flex-shrink: 0;
+}
+
+.miniTitle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   text-align: left;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.miniTitle:hover .miniTitleText {
+  color: var(--accent, #6c8efb);
+}
+
+.miniTitleText {
+  font-size: 0.8rem;
+  color: rgba(224, 230, 240, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
   transition: color 0.15s;
 }
 
-.miniTitle:hover {
-  color: var(--accent, #6c8efb);
+.miniArtist {
+  font-size: 0.68rem;
+  color: rgba(224, 230, 240, 0.42);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .miniFolderTag {
@@ -348,4 +396,107 @@
   background: rgba(220, 60, 60, 0.18);
   border-color: rgba(220, 60, 60, 0.4);
   color: #ff7a7a;
+}
+
+/* ─── Update banner ───────────────────────────────────────── */
+.updateBanner {
+  position: fixed;
+  top: 72px;
+  right: 18px;
+  z-index: 9001;
+  width: 270px;
+  background: rgba(16, 20, 34, 0.98);
+  border: 1px solid color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(108, 142, 251, 0.08);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: bannerSlide 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.updateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.updateTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(224, 230, 240, 0.95);
+}
+
+.updateDismiss {
+  background: none;
+  border: none;
+  color: rgba(224, 230, 240, 0.3);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.updateDismiss:hover { color: rgba(224, 230, 240, 0.75); }
+
+.updateVersion {
+  font-size: 0.75rem;
+  color: var(--accent, #6c8efb);
+  font-weight: 600;
+}
+
+.updateBody {
+  font-size: 0.75rem;
+  color: rgba(224, 230, 240, 0.55);
+  margin: 0;
+  line-height: 1.45;
+  max-height: 56px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.updateBtn {
+  margin-top: 2px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent, #6c8efb);
+  background: rgba(108, 142, 251, 0.16);
+  color: var(--accent, #6c8efb);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.12s, color 0.12s;
+}
+.updateBtn:hover {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+}
+
+.updateProgressBar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.updateProgressFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent, #6c8efb);
+  transition: width 0.3s ease;
+}
+.updatePct {
+  font-size: 0.72rem;
+  color: rgba(224, 230, 240, 0.5);
+  text-align: right;
+}
+
+@keyframes bannerSlide {
+  from { transform: translateX(20px) translateY(-8px); opacity: 0; }
+  to   { transform: translateX(0)    translateY(0);    opacity: 1; }
 }

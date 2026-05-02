@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { confirm } from '@tauri-apps/plugin-dialog';
 import { check } from '@tauri-apps/plugin-updater';
-import { ask } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { useDialog } from '../../hooks/useDialog';
+import { AppDialog } from '../../components/AppDialog/AppDialog';
+import { useToast } from '../../features/toast/ToastContext';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
 import { clearAllStorage, writeSettingsRaw } from '../../services/storage';
@@ -64,6 +65,9 @@ export function SettingsPage() {
     if (!q) return true;
     return keys.some((k) => t(k).toLowerCase().includes(q));
   }
+  const { dlgState, closeDialog, confirm } = useDialog();
+  const toast = useToast();
+
   const {
     settings,
     setBackgroundImageDataUrl,
@@ -96,9 +100,8 @@ export function SettingsPage() {
         return;
       }
       setUpdateStatus('idle');
-      const yes = await ask(
-        `Une nouvelle version est disponible : ${update.version}\n\n${update.body ?? ''}\n\nVoulez-vous mettre à jour maintenant ?`,
-        { title: 'Mise à jour disponible', kind: 'info', okLabel: 'Mettre à jour', cancelLabel: 'Plus tard' },
+      const yes = await confirm(
+        t('updater.confirmMessage', { version: update.version, body: update.body ?? '' }),
       );
       if (!yes) return;
       setUpdateStatus('downloading');
@@ -132,7 +135,7 @@ export function SettingsPage() {
     e.target.value = '';
 
     if (!file.type.startsWith('image/')) {
-      window.alert(t('settings.bgErrorType'));
+      toast.error(t('settings.bgErrorType'));
       return;
     }
 
@@ -140,7 +143,7 @@ export function SettingsPage() {
       const dataUrl = await compressImageFile(file);
       setBackgroundImageDataUrl(dataUrl);
     } catch {
-      window.alert(t('settings.bgErrorLoad'));
+      toast.error(t('settings.bgErrorLoad'));
     }
   }
 
@@ -165,7 +168,7 @@ export function SettingsPage() {
   }
 
   async function handleClearAllData() {
-    const ok = await confirm(t('settings.clearAllConfirm'));
+    const ok = await confirm(t('settings.clearAllConfirm'), { danger: true });
     if (!ok) return;
     const rawgKey = settings.rawgApiKey;
     await clearAllStorage();
@@ -182,6 +185,7 @@ export function SettingsPage() {
 
   return (
     <div className={css.page}>
+      {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
       <h1 className={css.title}>{t('settings.title')}</h1>
       <p className={css.subtitle}>{t('settings.subtitle')}</p>
 

@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppRouter } from './app/AppRouter';
 import { AppSettingsProvider } from './features/settings/context/AppSettingsProvider';
 import { MusicProvider } from './features/music/MusicContext';
+import { ToastProvider } from './features/toast/ToastContext';
 import { initStorage } from './services/storage';
 import './i18n';
 import './App.css';
@@ -13,13 +14,15 @@ import './App.css';
 initStorage().then(() => {
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
-      <AppSettingsProvider>
-        <MusicProvider>
-          <BrowserRouter>
-            <AppRouter />
-          </BrowserRouter>
-        </MusicProvider>
-      </AppSettingsProvider>
+      <ToastProvider>
+        <AppSettingsProvider>
+          <MusicProvider>
+            <BrowserRouter>
+              <AppRouter />
+            </BrowserRouter>
+          </MusicProvider>
+        </AppSettingsProvider>
+      </ToastProvider>
     </React.StrictMode>,
   );
 

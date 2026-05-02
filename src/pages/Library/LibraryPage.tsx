@@ -9,6 +9,7 @@ import { launchGame } from '../../features/Library/services/launchGame';
 import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
+import { useToast } from '../../features/toast/ToastContext';
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Other';
@@ -26,6 +27,7 @@ function getTimestamp(iso?: string | null): number {
 export function LibraryPage() {
   const { t } = useTranslation();
   const { settings } = useAppSettings();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const qRaw = searchParams.get('q') ?? '';
@@ -89,7 +91,7 @@ export function LibraryPage() {
     setLaunchingId(null);
     if (!res.ok) {
       setLaunchOverlay(null);
-      window.alert(res.message);
+      toast.error(res.message);
       return;
     }
     markPlayed(game.id);

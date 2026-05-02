@@ -5,8 +5,39 @@ import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
-import { useUpdater } from '../../features/updater/useUpdater';
+import { useUpdater, type UpdaterState } from '../../features/updater/useUpdater';
 import { useMusicPlayer } from '../../features/music/MusicContext';
+import { useSingleMeta } from '../../features/music/useTrackMeta';
+import { Toasts } from '../../features/toast/Toasts';
+
+/* ─── Update banner ──────────────────────────────────────────── */
+function UpdateBanner({ u }: { u: UpdaterState }) {
+  const { t } = useTranslation();
+  if (!u.available && !u.installing) return null;
+  return (
+    <div className={css.updateBanner}>
+      {u.installing ? (
+        <>
+          <span className={css.updateTitle}>{t('updater.installing')}</span>
+          <div className={css.updateProgressBar}>
+            <div className={css.updateProgressFill} style={{ width: `${u.progress}%` }} />
+          </div>
+          <span className={css.updatePct}>{u.progress}%</span>
+        </>
+      ) : (
+        <>
+          <div className={css.updateHeader}>
+            <span className={css.updateTitle}>{t('updater.available')}</span>
+            <button className={css.updateDismiss} onClick={u.dismiss} aria-label={t('updater.dismiss')}>✕</button>
+          </div>
+          <span className={css.updateVersion}>{t('updater.version', { version: u.version })}</span>
+          {u.body && <p className={css.updateBody}>{u.body}</p>}
+          <button className={css.updateBtn} onClick={u.doInstall}>{t('updater.installNow')}</button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -39,7 +70,7 @@ export function AppLayout() {
 
   const { settings } = useAppSettings();
   const navigate = useNavigate();
-  useUpdater();
+  // useUpdater moved to top of component
 
   // Minimize to tray instead of closing when runInBackground is enabled
   useEffect(() => {
@@ -62,6 +93,7 @@ export function AppLayout() {
   const music = useMusicPlayer();
   const progressPct = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
   const currentTrack = music.currentIndex >= 0 ? music.tracks[music.currentIndex] : null;
+  const miniMeta = useSingleMeta(currentTrack?.path ?? null);
   const volPct = music.volume * 100;
 
   const volumeBarRef = useRef<HTMLDivElement>(null);
@@ -107,6 +139,8 @@ export function AppLayout() {
     '--accent': settings.accentColor,
     '--bg-overlay-opacity': settings.bgOverlayOpacity,
   };
+
+  const updater = useUpdater();
 
   return (
     <div className={css.shell} style={bgStyle}>
@@ -172,17 +206,24 @@ export function AppLayout() {
         {/* Persistent mini-player */}
         {currentTrack && (
           <div className={css.miniPlayer}>
-            <button
-              className={css.miniTitle}
-              title={`Aller à "${currentTrack.title}"`}
-              onClick={() => {
-                const folder = music.tracks[music.currentIndex]?.folder;
-                const params = folder ? `?navTo=${encodeURIComponent(folder)}` : '';
-                navigate('/music' + params);
-              }}
-            >
-              {currentTrack.title}
-            </button>
+            <div className={css.miniTrackInfo}>
+              {miniMeta?.coverDataUrl
+                ? <img src={miniMeta.coverDataUrl} className={css.miniArt} alt="" aria-hidden="true" />
+                : <div className={css.miniArtPlaceholder}>♪</div>
+              }
+              <button
+                className={css.miniTitle}
+                title={currentTrack.title}
+                onClick={() => {
+                  const folder = music.tracks[music.currentIndex]?.folder;
+                  const params = folder ? `?navTo=${encodeURIComponent(folder)}` : '';
+                  navigate('/music' + params);
+                }}
+              >
+                <span className={css.miniTitleText}>{currentTrack.title}</span>
+                {miniMeta?.artist && <span className={css.miniArtist}>{miniMeta.artist}</span>}
+              </button>
+            </div>
 
             <div className={css.miniControls}>
               <button
@@ -237,6 +278,9 @@ export function AppLayout() {
           </div>
         )}
       </main>
+
+      <UpdateBanner u={updater} />
+      <Toasts />
     </div>
   );
 }

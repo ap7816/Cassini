@@ -5,6 +5,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
+import { useBatchMeta, type TrackMeta } from '../../features/music/useTrackMeta';
 import css from './MusicPage.module.css';
 
 type SortBy  = 'name' | 'dur' | 'ext';
@@ -25,6 +26,9 @@ const PALETTE = [
 ];
 
 import { readMusicFolderColors, writeMusicFolderColors, writeMusicFolder as storageWriteMusicFolder } from '../../services/storage';
+import { useDialog } from '../../hooks/useDialog';
+import { AppDialog } from '../../components/AppDialog/AppDialog';
+import { useToast } from '../../features/toast/ToastContext';
 
 /* ─── Tree ──────────────────────────────────────────────────── */
 interface FolderNode {
@@ -88,19 +92,39 @@ function absPath(root: string, rel: string) {
 }
 
 /* ─── Durations hook ────────────────────────────────────────── */
+// Cache module-level : survit aux navigations, effacé à la fermeture de l'app.
+const _durationCache: Record<string, number> = {};
+
 function useDurations(tracks: TrackDto[]) {
-  const [dur, setDur] = useState<Record<string, number>>({});
+  // Initialise l'état depuis le cache existant (lecture instantanée au re-mount)
+  const [dur, setDur] = useState<Record<string, number>>(() => {
+    const cached: Record<string, number> = {};
+    for (const t of tracks) {
+      if (_durationCache[t.path] !== undefined) cached[t.path] = _durationCache[t.path];
+    }
+    return cached;
+  });
+
   useEffect(() => {
-    if (!tracks.length) return;
+    // Filtre uniquement les pistes absentes du cache
+    const missing = tracks.filter(t => _durationCache[t.path] === undefined);
+    if (!missing.length) return;
+
     let cancelled = false;
     const BATCH = 20; let i = 0;
     async function next() {
-      if (cancelled || i >= tracks.length) return;
-      const slice = tracks.slice(i, i + BATCH); i += BATCH;
+      if (cancelled || i >= missing.length) return;
+      const slice = missing.slice(i, i + BATCH); i += BATCH;
       await Promise.all(slice.map(t => new Promise<void>(res => {
         const a = new Audio(); a.preload = 'metadata';
         a.src = convertFileSrc(t.path);
-        const done = () => { if (!cancelled && isFinite(a.duration) && a.duration > 0) setDur(p => ({ ...p, [t.path]: a.duration })); res(); };
+        const done = () => {
+          if (!cancelled && isFinite(a.duration) && a.duration > 0) {
+            _durationCache[t.path] = a.duration;          // mémorise dans le cache
+            setDur(p => ({ ...p, [t.path]: a.duration })); // met à jour le state
+          }
+          res();
+        };
         a.addEventListener('loadedmetadata', done, { once: true });
         a.addEventListener('error', done, { once: true });
       })));
@@ -109,6 +133,7 @@ function useDurations(tracks: TrackDto[]) {
     next();
     return () => { cancelled = true; };
   }, [tracks]);
+
   return dur;
 }
 
@@ -156,6 +181,7 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
   onColorPreview: (path: string, color: string) => void; // live, no localStorage
   onColorSave: (path: string, color: string) => void;    // on picker close, writes localStorage
 }) {
+  const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLInputElement>(null);
 
@@ -182,7 +208,7 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
       onClick={e => e.stopPropagation()}>
 
       <label className={css.ctxColorRow}>
-        <span className={css.ctxColorLabel}>🎨 Couleur</span>
+        <span className={css.ctxColorLabel}>{t('music.ctxColor')}</span>
         <input
           ref={colorRef}
           type="color"
@@ -197,14 +223,14 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
       {onRename && (
         <button className={css.ctxItem}
           onClick={() => { onClose(); onRename(menu.node); }}>
-          ✏️ Renommer
+          {t('music.ctxRename')}
         </button>
       )}
 
       {onDelete && (
         <button className={`${css.ctxItem} ${css.ctxItemDanger}`}
           onClick={() => { onClose(); onDelete(menu.node); }}>
-          🗑️ Supprimer
+          {t('music.ctxDelete')}
         </button>
       )}
     </div>
@@ -251,10 +277,11 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
 }
 
 /* ─── Track card ────────────────────────────────────────────── */
-function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, activeRef }: {
+function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, activeRef, meta }: {
   track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
   onSelect: () => void; duration: number | undefined;
   activeRef: React.RefObject<HTMLButtonElement | null>;
+  meta: TrackMeta | null;
 }) {
   return (
     <button
@@ -270,22 +297,29 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, acti
       title={track.title}
     >
       <div className={css.trackShape}>
-        {isActive && isPlaying ? <Equalizer /> : <span className={css.trackNum}>{index + 1}</span>}
-        {duration != null && <span className={css.trackDurationGrid}>{fmt(duration)}</span>}
+        {meta?.coverDataUrl && (
+          <img src={meta.coverDataUrl} className={css.trackArt} alt="" aria-hidden="true" />
+        )}
+        <div className={`${css.trackShapeContent} ${meta?.coverDataUrl ? css.trackShapeContentWithArt : ''}`}>
+          {isActive && isPlaying ? <Equalizer /> : <span className={css.trackNum}>{index + 1}</span>}
+          {duration != null && <span className={css.trackDurationGrid}>{fmt(duration)}</span>}
+        </div>
       </div>
       <span className={css.gridLabel}>{track.title}</span>
+      {meta?.artist && <span className={css.trackArtist}>{meta.artist}</span>}
     </button>
   );
 }
 
 /* ─── Sort dropdown (style Explorateur Windows) ─────────────── */
-const SORT_BY_LABELS: Record<SortBy, string>  = { name: 'Nom', dur: 'Durée', ext: 'Type' };
-const SORT_DIR_LABELS: Record<SortDir, string> = { asc: 'Croissant', desc: 'Décroissant' };
-
 function SortDropdown({ sortBy, sortDir, onChange }: {
   sortBy: SortBy; sortDir: SortDir;
   onChange: (by: SortBy, dir: SortDir) => void;
 }) {
+  const { t } = useTranslation();
+  const SORT_BY_LABELS: Record<SortBy, string>  = { name: t('music.sortByName'), dur: t('music.sortByDuration'), ext: t('music.sortByType') };
+  const SORT_DIR_LABELS: Record<SortDir, string> = { asc: t('music.sortAsc'), desc: t('music.sortDesc') };
+
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -304,7 +338,7 @@ function SortDropdown({ sortBy, sortDir, onChange }: {
         className={`${css.sortBtn} ${open ? css.sortBtnOpen : ''}`}
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
       >
-        Trier <span className={css.sortArrow}>↕</span>
+        {t('music.sortBtn')} <span className={css.sortArrow}>↕</span>
       </button>
 
       {open && (
@@ -340,6 +374,9 @@ export function MusicPage() {
   const sortDir = (searchParams.get('sd')  ?? 'asc')  as SortDir;
   const durations = useDurations(music.tracks);
   const activeRef = useRef<HTMLButtonElement>(null);
+
+  const { dlgState, closeDialog, prompt, confirm } = useDialog();
+  const toast = useToast();
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [folderColors, setFolderColors] = useState<Record<string, string>>(readMusicFolderColors);
@@ -411,52 +448,53 @@ export function MusicPage() {
 
   // ── Create folder ─────────────────────────────────────────────
   async function handleCreateFolder() {
-    const name = window.prompt('Nom du nouveau dossier :');
-    if (!name?.trim()) return;
+    const name = await prompt(t('music.newFolderPrompt'));
+    if (!name) return;
     const root = music.folderPath;
     if (!root) return;
-    const targetAbs = absPath(absPath(root, currentPath.join('/')), name.trim());
+    const targetAbs = absPath(absPath(root, currentPath.join('/')), name);
     try {
       await invoke('create_music_folder', { path: targetAbs });
       await music.loadFolder(root);
-    } catch (e) { window.alert('Erreur : ' + e); }
+    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
   // ── Rename folder ─────────────────────────────────────────────
   async function handleRenameFolder(node: FolderNode) {
-    const newName = window.prompt('Renommer le dossier :', node.name);
-    if (!newName?.trim() || newName.trim() === node.name) return;
+    const newName = await prompt(t('music.renameFolderPrompt'), node.name);
+    if (!newName || newName === node.name) return;
     const root = music.folderPath;
     if (!root) return;
     try {
-      await invoke('rename_music_folder', { path: absPath(root, node.fullPath), newName: newName.trim() });
+      await invoke('rename_music_folder', { path: absPath(root, node.fullPath), newName });
 
       // Update navigation path if the renamed folder is an ancestor of currentPath
       const nodeSegs = node.fullPath ? node.fullPath.split('/') : [];
       const matchesPrefix = nodeSegs.length > 0 && nodeSegs.every((seg, i) => currentPath[i] === seg);
       if (matchesPrefix) {
         const updated = [...currentPath];
-        updated[nodeSegs.length - 1] = newName.trim();
+        updated[nodeSegs.length - 1] = newName;
         setCurrentPath(updated);
       }
 
       await music.loadFolder(root);
-    } catch (e) { window.alert('Erreur : ' + e); }
+    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
   // ── Delete folder ─────────────────────────────────────────────
   async function handleDeleteFolder(node: FolderNode) {
     const n = countTracks(node);
     const msg = n > 0
-      ? `Supprimer "${node.name}" et ses ${n} musique(s) définitivement ?`
-      : `Supprimer le dossier vide "${node.name}" ?`;
-    if (!window.confirm(msg)) return;
+      ? t('music.deleteFolderWithTracks', { name: node.name, count: n })
+      : t('music.deleteFolderEmpty', { name: node.name });
+    const ok = await confirm(msg, { danger: true });
+    if (!ok) return;
     const root = music.folderPath;
     if (!root) return;
     try {
       await invoke('delete_music_folder', { path: absPath(root, node.fullPath) });
       await music.loadFolder(root);
-    } catch (e) { window.alert('Erreur : ' + e); }
+    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
   // ── Drag & drop ───────────────────────────────────────────────
@@ -469,7 +507,7 @@ export function MusicPage() {
     try {
       await invoke('move_music_file', { src: trackPath, dstFolder: dstAbs });
       await music.loadFolder(music.folderPath);
-    } catch (err) { window.alert('Erreur : ' + err); }
+    } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
   }
 
   // ── Tree ──────────────────────────────────────────────────────
@@ -502,6 +540,8 @@ export function MusicPage() {
       return dir * a.title.localeCompare(b.title); // 'name' (défaut)
     });
   }, [currentNode.tracks, sortBy, sortDir, durations]);
+
+  const getMeta = useBatchMeta(sortedTracks.map(t => t.path));
 
   const searchResults = useMemo(() => {
     if (!query) return [];
@@ -537,7 +577,7 @@ export function MusicPage() {
             path={currentPath}
             onNavigate={idx => idx < 0 ? setCurrentPath([]) : setCurrentPath(currentPath.slice(0, idx + 1))}
           />
-          <button className={css.newFolderBtn} onClick={handleCreateFolder} title="Nouveau dossier">+ Dossier</button>
+          <button className={css.newFolderBtn} onClick={handleCreateFolder} title={t('music.newFolderPrompt')}>{t('music.newFolderBtn')}</button>
           <SortDropdown sortBy={sortBy} sortDir={sortDir} onChange={setSort} />
         </div>
       )}
@@ -595,6 +635,7 @@ export function MusicPage() {
                   onSelect={() => music.selectTrack(track.originalIndex)}
                   duration={durations[track.path]}
                   activeRef={activeRef}
+                  meta={getMeta(track.path)}
                 />
               );
             })}
@@ -614,6 +655,9 @@ export function MusicPage() {
           onColorSave={saveFolderColor}
         />
       )}
+
+      {/* ── In-app dialog (prompt / confirm) ── */}
+      {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
     </div>
   );
 }

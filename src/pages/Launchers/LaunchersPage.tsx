@@ -12,6 +12,7 @@ import {
 } from '../../features/launchers/services/launcherIconCache';
 
 import { info } from '@tauri-apps/plugin-log';
+import { useToast } from '../../features/toast/ToastContext';
 
 type LauncherDto = {
   id: string;
@@ -39,6 +40,7 @@ async function openTarget(target: string): Promise<void> {
 
 export function LaunchersPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = (searchParams.get('q') ?? '').trim().toLowerCase();
   const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
@@ -144,7 +146,7 @@ export function LaunchersPage() {
       setOpenStatus('error');
       const msg = e instanceof Error ? e.message : 'Failed to open launcher.';
       window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 1200);
-      window.alert(msg);
+      toast.error(msg);
     }
   }
 
@@ -163,7 +165,7 @@ export function LaunchersPage() {
       setFolderStatus('error');
       const msg = e instanceof Error ? e.message : 'Failed to open folder.';
       window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 1200);
-      window.alert(msg);
+      toast.error(msg);
     }
   }
 

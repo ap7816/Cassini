@@ -92,7 +92,22 @@
     "trackCount": "{{count}} piste(s)",
     "noAudio": "Aucun fichier audio trouvé.",
     "chooseFirst": "Choisissez un dossier pour commencer.",
-    "noResults": "Aucun résultat pour « {{query}} »"
+    "noResults": "Aucun résultat pour « {{query}} »",
+    "newFolderBtn": "+ Dossier",
+    "newFolderPrompt": "Nom du nouveau dossier :",
+    "renameFolderPrompt": "Renommer le dossier :",
+    "deleteFolderWithTracks": "Supprimer \"{{name}}\" et ses {{count}} musique(s) définitivement ?",
+    "deleteFolderEmpty": "Supprimer le dossier vide \"{{name}}\" ?",
+    "errorGeneric": "Erreur : {{error}}",
+    "sortBtn": "Trier",
+    "sortByName": "Nom",
+    "sortByDuration": "Durée",
+    "sortByType": "Type",
+    "sortAsc": "Croissant",
+    "sortDesc": "Décroissant",
+    "ctxColor": "🎨 Couleur",
+    "ctxRename": "✏️ Renommer",
+    "ctxDelete": "🗑️ Supprimer"
   },
   "settings": {
     "title": "Paramètres",
@@ -150,5 +165,18 @@
     "autostartHint": "Démarre automatiquement ArcHive au démarrage de Windows.",
     "runInBgLabel": "Rester en arrière-plan",
     "runInBgHint": "En fermant la fenêtre, ArcHive continue de tourner dans la barre des tâches."
+  },
+  "updater": {
+    "available": "🎉 Mise à jour disponible",
+    "installing": "⬇ Installation en cours…",
+    "version": "Version {{version}}",
+    "installNow": "Installer maintenant",
+    "dismiss": "Ignorer",
+    "confirmMessage": "Nouvelle version disponible : {{version}}\n\n{{body}}\n\nInstaller maintenant ?"
+  },
+  "dialog": {
+    "cancel": "Annuler",
+    "ok": "OK",
+    "confirm": "Confirmer"
   }
 }

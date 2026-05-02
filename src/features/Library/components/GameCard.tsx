@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { confirm } from '@tauri-apps/plugin-dialog';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
+import { useDialog } from '../../../hooks/useDialog';
+import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { fetchRawgImage, clearRawgCacheEntry } from '../services/rawgService';
 
 type Props = {
@@ -19,6 +20,7 @@ const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'med
 
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey, isLaunching = false }: Props) {
   const { t } = useTranslation();
+  const { dlgState, closeDialog, prompt, confirm } = useDialog();
 
   const canPlay = Boolean(game.installed && game.launchUrl);
   const isFav = Boolean(game.favorite);
@@ -72,9 +74,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     }
   }
 
-  function handleSetImage() {
+  async function handleSetImage() {
     const current = game.customImageUrl ?? '';
-    const url = window.prompt(t('gameCard.imageUrlPrompt'), current);
+    const url = await prompt(t('gameCard.imageUrlPrompt'), current);
     if (url === null) return;
     onSetImageUrl(game.id, url.trim() || null);
     setImgSrc(null);
@@ -157,7 +159,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             <button
               type="button"
               className={css.remove}
-              onClick={() => { void confirm(t('gameCard.removeConfirm', { name: game.title })).then((ok) => { if (ok) onRemove(game.id); }); }}
+              onClick={async () => { const ok = await confirm(t('gameCard.removeConfirm', { name: game.title }), { danger: true }); if (ok) onRemove(game.id); }}
               aria-label={t('gameCard.remove')}
               title={t('gameCard.remove')}
             >
@@ -168,6 +170,8 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
         <div className={css.footer}>{lastPlayedLabel}</div>
       </div>
+
+      {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
     </article>
   );
 }

@@ -1,0 +1,118 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+
+.dialog {
+  background: #161a28;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 14px;
+  padding: 26px 24px 22px;
+  width: min(400px, 92vw);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.75),
+    0 4px 16px rgba(0, 0, 0, 0.45);
+  animation: popIn 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ─── Prompt variant ──────────────────────────────────────── */
+.title {
+  font-size: 0.92rem;
+  color: rgba(224, 230, 240, 0.92);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(224, 230, 240, 0.95);
+  font-size: 0.88rem;
+  outline: none;
+  margin-bottom: 18px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.input:focus {
+  border-color: var(--accent, #6c8efb);
+  background: rgba(108, 142, 251, 0.07);
+}
+
+/* ─── Confirm variant ─────────────────────────────────────── */
+.message {
+  font-size: 0.9rem;
+  color: rgba(224, 230, 240, 0.88);
+  margin: 0 0 22px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* ─── Actions row ─────────────────────────────────────────── */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnCancel {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(224, 230, 240, 0.65);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.btnCancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(224, 230, 240, 1);
+}
+
+.btnOk {
+  padding: 8px 22px;
+  border-radius: 8px;
+  border: 1px solid var(--accent, #6c8efb);
+  background: rgba(108, 142, 251, 0.16);
+  color: var(--accent, #6c8efb);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.btnOk:hover {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+}
+
+.btnDanger {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+.btnDanger:hover {
+  background: #f87171;
+  color: #fff;
+}
+
+/* ─── Animations ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.93) translateY(8px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);   opacity: 1; }
+}

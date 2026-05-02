@@ -7,6 +7,57 @@ mod steam_scan;
 use tauri_plugin_log;
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackMetadata {
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub cover_data_url: Option<String>,
+}
+
+#[tauri::command]
+fn get_track_metadata(path: String) -> TrackMetadata {
+    fn inner(path: &str) -> Option<TrackMetadata> {
+        use lofty::prelude::*;
+        use lofty::probe::Probe;
+        use base64::Engine;
+
+        let tagged = Probe::open(path).ok()?.guess_file_type().ok()?.read().ok()?;
+        let tag = tagged.primary_tag().or_else(|| tagged.first_tag())?;
+
+        let title = tag.title().map(|s| s.to_string());
+        let artist = tag.artist().map(|s| s.to_string());
+        let album = tag.album().map(|s| s.to_string());
+
+        let cover_data_url = tag
+            .pictures()
+            .iter()
+            .find(|p| p.pic_type() == lofty::picture::PictureType::CoverFront)
+            .or_else(|| tag.pictures().first())
+            .and_then(|p| {
+                let data = p.data();
+                if data.len() > 1_500_000 {
+                    return None;
+                }
+                let mime = p.mime_type()
+                    .map(|m| m.to_string())
+                    .unwrap_or_else(|| "image/jpeg".to_string());
+                let encoded = base64::engine::general_purpose::STANDARD.encode(data);
+                Some(format!("data:{};base64,{}", mime, encoded))
+            });
+
+        Some(TrackMetadata { title, artist, album, cover_data_url })
+    }
+
+    inner(&path).unwrap_or(TrackMetadata {
+        title: None,
+        artist: None,
+        album: None,
+        cover_data_url: None,
+    })
+}
+
+#[derive(serde::Serialize)]
 pub struct TrackDto {
     pub path: String,
     pub title: String,
@@ -15,7 +66,7 @@ pub struct TrackDto {
 
 #[tauri::command]
 fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
-    let audio_exts = ["mp3", "flac", "wav", "ogg", "m4a"];
+    let audio_exts = ["mp3", "flac", "wav", "ogg", "m4a", "opus"];
     let mut tracks: Vec<TrackDto> = Vec::new();
 
     fn walk_dir(root: &std::path::Path, dir: &std::path::Path, audio_exts: &[&str], tracks: &mut Vec<TrackDto>) {
@@ -322,7 +373,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

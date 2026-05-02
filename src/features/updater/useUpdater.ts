@@ -1,31 +1,71 @@
-import { useEffect } from 'react';
-import { check } from '@tauri-apps/plugin-updater';
+import { useEffect, useState } from 'react';
+import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { ask } from '@tauri-apps/plugin-dialog';
 
-export function useUpdater() {
+export interface UpdaterState {
+  available: boolean;   // update ready, banner should show
+  version: string;
+  body: string;
+  installing: boolean;
+  progress: number;     // 0-100 during download
+  doInstall: () => Promise<void>;
+  dismiss: () => void;
+}
+
+export function useUpdater(): UpdaterState {
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   useEffect(() => {
-    async function checkUpdate() {
+    async function run() {
       try {
         const token = import.meta.env.VITE_UPDATER_TOKEN as string | undefined;
-        const update = await check(token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
-        console.info('[updater] check result:', update);
-        if (!update?.available) return;
-
-        const yes = await ask(
-          `Une nouvelle version est disponible : ${update.version}\n\n${update.body ?? ''}\n\nVoulez-vous mettre à jour maintenant ?`,
-          { title: 'Mise à jour disponible', kind: 'info', okLabel: 'Mettre à jour', cancelLabel: 'Plus tard' },
+        const u = await check(
+          token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
         );
-
-        if (!yes) return;
-
-        await update.downloadAndInstall();
-        await relaunch();
+        console.info('[updater] check result:', u);
+        if (u?.available) setUpdate(u);
       } catch (e) {
         console.error('[updater] error:', e);
       }
     }
-
-    checkUpdate();
+    run();
   }, []);
+
+  async function doInstall() {
+    if (!update) return;
+    setInstalling(true);
+    setProgress(0);
+    let downloaded = 0;
+    let total = 0;
+    try {
+      await update.downloadAndInstall(event => {
+        if (event.event === 'Started') {
+          total = event.data.contentLength ?? 0;
+          console.info('[updater] download started, size:', total);
+        } else if (event.event === 'Progress') {
+          downloaded += event.data.chunkLength;
+          if (total > 0) setProgress(Math.round((downloaded / total) * 100));
+        } else if (event.event === 'Finished') {
+          console.info('[updater] download finished');
+        }
+      });
+      await relaunch();
+    } catch (e) {
+      console.error('[updater] install error:', e);
+      setInstalling(false);
+    }
+  }
+
+  return {
+    available: !!update && !dismissed,
+    version: update?.version ?? '',
+    body: update?.body ?? '',
+    installing,
+    progress,
+    doInstall,
+    dismiss: () => setDismissed(true),
+  };
 }
