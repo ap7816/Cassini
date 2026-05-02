@@ -243,7 +243,7 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
   isDragOver: boolean;
   onClick: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
-  onDragOver: () => void; onDragLeave: () => void; onDrop: () => void;
+  onDragOver: () => void; onDragLeave: () => void; onDrop: (e: React.DragEvent<HTMLButtonElement>) => void;
 }) {
   const active = hasActive(folder, currentIndex);
   const total = countTracks(folder);
@@ -255,7 +255,7 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
       onContextMenu={e => { e.preventDefault(); onContextMenu(e); }}
       onDragOver={e => { e.preventDefault(); onDragOver(); }}
       onDragLeave={onDragLeave}
-      onDrop={e => { e.preventDefault(); onDrop(); }}
+      onDrop={e => { e.preventDefault(); onDrop(e); }}
       title={folder.name}
     >
       <div className={css.folderShape} style={{ '--fc': color, '--fc-dark': color + 'bb' } as React.CSSProperties}>
@@ -632,7 +632,7 @@ export function MusicPage() {
                 onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
                 onDragOver={() => setDragOverPath(folder.fullPath)}
                 onDragLeave={() => setDragOverPath(null)}
-                onDrop={e => handleDropOnFolder(folder, e)}
+                onDrop={e => { void handleDropOnFolder(folder, e); }}
               />
             ))}
             {sortedTracks.map((track, idx) => {

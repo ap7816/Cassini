@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import {
-  readMusicFolder, writeMusicFolder,
+  readMusicFolder,
   readMusicVolume, writeMusicVolume,
   readMusicLastTrack, writeMusicLastTrack,
 } from '../../services/storage';
