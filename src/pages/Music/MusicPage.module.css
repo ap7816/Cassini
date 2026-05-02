@@ -333,6 +333,42 @@
               0 0 12px color-mix(in srgb, var(--accent, #6c8efb) 30%, transparent);
 }
 
+/* ─── Grid item — art mode (no card chrome) ───────────────── */
+.gridItemWithArt {
+  background: transparent;
+  border-color: transparent;
+  padding: 0 0 4px;
+  gap: 5px;
+}
+
+.gridItemWithArt:hover {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Active art card: keep accent glow, transparent body */
+.gridItemTrackActive.gridItemWithArt {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 55%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent, #6c8efb) 25%, transparent);
+}
+
+/* ─── Track shape override when art is present ────────────── */
+/* Square, full-width, no card chrome — only the image */
+.trackShapeWithArt {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.trackShapeWithArt::before {
+  display: none; /* hide the ♪ watermark */
+}
+
 /* ─── Track cover art ─────────────────────────────────────── */
 .trackArt {
   position: absolute;
@@ -340,11 +376,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.78;
+  opacity: 1;
   border-radius: 7px;
   pointer-events: none;
 }
 
+/* Content overlay (track number when no art, equalizer when active) */
 .trackShapeContent {
   position: absolute;
   inset: 0;
@@ -356,8 +393,26 @@
   border-radius: 7px;
 }
 
-.trackShapeContentWithArt {
-  background: linear-gradient(160deg, rgba(0, 0, 0, 0.60) 0%, rgba(0, 0, 0, 0.22) 100%);
+/* Dark scrim when the art track is actively playing */
+.trackShapeActiveArtOverlay {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+/* Duration badge — bottom-right corner over the art */
+.trackDurationBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 5px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.62);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.5;
+  z-index: 2;
+  pointer-events: none;
+  letter-spacing: 0.01em;
 }
 
 .trackArtist {
@@ -371,6 +426,22 @@
   line-height: 1.2;
   padding: 0 4px;
   margin-top: -4px;
+}
+
+/* ─── Art-card text: strong shadow so it's readable on any bg ─ */
+.gridItemWithArt .gridLabel {
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 1),
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+.gridItemWithArt .trackArtist {
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 1),
+    0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
 .trackNum {

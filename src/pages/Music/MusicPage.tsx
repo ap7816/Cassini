@@ -286,7 +286,7 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, acti
   return (
     <button
       ref={isActive ? activeRef : undefined}
-      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''}`}
+      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${meta?.coverDataUrl ? css.gridItemWithArt : ''}`}
       onClick={onSelect}
       draggable
       onDragStart={e => {
@@ -296,14 +296,26 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, acti
       }}
       title={track.title}
     >
-      <div className={css.trackShape}>
+      <div className={`${css.trackShape}${meta?.coverDataUrl ? ` ${css.trackShapeWithArt}` : ''}`}>
         {meta?.coverDataUrl && (
           <img src={meta.coverDataUrl} className={css.trackArt} alt="" aria-hidden="true" />
         )}
-        <div className={`${css.trackShapeContent} ${meta?.coverDataUrl ? css.trackShapeContentWithArt : ''}`}>
-          {isActive && isPlaying ? <Equalizer /> : <span className={css.trackNum}>{index + 1}</span>}
-          {duration != null && <span className={css.trackDurationGrid}>{fmt(duration)}</span>}
+        {/* Overlay: active state or no-art fallback */}
+        <div className={`${css.trackShapeContent}${meta?.coverDataUrl && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
+          {isActive && isPlaying
+            ? <Equalizer />
+            : !meta?.coverDataUrl
+              ? <span className={css.trackNum}>{index + 1}</span>
+              : null
+          }
+          {!meta?.coverDataUrl && duration != null && (
+            <span className={css.trackDurationGrid}>{fmt(duration)}</span>
+          )}
         </div>
+        {/* Duration badge in corner (only when art is present) */}
+        {meta?.coverDataUrl && duration != null && (
+          <span className={css.trackDurationBadge}>{fmt(duration)}</span>
+        )}
       </div>
       <span className={css.gridLabel}>{track.title}</span>
       {meta?.artist && <span className={css.trackArtist}>{meta.artist}</span>}
