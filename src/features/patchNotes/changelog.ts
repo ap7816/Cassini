@@ -33,15 +33,12 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v1_1_0.perf_0',
           'changelog.v1_1_0.perf_1',
           'changelog.v1_1_0.perf_2',
-          'changelog.v1_1_0.perf_3',
-          'changelog.v1_1_0.perf_4',
         ],
       },
       {
         type: 'fix',
         itemKeys: [
           'changelog.v1_1_0.fix_0',
-          'changelog.v1_1_0.fix_1',
         ],
       },
     ],

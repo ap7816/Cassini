@@ -182,37 +182,34 @@
   },
   "changelog": {
     "v1_1_0": {
-      "new_0": "Métadonnées audio : titre, artiste, album et durée lus directement depuis les fichiers (MP3, FLAC, WAV, OGG, M4A, Opus)",
-      "new_1": "Pochettes d'album style YouTube Music : image plein format sur la carte, texte en dessous, durée incrustée",
-      "new_2": "Ombres de texte renforcées sur les pochettes claires pour une lisibilité optimale",
-      "new_3": "Support complet du format .opus",
-      "new_4": "Notes de mise à jour à chaque nouvelle version (vous lisez la première !)",
-      "perf_0": "Chargement en lot côté Rust (rayon) : toutes les métadonnées lues en parallèle en une seule requête IPC",
-      "perf_1": "Pochettes chargées à la demande via IntersectionObserver (marge 200 px), plus aucun blocage de l'interface",
-      "perf_2": "Limiteur de concurrence : 4 appels simultanés maximum pour les pochettes",
-      "perf_3": "Barre de progression pendant l'analyse des métadonnées",
-      "perf_4": "Cache de session 300 entrées (éviction FIFO) pour éviter les re-lectures",
-      "fix_0": "Erreurs TypeScript pré-existantes corrigées (CI stabilisé)",
-      "fix_1": "Chaîne de probe lofty corrigée (incompatibilité LoftyError / io::Error)"
+      "new_0": "Les informations des pistes (titre, artiste, album, durée) s'affichent automatiquement",
+      "new_1": "Pochettes d'album affichées en plein format sur les cartes, avec la durée incrustée",
+      "new_2": "Le texte reste lisible même sur les pochettes aux couleurs claires",
+      "new_3": "Support du format audio .opus",
+      "new_4": "Notes de mise à jour à chaque nouvelle version",
+      "perf_0": "Chargement des grandes bibliothèques musicales beaucoup plus rapide",
+      "perf_1": "Les pochettes se chargent au fur et à mesure que vous faites défiler",
+      "perf_2": "Barre de progression pendant le chargement des informations des pistes",
+      "fix_0": "Corrections de bugs mineurs"
     },
     "v1_0_51": {
-      "new_0": "Dialogs intégrés (prompt, confirm) remplaçant les alertes natives du navigateur",
-      "new_1": "Système de toasts pour les notifications et retours d'action",
-      "new_2": "Bannière de mise à jour en bas d'écran avec progression du téléchargement",
-      "new_3": "Mini-player persistant avec pochette, artiste et contrôle du volume",
-      "new_4": "Dossiers de musique : couleur personnalisable via clic droit",
-      "new_5": "Glisser-déposer de pistes entre dossiers",
-      "change_0": "Cache des durées de pistes survit aux navigations entre pages",
-      "change_1": "Tri des pistes par nom, durée ou extension avec direction configurable"
+      "new_0": "Fenêtres de dialogue intégrées à l'application, plus de popups du navigateur",
+      "new_1": "Notifications visuelles pour les confirmations et retours d'action",
+      "new_2": "Notification de mise à jour disponible avec progression du téléchargement",
+      "new_3": "Mini-lecteur persistant avec pochette, nom de l'artiste et contrôle du volume",
+      "new_4": "Couleur personnalisable pour chaque dossier de musique via clic droit",
+      "new_5": "Déplacer des pistes entre dossiers par glisser-déposer",
+      "change_0": "Les durées des pistes restent affichées lors de la navigation entre pages",
+      "change_1": "Tri des pistes par nom, durée ou type de fichier"
     },
     "v1_0_0": {
-      "new_0": "Bibliothèque de jeux avec scan automatique Steam, Epic Games et Battle.net",
-      "new_1": "Lecteur de musique intégré avec navigation par arborescence de dossiers",
-      "new_2": "Détection automatique des lanceurs installés",
-      "new_3": "Image de fond personnalisable et couleur d'accent",
-      "new_4": "Lancement automatique au démarrage de Windows",
-      "new_5": "Mode arrière-plan (barre des tâches) lors de la fermeture",
-      "new_6": "Support multilingue : Français / English"
+      "new_0": "Bibliothèque de jeux avec détection automatique de Steam, Epic Games et Battle.net",
+      "new_1": "Lecteur de musique intégré avec gestion par dossiers",
+      "new_2": "Détection automatique des lanceurs installés sur le PC",
+      "new_3": "Image de fond et couleur d'accent personnalisables",
+      "new_4": "Lancement automatique d'ArcHive au démarrage de Windows",
+      "new_5": "Réduction dans la barre des tâches à la fermeture de la fenêtre",
+      "new_6": "Application disponible en français et en anglais"
     }
   },
   "updater": {
