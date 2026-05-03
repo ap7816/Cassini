@@ -26,11 +26,12 @@ function sectionLabel(type: SectionType, t: (key: string) => string): string {
 
 /* ─── Modal ──────────────────────────────────────────────────── */
 interface Props {
+  dismissed: boolean;
   onClose: () => void;
-  onDismiss: () => void;
+  onToggleDismiss: () => void;
 }
 
-export function PatchNotesModal({ onClose, onDismiss }: Props) {
+export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) {
   const { t } = useTranslation();
   const latest = CHANGELOG[0];
 
@@ -95,8 +96,8 @@ export function PatchNotesModal({ onClose, onDismiss }: Props) {
 
         {/* ── Pied de page ── */}
         <footer className={css.footer}>
-          <button className={css.dismissBtn} onClick={onDismiss}>
-            {t('patchNotes.dismiss')}
+          <button className={css.dismissBtn} onClick={onToggleDismiss}>
+            {dismissed ? t('patchNotes.enableAtStartup') : t('patchNotes.dismiss')}
           </button>
           <button className={css.closeMainBtn} onClick={onClose}>
             {t('patchNotes.close')}

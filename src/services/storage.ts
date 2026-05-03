@@ -195,6 +195,8 @@ export function writeLanguage(lang: string): void { rawWrite(STORAGE_KEYS.langua
 export function readPatchNotesSeen(): string | null { return rawRead(STORAGE_KEYS.patchNotesSeen); }
 /** Marque une version comme "ne plus afficher au démarrage". */
 export function writePatchNotesSeen(version: string): void { rawWrite(STORAGE_KEYS.patchNotesSeen, version); }
+/** Réactive l'affichage au démarrage pour la version courante. */
+export function removePatchNotesSeen(): void { rawRemove(STORAGE_KEYS.patchNotesSeen); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reset

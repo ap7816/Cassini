@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { readPatchNotesSeen, writePatchNotesSeen } from '../../services/storage';
+import {
+  readPatchNotesSeen,
+  writePatchNotesSeen,
+  removePatchNotesSeen,
+} from '../../services/storage';
 import { PatchNotesModal } from './PatchNotesModal';
 
 interface PatchNotesCtxType {
@@ -10,32 +14,43 @@ const PatchNotesCtx = createContext<PatchNotesCtxType>({ openPatchNotes: () => {
 
 export function PatchNotesProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
+  // true = l'utilisateur a cliqué "Ne plus afficher" pour cette version
+  const [dismissed, setDismissed] = useState(
+    () => readPatchNotesSeen() === __APP_VERSION__,
+  );
 
-  // Afficher au démarrage si la version n'a pas encore été vue
+  // Afficher au démarrage si la version n'a pas encore été ignorée
   useEffect(() => {
-    const seen = readPatchNotesSeen();
-    if (seen !== __APP_VERSION__) {
+    if (readPatchNotesSeen() !== __APP_VERSION__) {
       setVisible(true);
     }
   }, []);
 
   function handleClose() {
-    // Ferme le popup pour cette session ; ne marque PAS la version comme vue
-    // → s'affichera à nouveau au prochain lancement
     setVisible(false);
   }
 
-  function handleDismiss() {
-    // L'utilisateur ne veut plus voir ce popup au démarrage pour cette version
-    writePatchNotesSeen(__APP_VERSION__);
-    setVisible(false);
+  function handleToggleDismiss() {
+    if (dismissed) {
+      // Réactiver l'affichage au démarrage
+      removePatchNotesSeen();
+      setDismissed(false);
+    } else {
+      // Désactiver l'affichage au démarrage pour cette version
+      writePatchNotesSeen(__APP_VERSION__);
+      setDismissed(true);
+    }
   }
 
   return (
     <PatchNotesCtx.Provider value={{ openPatchNotes: () => setVisible(true) }}>
       {children}
       {visible && (
-        <PatchNotesModal onClose={handleClose} onDismiss={handleDismiss} />
+        <PatchNotesModal
+          dismissed={dismissed}
+          onClose={handleClose}
+          onToggleDismiss={handleToggleDismiss}
+        />
       )}
     </PatchNotesCtx.Provider>
   );
