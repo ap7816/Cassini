@@ -27,6 +27,7 @@ winreg = "0.52"
 base64 = "0.22"
 image = "0.25"
 lofty = "0.22"
+rayon = "1"
 windows = { version = "0.58", features = [
   "Win32_Foundation",
   "Win32_UI_WindowsAndMessaging",

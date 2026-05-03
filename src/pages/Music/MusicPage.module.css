@@ -833,3 +833,26 @@
   background: rgba(255, 255, 255, 0.07);
   margin: 3px 6px;
 }
+
+/* ─── Metadata loading bar ───────────────────────────────── */
+.metaLoadingBar {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.metaLoadingProgress {
+  position: absolute;
+  height: 100%;
+  width: 40%;
+  background: var(--accent, #6c8efb);
+  border-radius: 1px;
+  animation: metaLoadingSweep 1.4s ease-in-out infinite;
+}
+
+@keyframes metaLoadingSweep {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}

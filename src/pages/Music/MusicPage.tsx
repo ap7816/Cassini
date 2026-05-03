@@ -3,9 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { useBatchMeta, type TrackMeta } from '../../features/music/useTrackMeta';
+import { useBasicBatch, useLazyCoverArt, type TrackMeta } from '../../features/music/useTrackMeta';
 import css from './MusicPage.module.css';
 
 type SortBy  = 'name' | 'dur' | 'ext';
@@ -89,52 +88,6 @@ function fmt(sec: number): string {
 
 function absPath(root: string, rel: string) {
   return rel ? `${root}/${rel}` : root;
-}
-
-/* ─── Durations hook ────────────────────────────────────────── */
-// Cache module-level : survit aux navigations, effacé à la fermeture de l'app.
-const _durationCache: Record<string, number> = {};
-
-function useDurations(tracks: TrackDto[]) {
-  // Initialise l'état depuis le cache existant (lecture instantanée au re-mount)
-  const [dur, setDur] = useState<Record<string, number>>(() => {
-    const cached: Record<string, number> = {};
-    for (const t of tracks) {
-      if (_durationCache[t.path] !== undefined) cached[t.path] = _durationCache[t.path];
-    }
-    return cached;
-  });
-
-  useEffect(() => {
-    // Filtre uniquement les pistes absentes du cache
-    const missing = tracks.filter(t => _durationCache[t.path] === undefined);
-    if (!missing.length) return;
-
-    let cancelled = false;
-    const BATCH = 20; let i = 0;
-    async function next() {
-      if (cancelled || i >= missing.length) return;
-      const slice = missing.slice(i, i + BATCH); i += BATCH;
-      await Promise.all(slice.map(t => new Promise<void>(res => {
-        const a = new Audio(); a.preload = 'metadata';
-        a.src = convertFileSrc(t.path);
-        const done = () => {
-          if (!cancelled && isFinite(a.duration) && a.duration > 0) {
-            _durationCache[t.path] = a.duration;          // mémorise dans le cache
-            setDur(p => ({ ...p, [t.path]: a.duration })); // met à jour le state
-          }
-          res();
-        };
-        a.addEventListener('loadedmetadata', done, { once: true });
-        a.addEventListener('error', done, { once: true });
-      })));
-      next();
-    }
-    next();
-    return () => { cancelled = true; };
-  }, [tracks]);
-
-  return dur;
 }
 
 /* ─── Equalizer ─────────────────────────────────────────────── */
@@ -277,16 +230,26 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
 }
 
 /* ─── Track card ────────────────────────────────────────────── */
-function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, activeRef, meta }: {
+function TrackCard({ track, index, isActive, isPlaying, onSelect, meta }: {
   track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
-  onSelect: () => void; duration: number | undefined;
-  activeRef: React.RefObject<HTMLButtonElement | null>;
+  onSelect: () => void;
   meta: TrackMeta | null;
 }) {
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const coverArt = useLazyCoverArt(track.path, cardRef);
+  const duration = meta?.durationSecs ?? undefined;
+
+  // Scroll active track into view
+  useEffect(() => {
+    if (!isActive) return;
+    const t = setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    return () => clearTimeout(t);
+  }, [isActive]);
+
   return (
     <button
-      ref={isActive ? activeRef : undefined}
-      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${meta?.coverDataUrl ? css.gridItemWithArt : ''}`}
+      ref={cardRef}
+      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${coverArt ? css.gridItemWithArt : ''}`}
       onClick={onSelect}
       draggable
       onDragStart={e => {
@@ -296,24 +259,24 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, duration, acti
       }}
       title={track.title}
     >
-      <div className={`${css.trackShape}${meta?.coverDataUrl ? ` ${css.trackShapeWithArt}` : ''}`}>
-        {meta?.coverDataUrl && (
-          <img src={meta.coverDataUrl} className={css.trackArt} alt="" aria-hidden="true" />
+      <div className={`${css.trackShape}${coverArt ? ` ${css.trackShapeWithArt}` : ''}`}>
+        {coverArt && (
+          <img src={coverArt} className={css.trackArt} alt="" aria-hidden="true" />
         )}
         {/* Overlay: active state or no-art fallback */}
-        <div className={`${css.trackShapeContent}${meta?.coverDataUrl && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
+        <div className={`${css.trackShapeContent}${coverArt && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
           {isActive && isPlaying
             ? <Equalizer />
-            : !meta?.coverDataUrl
+            : !coverArt
               ? <span className={css.trackNum}>{index + 1}</span>
               : null
           }
-          {!meta?.coverDataUrl && duration != null && (
+          {!coverArt && duration != null && (
             <span className={css.trackDurationGrid}>{fmt(duration)}</span>
           )}
         </div>
         {/* Duration badge in corner (only when art is present) */}
-        {meta?.coverDataUrl && duration != null && (
+        {coverArt && duration != null && (
           <span className={css.trackDurationBadge}>{fmt(duration)}</span>
         )}
       </div>
@@ -384,8 +347,7 @@ export function MusicPage() {
   const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
   const sortBy  = (searchParams.get('sb')  ?? 'name') as SortBy;
   const sortDir = (searchParams.get('sd')  ?? 'asc')  as SortDir;
-  const durations = useDurations(music.tracks);
-  const activeRef = useRef<HTMLButtonElement>(null);
+  const { getMeta, loading: metaLoading } = useBasicBatch(music.tracks.map(t => t.path));
 
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
   const toast = useToast();
@@ -415,13 +377,6 @@ export function MusicPage() {
     const p = new URLSearchParams(searchParams);
     p.delete('navTo'); setSearchParams(p, { replace: true });
   }, [searchParams]);
-
-  // Scroll to active track
-  useEffect(() => {
-    if (music.currentIndex < 0) return;
-    const t = setTimeout(() => activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
-    return () => clearTimeout(t);
-  }, [currentPath, music.currentIndex]);
 
   function setSort(by: SortBy, dir: SortDir) {
     const p = new URLSearchParams(searchParams);
@@ -541,8 +496,8 @@ export function MusicPage() {
     const dir = sortDir === 'desc' ? -1 : 1;
     return [...currentNode.tracks].sort((a, b) => {
       if (sortBy === 'dur') {
-        const da = durations[a.path] ?? 0;
-        const db = durations[b.path] ?? 0;
+        const da = getMeta(a.path)?.durationSecs ?? 0;
+        const db = getMeta(b.path)?.durationSecs ?? 0;
         return dir * (da - db);
       }
       if (sortBy === 'ext') {
@@ -551,9 +506,9 @@ export function MusicPage() {
       }
       return dir * a.title.localeCompare(b.title); // 'name' (défaut)
     });
-  }, [currentNode.tracks, sortBy, sortDir, durations]);
-
-  const getMeta = useBatchMeta(sortedTracks.map(t => t.path));
+    // getMeta reads from module-level cache; metaLoading triggers re-sort when batch completes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNode.tracks, sortBy, sortDir, metaLoading]);
 
   const searchResults = useMemo(() => {
     if (!query) return [];
@@ -594,6 +549,13 @@ export function MusicPage() {
         </div>
       )}
 
+      {/* ── Metadata loading bar ── */}
+      {metaLoading && (
+        <div className={css.metaLoadingBar}>
+          <div className={css.metaLoadingProgress} />
+        </div>
+      )}
+
       {isEmpty && <div className={css.emptyState}>{music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}</div>}
 
       {/* ── Search results ── */}
@@ -608,7 +570,7 @@ export function MusicPage() {
                   {isActive && music.isPlaying ? <Equalizer /> : <span className={css.trackIndex}>{idx + 1}</span>}
                   <span className={css.trackTitle}>{track.title}</span>
                   {track.folder && <span className={css.trackFolderTag}>{track.folder.split('/').pop()}</span>}
-                  {durations[track.path] ? <span className={css.trackDuration}>{fmt(durations[track.path])}</span> : <span className={css.trackDurationPlaceholder} />}
+                  {getMeta(track.path)?.durationSecs ? <span className={css.trackDuration}>{fmt(getMeta(track.path)!.durationSecs!)}</span> : <span className={css.trackDurationPlaceholder} />}
                 </div>
               );
             })
@@ -645,8 +607,6 @@ export function MusicPage() {
                   isActive={isActive}
                   isPlaying={music.isPlaying}
                   onSelect={() => music.selectTrack(track.originalIndex)}
-                  duration={durations[track.path]}
-                  activeRef={activeRef}
                   meta={getMeta(track.path)}
                 />
               );

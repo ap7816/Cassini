@@ -10,6 +10,7 @@ dependencies = [
  "chrono",
  "image",
  "lofty",
+ "rayon",
  "serde",
  "serde_json",
  "tauri",
