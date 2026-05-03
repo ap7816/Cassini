@@ -19,10 +19,17 @@ function isLocalWindowsPath(input: string): boolean {
 async function openExternal(target: string): Promise<void> {
   // Desktop (Tauri)
   if (isTauri()) {
-    // Battle.net : lancer via Battle.net.exe --game=<uid>
+    // Battle.net : lancer via Battle.net.exe --exec=launch <uid>
     const battlenetMatch = target.match(/^battlenet:\/\/([^/]+)$/);
     if (battlenetMatch) {
       await invoke('launch_battlenet_game', { uid: battlenetMatch[1] });
+      return;
+    }
+
+    // Riot Client : lancer via RiotClientServices.exe --launch-product=<product>
+    const riotMatch = target.match(/^riotclient:\/\/(.+)$/);
+    if (riotMatch) {
+      await invoke('launch_riot_game', { product: riotMatch[1] });
       return;
     }
 
