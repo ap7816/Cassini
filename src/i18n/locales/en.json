@@ -179,6 +179,41 @@
     "sectionPerf": "Performance",
     "sectionChange": "Changes"
   },
+  "changelog": {
+    "v1_1_0": {
+      "new_0": "Audio metadata: title, artist, album and duration read directly from files (MP3, FLAC, WAV, OGG, M4A, Opus)",
+      "new_1": "Album art YouTube Music style — full image on the card, title below, duration overlaid",
+      "new_2": "Stronger text shadows on light artwork for optimal readability",
+      "new_3": "Full .opus format support",
+      "new_4": "Release notes popup on every new version (you're reading the first one!)",
+      "perf_0": "Rust batch loading (rayon) — all metadata read in parallel in a single IPC call",
+      "perf_1": "Artwork loaded on demand via IntersectionObserver (200 px margin) — no more UI blocking",
+      "perf_2": "Concurrency limiter: max 4 simultaneous artwork requests",
+      "perf_3": "Progress bar while metadata is being analysed",
+      "perf_4": "Session cache with 300 entries (FIFO eviction) to avoid re-reads",
+      "fix_0": "Pre-existing TypeScript errors fixed (CI stabilised)",
+      "fix_1": "lofty probe chain fixed (LoftyError / io::Error type mismatch)"
+    },
+    "v1_0_51": {
+      "new_0": "Built-in dialogs (prompt, confirm) replacing native browser alerts",
+      "new_1": "Toast notification system for action feedback",
+      "new_2": "Update banner at the bottom of the screen with download progress",
+      "new_3": "Persistent mini-player with artwork, artist and volume control",
+      "new_4": "Music folders: customisable colour via right-click",
+      "new_5": "Drag and drop tracks between folders",
+      "change_0": "Track duration cache survives page navigation",
+      "change_1": "Sort tracks by name, duration or extension with configurable direction"
+    },
+    "v1_0_0": {
+      "new_0": "Game library with automatic Steam, Epic Games and Battle.net scanning",
+      "new_1": "Built-in music player with folder tree navigation",
+      "new_2": "Automatic detection of installed launchers",
+      "new_3": "Customisable background image and accent colour",
+      "new_4": "Automatic launch on Windows startup",
+      "new_5": "Background mode (system tray) when closing the window",
+      "new_6": "Multilingual support: Français / English"
+    }
+  },
   "updater": {
     "available": "🎉 Update available",
     "installing": "⬇ Installing…",

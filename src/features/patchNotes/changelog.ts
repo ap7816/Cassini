@@ -2,7 +2,8 @@ export type SectionType = 'new' | 'fix' | 'perf' | 'change';
 
 export interface ChangeSection {
   type: SectionType;
-  items: string[];
+  /** Clés i18n — chaque clé est résolue via t() dans le composant */
+  itemKeys: string[];
 }
 
 export interface ChangeEntry {
@@ -18,29 +19,29 @@ export const CHANGELOG: ChangeEntry[] = [
     sections: [
       {
         type: 'new',
-        items: [
-          'Métadonnées audio : titre, artiste, album et durée lus directement depuis les fichiers (MP3, FLAC, WAV, OGG, M4A, Opus)',
-          'Pochettes d\'album style YouTube Music — image plein format sur la carte, texte en dessous, durée incrustée',
-          'Ombres de texte renforcées sur les pochettes claires pour une lisibilité optimale',
-          'Support complet du format .opus',
-          'Notes de mise à jour à chaque nouvelle version (vous lisez la première !)',
+        itemKeys: [
+          'changelog.v1_1_0.new_0',
+          'changelog.v1_1_0.new_1',
+          'changelog.v1_1_0.new_2',
+          'changelog.v1_1_0.new_3',
+          'changelog.v1_1_0.new_4',
         ],
       },
       {
         type: 'perf',
-        items: [
-          'Chargement en lot côté Rust (rayon) — toutes les métadonnées lues en parallèle en une seule requête IPC',
-          'Pochettes chargées à la demande via IntersectionObserver (marge 200 px) — plus aucun blocage de l\'interface',
-          'Limiteur de concurrence : 4 appels simultanés maximum pour les pochettes',
-          'Barre de progression pendant l\'analyse des métadonnées',
-          'Cache de session 300 entrées (éviction FIFO) pour éviter les re-lectures',
+        itemKeys: [
+          'changelog.v1_1_0.perf_0',
+          'changelog.v1_1_0.perf_1',
+          'changelog.v1_1_0.perf_2',
+          'changelog.v1_1_0.perf_3',
+          'changelog.v1_1_0.perf_4',
         ],
       },
       {
         type: 'fix',
-        items: [
-          'Erreurs TypeScript pré-existantes corrigées (CI stabilisé)',
-          'Chaîne de probe lofty corrigée (incompatibilité LoftyError / io::Error)',
+        itemKeys: [
+          'changelog.v1_1_0.fix_0',
+          'changelog.v1_1_0.fix_1',
         ],
       },
     ],
@@ -51,20 +52,20 @@ export const CHANGELOG: ChangeEntry[] = [
     sections: [
       {
         type: 'new',
-        items: [
-          'Dialogs intégrés (prompt, confirm) remplaçant les alertes natives du navigateur',
-          'Système de toasts pour les notifications et retours d\'action',
-          'Bannière de mise à jour en bas d\'écran avec progression du téléchargement',
-          'Mini-player persistant avec pochette, artiste et contrôle du volume',
-          'Dossiers de musique : couleur personnalisable via clic droit',
-          'Glisser-déposer de pistes entre dossiers',
+        itemKeys: [
+          'changelog.v1_0_51.new_0',
+          'changelog.v1_0_51.new_1',
+          'changelog.v1_0_51.new_2',
+          'changelog.v1_0_51.new_3',
+          'changelog.v1_0_51.new_4',
+          'changelog.v1_0_51.new_5',
         ],
       },
       {
         type: 'change',
-        items: [
-          'Cache des durées de pistes survit aux navigations entre pages',
-          'Tri des pistes par nom, durée ou extension avec direction configurable',
+        itemKeys: [
+          'changelog.v1_0_51.change_0',
+          'changelog.v1_0_51.change_1',
         ],
       },
     ],
@@ -75,14 +76,14 @@ export const CHANGELOG: ChangeEntry[] = [
     sections: [
       {
         type: 'new',
-        items: [
-          'Bibliothèque de jeux avec scan automatique Steam, Epic Games et Battle.net',
-          'Lecteur de musique intégré avec navigation par arborescence de dossiers',
-          'Détection automatique des lanceurs installés',
-          'Image de fond personnalisable et couleur d\'accent',
-          'Lancement automatique au démarrage de Windows',
-          'Mode arrière-plan (barre des tâches) lors de la fermeture',
-          'Support multilingue : Français / English',
+        itemKeys: [
+          'changelog.v1_0_0.new_0',
+          'changelog.v1_0_0.new_1',
+          'changelog.v1_0_0.new_2',
+          'changelog.v1_0_0.new_3',
+          'changelog.v1_0_0.new_4',
+          'changelog.v1_0_0.new_5',
+          'changelog.v1_0_0.new_6',
         ],
       },
     ],

@@ -83,8 +83,8 @@ export function PatchNotesModal({ onClose, onDismiss }: Props) {
                     <span>{sectionLabel(section.type, t)}</span>
                   </div>
                   <ul className={css.items}>
-                    {section.items.map((item, i) => (
-                      <li key={i} className={css.item}>{item}</li>
+                    {section.itemKeys.map((key, i) => (
+                      <li key={i} className={css.item}>{t(key)}</li>
                     ))}
                   </ul>
                 </div>
