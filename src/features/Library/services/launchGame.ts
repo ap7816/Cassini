@@ -33,6 +33,13 @@ async function openExternal(target: string): Promise<void> {
       return;
     }
 
+    // Ubisoft Connect : ouvrir uplay://launch/<id>/0 via cmd /c start
+    const ubisoftMatch = target.match(/^uplay:\/\/launch\/(\d+)\/0$/);
+    if (ubisoftMatch) {
+      await invoke('launch_ubisoft_game', { gameId: ubisoftMatch[1] });
+      return;
+    }
+
     if (isUrlTarget(target)) {
       await openUrl(target);
       return;

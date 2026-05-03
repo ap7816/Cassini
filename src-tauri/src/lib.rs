@@ -392,6 +392,18 @@ fn launch_riot_game(product: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
+    // uplay://launch/<id>/0 — on passe par cmd /c start pour que Windows
+    // déclenche le handler de protocole d'Ubisoft Connect correctement.
+    let url = format!("uplay://launch/{}/0", game_id);
+    std::process::Command::new("cmd")
+        .args(["/c", "start", "", &url])
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -445,7 +457,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
