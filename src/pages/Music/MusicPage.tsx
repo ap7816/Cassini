@@ -209,7 +209,6 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
       onDragOver={e => { e.preventDefault(); onDragOver(); }}
       onDragLeave={onDragLeave}
       onDrop={e => { e.preventDefault(); onDrop(e); }}
-      title={folder.name}
     >
       <div className={css.folderShape} style={{ '--fc': color, '--fc-dark': color + 'bb' } as React.CSSProperties}>
         <div className={css.folderShapeTab} />
@@ -257,7 +256,6 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta }: {
         e.dataTransfer.setData('trackPath', track.path);
         e.dataTransfer.setData('trackIdx', String(track.originalIndex));
       }}
-      title={track.title}
     >
       <div className={`${css.trackShape}${coverArt ? ` ${css.trackShapeWithArt}` : ''}`}>
         {coverArt && (
