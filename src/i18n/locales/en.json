@@ -164,7 +164,20 @@
     "autostartLabel": "Launch on startup",
     "autostartHint": "Automatically start ArcHive when Windows boots.",
     "runInBgLabel": "Run in background",
-    "runInBgHint": "When closing the window, ArcHive keeps running in the system tray."
+    "runInBgHint": "When closing the window, ArcHive keeps running in the system tray.",
+    "patchNotesLabel": "Release notes",
+    "patchNotesHint": "View what's new and fixed in the latest update.",
+    "patchNotesBtn": "View notes"
+  },
+  "patchNotes": {
+    "title": "Release Notes",
+    "newBadge": "NEW",
+    "close": "Close",
+    "dismiss": "Don't show at startup",
+    "sectionNew": "What's new",
+    "sectionFix": "Bug fixes",
+    "sectionPerf": "Performance",
+    "sectionChange": "Changes"
   },
   "updater": {
     "available": "🎉 Update available",

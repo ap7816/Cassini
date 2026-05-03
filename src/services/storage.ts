@@ -19,15 +19,16 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 // Clés
 // ─────────────────────────────────────────────────────────────────────────────
 export const STORAGE_KEYS = {
-  settings:       'arctive.settings.v1',
-  games:          'arctive.library.games.v1',
-  rawgCache:      'arctive.rawg.cache.v5',
-  launcherIcons:  'arctive.launcherIcons.v1',
-  musicFolder:    'music_folder',
-  musicVolume:    'music_volume',
-  musicLastTrack: 'music_last_track',
-  musicColors:    'music_folder_colors',
-  language:       'arctive.language',
+  settings:         'arctive.settings.v1',
+  games:            'arctive.library.games.v1',
+  rawgCache:        'arctive.rawg.cache.v5',
+  launcherIcons:    'arctive.launcherIcons.v1',
+  musicFolder:      'music_folder',
+  musicVolume:      'music_volume',
+  musicLastTrack:   'music_last_track',
+  musicColors:      'music_folder_colors',
+  language:         'arctive.language',
+  patchNotesSeen:   'arctive.patchNotes.seen',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -186,6 +187,14 @@ export function writeMusicFolderColors(colors: Record<string, string>): void {
 // ─────────────────────────────────────────────────────────────────────────────
 export function readLanguage(): string | null { return rawRead(STORAGE_KEYS.language); }
 export function writeLanguage(lang: string): void { rawWrite(STORAGE_KEYS.language, lang); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notes de mise à jour
+// ─────────────────────────────────────────────────────────────────────────────
+/** Retourne la version dont l'utilisateur a explicitement fermé le popup. */
+export function readPatchNotesSeen(): string | null { return rawRead(STORAGE_KEYS.patchNotesSeen); }
+/** Marque une version comme "ne plus afficher au démarrage". */
+export function writePatchNotesSeen(version: string): void { rawWrite(STORAGE_KEYS.patchNotesSeen, version); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reset

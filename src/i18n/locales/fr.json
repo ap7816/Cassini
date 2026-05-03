@@ -164,7 +164,20 @@
     "autostartLabel": "Lancement au démarrage",
     "autostartHint": "Démarre automatiquement ArcHive au démarrage de Windows.",
     "runInBgLabel": "Rester en arrière-plan",
-    "runInBgHint": "En fermant la fenêtre, ArcHive continue de tourner dans la barre des tâches."
+    "runInBgHint": "En fermant la fenêtre, ArcHive continue de tourner dans la barre des tâches.",
+    "patchNotesLabel": "Notes de version",
+    "patchNotesHint": "Consultez les nouveautés et corrections de la dernière mise à jour.",
+    "patchNotesBtn": "Voir les notes"
+  },
+  "patchNotes": {
+    "title": "Notes de mise à jour",
+    "newBadge": "NOUVEAU",
+    "close": "Fermer",
+    "dismiss": "Ne plus afficher au démarrage",
+    "sectionNew": "Nouveautés",
+    "sectionFix": "Corrections",
+    "sectionPerf": "Performances",
+    "sectionChange": "Changements"
   },
   "updater": {
     "available": "🎉 Mise à jour disponible",

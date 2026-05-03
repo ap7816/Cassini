@@ -13,6 +13,7 @@ import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
+import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 
 const MAX_DIM = 1920;
 const JPEG_QUALITY = 0.85;
@@ -67,6 +68,7 @@ export function SettingsPage() {
   }
   const { dlgState, closeDialog, confirm } = useDialog();
   const toast = useToast();
+  const { openPatchNotes } = usePatchNotes();
 
   const {
     settings,
@@ -343,9 +345,11 @@ export function SettingsPage() {
       )}
 
       {/* Mises à jour */}
-      {matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint') && (
+      {matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint', 'settings.patchNotesLabel', 'settings.patchNotesHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
+
+        {matches('settings.updateLabel', 'settings.updateHint') && (
         <div className={css.row}>
           <div>
             <div className={css.label}>{t('settings.updateLabel')}</div>
@@ -367,6 +371,21 @@ export function SettingsPage() {
             <div className={css.updateErrorMsg}>{updateError}</div>
           )}
         </div>
+        )}
+
+        {matches('settings.updateLabel', 'settings.updateHint') && matches('settings.patchNotesLabel', 'settings.patchNotesHint') && <div className={css.divider} />}
+
+        {matches('settings.patchNotesLabel', 'settings.patchNotesHint') && (
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.patchNotesLabel')}</div>
+            <div className={css.hint}>{t('settings.patchNotesHint')}</div>
+          </div>
+          <button type="button" className={css.button} onClick={openPatchNotes}>
+            {t('settings.patchNotesBtn')}
+          </button>
+        </div>
+        )}
       </div>
       )}
 
