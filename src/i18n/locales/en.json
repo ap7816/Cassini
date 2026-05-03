@@ -182,12 +182,12 @@
   "changelog": {
     "v1_1_0": {
       "new_0": "Audio metadata: title, artist, album and duration read directly from files (MP3, FLAC, WAV, OGG, M4A, Opus)",
-      "new_1": "Album art YouTube Music style — full image on the card, title below, duration overlaid",
+      "new_1": "Album art YouTube Music style: full image on the card, title below, duration overlaid",
       "new_2": "Stronger text shadows on light artwork for optimal readability",
       "new_3": "Full .opus format support",
       "new_4": "Release notes popup on every new version (you're reading the first one!)",
-      "perf_0": "Rust batch loading (rayon) — all metadata read in parallel in a single IPC call",
-      "perf_1": "Artwork loaded on demand via IntersectionObserver (200 px margin) — no more UI blocking",
+      "perf_0": "Rust batch loading (rayon): all metadata read in parallel in a single IPC call",
+      "perf_1": "Artwork loaded on demand via IntersectionObserver (200 px margin), no more UI blocking",
       "perf_2": "Concurrency limiter: max 4 simultaneous artwork requests",
       "perf_3": "Progress bar while metadata is being analysed",
       "perf_4": "Session cache with 300 entries (FIFO eviction) to avoid re-reads",
