@@ -13,8 +13,14 @@
     "windows": [
       {
         "title": "ArcHive",
-        "width": 800,
-        "height": 600
+        "width": 1200,
+        "height": 750,
+        "minWidth": 800,
+        "minHeight": 550,
+        "center": true,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false
       }
     ],
     "security": {
