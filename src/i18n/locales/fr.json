@@ -181,16 +181,18 @@
     "sectionChange": "Changements"
   },
   "changelog": {
-    "v1_1_0": {
-      "new_0": "Les informations des pistes (titre, artiste, album, durée) s'affichent automatiquement",
-      "new_1": "Pochettes d'album affichées en plein format sur les cartes, avec la durée incrustée",
-      "new_2": "Le texte reste lisible même sur les pochettes aux couleurs claires",
-      "new_3": "Support du format audio .opus",
-      "new_4": "Notes de mise à jour à chaque nouvelle version",
+    "v1_1_1": {
+      "new_0": "Notes de mise à jour à chaque nouvelle version",
       "perf_0": "Chargement des grandes bibliothèques musicales beaucoup plus rapide",
       "perf_1": "Les pochettes se chargent au fur et à mesure que vous faites défiler",
       "perf_2": "Barre de progression pendant le chargement des informations des pistes",
       "fix_0": "Corrections de bugs mineurs"
+    },
+    "v1_1_0": {
+      "new_0": "Les informations des pistes (titre, artiste, album, durée) s'affichent automatiquement",
+      "new_1": "Pochettes d'album affichées en plein format sur les cartes, avec la durée incrustée",
+      "new_2": "Le texte reste lisible même sur les pochettes aux couleurs claires",
+      "new_3": "Support du format audio .opus"
     },
     "v1_0_51": {
       "new_0": "Fenêtres de dialogue intégrées à l'application, plus de popups du navigateur",

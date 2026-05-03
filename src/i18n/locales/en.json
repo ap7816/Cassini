@@ -181,16 +181,18 @@
     "sectionChange": "Changes"
   },
   "changelog": {
-    "v1_1_0": {
-      "new_0": "Track information (title, artist, album, duration) now displays automatically",
-      "new_1": "Album artwork shown in full on track cards, with duration overlaid",
-      "new_2": "Text stays readable even on tracks with light-coloured artwork",
-      "new_3": "Support for the .opus audio format",
-      "new_4": "Release notes shown on every new version",
+    "v1_1_1": {
+      "new_0": "Release notes shown on every new version",
       "perf_0": "Large music libraries load much faster",
       "perf_1": "Album artwork loads gradually as you scroll",
       "perf_2": "Progress bar while track information is loading",
       "fix_0": "Minor bug fixes"
+    },
+    "v1_1_0": {
+      "new_0": "Track information (title, artist, album, duration) now displays automatically",
+      "new_1": "Album artwork shown in full on track cards, with duration overlaid",
+      "new_2": "Text stays readable even on tracks with light-coloured artwork",
+      "new_3": "Support for the .opus audio format"
     },
     "v1_0_51": {
       "new_0": "Built-in dialogs, no more browser popups",
