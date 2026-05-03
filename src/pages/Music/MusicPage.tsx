@@ -560,22 +560,23 @@ export function MusicPage() {
 
       {/* ── Search results ── */}
       {!isEmpty && query && (
-        <div className={css.trackList}>
-          {searchResults.length === 0
-            ? <div className={css.emptyState}>{t('music.noResults', { query })}</div>
-            : searchResults.map((track, idx) => {
-              const isActive = track.originalIndex === music.currentIndex;
-              return (
-                <div key={track.path} className={`${css.trackItem} ${isActive ? css.trackItemActive : ''}`} onClick={() => music.selectTrack(track.originalIndex)}>
-                  {isActive && music.isPlaying ? <Equalizer /> : <span className={css.trackIndex}>{idx + 1}</span>}
-                  <span className={css.trackTitle}>{track.title}</span>
-                  {track.folder && <span className={css.trackFolderTag}>{track.folder.split('/').pop()}</span>}
-                  {getMeta(track.path)?.durationSecs ? <span className={css.trackDuration}>{fmt(getMeta(track.path)!.durationSecs!)}</span> : <span className={css.trackDurationPlaceholder} />}
-                </div>
-              );
-            })
-          }
-        </div>
+        searchResults.length === 0
+          ? <div className={css.emptyState}>{t('music.noResults', { query })}</div>
+          : <div className={css.gridScroll}>
+              <div className={css.fileGrid}>
+                {searchResults.map((track, idx) => (
+                  <TrackCard
+                    key={track.path}
+                    track={track}
+                    index={idx}
+                    isActive={track.originalIndex === music.currentIndex}
+                    isPlaying={music.isPlaying}
+                    onSelect={() => music.selectTrack(track.originalIndex)}
+                    meta={getMeta(track.path)}
+                  />
+                ))}
+              </div>
+            </div>
       )}
 
       {/* ── Grid browser ── */}
