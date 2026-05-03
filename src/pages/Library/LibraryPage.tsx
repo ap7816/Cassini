@@ -12,7 +12,7 @@ import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChip
 import { useToast } from '../../features/toast/ToastContext';
 
 type ViewMode = 'games' | 'favorites';
-type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Other';
+type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Other';
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
@@ -60,12 +60,22 @@ export function LibraryPage() {
     scanPcSteam,
     scanPcEpic,
     scanPcBattlenet,
+    scanPcRiot,
+    scanPcRockstar,
+    scanPcUbisoft,
     isScanning,
     scanError,
   } = useLibraryGames();
 
   async function handleRefresh() {
-    await Promise.all([scanPcSteam(), scanPcEpic(), scanPcBattlenet()]);
+    await Promise.all([
+      scanPcSteam(),
+      scanPcEpic(),
+      scanPcBattlenet(),
+      scanPcRiot(),
+      scanPcRockstar(),
+      scanPcUbisoft(),
+    ]);
   }
 
   function setView(next: ViewMode) {
@@ -194,6 +204,9 @@ export function LibraryPage() {
             { value: 'Steam', label: 'Steam' },
             { value: 'Epic', label: 'Epic' },
             { value: 'BattleNet', label: t('filters.battlenet') },
+            { value: 'Riot', label: 'Riot' },
+            { value: 'Rockstar', label: 'Rockstar' },
+            { value: 'Ubisoft', label: 'Ubisoft Connect' },
             { value: 'Other', label: t('filters.other') },
           ]}
           value={platformFilter}

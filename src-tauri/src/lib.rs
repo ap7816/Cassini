@@ -3,7 +3,10 @@ mod battlenet_scan;
 mod epic_scan;
 mod icon_extract;
 mod launcher_scan;
+mod riot_scan;
+mod rockstar_scan;
 mod steam_scan;
+mod ubisoft_scan;
 use tauri_plugin_log;
 
 #[derive(serde::Serialize)]
@@ -204,6 +207,21 @@ fn scan_epic_games() -> Result<Vec<steam_scan::GameDto>, String> {
 #[tauri::command]
 fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
     battlenet_scan::scan_battlenet_games()
+}
+
+#[tauri::command]
+fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    riot_scan::scan_riot_games()
+}
+
+#[tauri::command]
+fn scan_rockstar_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    rockstar_scan::scan_rockstar_games()
+}
+
+#[tauri::command]
+fn scan_ubisoft_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    ubisoft_scan::scan_ubisoft_games()
 }
 
 #[tauri::command]
@@ -413,7 +431,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

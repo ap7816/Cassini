@@ -1,4 +1,4 @@
-export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'GOG' | 'Other';
+export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'GOG' | 'Other';
 
 export type Game = {
   id: string;

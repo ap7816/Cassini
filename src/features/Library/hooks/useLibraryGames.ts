@@ -17,7 +17,7 @@ async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Prom
   return invoke<T>(cmd, args);
 }
 
-const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2 };
+const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5 };
 
 function normalizeName(title: string): string {
   return title.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
@@ -291,6 +291,105 @@ export function useLibraryGames() {
     }
   }
 
+  async function scanPcRiot(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
+    setIsScanning(true);
+    setScanError(null);
+    try {
+      const detected = await tauriInvoke<Game[]>('scan_riot_games');
+      const normalized: Game[] = detected.map((g) => ({
+        ...g,
+        platform: 'Riot' as const,
+        installed: true,
+        favorite: g.favorite ?? false,
+      }));
+      let added = 0;
+      const incomingIds = new Set(normalized.map((g) => g.id));
+      setGames((prev) => {
+        const before = new Set(prev.map((g) => g.id));
+        for (const g of normalized) if (!before.has(g.id)) added += 1;
+        const updated = prev.map((g) =>
+          g.platform === 'Riot' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
+        );
+        return deduplicateGames(mergeById(updated, normalized));
+      });
+      return { ok: true, added };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Riot scan failed.';
+      setScanError(msg);
+      return { ok: false, message: msg };
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  async function scanPcRockstar(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
+    setIsScanning(true);
+    setScanError(null);
+    try {
+      const detected = await tauriInvoke<Game[]>('scan_rockstar_games');
+      const normalized: Game[] = detected.map((g) => ({
+        ...g,
+        platform: 'Rockstar' as const,
+        installed: true,
+        favorite: g.favorite ?? false,
+      }));
+      let added = 0;
+      const incomingIds = new Set(normalized.map((g) => g.id));
+      setGames((prev) => {
+        const before = new Set(prev.map((g) => g.id));
+        for (const g of normalized) if (!before.has(g.id)) added += 1;
+        const updated = prev.map((g) =>
+          g.platform === 'Rockstar' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
+        );
+        return deduplicateGames(mergeById(updated, normalized));
+      });
+      return { ok: true, added };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Rockstar scan failed.';
+      setScanError(msg);
+      return { ok: false, message: msg };
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  async function scanPcUbisoft(): Promise<
+    { ok: true; added: number } | { ok: false; message: string }
+  > {
+    setIsScanning(true);
+    setScanError(null);
+    try {
+      const detected = await tauriInvoke<Game[]>('scan_ubisoft_games');
+      const normalized: Game[] = detected.map((g) => ({
+        ...g,
+        platform: 'Ubisoft' as const,
+        installed: true,
+        favorite: g.favorite ?? false,
+      }));
+      let added = 0;
+      const incomingIds = new Set(normalized.map((g) => g.id));
+      setGames((prev) => {
+        const before = new Set(prev.map((g) => g.id));
+        for (const g of normalized) if (!before.has(g.id)) added += 1;
+        const updated = prev.map((g) =>
+          g.platform === 'Ubisoft' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
+        );
+        return deduplicateGames(mergeById(updated, normalized));
+      });
+      return { ok: true, added };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Ubisoft scan failed.';
+      setScanError(msg);
+      return { ok: false, message: msg };
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
   // Auto-scan 1 fois si la library est vide
   const didAutoScan = useRef(false);
   useEffect(() => {
@@ -298,7 +397,14 @@ export function useLibraryGames() {
     if (games.length !== 0) return;
 
     didAutoScan.current = true;
-    void Promise.all([scanPcSteam(), scanPcEpic(), scanPcBattlenet()]);
+    void Promise.all([
+      scanPcSteam(),
+      scanPcEpic(),
+      scanPcBattlenet(),
+      scanPcRiot(),
+      scanPcRockstar(),
+      scanPcUbisoft(),
+    ]);
   }, [games.length]);
 
   return {
@@ -321,6 +427,9 @@ export function useLibraryGames() {
     scanPcSteam,
     scanPcEpic,
     scanPcBattlenet,
+    scanPcRiot,
+    scanPcRockstar,
+    scanPcUbisoft,
     isScanning,
     scanError,
   };
