@@ -70,24 +70,33 @@ export function AppLayout() {
 
   const { settings } = useAppSettings();
   const navigate = useNavigate();
-  // useUpdater moved to top of component
+
+  // Ref toujours à jour — permet au listener (créé une seule fois) de lire la valeur courante
+  const runInBgRef = useRef(settings.runInBackground);
+  useEffect(() => { runInBgRef.current = settings.runInBackground; }, [settings.runInBackground]);
 
   // Minimize to tray instead of closing when runInBackground is enabled
+  // Listener enregistré une seule fois au montage pour éviter les doublons liés à l'async
   useEffect(() => {
     if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
     let unlisten: (() => void) | undefined;
+    let mounted = true;
     import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+      if (!mounted) return;
       getCurrentWindow()
         .onCloseRequested(async (event) => {
-          if (settings.runInBackground) {
+          if (runInBgRef.current) {
             event.preventDefault();
             await getCurrentWindow().hide();
           }
         })
-        .then((fn) => { unlisten = fn; });
+        .then((fn) => {
+          if (!mounted) { fn(); return; }
+          unlisten = fn;
+        });
     });
-    return () => { unlisten?.(); };
-  }, [settings.runInBackground]);
+    return () => { mounted = false; unlisten?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Music player
   const music = useMusicPlayer();
