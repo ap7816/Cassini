@@ -94,6 +94,7 @@
 .body {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   padding: 10px;
 }
