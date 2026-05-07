@@ -6,34 +6,35 @@ export type LaunchResult =
   | { ok: true }
   | { ok: false; reason: 'NOT_INSTALLED' | 'NO_LAUNCH_URL' | 'OPEN_FAILED'; message: string };
 
+// Détecte si la cible est une URL avec protocole (steam://, https://, file://, etc.)
 function isUrlTarget(target: string): boolean {
-  // ex: steam://..., https://..., file://...
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
 }
 
+// Détecte si la cible est un chemin Windows local (C:\... ou \\server\share\...)
 function isLocalWindowsPath(input: string): boolean {
-  // ex: C:\... or \\server\share\...
   return /^[a-zA-Z]:\\/.test(input) || input.startsWith('\\\\');
 }
 
+// Ouvre la cible en choisissant la méthode appropriée selon le type d'URL et la plateforme
+// Gère les protocoles spéciaux : battlenet://, riotclient://, uplay://
 async function openExternal(target: string): Promise<void> {
-  // Desktop (Tauri)
   if (isTauri()) {
-    // Battle.net : lancer via Battle.net.exe --exec=launch <uid>
+    // Battle.net : délègue au commande Tauri qui invoque Battle.net.exe --exec=launch <uid>
     const battlenetMatch = target.match(/^battlenet:\/\/([^/]+)$/);
     if (battlenetMatch) {
       await invoke('launch_battlenet_game', { uid: battlenetMatch[1] });
       return;
     }
 
-    // Riot Client : lancer via RiotClientServices.exe --launch-product=<product>
+    // Riot Client : délègue au commande Tauri qui invoque RiotClientServices.exe --launch-product=<product>
     const riotMatch = target.match(/^riotclient:\/\/(.+)$/);
     if (riotMatch) {
       await invoke('launch_riot_game', { product: riotMatch[1] });
       return;
     }
 
-    // Ubisoft Connect : ouvrir uplay://launch/<id>/0 via cmd /c start
+    // Ubisoft Connect : passe par cmd /c start pour que Windows traite le protocole uplay://
     const ubisoftMatch = target.match(/^uplay:\/\/launch\/(\d+)\/0$/);
     if (ubisoftMatch) {
       await invoke('launch_ubisoft_game', { gameId: ubisoftMatch[1] });
@@ -45,22 +46,22 @@ async function openExternal(target: string): Promise<void> {
       return;
     }
 
-    // support "path" direct (C:\...) ou autre
+    // Chemin local (C:\...) ou autre — ouverture via le plugin opener de Tauri
     await openPath(target);
     return;
   }
 
-  // Web fallback
+  // Fallback web : les protocoles custom (steam://) seront souvent bloqués par le navigateur
   if (isUrlTarget(target)) {
-    // steam:// ne marchera pas en web preview → ça va souvent être bloqué
     window.location.assign(target);
     return;
   }
 
-  // chemin local en web preview => impossible
+  // Les chemins locaux ne peuvent pas être ouverts depuis un navigateur web
   throw new Error('Local paths can only be opened in the desktop app.');
 }
 
+// Lance un jeu en vérifiant d'abord qu'il est installé et qu'une URL de lancement est définie
 export async function launchGame(game: Game): Promise<LaunchResult> {
   if (!game.installed) {
     return { ok: false, reason: 'NOT_INSTALLED', message: 'Game is not installed.' };
@@ -75,11 +76,9 @@ export async function launchGame(game: Game): Promise<LaunchResult> {
   }
 
   try {
-    // Si quelqu’un met un path Windows dans launchUrl, on l’accepte aussi
-    // (ex: raccourci ajouté manuellement)
     const target = game.launchUrl;
 
-    // petite sécurité : en web preview, un path local ne peut pas marcher
+    // En mode web, les chemins locaux Windows ne peuvent pas être exécutés
     if (!isTauri() && isLocalWindowsPath(target)) {
       return {
         ok: false,

@@ -1,23 +1,14 @@
-/**
- * storage.ts — Point d'entrée UNIQUE pour toutes les opérations de persistance.
- *
- * Backend : tauri-plugin-store (fichier JSON dans AppData).
- * Fallback : localStorage (mode navigateur / dev Vite).
- *
- * Architecture :
- *  - `initStorage()` charge tout en mémoire au démarrage (une seule fois).
- *  - Les lectures sont SYNCHRONES (depuis le cache mémoire).
- *  - Les écritures sont synchrones en mémoire + asynchrones vers le store.
- *  - Migration automatique depuis localStorage si le store est vierge.
- *
- * Pour changer de backend à l'avenir : modifier uniquement rawRead/rawWrite/rawRemove.
- */
+// Point d'entrée unique pour toutes les opérations de persistance.
+// Backend : tauri-plugin-store (fichier JSON dans AppData).
+// Fallback : localStorage (mode navigateur / dev Vite).
+// Architecture : initStorage() charge tout en mémoire au démarrage.
+// Les lectures sont synchrones (depuis le cache mémoire).
+// Les écritures sont synchrones en mémoire + asynchrones vers le store.
+// Migration automatique depuis localStorage si le store est vierge.
 
 import { load, type Store } from '@tauri-apps/plugin-store';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Clés
-// ─────────────────────────────────────────────────────────────────────────────
+// Clés de stockage utilisées dans toute l'application — centralisées ici pour éviter les fautes de frappe
 export const STORAGE_KEYS = {
   settings:            'arctive.settings.v1',
   games:               'arctive.library.games.v1',
@@ -32,26 +23,24 @@ export const STORAGE_KEYS = {
   patchNotesSeen:      'arctive.patchNotes.seen',
 } as const;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Cache mémoire + instance store
-// ─────────────────────────────────────────────────────────────────────────────
+// Cache mémoire synchrone — toutes les lectures passent par ici pour éviter l'asynchronisme
 const mem: Record<string, string> = {};
 let store: Store | null = null;
 let ready = false;
 
+// Détecte si l'application tourne dans Tauri (desktop) ou dans un navigateur (dev)
 function isTauri(): boolean {
   return !!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Initialisation — appeler UNE SEULE FOIS avant le rendu React
-// ─────────────────────────────────────────────────────────────────────────────
+// Initialise le stockage — doit être appelé UNE SEULE FOIS avant le premier rendu React
+// Charge toutes les données connues en mémoire et migre depuis localStorage si nécessaire
 export async function initStorage(): Promise<void> {
   if (ready) return;
   ready = true;
 
   if (!isTauri()) {
-    // Mode navigateur (dev Vite) : charger depuis localStorage
+    // Mode navigateur (dev Vite) : lit directement depuis localStorage
     for (const key of Object.values(STORAGE_KEYS)) {
       const v = window.localStorage.getItem(key);
       if (v !== null) mem[key] = v;
@@ -62,7 +51,7 @@ export async function initStorage(): Promise<void> {
   try {
     store = await load('archive.json', { autoSave: true, defaults: {} });
 
-    // Charger toutes les clés connues en mémoire
+    // Charge toutes les clés connues dans le cache mémoire
     let hasData = false;
     for (const key of Object.values(STORAGE_KEYS)) {
       const val = await store.get<string>(key);
@@ -72,7 +61,7 @@ export async function initStorage(): Promise<void> {
       }
     }
 
-    // Migration automatique depuis localStorage si le store est vierge
+    // Si le store est vierge (première installation), migre les données depuis localStorage
     if (!hasData) {
       console.info('[storage] Store vierge — migration depuis localStorage');
       const migrations: Promise<void>[] = [];
@@ -95,34 +84,32 @@ export async function initStorage(): Promise<void> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Primitives internes
-// ─────────────────────────────────────────────────────────────────────────────
+// Lit une valeur depuis le cache mémoire de manière synchrone
 function rawRead(key: string): string | null {
   return mem[key] ?? null;
 }
 
+// Écrit une valeur en mémoire immédiatement, puis la persiste de façon asynchrone dans le store
 function rawWrite(key: string, value: string): void {
   mem[key] = value;
   if (store) {
     store.set(key, value).catch(err => console.error('[storage] write error', err));
   } else {
-    try { window.localStorage?.setItem(key, value); } catch { /* quota */ }
+    try { window.localStorage?.setItem(key, value); } catch { /* quota dépassé */ }
   }
 }
 
+// Supprime une valeur du cache mémoire et du store
 function rawRemove(key: string): void {
   delete mem[key];
   if (store) {
     store.delete(key).catch(err => console.error('[storage] delete error', err));
   } else {
-    try { window.localStorage?.removeItem(key); } catch { /* ignore */ }
+    try { window.localStorage?.removeItem(key); } catch { /* ignorer */ }
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers génériques
-// ─────────────────────────────────────────────────────────────────────────────
+// Lit et désérialise une valeur JSON depuis le stockage
 export function readJSON<T>(key: string): T | null {
   const raw = rawRead(key);
   if (!raw) return null;
@@ -130,52 +117,46 @@ export function readJSON<T>(key: string): T | null {
   catch { return null; }
 }
 
+// Sérialise et écrit une valeur JSON dans le stockage
 export function writeJSON<T>(key: string, value: T): void {
   rawWrite(key, JSON.stringify(value));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Settings
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture des paramètres de l'application
 export function readSettingsRaw(): string | null  { return rawRead(STORAGE_KEYS.settings); }
 export function writeSettingsRaw(json: string): void { rawWrite(STORAGE_KEYS.settings, json); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bibliothèque de jeux
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture de la bibliothèque de jeux
 export function readGamesRaw(): string | null  { return rawRead(STORAGE_KEYS.games); }
 export function writeGamesRaw(json: string): void { rawWrite(STORAGE_KEYS.games, json); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Cache RAWG
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture/suppression du cache d'images RAWG
 export function readRawgCacheRaw(): string | null  { return rawRead(STORAGE_KEYS.rawgCache); }
 export function writeRawgCacheRaw(json: string): void { rawWrite(STORAGE_KEYS.rawgCache, json); }
 export function removeRawgCache(): void { rawRemove(STORAGE_KEYS.rawgCache); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Cache icônes launchers
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture du cache des icônes de launchers
 export function readLauncherIconsRaw(): string | null  { return rawRead(STORAGE_KEYS.launcherIcons); }
 export function writeLauncherIconsRaw(json: string): void { rawWrite(STORAGE_KEYS.launcherIcons, json); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Musique
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture du dossier musique sélectionné
 export function readMusicFolder(): string { return rawRead(STORAGE_KEYS.musicFolder) ?? ''; }
 export function writeMusicFolder(path: string): void { rawWrite(STORAGE_KEYS.musicFolder, path); }
 
+// Lecture/écriture du volume du lecteur audio (entre 0 et 1)
 export function readMusicVolume(): number {
   const v = parseFloat(rawRead(STORAGE_KEYS.musicVolume) ?? '');
   return isNaN(v) ? 0.5 : v;
 }
 export function writeMusicVolume(v: number): void { rawWrite(STORAGE_KEYS.musicVolume, String(v)); }
 
+// Lecture/écriture de l'index de la dernière piste jouée (pour reprendre au redémarrage)
 export function readMusicLastTrack(): number {
   return parseInt(rawRead(STORAGE_KEYS.musicLastTrack) ?? '-1', 10);
 }
 export function writeMusicLastTrack(idx: number): void { rawWrite(STORAGE_KEYS.musicLastTrack, String(idx)); }
 
+// Lecture/écriture des couleurs associées à chaque dossier musical
 export function readMusicFolderColors(): Record<string, string> {
   return readJSON<Record<string, string>>(STORAGE_KEYS.musicColors) ?? {};
 }
@@ -183,6 +164,7 @@ export function writeMusicFolderColors(colors: Record<string, string>): void {
   writeJSON(STORAGE_KEYS.musicColors, colors);
 }
 
+// Lecture/écriture des métadonnées enrichies (iTunes/Deezer) persistées entre les sessions
 export function readMusicEnrichedMetaRaw(): string | null {
   return rawRead(STORAGE_KEYS.musicEnrichedMeta);
 }
@@ -190,25 +172,20 @@ export function writeMusicEnrichedMetaRaw(json: string): void {
   rawWrite(STORAGE_KEYS.musicEnrichedMeta, json);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Langue
-// ─────────────────────────────────────────────────────────────────────────────
+// Lecture/écriture de la langue de l'interface
 export function readLanguage(): string | null { return rawRead(STORAGE_KEYS.language); }
 export function writeLanguage(lang: string): void { rawWrite(STORAGE_KEYS.language, lang); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notes de mise à jour
-// ─────────────────────────────────────────────────────────────────────────────
-/** Retourne la version dont l'utilisateur a explicitement fermé le popup. */
+// Retourne la version dont l'utilisateur a explicitement fermé le popup de notes de mise à jour
 export function readPatchNotesSeen(): string | null { return rawRead(STORAGE_KEYS.patchNotesSeen); }
-/** Marque une version comme "ne plus afficher au démarrage". */
+
+// Marque une version comme "ne plus afficher au démarrage"
 export function writePatchNotesSeen(version: string): void { rawWrite(STORAGE_KEYS.patchNotesSeen, version); }
-/** Réactive l'affichage au démarrage pour la version courante. */
+
+// Réactive l'affichage au démarrage pour la version courante
 export function removePatchNotesSeen(): void { rawRemove(STORAGE_KEYS.patchNotesSeen); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reset
-// ─────────────────────────────────────────────────────────────────────────────
+// Supprime toutes les données persistées (en mémoire + store/localStorage)
 export async function clearAllStorage(): Promise<void> {
   for (const key of Object.keys(mem)) delete mem[key];
   if (store) {
@@ -218,6 +195,7 @@ export async function clearAllStorage(): Promise<void> {
   }
 }
 
+// Supprime toutes les données sauf celles dont les clés sont dans keysToKeep (ex: clé RAWG)
 export async function clearStoragePreserving(keysToKeep: string[]): Promise<void> {
   const saved: Record<string, string> = {};
   for (const key of keysToKeep) {

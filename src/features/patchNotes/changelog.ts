@@ -2,16 +2,17 @@ export type SectionType = 'new' | 'fix' | 'perf' | 'change';
 
 export interface ChangeSection {
   type: SectionType;
-  /** Clés i18n — chaque clé est résolue via t() dans le composant */
+  // Clés i18n — chaque clé est résolue via t() dans le composant PatchNotesModal
   itemKeys: string[];
 }
 
 export interface ChangeEntry {
   version: string;
-  date: string; // 'YYYY-MM-DD'
+  date: string;
   sections: ChangeSection[];
 }
 
+// Historique complet des versions de l'application, du plus récent au plus ancien
 export const CHANGELOG: ChangeEntry[] = [
   {
     version: '1.1.2',

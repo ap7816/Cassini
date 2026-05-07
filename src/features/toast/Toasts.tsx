@@ -1,8 +1,10 @@
 import { useToast } from './ToastContext';
 import css from './Toasts.module.css';
 
+// Icônes associées à chaque type de toast
 const ICONS: Record<string, string> = { success: '✓', error: '✕', info: 'ℹ' };
 
+// Affiche la pile de toasts actifs dans le coin de l'écran — invisible si aucun toast en cours
 export function Toasts() {
   const { toasts, dismiss } = useToast();
   if (!toasts.length) return null;

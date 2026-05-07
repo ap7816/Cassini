@@ -17,17 +17,20 @@ interface ToastCtxValue {
 
 const ToastCtx = createContext<ToastCtxValue | null>(null);
 
+// Gère la liste des toasts actifs, leur affichage temporaire et leur suppression automatique
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const seq = useRef(0);
 
+  // Supprime un toast par son identifiant unique
   const dismiss = useCallback((id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  // Ajoute un toast en limitant à 5 simultanément, avec disparition automatique après `duration` ms
   const push = useCallback((kind: ToastKind, message: string, duration = 4000) => {
     const id = ++seq.current;
-    setToasts(prev => [...prev.slice(-4), { id, kind, message }]); // max 5 toasts
+    setToasts(prev => [...prev.slice(-4), { id, kind, message }]);
     if (duration > 0) setTimeout(() => dismiss(id), duration);
   }, [dismiss]);
 
@@ -38,6 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Accède au système de toasts — expose des helpers par type (success, error, info)
 export function useToast() {
   const ctx = useContext(ToastCtx);
   if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');

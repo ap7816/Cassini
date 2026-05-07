@@ -6,6 +6,7 @@ export type DialogState =
   | { type: 'prompt';  title: string; defaultValue?: string; resolve: (v: string | null) => void }
   | { type: 'confirm'; message: string; danger?: boolean;    resolve: (v: boolean) => void };
 
+// Dialogue modal in-app utilisé comme remplacement de window.prompt / window.confirm
 export function AppDialog({ state, onClose }: {
   state: DialogState;
   onClose: (value: string | boolean | null) => void;
@@ -16,7 +17,7 @@ export function AppDialog({ state, onClose }: {
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus + select input on open
+  // Donne le focus et sélectionne le texte dans l'input au moment de l'ouverture
   useEffect(() => {
     const t = setTimeout(() => {
       inputRef.current?.focus();
@@ -25,7 +26,7 @@ export function AppDialog({ state, onClose }: {
     return () => clearTimeout(t);
   }, []);
 
-  // Escape key = cancel
+  // Ferme le dialogue (annuler) quand l'utilisateur appuie sur Échap
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { e.preventDefault(); handleCancel(); }
@@ -34,6 +35,7 @@ export function AppDialog({ state, onClose }: {
     return () => window.removeEventListener('keydown', h);
   });
 
+  // Valide la saisie — retourne null si le champ est vide pour un prompt
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     if (state.type === 'prompt') {
@@ -44,6 +46,7 @@ export function AppDialog({ state, onClose }: {
     }
   }
 
+  // Annule le dialogue : retourne null (prompt) ou false (confirm)
   function handleCancel() {
     onClose(state.type === 'prompt' ? null : false);
   }

@@ -1,52 +1,36 @@
-/**
- * enrichMeta.ts
- *
- * Fetches track metadata (artist, album, cover art URL) from iTunes → Deezer.
- *
- * - ALL tracks are searched on every app start (no artist-tag filter).
- * - Results are kept in memory only for the current session — nothing is
- *   written to disk or localStorage.
- * - At most MAX_CONCURRENT requests run in parallel.
- */
+// Récupère les métadonnées de pistes (artiste, album, couverture) depuis iTunes puis Deezer en fallback.
+// Toutes les pistes sont tentées à chaque démarrage sans filtre sur le tag artiste.
+// Les résultats sont conservés uniquement en mémoire pour la session — rien n'est écrit sur disque.
+// La concurrence est limitée à MAX_CONCURRENT requêtes simultanées.
 
 import { invoke, isTauri } from '@tauri-apps/api/core';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface EnrichedData {
-  /** Artist name found online, or null. */
   artist: string | null;
-  /** Album name found online, or null. */
   album: string | null;
-  /** HTTPS cover-art URL (600 × 600). Use directly in <img src>. null if not found. */
+  // URL HTTPS vers la couverture (600×600), utilisable directement dans <img src>
   coverUrl: string | null;
-  /** Unix timestamp (ms) when this entry was fetched. */
+  // Horodatage Unix (ms) du moment où cette entrée a été récupérée
   fetchedAt: number;
 }
 
-// ── In-memory session cache (no persistence) ──────────────────────────────────
-
+// Cache de session en mémoire — non persisté entre les redémarrages
 const _cache = new Map<string, EnrichedData>();
 
-/** Returns cached enriched data for a path, or null if not yet fetched. */
+// Retourne les données enrichies pour un chemin, ou null si pas encore récupérées
 export function getEnriched(path: string): EnrichedData | null {
   return _cache.get(path) ?? null;
 }
 
-/** Clears all in-memory enrichment data (used on startup). */
+// Efface toutes les données d'enrichissement (utilisé au démarrage d'une nouvelle session)
 export function clearAllEnrichments(): void {
   _cache.clear();
 }
 
-/**
- * Returns true if this track hasn't been attempted yet this session.
- * Every track is searched regardless of whether it already has an artist tag.
- */
+// Retourne true si cette piste n'a pas encore été tentée pendant la session courante
 export function needsEnrichment(path: string): boolean {
   return !_cache.has(path);
 }
-
-// ── iTunes / Deezer search (via Rust to bypass CORS) ─────────────────────────
 
 interface MusicMetaInvokeResult {
   artist: string | null;
@@ -55,25 +39,19 @@ interface MusicMetaInvokeResult {
   source: 'itunes' | 'deezer';
 }
 
-/**
- * Cleans a raw filename / tag title into a search term.
- *
- * Steps:
- *  1. Strip file extension
- *  2. Strip leading track-number prefix  ("01 - ", "02.", "003_")
- *  3. Remove [bracket tags]              ("[Electro]", "[Monstercat Release]")
- *  4. Remove noisy parenthetical info    ("(Lyrics)", "(Official Video)", "(HD)")
- */
+// Nettoie un nom de fichier brut pour en faire un terme de recherche exploitable :
+// supprime l'extension, le numéro de piste, les tags [entre crochets] et les parenthèses parasites
 function buildSearchTerm(raw: string): string {
   return raw
-    .replace(/\.[a-zA-Z0-9]{1,5}$/, '')                                               // 1. extension
-    .replace(/^\d+[\s\-_\.]+/, '')                                                     // 2. track-number prefix
-    .replace(/\[.*?\]/g, ' ')                                                          // 3. [bracket tags]
-    .replace(/\((?:official|lyrics?|video|audio|hd|4k|hq|full|mv)\s*[^)]*\)/gi, ' ') // 4. noisy parens
+    .replace(/\.[a-zA-Z0-9]{1,5}$/, '')
+    .replace(/^\d+[\s\-_\.]+/, '')
+    .replace(/\[.*?\]/g, ' ')
+    .replace(/\((?:official|lyrics?|video|audio|hd|4k|hq|full|mv)\s*[^)]*\)/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
+// Interroge l'API iTunes via Rust (pour contourner les restrictions CORS du navigateur)
 async function queryItunes(title: string): Promise<Omit<EnrichedData, 'fetchedAt'>> {
   const empty = { artist: null, album: null, coverUrl: null };
   if (!isTauri()) return empty;
@@ -88,12 +66,12 @@ async function queryItunes(title: string): Promise<Omit<EnrichedData, 'fetchedAt
   }
 }
 
-// ── Rate-limited queue ────────────────────────────────────────────────────────
-
+// Limite le nombre de requêtes iTunes/Deezer simultanées à 6 pour ne pas saturer le thread pool Rust
 const MAX_CONCURRENT = 6;
 let _active = 0;
 const _queue: Array<() => void> = [];
 
+// Libère un slot de concurrence et démarre la prochaine tâche en attente
 function releaseSlot(): void {
   _active--;
   if (_queue.length > 0) {
@@ -102,11 +80,8 @@ function releaseSlot(): void {
   }
 }
 
-/**
- * Enriches one track by querying iTunes (then Deezer as fallback).
- * Resolves once done. Safe to call multiple times — subsequent calls for
- * an already-cached path resolve immediately.
- */
+// Enrichit une piste en interrogeant iTunes (puis Deezer en fallback côté Rust)
+// Les appels suivants pour un chemin déjà en cache se résolvent immédiatement
 export function enrichTrack(path: string, title: string): Promise<void> {
   if (_cache.has(path)) return Promise.resolve();
 

@@ -5,6 +5,7 @@ type Props = {
   onLoadSamples: () => void;
 };
 
+// Affichage quand la bibliothèque est vide, avec un bouton pour charger des jeux d'exemple
 export function EmptyState({ onLoadSamples }: Props) {
   const { t } = useTranslation();
 

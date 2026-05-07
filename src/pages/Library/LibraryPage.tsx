@@ -16,14 +16,17 @@ type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rocksta
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
+// Comparateur de titres insensible à la casse et aux accents pour le tri alphabétique
 const titleCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
+// Convertit une date ISO en timestamp numérique pour le tri par date de jeu récente
 function getTimestamp(iso?: string | null): number {
   if (!iso) return -1;
   const t = Date.parse(iso);
   return Number.isFinite(t) ? t : -1;
 }
 
+// Page principale de la bibliothèque avec filtres, tri, onglets et lancement de jeux
 export function LibraryPage() {
   const { t } = useTranslation();
   const { settings } = useAppSettings();
@@ -32,6 +35,7 @@ export function LibraryPage() {
 
   const qRaw = searchParams.get('q') ?? '';
   const q = qRaw.trim().toLowerCase();
+  // Différé pour ne pas bloquer la frappe clavier en filtrant à chaque touche
   const deferredQ = useDeferredValue(q);
 
   const view: ViewMode = searchParams.get('view') === 'favorites' ? 'favorites' : 'games';
@@ -40,6 +44,7 @@ export function LibraryPage() {
   const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
   const sortMode = (searchParams.get('sort') ?? 'recent') as SortMode;
 
+  // Met à jour un paramètre d'URL sans créer d'entrée dans l'historique
   function setParam(key: string, value: string, defaultValue: string) {
     const p = new URLSearchParams(searchParams);
     if (value === defaultValue) p.delete(key);
@@ -67,6 +72,7 @@ export function LibraryPage() {
     scanError,
   } = useLibraryGames();
 
+  // Lance un rescan simultané sur toutes les plateformes
   async function handleRefresh() {
     await Promise.all([
       scanPcSteam(),
@@ -78,6 +84,7 @@ export function LibraryPage() {
     ]);
   }
 
+  // Bascule entre l'onglet "Tous les jeux" et "Favoris"
   function setView(next: ViewMode) {
     const p = new URLSearchParams(searchParams);
     if (next === 'favorites') p.set('view', 'favorites');
@@ -85,6 +92,7 @@ export function LibraryPage() {
     setSearchParams(p, { replace: true });
   }
 
+  // Supprime le paramètre de recherche de l'URL
   function clearSearch() {
     const next = new URLSearchParams(searchParams);
     next.delete('q');
@@ -94,6 +102,7 @@ export function LibraryPage() {
   const [launchingId, setLaunchingId] = useState<string | null>(null);
   const [launchOverlay, setLaunchOverlay] = useState<{ title: string; phase: 'opening' | 'launched' } | null>(null);
 
+  // Lance un jeu et affiche un overlay de feedback pendant le démarrage
   async function handlePlay(game: Game) {
     setLaunchingId(game.id);
     setLaunchOverlay({ title: game.title, phase: 'opening' });
@@ -109,6 +118,7 @@ export function LibraryPage() {
     setTimeout(() => setLaunchOverlay(null), 2500);
   }
 
+  // Pré-calcule les champs de tri pour éviter de recalculer à chaque comparaison
   const preparedGames = useMemo(
     () =>
       games.map((g) => ({
@@ -120,11 +130,13 @@ export function LibraryPage() {
     [games],
   );
 
+  // Filtre la liste de base selon l'onglet actif (tous / favoris)
   const baseList = useMemo(() => {
     if (view === 'favorites') return preparedGames.filter((g) => g.favorite);
     return preparedGames;
   }, [preparedGames, view]);
 
+  // Applique la recherche, les filtres de plateforme/installation et le tri
   const filteredGames = useMemo(() => {
     let list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
     if (platformFilter !== 'all')
@@ -147,6 +159,7 @@ export function LibraryPage() {
   const showNoResults = baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;
 
+  // Texte dynamique du sous-titre selon l'état courant (vide, favoris, recherche, normal)
   const subtitleText = isEmpty
     ? t('library.subtitleEmpty')
     : view === 'favorites'
@@ -270,6 +283,8 @@ export function LibraryPage() {
           ))}
         </div>
       )}
+
+      {/* Overlay plein écran affiché pendant le lancement d'un jeu */}
       {launchOverlay && (
         <div className={css.launchOverlay}>
           <div className={css.launchCard}>

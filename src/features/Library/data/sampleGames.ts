@@ -1,5 +1,6 @@
 import type { Game } from '../../types';
 
+// Jeux d'exemple affichés quand la bibliothèque est vide, pour illustrer l'interface
 export const sampleGames: Game[] = [
   {
     id: 'steam-322170',

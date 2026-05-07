@@ -12,6 +12,7 @@ interface GroupProps<T extends string> {
   onChange: (v: T) => void;
 }
 
+// Sélecteur déroulant stylisé pour filtrer une liste par une valeur parmi des options prédéfinies
 export function FilterSelect<T extends string>({ label, options, value, onChange }: GroupProps<T>) {
   return (
     <div className={css.selectGroup}>
@@ -29,11 +30,12 @@ export function FilterSelect<T extends string>({ label, options, value, onChange
   );
 }
 
+// Conteneur flex pour aligner plusieurs FilterSelect horizontalement dans une barre de filtres
 export function FilterBar({ children }: { children: React.ReactNode }) {
   return <div className={css.bar}>{children}</div>;
 }
 
-// kept for backwards compat if referenced elsewhere
+// Alias conservé pour rétro-compatibilité — redirige vers FilterSelect
 export function FilterChipGroup<T extends string>(props: GroupProps<T>) {
   return <FilterSelect {...props} />;
 }

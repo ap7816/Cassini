@@ -7,6 +7,7 @@ import { GamePage } from '../pages/Game/GamePage';
 import { MusicPage } from '../pages/Music/MusicPage';
 import { PatchNotesProvider } from '../features/patchNotes/PatchNotesContext';
 
+// Définit toutes les routes de l'application dans un layout commun avec sidebar et mini-player
 export function AppRouter() {
   return (
     <PatchNotesProvider>

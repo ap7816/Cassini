@@ -4,12 +4,14 @@ export type LauncherIconInput = {
 };
 
 type IconCacheEntry = { dataUrl: string; updatedAt: number };
-type IconCache = Record<string, IconCacheEntry>; // key = iconPath
+type IconCache = Record<string, IconCacheEntry>;
 
 import { readLauncherIconsRaw, writeLauncherIconsRaw } from '../../../services/storage';
 
-const ICON_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
+// Durée de vie du cache : 30 jours — au-delà, les icônes sont re-extraites depuis le .exe
+const ICON_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Lit le cache d'icônes depuis le stockage persistant
 function readCache(): IconCache {
   try {
     const raw = readLauncherIconsRaw();
@@ -21,10 +23,12 @@ function readCache(): IconCache {
   }
 }
 
+// Écrit le cache d'icônes dans le stockage persistant
 function writeCache(cache: IconCache): void {
   writeLauncherIconsRaw(JSON.stringify(cache));
 }
 
+// Supprime les entrées expirées (TTL dépassé) ou malformées du cache
 function pruneCache(cache: IconCache): IconCache {
   const now = Date.now();
   const next: IconCache = {};
@@ -38,17 +42,13 @@ function pruneCache(cache: IconCache): IconCache {
   return next;
 }
 
-/** Nettoie le cache (TTL) et le réécrit. */
+// Purge le cache (TTL) et le réécrit sur le disque — appelé au démarrage de la page Launchers
 export function pruneLauncherIconCache(): void {
   const cache = pruneCache(readCache());
   writeCache(cache);
 }
 
-/**
- * Retourne :
- * - byId : icônes trouvées en cache, indexées par launcher id
- * - missing : celles à fetch via Rust (id + iconPath)
- */
+// Sépare les icônes déjà disponibles en cache de celles qui doivent être extraites via Rust
 export function getCachedLauncherIconsById(inputs: LauncherIconInput[]): {
   byId: Record<string, string>;
   missing: Array<{ id: string; iconPath: string }>;
@@ -71,7 +71,7 @@ export function getCachedLauncherIconsById(inputs: LauncherIconInput[]): {
   return { byId, missing };
 }
 
-/** Stocke/refresh une icône pour un iconPath donné. */
+// Enregistre ou rafraîchit l'icône d'un launcher identifié par son iconPath
 export function storeLauncherIcon(iconPath: string, dataUrl: string): void {
   let cache = pruneCache(readCache());
   cache[iconPath] = { dataUrl, updatedAt: Date.now() };
@@ -79,7 +79,7 @@ export function storeLauncherIcon(iconPath: string, dataUrl: string): void {
   writeCache(cache);
 }
 
-/** Stocke plusieurs icônes d’un coup (plus efficace). */
+// Enregistre un lot d'icônes en une seule écriture pour minimiser les accès au stockage
 export function storeLauncherIcons(batch: Array<{ iconPath: string; dataUrl: string }>): void {
   let cache = pruneCache(readCache());
   const now = Date.now();

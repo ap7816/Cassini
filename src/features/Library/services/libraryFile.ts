@@ -7,10 +7,12 @@ type ExportPayload = {
   games: Game[];
 };
 
+// Détecte si le code s'exécute dans l'environnement Tauri (app desktop)
 function isTauri(): boolean {
   return typeof window !== 'undefined' && Boolean(window.__TAURI__);
 }
 
+// Raccourci pour accéder aux plugins dialog et fs de Tauri
 function getTauriApis() {
   return {
     dialog: window.__TAURI__?.dialog,
@@ -18,6 +20,7 @@ function getTauriApis() {
   };
 }
 
+// Exporte la bibliothèque vers un fichier JSON : dialogue natif sur desktop, téléchargement dans le navigateur
 export async function exportLibraryToFile(games: Game[]): Promise<void> {
   const payload: ExportPayload = {
     version: 1,
@@ -39,13 +42,14 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
 
-    if (!path) return; // user cancelled
+    // L'utilisateur a annulé le dialogue
+    if (!path) return;
 
     await fs.writeTextFile(path, json);
     return;
   }
 
-  // Browser fallback: download
+  // Fallback navigateur : génère un lien de téléchargement temporaire
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
@@ -59,6 +63,7 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+// Importe des jeux depuis un fichier JSON : dialogue natif sur desktop, sélecteur de fichier dans le navigateur
 export async function importLibraryFromFile(): Promise<Game[]> {
   if (isTauri()) {
     const { dialog, fs } = getTauriApis();
@@ -78,7 +83,7 @@ export async function importLibraryFromFile(): Promise<Game[]> {
     return parseImport(txt);
   }
 
-  // Browser fallback: file picker
+  // Fallback navigateur : file picker HTML
   const file = await pickJsonFileInBrowser();
   if (!file) return [];
 
@@ -86,15 +91,16 @@ export async function importLibraryFromFile(): Promise<Game[]> {
   return parseImport(txt);
 }
 
+// Vérifie qu'une valeur est un objet non-null (guard de type)
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+// Parse le JSON importé en acceptant deux formats : { games: [...] } ou directement [...]
 function parseImport(txt: string): Game[] {
   try {
     const parsed: unknown = JSON.parse(txt);
 
-    // support: soit { games: [...] }, soit directement [...]
     const gamesRaw =
       isRecord(parsed) && 'games' in parsed ? (parsed as Record<string, unknown>).games : parsed;
 
@@ -104,6 +110,7 @@ function parseImport(txt: string): Game[] {
   }
 }
 
+// Ouvre un sélecteur de fichier JSON dans le navigateur via un <input type="file"> temporaire
 function pickJsonFileInBrowser(): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');

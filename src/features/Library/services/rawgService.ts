@@ -1,10 +1,11 @@
 import { readRawgCacheRaw, writeRawgCacheRaw, removeRawgCache as storageRemoveRawgCache } from '../../../services/storage';
 
-// URLs trouvées → persistées en localStorage
+// URLs d'images trouvées → persistées dans le stockage entre les sessions
 const persistentCache = new Map<string, string>();
-// Jeux sans résultat → mémoire seulement (retente à chaque session)
+// Clés sans résultat → gardées en mémoire seulement (retente à chaque redémarrage)
 const notFoundCache = new Set<string>();
 
+// Charge le cache d'images RAWG depuis le stockage au démarrage
 function loadCache(): Map<string, string> {
   try {
     const raw = readRawgCacheRaw();
@@ -20,26 +21,31 @@ function loadCache(): Map<string, string> {
   }
 }
 
+// Persiste le cache courant dans le stockage (après chaque nouvelle entrée)
 function saveCache() {
   writeRawgCacheRaw(JSON.stringify(Object.fromEntries(persistentCache)));
 }
 
+// Pré-charge le cache persistant dès l'import du module (côté client uniquement)
 if (typeof window !== 'undefined') {
   for (const [k, v] of loadCache()) persistentCache.set(k, v);
 }
 
+// Vide complètement le cache RAWG en mémoire et dans le stockage
 export function clearRawgCache() {
   persistentCache.clear();
   notFoundCache.clear();
   storageRemoveRawgCache();
 }
 
+// Supprime une seule entrée du cache (par ex. pour forcer une nouvelle tentative après une erreur d'image)
 export function clearRawgCacheEntry(key: string) {
   persistentCache.delete(key);
   notFoundCache.delete(key);
   saveCache();
 }
 
+// Ajoute ou retire une entrée du cache selon que l'URL est trouvée ou non
 export function setRawgCacheEntry(key: string, value: string | null) {
   if (value) {
     persistentCache.set(key, value);
@@ -49,10 +55,12 @@ export function setRawgCacheEntry(key: string, value: string | null) {
   }
 }
 
+// Normalise un titre pour la comparaison : minuscules, sans ponctuation, espaces simples
 function normalize(s: string): string {
   return s.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
 }
 
+// Tables de conversion chiffres arabes ↔ chiffres romains (1–11)
 const ARABIC_TO_ROMAN: [number, string][] = [
   [10, 'X'], [9, 'IX'], [8, 'VIII'], [7, 'VII'], [6, 'VI'],
   [5, 'V'], [4, 'IV'], [3, 'III'], [2, 'II'], [1, 'I'],
@@ -64,8 +72,8 @@ const ROMAN_TO_ARABIC: [RegExp, string][] = [
   [/\bII\b/gi, '2'], [/\bI\b/gi, '1'],
 ];
 
+// Convertit les numéraux dans un titre (3↔III) pour une seconde tentative de recherche
 function convertNumerals(title: string): string | null {
-  // Arabic → Roman
   const withRoman = title.replace(/\b(\d+)\b/g, (_, n) => {
     const num = parseInt(n, 10);
     const pair = ARABIC_TO_ROMAN.find(([v]) => v === num);
@@ -73,7 +81,6 @@ function convertNumerals(title: string): string | null {
   });
   if (withRoman !== title) return withRoman;
 
-  // Roman → Arabic
   let withArabic = title;
   for (const [regex, arabic] of ROMAN_TO_ARABIC) {
     withArabic = withArabic.replace(regex, arabic);
@@ -85,12 +92,13 @@ function convertNumerals(title: string): string | null {
 
 type RawgResult = { name?: string; background_image?: string | null };
 
+// Vérifie si une chaîne est entièrement en majuscules (ex: "DEADLOCK")
 function isAllCaps(s: string): boolean {
   return s === s.toUpperCase() && s !== s.toLowerCase();
 }
 
+// Calcule un score de 0 à 1 basé sur la proportion de caractères identiques entre titre cherché et résultat
 function casingScore(title: string, result: string): number {
-  // Score de 0 à 1 : proportion de caractères avec la même casse
   let matches = 0;
   const len = Math.min(title.length, result.length);
   for (let i = 0; i < len; i++) {
@@ -99,13 +107,13 @@ function casingScore(title: string, result: string): number {
   return len > 0 ? matches / len : 0;
 }
 
+// Choisit le meilleur résultat RAWG parmi plusieurs candidats en 5 passes de précision décroissante
 function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean): string | null {
   if (!results.length) return null;
   const a = normalize(title);
   const titleIsAllCaps = isAllCaps(title);
 
-  // Trier : déprioritiser ALL_CAPS si le titre ne l'est pas, puis par score de casse,
-  // puis par longueur du nom (plus court = plus proche)
+  // Trie : déprioritise les ALL_CAPS si le titre ne l'est pas, puis par score de casse, puis par longueur
   const sorted = [...results].sort((x, y) => {
     if (!titleIsAllCaps) {
       const xCaps = x.name ? isAllCaps(x.name) : false;
@@ -116,16 +124,15 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
     const scoreX = x.name ? casingScore(title, x.name) : 0;
     const scoreY = y.name ? casingScore(title, y.name) : 0;
     if (scoreY !== scoreX) return scoreY - scoreX;
-    // À score égal, préférer le nom le plus court (ex: "Deadlock (Valve)" avant "Deadlock II: Shrine Wars")
+    // À score égal, préférer le nom le plus court (ex: "Deadlock" avant "Deadlock II: Shrine Wars")
     return (x.name?.length ?? 999) - (y.name?.length ?? 999);
   });
 
-  // 1. Match exact sensible à la casse (ex: "Deadlock" === "Deadlock")
+  // Passe 1 : correspondance exacte sensible à la casse
   const caseSensitive = sorted.find((r) => r.name === title);
   if (caseSensitive) return caseSensitive.background_image ?? null;
 
-  // 2. Match exact normalisé — en ignorant les ALL_CAPS si le titre ne l'est pas
-  // (évite de prendre "DEADLOCK" quand on cherche "Deadlock")
+  // Passe 2 : correspondance exacte normalisée, en ignorant les résultats ALL_CAPS non pertinents
   const exact = sorted.find((r) => {
     if (!r.name) return false;
     if (!titleIsAllCaps && isAllCaps(r.name)) return false;
@@ -133,8 +140,7 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   });
   if (exact) return exact.background_image ?? null;
 
-  // 3. Le nom du résultat COMMENCE par le titre cherché
-  // (ex: "Deadlock (Valve)" commence par "Deadlock")
+  // Passe 3 : le nom du résultat commence par le titre cherché (ex: "Deadlock (Valve)")
   const startsWith = sorted.find((r) => {
     if (!r.name) return false;
     if (!titleIsAllCaps && isAllCaps(r.name)) return false;
@@ -143,7 +149,7 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
   });
   if (startsWith) return startsWith.background_image ?? null;
 
-  // 4. Tous les mots significatifs du titre cherché sont présents dans le résultat
+  // Passe 4 : tous les mots significatifs du titre (>2 chars) sont présents dans le résultat
   const words = a.split(' ').filter((w) => w.length > 2);
   if (words.length > 0) {
     const wordMatch = sorted.find((r) => {
@@ -154,28 +160,32 @@ function pickBestMatch(title: string, results: RawgResult[], trustFirst: boolean
     if (wordMatch) return wordMatch.background_image ?? null;
   }
 
-  // 5. En dernier recours, prendre le premier résultat non-ALL_CAPS
+  // Passe 5 : en dernier recours, prendre le premier résultat non-ALL_CAPS
   if (trustFirst) return sorted[0].background_image ?? null;
 
   return null;
 }
 
+// Génère l'URL de la bannière header.jpg Steam (1920×620) depuis un AppID
 export function steamCdnUrl(appId: string): string {
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
 }
 
+// Génère l'URL de la jaquette portrait Steam (600×900) utilisée en fallback si header.jpg échoue
 export function steamPortraitUrl(appId: string): string {
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
 }
 
+// Récupère l'URL d'une image de jeu : CDN Steam direct pour les jeux Steam, RAWG API pour les autres
+// Utilise un double cache (mémoire + localStorage) pour éviter les requêtes répétées
+// Effectue jusqu'à 3 passes de recherche RAWG avec des stratégies de correspondance différentes
 export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
-  // La clé de cache inclut la plateforme pour éviter les collisions
+  // La clé de cache inclut la plateforme pour éviter les collisions entre jeux homonymes
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
   if (persistentCache.has(cacheKey)) return persistentCache.get(cacheKey)!;
   if (notFoundCache.has(cacheKey)) return null;
 
-  // Pour les jeux Steam : CDN Steam en priorité — pas de HEAD check (bloqué par CORS)
-  // Le fallback header.jpg est géré côté UI (onError dans GameCard)
+  // Pour les jeux Steam, on utilise directement le CDN sans vérification HEAD (bloqué par CORS)
   if (steamAppId) {
     const steamUrl = steamCdnUrl(steamAppId);
     console.log(`[Steam CDN] "${title}" → ${steamUrl}`);
@@ -186,11 +196,10 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
 
   if (!apiKey) return null;
 
-  // Filtre Steam : &stores=1 si on a un appid Steam (store 1 = Steam sur RAWG)
   const storeFilter = steamAppId ? '&stores=1' : '';
 
   try {
-    // First pass: strict exact search with original title
+    // Passe 1 : recherche exacte avec le titre original
     const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=10&search_exact=true&ordering=-added${storeFilter}`;
     const res = await fetch(url);
     if (!res.ok) {
@@ -206,7 +215,7 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
     let imageUrl = pickBestMatch(title, results, results.length > 0);
     console.log(`[RAWG] "${title}" — image choisie (pass 1):`, imageUrl ?? 'aucune');
 
-    // Second pass: if exact search returned nothing, retry without search_exact
+    // Passe 2 : si la recherche exacte n'a rien retourné, retente sans search_exact
     if (imageUrl === null && results.length === 0) {
       const url2 = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(title)}&page_size=5${storeFilter}`;
       const res2 = await fetch(url2);
@@ -219,7 +228,7 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
       }
     }
 
-    // Third pass: retry with numeral conversion (3 ↔ III)
+    // Passe 3 : si toujours sans résultat, retente avec les numéraux convertis (3 ↔ III)
     if (imageUrl === null) {
       const altTitle = convertNumerals(title);
       if (altTitle) {
@@ -240,7 +249,8 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
       persistentCache.set(cacheKey, imageUrl);
       saveCache();
     } else {
-      notFoundCache.add(cacheKey); // pas de résultat → retente à la prochaine session
+      // Pas de résultat cette session → mémorisé pour éviter les requêtes inutiles, retente au redémarrage
+      notFoundCache.add(cacheKey);
     }
     return imageUrl;
   } catch (err) {

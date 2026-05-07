@@ -3,21 +3,23 @@ import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
 export interface UpdaterState {
-  available: boolean;   // update ready, banner should show
+  available: boolean;
   version: string;
   body: string;
   installing: boolean;
-  progress: number;     // 0-100 during download
+  progress: number;
   doInstall: () => Promise<void>;
   dismiss: () => void;
 }
 
+// Vérifie automatiquement au démarrage si une mise à jour est disponible via le serveur de mise à jour Tauri
 export function useUpdater(): UpdaterState {
   const [update, setUpdate] = useState<Update | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Lance la vérification de mise à jour une seule fois au montage du composant
   useEffect(() => {
     async function run() {
       try {
@@ -34,6 +36,7 @@ export function useUpdater(): UpdaterState {
     run();
   }, []);
 
+  // Télécharge et installe la mise à jour en affichant la progression, puis relance l'application
   async function doInstall() {
     if (!update) return;
     setInstalling(true);

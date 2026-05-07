@@ -1,6 +1,7 @@
 import type { AppSettings } from '../../types';
 import { readSettingsRaw, writeSettingsRaw } from '../../../services/storage';
 
+// Valeurs par défaut utilisées si le stockage est vide ou corrompu
 const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
   accentColor: '#e5e7eb',
@@ -10,10 +11,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   runInBackground: false,
 };
 
+// Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+// Charge les paramètres depuis le stockage persistant, en validant chaque champ individuellement
 export function loadSettings(): AppSettings {
   const raw = readSettingsRaw();
   if (!raw) return DEFAULT_SETTINGS;
@@ -50,6 +53,7 @@ export function loadSettings(): AppSettings {
   }
 }
 
+// Sérialise les paramètres et les écrit dans le stockage persistant
 export function saveSettings(settings: AppSettings): void {
   writeSettingsRaw(JSON.stringify(settings));
 }

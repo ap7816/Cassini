@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CHANGELOG, type SectionType } from './changelog';
 import css from './PatchNotesModal.module.css';
 
-/* ─── Icône et libellé de section ───────────────────────────── */
+// Retourne l'emoji correspondant au type de section de changelog
 function sectionIcon(type: SectionType): string {
   const icons: Record<SectionType, string> = {
     new:    '✨',
@@ -14,6 +14,7 @@ function sectionIcon(type: SectionType): string {
   return icons[type];
 }
 
+// Retourne le libellé i18n pour le type de section de changelog
 function sectionLabel(type: SectionType, t: (key: string) => string): string {
   const keys: Record<SectionType, string> = {
     new:    'patchNotes.sectionNew',
@@ -24,18 +25,18 @@ function sectionLabel(type: SectionType, t: (key: string) => string): string {
   return t(keys[type]);
 }
 
-/* ─── Modal ──────────────────────────────────────────────────── */
 interface Props {
   dismissed: boolean;
   onClose: () => void;
   onToggleDismiss: () => void;
 }
 
+// Modal de notes de mise à jour affichant tout le CHANGELOG avec sections typées
 export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) {
   const { t } = useTranslation();
   const latest = CHANGELOG[0];
 
-  // Fermer avec Échap
+  // Ferme le modal quand l'utilisateur appuie sur Échap
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', h);
@@ -51,7 +52,6 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
         aria-modal="true"
         aria-label={t('patchNotes.title')}
       >
-        {/* ── Header ── */}
         <header className={css.header}>
           <div className={css.headerLeft}>
             <span className={css.headerIcon} aria-hidden="true">🎉</span>
@@ -63,20 +63,19 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
           <button className={css.closeBtn} onClick={onClose} aria-label={t('patchNotes.close')}>✕</button>
         </header>
 
-        {/* ── Contenu ── */}
+        {/* Liste de toutes les versions du changelog */}
         <div className={css.body}>
           {CHANGELOG.map((entry, ei) => (
             <div key={entry.version} className={css.entry}>
-              {/* En-tête de version */}
               <div className={css.entryHeader}>
                 <span className={css.versionNum}>v{entry.version}</span>
                 <span className={css.versionDate}>{entry.date}</span>
+                {/* Badge "Nouveau" uniquement sur la version la plus récente */}
                 {ei === 0 && (
                   <span className={css.newBadge}>{t('patchNotes.newBadge')}</span>
                 )}
               </div>
 
-              {/* Sections */}
               {entry.sections.map(section => (
                 <div key={section.type} className={`${css.section} ${css[`section_${section.type}`]}`}>
                   <div className={css.sectionHeader}>
@@ -94,7 +93,7 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
           ))}
         </div>
 
-        {/* ── Pied de page ── */}
+        {/* Pied de page avec bouton pour désactiver l'affichage automatique */}
         <footer className={css.footer}>
           <button className={css.dismissBtn} onClick={onToggleDismiss}>
             {dismissed ? t('patchNotes.enableAtStartup') : t('patchNotes.dismiss')}

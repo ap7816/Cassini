@@ -9,8 +9,8 @@ import { initStorage } from './services/storage';
 import './i18n';
 import './App.css';
 
-// Initialiser le store de persistance avant le premier rendu
-// pour que tous les useState() lisent déjà les bonnes valeurs.
+// Initialise le store de persistance AVANT le premier rendu React
+// pour que tous les useState() lisent déjà les bonnes valeurs depuis le cache mémoire
 initStorage().then(() => {
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
@@ -26,20 +26,20 @@ initStorage().then(() => {
     </React.StrictMode>,
   );
 
+  // Anime la barre de chargement vers 100 % puis retire le preloader de l'écran
   const pre = document.getElementById('app-preloader');
   if (pre) {
-    // Compléter la barre à 100 % avant de dismisser
     const fill = pre.querySelector('.bar-fill') as HTMLElement | null;
     if (fill) {
-      // Geler la position courante de l'animation, puis transitionner vers 100 %
+      // Gèle la position courante de l'animation CSS, puis la transite vers 100 %
       const currentW = window.getComputedStyle(fill).width;
       fill.style.width = currentW;
       fill.style.animation = 'none';
-      void fill.offsetWidth; // force reflow
+      void fill.offsetWidth;
       fill.style.transition = 'width 0.22s ease';
       fill.style.width = '100%';
     }
-    // Laisser la barre atteindre 100 % avant le fade-out
+    // Attend que la barre atteigne 100 % avant de lancer le fade-out
     window.setTimeout(() => {
       pre.classList.add('preloader--done');
       window.setTimeout(() => pre.remove(), 260);

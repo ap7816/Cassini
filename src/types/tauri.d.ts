@@ -1,5 +1,6 @@
 export {};
 
+// Augmente le type Window pour exposer les APIs Tauri disponibles en mode legacy (window.__TAURI__)
 declare global {
   interface Window {
     __TAURI__?: {

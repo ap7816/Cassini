@@ -8,6 +8,7 @@ import { createGameFromPath } from '../services/createGameFromPath';
 
 type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 
+// Résout invoke() soit depuis window.__TAURI__ (legacy), soit depuis @tauri-apps/api/core
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
   if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
@@ -17,14 +18,16 @@ async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Prom
   return invoke<T>(cmd, args);
 }
 
+// Ordre de priorité pour la déduplication : Steam prime sur Epic, puis BattleNet, etc.
 const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5 };
 
+// Normalise un titre pour la comparaison de doublons : minuscules, sans ponctuation
 function normalizeName(title: string): string {
   return title.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
 }
 
-// Déduplique les jeux par nom normalisé, priorité Steam > Epic > BattleNet
-// Fusionne les données utilisateur (favori, lastPlayedAt, image custom)
+// Déduplique les jeux détectés sur plusieurs plateformes par titre normalisé
+// En cas de conflit, garde la plateforme prioritaire et fusionne les données utilisateur
 function deduplicateGames(games: Game[]): Game[] {
   const groups = new Map<string, Game[]>();
   for (const g of games) {
@@ -50,6 +53,8 @@ function deduplicateGames(games: Game[]): Game[] {
   return result;
 }
 
+// Fusionne une liste existante avec une liste entrante en préservant les données utilisateur
+// (favori, lastPlayedAt, image custom) — jamais perdues lors d'un rescan
 function mergeById(prev: Game[], incoming: Game[]): Game[] {
   const map = new Map<string, Game>();
   for (const g of prev) map.set(g.id, g);
@@ -60,7 +65,6 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
       map.set(g.id, {
         ...existing,
         ...g,
-        // user data: jamais perdu lors d'un rescan
         favorite: existing.favorite ?? g.favorite ?? false,
         lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
         customImageUrl: existing.customImageUrl ?? g.customImageUrl ?? null,
@@ -73,23 +77,25 @@ function mergeById(prev: Game[], incoming: Game[]): Game[] {
   return Array.from(map.values());
 }
 
+// Gère l'état complet de la bibliothèque : chargement, sauvegarde, scans et actions utilisateur
 export function useLibraryGames() {
   const [games, setGames] = useState<Game[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  // ref toujours à jour pour lire la dernière liste dans des funcs async
+  // Ref toujours synchronisée avec games pour lire la liste la plus récente dans des fonctions async
   const gamesRef = useRef<Game[]>([]);
   useEffect(() => {
     gamesRef.current = games;
   }, [games]);
 
-  // Load une fois
+  // Charge la bibliothèque depuis le stockage une seule fois au montage
   useEffect(() => {
     setGames(deduplicateGames(loadGamesFromStorage()));
   }, []);
 
-  // Save (évite d’écraser au 1er render)
+  // Sauvegarde avec un délai de 250 ms pour grouper les changements rapides
+  // Ignore le premier rendu pour ne pas écraser le stockage avec un tableau vide
   const didMount = useRef(false);
   useEffect(() => {
     if (!didMount.current) {
@@ -104,6 +110,7 @@ export function useLibraryGames() {
 
   const isEmpty = games.length === 0;
 
+  // Calcule le nombre de jeux installés et en favoris pour l'affichage dans l'en-tête
   const { installedCount, favoritesCount } = useMemo(() => {
     let installed = 0;
     let favorites = 0;
@@ -116,41 +123,50 @@ export function useLibraryGames() {
     return { installedCount: installed, favoritesCount: favorites };
   }, [games]);
 
+  // Remplace la bibliothèque par les jeux d'exemple pour illustrer l'interface
   function loadSamples() {
     setGames(sampleGames.map((g) => ({ ...g, favorite: g.favorite ?? false })));
   }
 
+  // Vide complètement la bibliothèque
   function clearLibrary() {
     setGames([]);
   }
 
+  // Supprime un jeu par son identifiant unique
   function removeGame(id: string) {
     setGames((prev) => prev.filter((g) => g.id !== id));
   }
 
+  // Met à jour lastPlayedAt d'un jeu avec l'horodatage actuel
   function markPlayed(id: string) {
     const nowIso = new Date().toISOString();
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, lastPlayedAt: nowIso } : g)));
   }
 
+  // Inverse l'état favori d'un jeu
   function toggleFavorite(id: string) {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, favorite: !g.favorite } : g)));
   }
 
+  // Met à jour l'URL d'image personnalisée d'un jeu (null = revenir à l'image automatique)
   function setGameImageUrl(id: string, url: string | null) {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, customImageUrl: url } : g)));
   }
 
+  // Exporte la bibliothèque vers un fichier JSON via le dialogue natif
   async function exportToFile() {
     await exportLibraryToFile(games);
   }
 
+  // Importe des jeux depuis un fichier JSON et les fusionne avec la bibliothèque existante
   async function importFromFile() {
     const imported = await importLibraryFromFile();
     if (imported.length === 0) return;
     setGames((prev) => mergeById(prev, imported));
   }
 
+  // Ouvre un sélecteur de fichier pour ajouter un jeu manuellement depuis un .exe ou .lnk
   async function addGameFromPicker(): Promise<{ ok: true } | { ok: false; message: string }> {
     const picked = await pickGameFile();
     if (!picked.ok) {
@@ -169,6 +185,7 @@ export function useLibraryGames() {
     return { ok: true };
   }
 
+  // Scanne les jeux Battle.net via la commande Rust et met à jour la bibliothèque
   async function scanPcBattlenet(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -192,6 +209,7 @@ export function useLibraryGames() {
         const before = new Set(prev.map((g) => g.id));
         for (const g of normalized) if (!before.has(g.id)) added += 1;
 
+        // Les jeux Battle.net absents du rescan sont marqués comme non installés
         const updated = prev.map((g) =>
           g.platform === 'BattleNet' && !incomingIds.has(g.id) ? { ...g, installed: false } : g,
         );
@@ -209,6 +227,7 @@ export function useLibraryGames() {
     }
   }
 
+  // Scanne les jeux Epic Games via la commande Rust et met à jour la bibliothèque
   async function scanPcEpic(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -250,6 +269,7 @@ export function useLibraryGames() {
     }
   }
 
+  // Scanne les jeux Steam via la commande Rust et met à jour la bibliothèque
   async function scanPcSteam(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -291,6 +311,7 @@ export function useLibraryGames() {
     }
   }
 
+  // Scanne les jeux Riot Games via la commande Rust et met à jour la bibliothèque
   async function scanPcRiot(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -324,6 +345,7 @@ export function useLibraryGames() {
     }
   }
 
+  // Scanne les jeux Rockstar Games via la commande Rust et met à jour la bibliothèque
   async function scanPcRockstar(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -357,6 +379,7 @@ export function useLibraryGames() {
     }
   }
 
+  // Scanne les jeux Ubisoft Connect via la commande Rust et met à jour la bibliothèque
   async function scanPcUbisoft(): Promise<
     { ok: true; added: number } | { ok: false; message: string }
   > {
@@ -390,7 +413,7 @@ export function useLibraryGames() {
     }
   }
 
-  // Auto-scan 1 fois si la library est vide
+  // Lance automatiquement un scan complet toutes plateformes si la bibliothèque est vide au premier rendu
   const didAutoScan = useRef(false);
   useEffect(() => {
     if (didAutoScan.current) return;

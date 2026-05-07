@@ -4,6 +4,7 @@ export type PickedGameFile =
   | { ok: true; path: string }
   | { ok: false; reason: 'CANCELLED' | 'NOT_AVAILABLE'; message: string };
 
+// Ouvre un dialogue natif pour sélectionner un exécutable (.exe) ou un raccourci (.lnk)
 export async function pickGameFile(): Promise<PickedGameFile> {
   try {
     const selected = await open({

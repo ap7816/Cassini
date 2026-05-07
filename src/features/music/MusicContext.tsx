@@ -35,6 +35,7 @@ interface MusicContextType {
 
 const MusicContext = createContext<MusicContextType | null>(null);
 
+// Gère la lecture audio, la liste des pistes, le volume et la progression pour toute l'application
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [folderPath, setFolderPath] = useState<string>(readMusicFolder);
   const [tracks, setTracks] = useState<TrackDto[]>([]);
@@ -46,23 +47,25 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Élément <audio> persistent — ne jamais recréer pour éviter les coupures
   const audioRef = useRef<HTMLAudioElement>(new Audio());
+  // Ref synchronisée avec tracks pour être lisible dans les callbacks asynchrones (onEnded)
   const tracksRef = useRef<TrackDto[]>([]);
 
-  // Apply saved volume to audio element on mount
+  // Applique le volume sauvegardé à l'élément audio dès le montage
   useEffect(() => {
     audioRef.current.volume = readMusicVolume();
   }, []);
 
   useEffect(() => { tracksRef.current = tracks; }, [tracks]);
 
-  // Load folder on mount
+  // Recharge le dossier musical au démarrage si un chemin était déjà sauvegardé
   useEffect(() => {
     if (folderPath) loadFolder(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Audio event listeners
+  // Enregistre les événements audio pour mettre à jour la progression et passer à la piste suivante
   useEffect(() => {
     const audio = audioRef.current;
 
@@ -74,6 +77,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setProgress(audio.currentTime);
       setDuration(audio.duration || 0);
     }
+    // Passe automatiquement à la piste suivante quand la lecture est terminée
     function onEnded() {
       setCurrentIndex((i) => {
         const ts = tracksRef.current;
@@ -103,6 +107,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Scanne un dossier via Rust, met à jour la liste de pistes et restaure la dernière piste sans lancer la lecture
   async function loadFolder(path: string) {
     setLoading(true);
     setError(null);
@@ -112,7 +117,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       tracksRef.current = result;
       setTracks(result);
 
-      // Restore last played track (without auto-playing)
+      // Restaure la position de la dernière piste écoutée sans démarrer la lecture automatiquement
       const saved = readMusicLastTrack();
       if (saved >= 0 && saved < result.length) {
         setCurrentIndex(saved);
@@ -128,6 +133,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Sélectionne et démarre immédiatement la lecture d'une piste par son index
   function selectTrack(index: number) {
     const audio = audioRef.current;
     const ts = tracksRef.current;
@@ -141,6 +147,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setProgress(0);
   }
 
+  // Lance la première piste si aucune n'est sélectionnée, sinon alterne lecture/pause
   function togglePlayPause() {
     const audio = audioRef.current;
     if (currentIndex < 0 && tracksRef.current.length > 0) {
@@ -156,20 +163,24 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Passe à la piste précédente si possible
   function prevTrack() {
     if (currentIndex > 0) selectTrack(currentIndex - 1);
   }
 
+  // Passe à la piste suivante si possible
   function nextTrack() {
     if (currentIndex < tracksRef.current.length - 1) selectTrack(currentIndex + 1);
   }
 
+  // Met à jour le volume de l'élément audio et le persiste dans le stockage
   function setVolume(v: number) {
     setVolumeState(v);
     audioRef.current.volume = v;
     writeMusicVolume(v);
   }
 
+  // Déplace la position de lecture à une fraction (0–1) de la durée totale
   function seekTo(ratio: number) {
     const audio = audioRef.current;
     if (!duration) return;
@@ -177,6 +188,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setProgress(audio.currentTime);
   }
 
+  // Arrête la lecture, vide la source et remet l'état à zéro
   function stop() {
     const audio = audioRef.current;
     audio.pause();
@@ -197,6 +209,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Accède au contexte du lecteur musical — doit être utilisé dans MusicProvider
 export function useMusicPlayer() {
   const ctx = useContext(MusicContext);
   if (!ctx) throw new Error('useMusicPlayer must be used within MusicProvider');

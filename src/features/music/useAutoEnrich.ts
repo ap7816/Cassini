@@ -1,10 +1,6 @@
-/**
- * useAutoEnrich.ts
- *
- * Fetches artist / album / coverUrl from iTunes → Deezer for ALL tracks.
- * Results appear progressively as each track resolves (no global gate).
- * Cache is in-memory only — nothing is saved between sessions.
- */
+// Déclenche l'enrichissement iTunes/Deezer pour TOUTES les pistes de la liste.
+// Les résultats apparaissent progressivement au fur et à mesure que chaque piste se résout.
+// Le cache est en mémoire uniquement — rien n'est sauvegardé entre les sessions.
 
 import { useState, useEffect } from 'react';
 import type { TrackMeta } from './useTrackMeta';
@@ -25,19 +21,23 @@ export interface EnrichProgress {
   total: number;
 }
 
+// Lance l'enrichissement en arrière-plan dès que les métadonnées de base sont disponibles
+// Retourne un getter synchrone pour les données enrichies et un état de progression
 export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions): {
   getEnriched: (path: string) => EnrichedData | null;
   progress: EnrichProgress | null;
 } {
   const [progress, setProgress] = useState<EnrichProgress | null>(null);
-  const [, setTick] = useState(0); // force re-render when enriched data arrives
+  // Incrémenté à chaque résultat pour forcer un re-rendu et afficher les nouvelles couvertures
+  const [, setTick] = useState(0);
 
+  // Clé stable qui change uniquement quand l'ensemble des pistes change (évite les re-runs inutiles)
   const pathsKey = [...paths].sort().join('\x00');
 
   useEffect(() => {
     if (!enabled || !paths.length) return;
 
-    // Enrich ALL tracks not yet attempted this session
+    // Filtre uniquement les pistes non encore tentées cette session
     const toEnrich = paths.filter(p => needsEnrichment(p));
     if (!toEnrich.length) return;
 
@@ -51,9 +51,8 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
         meta?.title ??
         path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, '') ??
         '';
-      // If we have an artist tag AND the title doesn't already look like
-      // "Artist - Title", prepend the artist so the Rust scorer can verify
-      // both parts independently — much stricter than title-only matching.
+      // Si on a un tag artiste ET que le titre ne contient pas déjà " - ", on préfixe l'artiste
+      // pour que le scoreur Rust puisse vérifier les deux parties indépendamment (plus strict)
       const hasDash  = rawTitle.includes(' - ');
       const title    = (meta?.artist && !hasDash)
         ? `${meta.artist} - ${rawTitle}`
@@ -62,10 +61,12 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
         if (cancelled) return;
         searchDone++;
         setProgress({ phase: 'searching', done: searchDone, total: toEnrich.length });
-        setTick(n => n + 1); // show each result as it arrives
+        // Affiche chaque résultat dès qu'il arrive plutôt que d'attendre la fin du lot
+        setTick(n => n + 1);
       });
     });
 
+    // Efface la barre de progression quand toutes les pistes sont traitées
     Promise.allSettled(enrichPromises).then(() => {
       if (!cancelled) setProgress(null);
     });
