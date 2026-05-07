@@ -13,8 +13,8 @@ export interface TrackMeta {
   coverLoaded: boolean;
 }
 
-// ── Session cache (max 300 entries, FIFO eviction) ────────────────────────────
-const MAX_CACHE = 300;
+// ── Session cache (max 2000 entries, FIFO eviction) ───────────────────────────
+const MAX_CACHE = 2000;
 const _cache = new Map<string, TrackMeta>();
 
 function evict() {

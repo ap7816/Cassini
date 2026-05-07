@@ -19,16 +19,17 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 // Clés
 // ─────────────────────────────────────────────────────────────────────────────
 export const STORAGE_KEYS = {
-  settings:         'arctive.settings.v1',
-  games:            'arctive.library.games.v1',
-  rawgCache:        'arctive.rawg.cache.v5',
-  launcherIcons:    'arctive.launcherIcons.v1',
-  musicFolder:      'music_folder',
-  musicVolume:      'music_volume',
-  musicLastTrack:   'music_last_track',
-  musicColors:      'music_folder_colors',
-  language:         'arctive.language',
-  patchNotesSeen:   'arctive.patchNotes.seen',
+  settings:            'arctive.settings.v1',
+  games:               'arctive.library.games.v1',
+  rawgCache:           'arctive.rawg.cache.v5',
+  launcherIcons:       'arctive.launcherIcons.v1',
+  musicFolder:         'music_folder',
+  musicVolume:         'music_volume',
+  musicLastTrack:      'music_last_track',
+  musicColors:         'music_folder_colors',
+  musicEnrichedMeta:   'music_enriched_meta',
+  language:            'arctive.language',
+  patchNotesSeen:      'arctive.patchNotes.seen',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -180,6 +181,13 @@ export function readMusicFolderColors(): Record<string, string> {
 }
 export function writeMusicFolderColors(colors: Record<string, string>): void {
   writeJSON(STORAGE_KEYS.musicColors, colors);
+}
+
+export function readMusicEnrichedMetaRaw(): string | null {
+  return rawRead(STORAGE_KEYS.musicEnrichedMeta);
+}
+export function writeMusicEnrichedMetaRaw(json: string): void {
+  rawWrite(STORAGE_KEYS.musicEnrichedMeta, json);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

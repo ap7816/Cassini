@@ -5,6 +5,8 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
 import { useBasicBatch, useLazyCoverArt, type TrackMeta } from '../../features/music/useTrackMeta';
+import { useAutoEnrich } from '../../features/music/useAutoEnrich';
+import type { EnrichedData } from '../../features/music/enrichMeta';
 import css from './MusicPage.module.css';
 
 type SortBy  = 'name' | 'dur' | 'ext';
@@ -229,14 +231,20 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
 }
 
 /* ─── Track card ────────────────────────────────────────────── */
-function TrackCard({ track, index, isActive, isPlaying, onSelect, meta }: {
+function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched }: {
   track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
   onSelect: () => void;
   meta: TrackMeta | null;
+  enriched: EnrichedData | null;
 }) {
   const cardRef = useRef<HTMLButtonElement>(null);
   const coverArt = useLazyCoverArt(track.path, cardRef);
   const duration = meta?.durationSecs ?? undefined;
+
+  // Use embedded cover first; fall back to enriched URL
+  const effectiveCover = coverArt ?? enriched?.coverUrl ?? null;
+  // Use tag artist first; fall back to enriched artist if missing
+  const displayArtist = meta?.artist ?? enriched?.artist ?? null;
 
   // Scroll active track into view
   useEffect(() => {
@@ -248,7 +256,7 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta }: {
   return (
     <button
       ref={cardRef}
-      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${coverArt ? css.gridItemWithArt : ''}`}
+      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${effectiveCover ? css.gridItemWithArt : ''}`}
       onClick={onSelect}
       draggable
       onDragStart={e => {
@@ -257,29 +265,29 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta }: {
         e.dataTransfer.setData('trackIdx', String(track.originalIndex));
       }}
     >
-      <div className={`${css.trackShape}${coverArt ? ` ${css.trackShapeWithArt}` : ''}`}>
-        {coverArt && (
-          <img src={coverArt} className={css.trackArt} alt="" aria-hidden="true" />
+      <div className={`${css.trackShape}${effectiveCover ? ` ${css.trackShapeWithArt}` : ''}`}>
+        {effectiveCover && (
+          <img src={effectiveCover} className={css.trackArt} alt="" aria-hidden="true" />
         )}
         {/* Overlay: active state or no-art fallback */}
-        <div className={`${css.trackShapeContent}${coverArt && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
+        <div className={`${css.trackShapeContent}${effectiveCover && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
           {isActive && isPlaying
             ? <Equalizer />
-            : !coverArt
+            : !effectiveCover
               ? <span className={css.trackNum}>{index + 1}</span>
               : null
           }
-          {!coverArt && duration != null && (
+          {!effectiveCover && duration != null && (
             <span className={css.trackDurationGrid}>{fmt(duration)}</span>
           )}
         </div>
         {/* Duration badge in corner (only when art is present) */}
-        {coverArt && duration != null && (
+        {effectiveCover && duration != null && (
           <span className={css.trackDurationBadge}>{fmt(duration)}</span>
         )}
       </div>
       <span className={css.gridLabel}>{track.title}</span>
-      {meta?.artist && <span className={css.trackArtist}>{meta.artist}</span>}
+      {displayArtist && <span className={css.trackArtist}>{displayArtist}</span>}
     </button>
   );
 }
@@ -345,7 +353,19 @@ export function MusicPage() {
   const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
   const sortBy  = (searchParams.get('sb')  ?? 'name') as SortBy;
   const sortDir = (searchParams.get('sd')  ?? 'asc')  as SortDir;
-  const { getMeta, loading: metaLoading } = useBasicBatch(music.tracks.map(t => t.path));
+  const trackPaths = useMemo(() => music.tracks.map(t => t.path), [music.tracks]);
+  const { getMeta, loading: metaLoading } = useBasicBatch(trackPaths);
+  const { getEnriched, progress: enrichProgress } = useAutoEnrich({
+    paths: trackPaths, getMeta, enabled: !metaLoading,
+  });
+
+  // Bar state derived from enrichProgress
+  const showBar          = enrichProgress !== null;
+  const barLabel         = "Recherche d'illustrations…";
+  const barDone          = enrichProgress?.done  ?? 0;
+  const barTotal         = enrichProgress?.total ?? 1;
+  const barPct           = barTotal > 0 ? Math.round((barDone / barTotal) * 100) : 0;
+  const barIndeterminate = barDone === 0;
 
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
   const toast = useToast();
@@ -571,6 +591,7 @@ export function MusicPage() {
                     isPlaying={music.isPlaying}
                     onSelect={() => music.selectTrack(track.originalIndex)}
                     meta={getMeta(track.path)}
+                    enriched={getEnriched(track.path)}
                   />
                 ))}
               </div>
@@ -607,6 +628,7 @@ export function MusicPage() {
                   isPlaying={music.isPlaying}
                   onSelect={() => music.selectTrack(track.originalIndex)}
                   meta={getMeta(track.path)}
+                  enriched={getEnriched(track.path)}
                 />
               );
             })}
@@ -625,6 +647,32 @@ export function MusicPage() {
           onColorPreview={previewFolderColor}
           onColorSave={saveFolderColor}
         />
+      )}
+
+      {/* ── Progress bar (enrichment + image loading) ── */}
+      {showBar && (
+        <div className={css.enrichBar}>
+          <svg className={css.enrichSpinner} viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.2" />
+            <path d="M10 3 a7 7 0 0 1 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+
+          <span className={css.enrichBarLabel}>{barLabel}</span>
+
+          <span className={css.enrichBarPct}>
+            {barIndeterminate ? 'En cours…' : `${barPct} %`}
+          </span>
+
+          <div className={css.enrichBarTrack}>
+            {barIndeterminate ? (
+              <div className={css.enrichBarSweep} />
+            ) : (
+              <div className={css.enrichBarFill} style={{ width: `${barPct}%` }} />
+            )}
+          </div>
+
+          <span className={css.enrichBarCount}>{barDone} / {barTotal}</span>
+        </div>
       )}
 
       {/* ── In-app dialog (prompt / confirm) ── */}

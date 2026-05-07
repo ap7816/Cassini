@@ -404,6 +404,205 @@ fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Result returned to the frontend for music metadata enrichment.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicMetaResult {
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    /// External HTTPS URL to album artwork, ready for <img src>.
+    pub cover_url: Option<String>,
+    /// Which API found this result ("itunes" or "deezer").
+    pub source: String,
+}
+
+// ── Matching helpers ─────────────────────────────────────────────────────────
+
+/// Fraction of words in `needle_lc` (≥ 3 chars) that appear as whole words in
+/// `haystack_lc`. Both strings must already be lowercased.
+fn word_recall(needle_lc: &str, haystack_lc: &str) -> f32 {
+    let needle_words: Vec<&str> = needle_lc
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 3)
+        .collect();
+    if needle_words.is_empty() { return 0.0; }
+
+    let hay_words: Vec<&str> = haystack_lc
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+
+    let matched = needle_words.iter()
+        .filter(|&&w| hay_words.contains(&w))
+        .count();
+
+    matched as f32 / needle_words.len() as f32
+}
+
+/// Strips everything from the first '(' or '[' to the end of the string.
+/// "Stressed Out (Tomsize Remix)" → "Stressed Out"
+/// "Bohemian Rhapsody [2011 Remaster]" → "Bohemian Rhapsody"
+fn strip_parens(s: &str) -> &str {
+    let cut = s.find('(').or_else(|| s.find('['));
+    cut.map(|i| s[..i].trim_end()).unwrap_or(s)
+}
+
+/// Returns a confidence score in [0, 1] for how well (result_title, result_artist)
+/// matches `term`. Returns 0.0 when there is clearly no overlap.
+///
+/// Strategy:
+/// - If term looks like "Artist - Title", check each part separately.
+///   Title is weighted 65 %, artist 35 %.  If the artist part has words but
+///   none appear in the result artist, confidence is capped (suspicious).
+///   Both the raw title and its paren-stripped version are tried so that
+///   "(Tomsize Remix)" / "[Remaster]" suffixes don't penalise the score.
+/// - Otherwise check term words against result title first; fall back to the
+///   combined "artist title" string.
+fn match_score(term: &str, result_title: &str, result_artist: &str) -> f32 {
+    let term_lc   = term.to_lowercase();
+    let title_lc  = result_title.to_lowercase();
+    let artist_lc = result_artist.to_lowercase();
+
+    // ── "Artist - Title" format ──────────────────────────────────────────────
+    if let Some(dash) = term_lc.find(" - ") {
+        let t_artist = &term_lc[..dash];
+        let t_title  = &term_lc[dash + 3..];
+
+        // Score both with and without parenthetical suffix; keep the best.
+        let t_title_clean = strip_parens(t_title);
+        let tr = word_recall(t_title,       &title_lc)
+            .max(word_recall(t_title_clean, &title_lc));
+        let ar = word_recall(t_artist, &artist_lc);
+
+        // If the artist part contains meaningful words but none matched,
+        // the result is likely for a different artist → low confidence.
+        let artist_has_words = t_artist
+            .split(|c: char| !c.is_alphanumeric())
+            .any(|w| w.len() >= 3);
+        if artist_has_words && ar == 0.0 {
+            return tr * 0.35; // title-only match — suspicious
+        }
+
+        return tr * 0.65 + ar * 0.35;
+    }
+
+    // ── Title-only search ────────────────────────────────────────────────────
+    // Without an artist in the search term we cannot reliably distinguish a
+    // genuine match from an AI track that happens to share a real song's name.
+    // Return 0.0 so this never reaches MIN_SCORE — we'd rather show nothing
+    // than the wrong cover art.
+    // The JS layer prepends the artist tag when available, so any track with
+    // proper metadata will already be in "Artist - Title" format above.
+    0.0
+}
+
+/// Minimum match_score to accept a result. Below this we return None rather
+/// than showing a wrong cover.
+/// 0.7 is intentionally strict: better to show nothing than the wrong image.
+const MIN_SCORE: f32 = 0.7;
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
+/// Try iTunes Search API. Returns None on network error, no results, or when
+/// no candidate reaches MIN_SCORE.
+async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaResult> {
+    let resp = client
+        .get("https://itunes.apple.com/search")
+        .query(&[("term", term), ("media", "music"), ("limit", "5")])
+        .send()
+        .await
+        .ok()?;
+
+    if !resp.status().is_success() { return None; }
+
+    let json: serde_json::Value = resp.json().await.ok()?;
+    let results = json["results"].as_array()?;
+    if results.is_empty() { return None; }
+
+    // Pick the highest-scoring candidate
+    let (best_score, best) = results.iter()
+        .map(|r| {
+            let title  = r["trackName"].as_str().unwrap_or("");
+            let artist = r["artistName"].as_str().unwrap_or("");
+            (match_score(term, title, artist), r)
+        })
+        .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))?;
+
+    if best_score < MIN_SCORE { return None; }
+
+    let cover_url = best["artworkUrl100"]
+        .as_str()
+        .map(|u| u.replacen("100x100bb", "600x600bb", 1));
+
+    Some(MusicMetaResult {
+        artist:    best["artistName"].as_str().map(String::from),
+        album:     best["collectionName"].as_str().map(String::from),
+        cover_url,
+        source:    "itunes".into(),
+    })
+}
+
+/// Try Deezer Search API. Returns None on network error, no results, or when
+/// no candidate reaches MIN_SCORE.
+async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaResult> {
+    let resp = client
+        .get("https://api.deezer.com/search")
+        .query(&[("q", term), ("limit", "5")])
+        .send()
+        .await
+        .ok()?;
+
+    if !resp.status().is_success() { return None; }
+
+    let json: serde_json::Value = resp.json().await.ok()?;
+    let data = json["data"].as_array()?;
+    if data.is_empty() { return None; }
+
+    // Pick the highest-scoring candidate
+    let (best_score, best) = data.iter()
+        .map(|r| {
+            let title  = r["title"].as_str().unwrap_or("");
+            let artist = r["artist"]["name"].as_str().unwrap_or("");
+            (match_score(term, title, artist), r)
+        })
+        .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))?;
+
+    if best_score < MIN_SCORE { return None; }
+
+    // cover_xl = 1000×1000
+    let cover_url = best["album"]["cover_xl"].as_str().map(String::from);
+
+    Some(MusicMetaResult {
+        artist:    best["artist"]["name"].as_str().map(String::from),
+        album:     best["album"]["title"].as_str().map(String::from),
+        cover_url,
+        source:    "deezer".into(),
+    })
+}
+
+/// Searches for track metadata using iTunes first, then Deezer as fallback.
+/// Runs entirely from Rust to bypass browser CORS restrictions.
+/// `term` should already be cleaned (no extension, no track-number prefix).
+#[tauri::command]
+async fn search_itunes(term: String) -> Result<Option<MusicMetaResult>, String> {
+    if term.trim().is_empty() {
+        return Ok(None);
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(8))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 1. Try iTunes (good structured metadata, global catalogue)
+    if let Some(result) = try_itunes(&client, &term).await {
+        return Ok(Some(result));
+    }
+
+    // 2. Fallback: Deezer (better for non-English / non-US tracks)
+    Ok(try_deezer(&client, &term).await)
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -457,7 +656,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

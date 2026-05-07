@@ -4,7 +4,7 @@ import type { Game } from '../../types';
 import css from './GameCard.module.css';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
-import { fetchRawgImage, clearRawgCacheEntry } from '../services/rawgService';
+import { fetchRawgImage, clearRawgCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/rawgService';
 
 type Props = {
   game: Game;
@@ -32,45 +32,57 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     return t('gameCard.lastPlayed', { date: lastPlayedFormatter.format(d) });
   }, [game.lastPlayedAt, t]);
 
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const isSteam = game.platform === 'Steam';
+
+  // Pour les jeux Steam, l'URL CDN est toujours calculable directement depuis l'appId.
+  // On ne passe jamais par le cache pour éviter que handleImgError ne la supprime.
+  const steamDirectUrl = isSteam && game.steamAppId ? steamCdnUrl(game.steamAppId) : null;
+
+  const [imgSrc, setImgSrc] = useState<string | null>(steamDirectUrl);
 
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
-  const isSteam = game.platform === 'Steam';
-
-  // Charge l'image depuis le CDN Steam ou RAWG
-  // Le persistentCache dans rawgService évite les appels API en double
+  // Charge l'image : Steam → URL directe, non-Steam → RAWG (clé requise)
   useEffect(() => {
     if (game.customImageUrl) return;
-    let cancelled = false;
 
     if (isSteam && game.steamAppId) {
-      fetchRawgImage(game.title, '', game.steamAppId).then((url) => {
-        if (!cancelled) setImgSrc(url ?? null);
-      });
-    } else if (!isSteam && rawgApiKey) {
+      // L'URL CDN Steam est toujours disponible, aucun fetch async nécessaire
+      setImgSrc(steamCdnUrl(game.steamAppId));
+      return;
+    }
+
+    if (!isSteam && rawgApiKey) {
+      let cancelled = false;
       fetchRawgImage(game.title, rawgApiKey).then((url) => {
         if (!cancelled) setImgSrc(url ?? null);
       });
+      return () => { cancelled = true; };
     }
-
-    return () => { cancelled = true; };
   }, [game.id, game.title, game.customImageUrl, game.steamAppId, isSteam, rawgApiKey]);
 
   function handleImgError() {
-    setImgSrc(null);
-    if (game.customImageUrl) return;
+    if (game.customImageUrl) { setImgSrc(null); return; }
 
-    // Vider l'URL brisée du cache pour que le prochain mount retente
-    const cacheKey = isSteam && game.steamAppId
-      ? `steam:${game.steamAppId}`
-      : game.title.toLowerCase();
-    clearRawgCacheEntry(cacheKey);
+    if (isSteam && game.steamAppId) {
+      // header.jpg a échoué → essayer library_600x900.jpg en fallback
+      const portrait = steamPortraitUrl(game.steamAppId);
+      if (imgSrc !== portrait) {
+        setImgSrc(portrait);
+      } else {
+        // Les deux URLs Steam ont échoué (réseau coupé etc.) → pas d'image
+        setImgSrc(null);
+      }
+      return;
+    }
 
-    // Pour Steam : fallback immédiat via RAWG si clé disponible
-    if (isSteam && rawgApiKey) {
+    // Non-Steam : vider le cache et retenter via RAWG
+    clearRawgCacheEntry(game.title.toLowerCase());
+    if (rawgApiKey) {
       fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+    } else {
+      setImgSrc(null);
     }
   }
 

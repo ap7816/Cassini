@@ -851,3 +851,85 @@
   0%   { left: -40%; }
   100% { left: 100%; }
 }
+
+/* ─── Enrichment progress bar (bottom) ──────────────────── */
+.enrichBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 14, 20, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+/* Spinning SVG circle */
+.enrichSpinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--accent, #e6a817);
+  animation: enrichSpin 0.9s linear infinite;
+}
+
+@keyframes enrichSpin {
+  to { transform: rotate(360deg); }
+}
+
+.enrichBarLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.enrichBarPct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #e6a817);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Progress bar */
+.enrichBarTrack {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.enrichBarFill {
+  height: 100%;
+  background: var(--accent, #e6a817);
+  border-radius: 2px;
+  transition: width 300ms ease;
+  min-width: 4px;
+}
+
+/* Indeterminate sweep — shown while waiting for first result */
+.enrichBarSweep {
+  position: absolute;
+  height: 100%;
+  width: 40%;
+  background: var(--accent, #e6a817);
+  border-radius: 2px;
+  animation: enrichIndeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes enrichIndeterminate {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+
+.enrichBarCount {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
