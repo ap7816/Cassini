@@ -8,6 +8,7 @@ import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useUpdater, type UpdaterState } from '../../features/updater/useUpdater';
 import { useMusicPlayer } from '../../features/music/MusicContext';
 import { useSingleMeta } from '../../features/music/useTrackMeta';
+import { getEnriched } from '../../features/music/enrichMeta';
 import { Toasts } from '../../features/toast/Toasts';
 
 /* ─── Update banner ──────────────────────────────────────────── */
@@ -103,6 +104,9 @@ export function AppLayout() {
   const progressPct = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
   const currentTrack = music.currentIndex >= 0 ? music.tracks[music.currentIndex] : null;
   const miniMeta = useSingleMeta(currentTrack?.path ?? null);
+  // Cover enrichie (iTunes/Deezer) utilisée si pas de cover embarquée dans le fichier
+  const enrichedCover = currentTrack ? (getEnriched(currentTrack.path)?.coverUrl ?? null) : null;
+  const miniCover = miniMeta?.coverDataUrl ?? enrichedCover;
   const volPct = music.volume * 100;
 
   const volumeBarRef = useRef<HTMLDivElement>(null);
@@ -216,8 +220,8 @@ export function AppLayout() {
         {currentTrack && (
           <div className={css.miniPlayer}>
             <div className={css.miniTrackInfo}>
-              {miniMeta?.coverDataUrl
-                ? <img src={miniMeta.coverDataUrl} className={css.miniArt} alt="" aria-hidden="true" />
+              {miniCover
+                ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" />
                 : <div className={css.miniArtPlaceholder}>♪</div>
               }
               <button

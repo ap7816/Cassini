@@ -181,6 +181,14 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v1_1_2": {
+      "new_0": "Automatic artwork search via iTunes for all music tracks",
+      "new_1": "Online artwork now appears in the mini-player at the bottom of the screen",
+      "new_2": "App launch progress bar now fills from 0 to 100 % smoothly",
+      "fix_0": "Steam game images stay visible even after uninstalling the game",
+      "fix_1": "Music enrichment now processes all tracks from app startup",
+      "perf_0": "Stricter artwork matching: shows nothing rather than a wrong cover"
+    },
     "v1_1_1": {
       "new_0": "Release notes shown on every new version",
       "perf_0": "Large music libraries load much faster",

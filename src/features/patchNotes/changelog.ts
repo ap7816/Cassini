@@ -14,6 +14,33 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '1.1.2',
+    date: '2026-05-07',
+    sections: [
+      {
+        type: 'new',
+        itemKeys: [
+          'changelog.v1_1_2.new_0',
+          'changelog.v1_1_2.new_1',
+          'changelog.v1_1_2.new_2',
+        ],
+      },
+      {
+        type: 'fix',
+        itemKeys: [
+          'changelog.v1_1_2.fix_0',
+          'changelog.v1_1_2.fix_1',
+        ],
+      },
+      {
+        type: 'perf',
+        itemKeys: [
+          'changelog.v1_1_2.perf_0',
+        ],
+      },
+    ],
+  },
+  {
     version: '1.1.1',
     date: '2026-05-03',
     sections: [

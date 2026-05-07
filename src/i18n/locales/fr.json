@@ -181,6 +181,14 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v1_1_2": {
+      "new_0": "Recherche automatique de pochettes via iTunes pour toutes les pistes musicales",
+      "new_1": "La pochette trouvée en ligne s'affiche dans le mini-lecteur en bas de l'écran",
+      "new_2": "Barre de chargement au lancement de 0 à 100 % (remplace l'animation gauche-droite)",
+      "fix_0": "Les images des jeux Steam restent affichées même après désinstallation",
+      "fix_1": "L'enrichissement musical traite désormais toutes les pistes dès le démarrage",
+      "perf_0": "Correspondance plus stricte : affiche rien plutôt qu'une mauvaise pochette"
+    },
     "v1_1_1": {
       "new_0": "Notes de mise à jour à chaque nouvelle version",
       "perf_0": "Chargement des grandes bibliothèques musicales beaucoup plus rapide",
