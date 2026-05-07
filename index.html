@@ -125,7 +125,7 @@
         animation-delay: 820ms;
       }
 
-      /* Petite barre de chargement (optionnelle) */
+      /* Petite barre de chargement */
       .bar {
         width: min(260px, 70vw);
         height: 7px;
@@ -138,14 +138,13 @@
         animation: subIn 420ms ease forwards;
         animation-delay: 900ms;
       }
-      .bar::before {
-        content: '';
-        display: block;
+      .bar-fill {
         height: 100%;
-        width: 40%;
+        width: 0%;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.55);
-        animation: move 1.05s ease-in-out infinite;
+        background: rgba(255, 255, 255, 0.65);
+        animation: fillProgress 2.2s cubic-bezier(0.4, 0, 0.15, 1) both;
+        animation-delay: 900ms;
       }
 
       @keyframes logoIn {
@@ -171,19 +170,9 @@
         }
       }
 
-      @keyframes move {
-        0% {
-          transform: translateX(-10%);
-          opacity: 0.55;
-        }
-        50% {
-          transform: translateX(130%);
-          opacity: 0.9;
-        }
-        100% {
-          transform: translateX(-10%);
-          opacity: 0.55;
-        }
+      @keyframes fillProgress {
+        0%   { width: 0%; }
+        100% { width: 85%; }
       }
 
       /* Accessibilité: réduit les animations si demandé */
@@ -192,11 +181,12 @@
         .word,
         .sub,
         .bar,
-        .bar::before {
+        .bar-fill {
           animation: none !important;
           opacity: 1 !important;
           transform: none !important;
           filter: none !important;
+          width: 100% !important;
         }
       }
     </style>
@@ -219,7 +209,9 @@
 
         <div class="sub">Starting…</div>
 
-        <div class="bar" aria-hidden="true"></div>
+        <div class="bar" aria-hidden="true">
+          <div class="bar-fill"></div>
+        </div>
       </div>
     </div>
     <div id="root"></div>

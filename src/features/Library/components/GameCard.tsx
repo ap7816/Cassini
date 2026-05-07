@@ -34,9 +34,15 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
 
   const isSteam = game.platform === 'Steam';
 
+  // Résout l'appId Steam — game.steamAppId peut être null pour les jeux anciennement
+  // stockés avant l'ajout du champ. On le reextrait depuis game.id (ex: "steam-552100").
+  const resolvedSteamAppId =
+    game.steamAppId ??
+    (isSteam && game.id.startsWith('steam-') ? game.id.slice('steam-'.length) : null);
+
   // Pour les jeux Steam, l'URL CDN est toujours calculable directement depuis l'appId.
   // On ne passe jamais par le cache pour éviter que handleImgError ne la supprime.
-  const steamDirectUrl = isSteam && game.steamAppId ? steamCdnUrl(game.steamAppId) : null;
+  const steamDirectUrl = resolvedSteamAppId ? steamCdnUrl(resolvedSteamAppId) : null;
 
   const [imgSrc, setImgSrc] = useState<string | null>(steamDirectUrl);
 
@@ -47,9 +53,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
   useEffect(() => {
     if (game.customImageUrl) return;
 
-    if (isSteam && game.steamAppId) {
+    if (isSteam && resolvedSteamAppId) {
       // L'URL CDN Steam est toujours disponible, aucun fetch async nécessaire
-      setImgSrc(steamCdnUrl(game.steamAppId));
+      setImgSrc(steamCdnUrl(resolvedSteamAppId));
       return;
     }
 
@@ -60,14 +66,14 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
       });
       return () => { cancelled = true; };
     }
-  }, [game.id, game.title, game.customImageUrl, game.steamAppId, isSteam, rawgApiKey]);
+  }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, rawgApiKey]);
 
   function handleImgError() {
     if (game.customImageUrl) { setImgSrc(null); return; }
 
-    if (isSteam && game.steamAppId) {
+    if (isSteam && resolvedSteamAppId) {
       // header.jpg a échoué → essayer library_600x900.jpg en fallback
-      const portrait = steamPortraitUrl(game.steamAppId);
+      const portrait = steamPortraitUrl(resolvedSteamAppId);
       if (imgSrc !== portrait) {
         setImgSrc(portrait);
       } else {

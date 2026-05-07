@@ -28,7 +28,21 @@ initStorage().then(() => {
 
   const pre = document.getElementById('app-preloader');
   if (pre) {
-    pre.classList.add('preloader--done');
-    window.setTimeout(() => pre.remove(), 260);
+    // Compléter la barre à 100 % avant de dismisser
+    const fill = pre.querySelector('.bar-fill') as HTMLElement | null;
+    if (fill) {
+      // Geler la position courante de l'animation, puis transitionner vers 100 %
+      const currentW = window.getComputedStyle(fill).width;
+      fill.style.width = currentW;
+      fill.style.animation = 'none';
+      void fill.offsetWidth; // force reflow
+      fill.style.transition = 'width 0.22s ease';
+      fill.style.width = '100%';
+    }
+    // Laisser la barre atteindre 100 % avant le fade-out
+    window.setTimeout(() => {
+      pre.classList.add('preloader--done');
+      window.setTimeout(() => pre.remove(), 260);
+    }, 240);
   }
 });
