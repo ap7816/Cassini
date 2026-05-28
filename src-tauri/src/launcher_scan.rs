@@ -3,58 +3,45 @@ use std::path::PathBuf;
 use winreg::enums::*;
 use winreg::RegKey;
 
+// Informations d'un launcher détecté renvoyées au frontend
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LauncherDto {
     pub id: String,
     pub name: String,
     pub installed: bool,
-    pub launch_target: String, // URI (steam://...) ou chemin exe
+    pub launch_target: String, // URI (steam://...) ou chemin vers l'exe
     pub icon_path: Option<String>,
 }
 
-// IMPORTANT: PAS de #[tauri::command] ici.
-// Le command Tauri est défini dans lib.rs et appelle cette fonction.
+// Détecte tous les launchers installés et retourne la liste triée par nom
+// Note : pas de #[tauri::command] ici — la commande est dans lib.rs
 pub fn scan_launchers() -> Result<Vec<LauncherDto>, String> {
     let mut out: Vec<LauncherDto> = Vec::new();
 
-    if let Some(x) = detect_steam() {
-        out.push(x);
-    }
-    if let Some(x) = detect_epic() {
-        out.push(x);
-    }
-    if let Some(x) = detect_battlenet() {
-        out.push(x);
-    }
-    if let Some(x) = detect_riot() {
-        out.push(x);
-    }
-    if let Some(x) = detect_rockstar_launcher() {
-        out.push(x);
-    }
-    if let Some(x) = detect_ubisoft_connect() {
-        out.push(x);
-    }
-    if let Some(x) = detect_hytale() {
-        out.push(x);
-    }
+    if let Some(x) = detect_steam() { out.push(x); }
+    if let Some(x) = detect_epic() { out.push(x); }
+    if let Some(x) = detect_battlenet() { out.push(x); }
+    if let Some(x) = detect_riot() { out.push(x); }
+    if let Some(x) = detect_rockstar_launcher() { out.push(x); }
+    if let Some(x) = detect_ubisoft_connect() { out.push(x); }
+    if let Some(x) = detect_hytale() { out.push(x); }
 
     out.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     Ok(out)
 }
 
-/* ---------------- Generic helpers ---------------- */
-
+// Vérifie si haystack_lc contient au moins un des mots-clés needles (insensible à la casse)
 fn contains_any(haystack_lc: &str, needles: &[&str]) -> bool {
     needles
         .iter()
         .any(|n| haystack_lc.contains(&n.to_lowercase()))
 }
 
+// Extrait le chemin d'exe depuis la valeur DisplayIcon du registre (format "C:\...\App.exe,0")
 fn parse_display_icon_path(raw: &str) -> Option<PathBuf> {
-    // "C:\...\App.exe,0" -> "C:\...\App.exe"
     let trimmed = raw.trim().trim_matches('"');
+    // Supprime le suffixe ",0" ou ",1" qui suit parfois le chemin
     let before_comma = trimmed.split(',').next().unwrap_or(trimmed).trim();
     if before_comma.is_empty() {
         return None;
@@ -62,20 +49,21 @@ fn parse_display_icon_path(raw: &str) -> Option<PathBuf> {
     Some(PathBuf::from(before_comma))
 }
 
+// Extrait le chemin d'exe depuis la valeur UninstallString du registre
+// Gère les formats : chemin entre guillemets, chemin nu, chemin avec arguments
 fn parse_uninstall_string_exe(raw: &str) -> Option<PathBuf> {
     let s = raw.trim();
     if s.is_empty() {
         return None;
     }
 
-    // 1) Si c'est "...\something.exe" ...
+    // Extrait le chemin selon le format : avec guillemets ou sans
     let path_str = if s.starts_with('"') {
-        // prend le contenu entre les 2 premiers "
         let rest = &s[1..];
         let end = rest.find('"')?;
         &rest[..end]
     } else {
-        // sinon prend le 1er token
+        // Chemin sans guillemets : prend le premier token
         s.split_whitespace().next().unwrap_or("")
     };
 
@@ -86,7 +74,7 @@ fn parse_uninstall_string_exe(raw: &str) -> Option<PathBuf> {
     let path_str = path_str.trim().trim_matches('"');
     let path_str = path_str.split(',').next().unwrap_or(path_str).trim();
 
-    // ignore msiexec
+    // Ignore msiexec (installeur Windows, pas un exe de launcher)
     if path_str.to_lowercase().contains("msiexec") {
         return None;
     }
@@ -103,6 +91,8 @@ fn parse_uninstall_string_exe(raw: &str) -> Option<PathBuf> {
     }
 }
 
+// Recherche un exe de launcher dans les clés Uninstall du registre en combinant plusieurs stratégies :
+// 1) DisplayIcon → 2) InstallLocation + noms connus → 3) UninstallString
 fn find_exe_from_uninstall(needles: &[&str], exe_names: &[&str]) -> Option<PathBuf> {
     let roots = [
         (
@@ -138,7 +128,7 @@ fn find_exe_from_uninstall(needles: &[&str], exe_names: &[&str]) -> Option<PathB
                 continue;
             }
 
-            // 1) DisplayIcon -> souvent un exe (parfois un .ico)
+            // Stratégie 1 : DisplayIcon contient souvent le chemin de l'exe principal
             if let Ok(icon) = sk.get_value::<String, _>("DisplayIcon") {
                 if let Some(p) = parse_display_icon_path(&icon) {
                     if p.is_file() && p.to_string_lossy().to_lowercase().ends_with(".exe") {
@@ -147,7 +137,7 @@ fn find_exe_from_uninstall(needles: &[&str], exe_names: &[&str]) -> Option<PathB
                 }
             }
 
-            // 2) InstallLocation + exe_names
+            // Stratégie 2 : InstallLocation + liste de noms d'exe connus pour ce launcher
             if let Ok(loc) = sk.get_value::<String, _>("InstallLocation") {
                 let base = PathBuf::from(loc);
                 for exe in exe_names {
@@ -158,7 +148,7 @@ fn find_exe_from_uninstall(needles: &[&str], exe_names: &[&str]) -> Option<PathB
                 }
             }
 
-            // 3) UninstallString peut contenir le launcher exe
+            // Stratégie 3 : UninstallString peut contenir le chemin du launcher
             if let Ok(us) = sk.get_value::<String, _>("UninstallString") {
                 if let Some(p) = parse_uninstall_string_exe(&us) {
                     return Some(p);
@@ -170,6 +160,7 @@ fn find_exe_from_uninstall(needles: &[&str], exe_names: &[&str]) -> Option<PathB
     None
 }
 
+// Retourne le premier chemin de la liste qui correspond à un fichier existant sur le disque
 fn first_existing_path(candidates: &[&str]) -> Option<PathBuf> {
     for c in candidates {
         let p = PathBuf::from(c);
@@ -180,6 +171,7 @@ fn first_existing_path(candidates: &[&str]) -> Option<PathBuf> {
     None
 }
 
+// Crée un LauncherDto à partir d'un exe trouvé (launch_target = icon_path = chemin de l'exe)
 fn make_exe_launcher(id: &str, name: &str, exe: PathBuf) -> LauncherDto {
     let p = exe.to_string_lossy().to_string();
     LauncherDto {
@@ -191,8 +183,7 @@ fn make_exe_launcher(id: &str, name: &str, exe: PathBuf) -> LauncherDto {
     }
 }
 
-/* ---------------- Steam ---------------- */
-
+// Détecte Steam via le chemin standard — utilise l'URI steam:// pour le lancement
 fn detect_steam() -> Option<LauncherDto> {
     let base = PathBuf::from(r"C:\Program Files (x86)\Steam");
     let exe = base.join("steam.exe");
@@ -204,15 +195,14 @@ fn detect_steam() -> Option<LauncherDto> {
         id: "steam".to_string(),
         name: "Steam".to_string(),
         installed: true,
-        // On garde l’URI (souvent le plus fiable) pour ouvrir Steam
+        // URI protocol plus fiable que l'exe direct pour ouvrir Steam
         launch_target: "steam://open/main".to_string(),
-        // Mais l’icône doit venir d’un vrai .exe
+        // L'icône doit venir d'un vrai fichier .exe (pas d'une URI)
         icon_path: Some(exe.to_string_lossy().to_string()),
     })
 }
 
-/* ---------------- Epic Games Launcher ---------------- */
-
+// Détecte Epic Games Launcher via le registre ou les chemins connus
 fn detect_epic() -> Option<LauncherDto> {
     if let Some(exe) = find_exe_from_uninstall(
         &["Epic Games Launcher", "Epic Games"],
@@ -233,8 +223,7 @@ fn detect_epic() -> Option<LauncherDto> {
     first_existing_path(&known).map(|p| make_exe_launcher("epic", "Epic Games", p))
 }
 
-/* ---------------- Battle.net ---------------- */
-
+// Détecte Battle.net via le registre ou les chemins connus
 fn detect_battlenet() -> Option<LauncherDto> {
     if let Some(exe) = find_exe_from_uninstall(
         &["Battle.net", "Blizzard Battle.net"],
@@ -251,16 +240,14 @@ fn detect_battlenet() -> Option<LauncherDto> {
     first_existing_path(&known).map(|p| make_exe_launcher("battlenet", "Battle.net", p))
 }
 
-/* ---------------- Riot Client ---------------- */
-
+// Détecte Riot Client via les exes connus dans le dossier d'installation standard
 fn detect_riot() -> Option<LauncherDto> {
     let base = PathBuf::from(r"C:\Riot Games\Riot Client");
 
-    // L’exe le plus courant
     let exe1 = base.join("RiotClientServices.exe");
-    // au cas où (selon install)
     let exe2 = base.join("RiotClientUx.exe");
 
+    // Préfère RiotClientServices.exe, utilise RiotClientUx.exe en fallback
     let exe = if exe1.is_file() {
         exe1
     } else if exe2.is_file() {
@@ -273,15 +260,12 @@ fn detect_riot() -> Option<LauncherDto> {
         id: "riot".to_string(),
         name: "Riot Client".to_string(),
         installed: true,
-        // Ouvrir le launcher via l’exe directement
         launch_target: exe.to_string_lossy().to_string(),
-        // Icône depuis le même exe
         icon_path: Some(exe.to_string_lossy().to_string()),
     })
 }
 
-/* ---------------- Rockstar Games Launcher ---------------- */
-
+// Détecte Rockstar Games Launcher via le registre ou les chemins connus
 fn detect_rockstar_launcher() -> Option<LauncherDto> {
     if let Some(exe) = find_exe_from_uninstall(
         &["Rockstar Games Launcher", "Rockstar Games"],
@@ -302,8 +286,7 @@ fn detect_rockstar_launcher() -> Option<LauncherDto> {
     first_existing_path(&known).map(|p| make_exe_launcher("rockstar", "Rockstar Games", p))
 }
 
-/* ---------------- Ubisoft Connect (Uplay) ---------------- */
-
+// Détecte Ubisoft Connect (anciennement Uplay) via le registre ou les chemins connus
 fn detect_ubisoft_connect() -> Option<LauncherDto> {
     if let Some(exe) = find_exe_from_uninstall(
         &["Ubisoft Connect", "Uplay", "Ubisoft Game Launcher"],
@@ -321,10 +304,8 @@ fn detect_ubisoft_connect() -> Option<LauncherDto> {
     first_existing_path(&known).map(|p| make_exe_launcher("ubisoft", "Ubisoft Connect", p))
 }
 
-/* ---------------- Hytale (best-effort) ---------------- */
-
+// Détecte Hytale Launcher via le chemin connu ou le registre
 fn detect_hytale() -> Option<LauncherDto> {
-    // Chemin connu chez toi
     let known = [r"C:\Program Files\Hypixel Studios\Hytale Launcher\hytale-launcher.exe"];
 
     if let Some(p) = first_existing_path(&known) {

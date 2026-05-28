@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use winreg::enums::*;
 use winreg::RegKey;
 
+// Structure commune à toutes les plateformes pour représenter un jeu détecté
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GameDto {
@@ -18,11 +19,13 @@ pub struct GameDto {
     pub steam_app_id: Option<String>,
 }
 
+// Scanne toutes les bibliothèques Steam et retourne la liste des jeux installés
 pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
     let steam_path = find_steam_path().ok_or("Steam not found on this PC.")?;
     let library_paths = collect_library_paths(&steam_path);
 
     let mut games: Vec<GameDto> = Vec::new();
+    // Évite les doublons si un même jeu apparaît dans plusieurs bibliothèques
     let mut seen_ids: HashSet<String> = HashSet::new();
 
     for lib in library_paths {
@@ -36,6 +39,7 @@ pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
             let entry = entry.map_err(|e| format!("read_dir entry failed: {e}"))?;
             let path = entry.path();
 
+            // Traite uniquement les fichiers appmanifest_*.acf
             if !is_appmanifest(&path) {
                 continue;
             }
@@ -54,6 +58,7 @@ pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
     Ok(games)
 }
 
+// Vérifie si le chemin est un fichier manifeste Steam (appmanifest_*.acf)
 fn is_appmanifest(path: &Path) -> bool {
     if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
         return name.starts_with("appmanifest_") && name.ends_with(".acf");
@@ -61,8 +66,9 @@ fn is_appmanifest(path: &Path) -> bool {
     false
 }
 
+// Parse un fichier ACF Steam et retourne un GameDto avec appid, nom et date de dernière partie
 fn parse_appmanifest(content: &str) -> Option<GameDto> {
-    // ACF resembles: "appid" "570" / "name" "Dota 2"
+    // Format ACF : lignes de type "appid" "570" / "name" "Dota 2"
     let mut appid: Option<String> = None;
     let mut name: Option<String> = None;
     let mut last_played: Option<i64> = None;
@@ -73,7 +79,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
             continue;
         }
 
-        // expected format: "key" "value"
+        // Format attendu : "clé" "valeur"
         let parts: Vec<&str> = line.split('"').collect();
         if parts.len() < 4 {
             continue;
@@ -85,6 +91,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         match key {
             "appid" => appid = Some(val.to_string()),
             "name" => name = Some(val.to_string()),
+            // Timestamp Unix de la dernière session de jeu
             "LastPlayed" => {
                 if let Ok(ts) = val.parse::<i64>() {
                     if ts > 0 {
@@ -104,6 +111,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         title,
         platform: "Steam".to_string(),
         installed: true,
+        // Convertit le timestamp Unix en date ISO 8601
         last_played_at: last_played
             .and_then(|ts| Utc.timestamp_opt(ts, 0).single())
             .map(|dt| dt.to_rfc3339()),
@@ -112,8 +120,10 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
     })
 }
 
+// Collecte tous les chemins de bibliothèques Steam depuis libraryfolders.vdf
 fn collect_library_paths(steam_path: &Path) -> Vec<PathBuf> {
     let mut libs: Vec<PathBuf> = Vec::new();
+    // Bibliothèque principale (dossier d'installation de Steam)
     libs.push(steam_path.to_path_buf());
 
     let vdf = steam_path.join("steamapps").join("libraryfolders.vdf");
@@ -124,7 +134,7 @@ fn collect_library_paths(steam_path: &Path) -> Vec<PathBuf> {
     for line in txt.lines() {
         let l = line.trim();
 
-        // typical line: "path" "D:\\SteamLibrary"
+        // Ligne type : "path" "D:\\SteamLibrary"
         if !(l.starts_with("\"path\"") || l.contains("\"path\"")) {
             continue;
         }
@@ -135,7 +145,8 @@ fn collect_library_paths(steam_path: &Path) -> Vec<PathBuf> {
         }
 
         let raw = parts[3];
-        let unescaped = raw.replace("\\\\", "\\"); // "D:\\SteamLibrary" -> "D:\SteamLibrary"
+        // Déséchapper les doubles backslashes du format VDF
+        let unescaped = raw.replace("\\\\", "\\");
         let p = PathBuf::from(unescaped);
 
         if !libs.iter().any(|x| x == &p) {
@@ -146,8 +157,9 @@ fn collect_library_paths(steam_path: &Path) -> Vec<PathBuf> {
     libs
 }
 
+// Localise le dossier d'installation de Steam via le registre Windows ou les chemins courants
 fn find_steam_path() -> Option<PathBuf> {
-    // 1) HKCU\Software\Valve\Steam -> SteamPath
+    // 1) HKCU\Software\Valve\Steam → SteamPath (chemin préféré, mis à jour par Steam)
     {
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         if let Ok(key) = hkcu.open_subkey("Software\\Valve\\Steam") {
@@ -160,7 +172,7 @@ fn find_steam_path() -> Option<PathBuf> {
         }
     }
 
-    // 2) HKLM\SOFTWARE\WOW6432Node\Valve\Steam -> InstallPath
+    // 2) HKLM\SOFTWARE\WOW6432Node\Valve\Steam → InstallPath (installation 32 bits sur 64 bits)
     {
         let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
         if let Ok(key) = hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
@@ -173,7 +185,7 @@ fn find_steam_path() -> Option<PathBuf> {
         }
     }
 
-    // 3) fallback common paths
+    // 3) Chemins d'installation par défaut en dernier recours
     let candidates = [
         PathBuf::from(r"C:\Program Files (x86)\Steam"),
         PathBuf::from(r"C:\Program Files\Steam"),

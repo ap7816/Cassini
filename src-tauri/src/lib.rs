@@ -1,4 +1,4 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+// Modules de scan par plateforme et utilitaires d'extraction d'icônes
 mod battlenet_scan;
 mod epic_scan;
 mod icon_extract;
@@ -9,6 +9,7 @@ mod steam_scan;
 mod ubisoft_scan;
 use tauri_plugin_log;
 
+// Métadonnées audio renvoyées au frontend pour chaque piste
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackMetadata {
@@ -16,12 +17,12 @@ pub struct TrackMetadata {
     pub title: Option<String>,
     pub artist: Option<String>,
     pub album: Option<String>,
+    // Pochette encodée en base64 data-URL (None si with_cover=false)
     pub cover_data_url: Option<String>,
     pub duration_secs: Option<f64>,
 }
 
-/// Shared implementation. `with_cover = false` skips base64-encoding the
-/// artwork (used by the batch command so it stays fast).
+// Implémentation partagée : with_cover=false saute l'encodage base64 de la pochette (mode batch rapide)
 fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
     use lofty::prelude::*;
     use lofty::probe::Probe;
@@ -48,7 +49,7 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
         }
     };
 
-    // Duration lives in audio properties — always fast, no tag needed.
+    // Durée en secondes depuis les propriétés audio — lecture rapide sans décodage des tags
     let duration_secs = {
         let d = tagged.properties().duration().as_secs_f64();
         if d > 0.0 { Some(d) } else { None }
@@ -84,14 +85,14 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
     TrackMetadata { path: path.to_string(), title, artist, album, cover_data_url, duration_secs }
 }
 
-/// Single track — full metadata including cover art (used by the mini-player).
+// Commande Tauri : retourne les métadonnées complètes d'une piste (avec pochette) pour le mini-lecteur
 #[tauri::command]
 fn get_track_metadata(path: String) -> TrackMetadata {
     read_track_metadata(&path, true)
 }
 
-/// All tracks at once — title / artist / album / duration, NO cover art.
-/// Processed in parallel with rayon so I/O doesn't block the UI thread.
+// Commande Tauri : retourne titre/artiste/album/durée pour toutes les pistes sans pochette
+// Traitement en parallèle via rayon pour ne pas bloquer le thread UI
 #[tauri::command]
 fn get_tracks_basic_batch(paths: Vec<String>) -> Vec<TrackMetadata> {
     use rayon::prelude::*;
@@ -107,11 +108,13 @@ pub struct TrackDto {
     pub folder: String,
 }
 
+// Commande Tauri : parcourt récursivement un dossier et retourne toutes les pistes audio trouvées
 #[tauri::command]
 fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
     let audio_exts = ["mp3", "flac", "wav", "ogg", "m4a", "opus"];
     let mut tracks: Vec<TrackDto> = Vec::new();
 
+    // Fonction récursive interne : descend dans les sous-dossiers et collecte les fichiers audio
     fn walk_dir(root: &std::path::Path, dir: &std::path::Path, audio_exts: &[&str], tracks: &mut Vec<TrackDto>) {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
@@ -158,11 +161,13 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
     Ok(tracks)
 }
 
+// Commande Tauri : extrait l'icône d'un fichier .exe et la retourne en data-URL PNG 64×64
 #[tauri::command]
 fn get_file_icon_data_url(path: String) -> Result<String, String> {
     icon_extract::file_icon_png_data_url(&path, 64)
 }
 
+// Commande Tauri : ouvre un dossier dans l'explorateur de fichiers natif (cross-platform)
 #[tauri::command]
 fn open_folder(path: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
@@ -189,46 +194,55 @@ fn open_folder(path: String) -> Result<(), String> {
     Ok(())
 }
 
+// Commande Tauri de test (non utilisée en prod) — conservée pour compatibilité
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+// Commande Tauri : scanne les jeux Steam installés via les manifestes ACF
 #[tauri::command]
 fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
     steam_scan::scan_steam_games()
 }
 
+// Commande Tauri : scanne les jeux Epic Games via les fichiers .item du launcher
 #[tauri::command]
 fn scan_epic_games() -> Result<Vec<steam_scan::GameDto>, String> {
     epic_scan::scan_epic_games()
 }
 
+// Commande Tauri : scanne les jeux Battle.net via le registre Windows
 #[tauri::command]
 fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
     battlenet_scan::scan_battlenet_games()
 }
 
+// Commande Tauri : scanne les jeux Riot Games via le registre Windows
 #[tauri::command]
 fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
     riot_scan::scan_riot_games()
 }
 
+// Commande Tauri : scanne les jeux Rockstar Games via le registre Windows
 #[tauri::command]
 fn scan_rockstar_games() -> Result<Vec<steam_scan::GameDto>, String> {
     rockstar_scan::scan_rockstar_games()
 }
 
+// Commande Tauri : scanne les jeux Ubisoft Connect via le registre Windows
 #[tauri::command]
 fn scan_ubisoft_games() -> Result<Vec<steam_scan::GameDto>, String> {
     ubisoft_scan::scan_ubisoft_games()
 }
 
+// Commande Tauri : détecte les launchers installés (Steam, Epic, Battle.net, Riot, Rockstar, Ubisoft)
 #[tauri::command]
 fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
     launcher_scan::scan_launchers()
 }
 
+// Commande Tauri : liste tous les sous-dossiers d'un dossier racine (chemins relatifs)
 #[tauri::command]
 fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
     let root_path = std::path::Path::new(&root);
@@ -237,6 +251,7 @@ fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
     }
     let mut dirs: Vec<String> = Vec::new();
 
+    // Fonction récursive interne : collecte les chemins relatifs de tous les sous-dossiers
     fn walk(root: &std::path::Path, dir: &std::path::Path, dirs: &mut Vec<String>) {
         let Ok(entries) = std::fs::read_dir(dir) else { return };
         for entry in entries.flatten() {
@@ -258,16 +273,19 @@ fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
     Ok(dirs)
 }
 
+// Commande Tauri : crée un dossier musical (et ses parents si nécessaire)
 #[tauri::command]
 fn create_music_folder(path: String) -> Result<(), String> {
     std::fs::create_dir_all(&path).map_err(|e| e.to_string())
 }
 
+// Commande Tauri : supprime récursivement un dossier musical et tout son contenu
 #[tauri::command]
 fn delete_music_folder(path: String) -> Result<(), String> {
     std::fs::remove_dir_all(&path).map_err(|e| e.to_string())
 }
 
+// Commande Tauri : renomme un dossier musical en vérifiant l'absence de conflit de noms
 #[tauri::command]
 fn rename_music_folder(path: String, new_name: String) -> Result<(), String> {
     use std::path::Path;
@@ -280,6 +298,7 @@ fn rename_music_folder(path: String, new_name: String) -> Result<(), String> {
     std::fs::rename(&path, &dst).map_err(|e| e.to_string())
 }
 
+// Commande Tauri : déplace un fichier audio vers un autre dossier, renomme si conflit de noms
 #[tauri::command]
 fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
     use std::path::Path;
@@ -294,7 +313,7 @@ fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
 
     let mut dst_path = dst_dir.join(filename);
 
-    // Gérer les conflits de noms
+    // Résoudre les conflits de noms en ajoutant un compteur numérique "(1)", "(2)"…
     if dst_path.exists() {
         let stem = src_path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
         let ext = src_path.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -317,6 +336,7 @@ fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
     std::fs::rename(&src, &dst_path).map_err(|e| e.to_string())
 }
 
+// Commande Tauri : vérifie si ArcHive est configuré pour démarrer avec Windows
 #[tauri::command]
 fn get_autostart() -> bool {
     #[cfg(target_os = "windows")]
@@ -333,6 +353,7 @@ fn get_autostart() -> bool {
     { false }
 }
 
+// Commande Tauri : active ou désactive le démarrage automatique d'ArcHive via la clé Run du registre
 #[tauri::command]
 fn set_autostart(enabled: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
@@ -358,6 +379,7 @@ fn set_autostart(enabled: bool) -> Result<(), String> {
     Ok(())
 }
 
+// Commande Tauri : lance un jeu Battle.net via l'argument --exec=launch de Battle.net.exe
 #[tauri::command]
 fn launch_battlenet_game(uid: String) -> Result<(), String> {
     let candidates = [
@@ -378,6 +400,7 @@ fn launch_battlenet_game(uid: String) -> Result<(), String> {
     Ok(())
 }
 
+// Commande Tauri : lance un jeu Riot via RiotClientServices.exe avec le product ID et la patchline live
 #[tauri::command]
 fn launch_riot_game(product: String) -> Result<(), String> {
     let exe = riot_scan::find_riot_client_exe()
@@ -392,10 +415,10 @@ fn launch_riot_game(product: String) -> Result<(), String> {
     Ok(())
 }
 
+// Commande Tauri : lance un jeu Ubisoft via le protocole uplay:// (cmd /c start pour déclencher le handler Windows)
 #[tauri::command]
 fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
-    // uplay://launch/<id>/0 — on passe par cmd /c start pour que Windows
-    // déclenche le handler de protocole d'Ubisoft Connect correctement.
+    // uplay://launch/<id>/0 — cmd /c start est nécessaire pour activer le handler de protocole Windows
     let url = format!("uplay://launch/{}/0", game_id);
     std::process::Command::new("cmd")
         .args(["/c", "start", "", &url])
@@ -404,22 +427,20 @@ fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Result returned to the frontend for music metadata enrichment.
+// Résultat d'enrichissement renvoyé au frontend : artiste, album, URL de pochette et source API
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicMetaResult {
     pub artist: Option<String>,
     pub album: Option<String>,
-    /// External HTTPS URL to album artwork, ready for <img src>.
+    // URL HTTPS externe vers la pochette d'album, prête à être utilisée dans <img src>
     pub cover_url: Option<String>,
-    /// Which API found this result ("itunes" or "deezer").
+    // Quelle API a trouvé le résultat : "itunes" ou "deezer"
     pub source: String,
 }
 
-// ── Matching helpers ─────────────────────────────────────────────────────────
-
-/// Fraction of words in `needle_lc` (≥ 3 chars) that appear as whole words in
-/// `haystack_lc`. Both strings must already be lowercased.
+// Calcule la fraction de mots de needle_lc (≥ 3 caractères) présents dans haystack_lc
+// Les deux chaînes doivent déjà être en minuscules
 fn word_recall(needle_lc: &str, haystack_lc: &str) -> f32 {
     let needle_words: Vec<&str> = needle_lc
         .split(|c: char| !c.is_alphanumeric())
@@ -439,72 +460,54 @@ fn word_recall(needle_lc: &str, haystack_lc: &str) -> f32 {
     matched as f32 / needle_words.len() as f32
 }
 
-/// Strips everything from the first '(' or '[' to the end of the string.
-/// "Stressed Out (Tomsize Remix)" → "Stressed Out"
-/// "Bohemian Rhapsody [2011 Remaster]" → "Bohemian Rhapsody"
+// Supprime tout ce qui suit la première parenthèse ou crochet pour nettoyer les titres avec remix/remaster
+// Ex : "Stressed Out (Tomsize Remix)" → "Stressed Out"
 fn strip_parens(s: &str) -> &str {
     let cut = s.find('(').or_else(|| s.find('['));
     cut.map(|i| s[..i].trim_end()).unwrap_or(s)
 }
 
-/// Returns a confidence score in [0, 1] for how well (result_title, result_artist)
-/// matches `term`. Returns 0.0 when there is clearly no overlap.
-///
-/// Strategy:
-/// - If term looks like "Artist - Title", check each part separately.
-///   Title is weighted 65 %, artist 35 %.  If the artist part has words but
-///   none appear in the result artist, confidence is capped (suspicious).
-///   Both the raw title and its paren-stripped version are tried so that
-///   "(Tomsize Remix)" / "[Remaster]" suffixes don't penalise the score.
-/// - Otherwise check term words against result title first; fall back to the
-///   combined "artist title" string.
+// Retourne un score de confiance [0, 1] indiquant à quel point (result_title, result_artist) correspond à `term`
+// Format "Artiste - Titre" : titre pondéré à 65 %, artiste à 35 %
+// Sans artiste dans le terme de recherche : retourne 0.0 pour éviter les faux positifs
 fn match_score(term: &str, result_title: &str, result_artist: &str) -> f32 {
     let term_lc   = term.to_lowercase();
     let title_lc  = result_title.to_lowercase();
     let artist_lc = result_artist.to_lowercase();
 
-    // ── "Artist - Title" format ──────────────────────────────────────────────
+    // Format "Artiste - Titre" : calcule le score séparément pour chaque partie
     if let Some(dash) = term_lc.find(" - ") {
         let t_artist = &term_lc[..dash];
         let t_title  = &term_lc[dash + 3..];
 
-        // Score both with and without parenthetical suffix; keep the best.
+        // Compare avec et sans suffixe entre parenthèses pour tolérer les remixes/remasters
         let t_title_clean = strip_parens(t_title);
         let tr = word_recall(t_title,       &title_lc)
             .max(word_recall(t_title_clean, &title_lc));
         let ar = word_recall(t_artist, &artist_lc);
 
-        // If the artist part contains meaningful words but none matched,
-        // the result is likely for a different artist → low confidence.
+        // Si l'artiste du terme contient des mots mais qu'aucun ne correspond → résultat suspect
         let artist_has_words = t_artist
             .split(|c: char| !c.is_alphanumeric())
             .any(|w| w.len() >= 3);
         if artist_has_words && ar == 0.0 {
-            return tr * 0.35; // title-only match — suspicious
+            return tr * 0.35; // correspondance titre seulement — peu fiable
         }
 
         return tr * 0.65 + ar * 0.35;
     }
 
-    // ── Title-only search ────────────────────────────────────────────────────
-    // Without an artist in the search term we cannot reliably distinguish a
-    // genuine match from an AI track that happens to share a real song's name.
-    // Return 0.0 so this never reaches MIN_SCORE — we'd rather show nothing
-    // than the wrong cover art.
-    // The JS layer prepends the artist tag when available, so any track with
-    // proper metadata will already be in "Artist - Title" format above.
+    // Recherche titre seul : impossible de distinguer une vraie correspondance d'un homonyme
+    // → retourne 0.0 pour ne jamais atteindre MIN_SCORE (mieux ne rien afficher que la mauvaise pochette)
+    // Le côté JS ajoute l'artiste quand les tags ID3 sont présents, donc les pistes avec métadonnées
+    // passent déjà par le format "Artiste - Titre" ci-dessus
     0.0
 }
 
-/// Minimum match_score to accept a result. Below this we return None rather
-/// than showing a wrong cover.
-/// 0.7 is intentionally strict: better to show nothing than the wrong image.
+// Score minimum pour accepter un résultat : 0.7 volontairement strict pour éviter les mauvaises pochettes
 const MIN_SCORE: f32 = 0.7;
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-
-/// Try iTunes Search API. Returns None on network error, no results, or when
-/// no candidate reaches MIN_SCORE.
+// Interroge l'API iTunes Search et retourne le meilleur résultat si son score dépasse MIN_SCORE
 async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaResult> {
     let resp = client
         .get("https://itunes.apple.com/search")
@@ -519,7 +522,7 @@ async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
     let results = json["results"].as_array()?;
     if results.is_empty() { return None; }
 
-    // Pick the highest-scoring candidate
+    // Sélectionne le candidat avec le meilleur score parmi les 5 résultats
     let (best_score, best) = results.iter()
         .map(|r| {
             let title  = r["trackName"].as_str().unwrap_or("");
@@ -530,6 +533,7 @@ async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
 
     if best_score < MIN_SCORE { return None; }
 
+    // Remplace la taille 100×100 par 600×600 pour une pochette haute résolution
     let cover_url = best["artworkUrl100"]
         .as_str()
         .map(|u| u.replacen("100x100bb", "600x600bb", 1));
@@ -542,8 +546,7 @@ async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
     })
 }
 
-/// Try Deezer Search API. Returns None on network error, no results, or when
-/// no candidate reaches MIN_SCORE.
+// Interroge l'API Deezer Search en fallback et retourne le meilleur résultat si son score dépasse MIN_SCORE
 async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaResult> {
     let resp = client
         .get("https://api.deezer.com/search")
@@ -558,7 +561,7 @@ async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
     let data = json["data"].as_array()?;
     if data.is_empty() { return None; }
 
-    // Pick the highest-scoring candidate
+    // Sélectionne le candidat avec le meilleur score parmi les 5 résultats
     let (best_score, best) = data.iter()
         .map(|r| {
             let title  = r["title"].as_str().unwrap_or("");
@@ -569,7 +572,7 @@ async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
 
     if best_score < MIN_SCORE { return None; }
 
-    // cover_xl = 1000×1000
+    // cover_xl = 1000×1000 — meilleure résolution disponible chez Deezer
     let cover_url = best["album"]["cover_xl"].as_str().map(String::from);
 
     Some(MusicMetaResult {
@@ -580,9 +583,9 @@ async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
     })
 }
 
-/// Searches for track metadata using iTunes first, then Deezer as fallback.
-/// Runs entirely from Rust to bypass browser CORS restrictions.
-/// `term` should already be cleaned (no extension, no track-number prefix).
+// Commande Tauri : enrichit les métadonnées d'une piste via iTunes puis Deezer en fallback
+// S'exécute côté Rust pour contourner les restrictions CORS du navigateur
+// term doit déjà être nettoyé (sans extension, sans numéro de piste)
 #[tauri::command]
 async fn search_itunes(term: String) -> Result<Option<MusicMetaResult>, String> {
     if term.trim().is_empty() {
@@ -594,22 +597,24 @@ async fn search_itunes(term: String) -> Result<Option<MusicMetaResult>, String> 
         .build()
         .map_err(|e| e.to_string())?;
 
-    // 1. Try iTunes (good structured metadata, global catalogue)
+    // 1. iTunes en priorité : catalogue mondial, métadonnées structurées de qualité
     if let Some(result) = try_itunes(&client, &term).await {
         return Ok(Some(result));
     }
 
-    // 2. Fallback: Deezer (better for non-English / non-US tracks)
+    // 2. Deezer en fallback : meilleure couverture des titres non-anglophones
     Ok(try_deezer(&client, &term).await)
 }
 
 
+// Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             #[cfg(desktop)]
             {
+                // Configure l'icône de la zone de notification avec un menu contextuel Ouvrir/Quitter
                 use tauri::menu::{Menu, MenuItem};
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
                 use tauri::Manager;

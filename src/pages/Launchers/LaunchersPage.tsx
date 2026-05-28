@@ -14,6 +14,7 @@ import {
 import { info } from '@tauri-apps/plugin-log';
 import { useToast } from '../../features/toast/ToastContext';
 
+// Structure d'un launcher détecté par Rust (scan_launchers)
 type LauncherDto = {
   id: string;
   name: string;
@@ -26,10 +27,12 @@ type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
 type InstalledFilter = 'all' | 'yes';
 type SortMode = 'default' | 'az';
 
+// Détecte si une cible est une URL (protocole://) plutôt qu'un chemin de fichier
 function isUrlTarget(target: string): boolean {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
 }
 
+// Ouvre une cible soit comme URL (openUrl) soit comme chemin exe (openPath)
 async function openTarget(target: string): Promise<void> {
   if (isUrlTarget(target)) {
     await openUrl(target);
@@ -38,6 +41,7 @@ async function openTarget(target: string): Promise<void> {
   }
 }
 
+// Page des launchers : liste, icônes et boutons d'ouverture pour chaque launcher détecté
 export function LaunchersPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -46,6 +50,7 @@ export function LaunchersPage() {
   const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
   const sortMode = (searchParams.get('sort') ?? 'default') as SortMode;
 
+  // Met à jour un paramètre d'URL sans entrée d'historique
   function setParam(key: string, value: string, defaultValue: string) {
     const p = new URLSearchParams(searchParams);
     if (value === defaultValue) p.delete(key);
@@ -65,6 +70,7 @@ export function LaunchersPage() {
 
   const [iconsById, setIconsById] = useState<Record<string, string>>({});
 
+  // Déclenche un scan des launchers via Rust et met à jour la liste
   async function refresh() {
     setLoading(true);
     setError(null);
@@ -81,15 +87,18 @@ export function LaunchersPage() {
     }
   }
 
+  // Lance le scan initial uniquement en contexte desktop Tauri
   useEffect(() => {
     const ok = isTauri();
     setDesktop(ok);
     if (ok) void refresh();
   }, []);
 
+  // Charge les icônes des launchers depuis le cache ou via Rust, en évitant les requêtes redondantes
   useEffect(() => {
     if (!desktop) return;
 
+    // Supprime les entrées obsolètes du cache d'icônes
     pruneLauncherIconCache();
 
     if (launchers.length === 0) {
@@ -134,6 +143,7 @@ export function LaunchersPage() {
     return () => { cancelled = true; };
   }, [launchers, desktop]);
 
+  // Lance un launcher et affiche un feedback d'état (ouverture / succès / erreur)
   async function handleOpen(l: LauncherDto) {
     setOpeningId(l.id);
     setOpenStatus('opening');
@@ -150,6 +160,7 @@ export function LaunchersPage() {
     }
   }
 
+  // Ouvre le dossier d'installation du launcher dans l'explorateur de fichiers
   async function handleOpenFolder(l: LauncherDto) {
     setFolderOpeningId(l.id);
     setFolderStatus('opening');
@@ -169,6 +180,7 @@ export function LaunchersPage() {
     }
   }
 
+  // Applique recherche, filtre installé et tri à la liste de launchers
   const filteredLaunchers = launchers
     .filter((l) => !q || l.name.toLowerCase().includes(q))
     .filter((l) => installedFilter === 'all' || l.installed)

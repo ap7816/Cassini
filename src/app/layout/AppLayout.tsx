@@ -11,7 +11,7 @@ import { useSingleMeta } from '../../features/music/useTrackMeta';
 import { getEnriched } from '../../features/music/enrichMeta';
 import { Toasts } from '../../features/toast/Toasts';
 
-/* ─── Update banner ──────────────────────────────────────────── */
+// Bandeau de mise à jour affiché en haut de la sidebar quand une mise à jour est disponible ou en cours
 function UpdateBanner({ u }: { u: UpdaterState }) {
   const { t } = useTranslation();
   if (!u.available && !u.installing) return null;

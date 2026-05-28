@@ -2,13 +2,13 @@ use crate::steam_scan::GameDto;
 use winreg::enums::*;
 use winreg::RegKey;
 
-/// Scan Blizzard games via the Uninstall registry keys (works for all modern Battle.net games).
+// Scanne les jeux Blizzard via les clés Uninstall du registre Windows
 pub fn scan_battlenet_games() -> Result<Vec<GameDto>, String> {
     let mut games: Vec<GameDto> = Vec::new();
 
     scan_uninstall_keys(&mut games);
 
-    // Fallback: ancienne méthode via clé Blizzard Entertainment (jeux plus anciens)
+    // Fallback : ancienne méthode via la clé Blizzard Entertainment pour les jeux plus anciens
     if games.is_empty() {
         scan_blizzard_legacy_keys(&mut games);
     }
@@ -18,11 +18,11 @@ pub fn scan_battlenet_games() -> Result<Vec<GameDto>, String> {
     Ok(games)
 }
 
-/// Cherche dans HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall
-/// les entrées dont le Publisher contient "Blizzard".
+// Cherche dans les clés Uninstall les entrées dont le Publisher contient "Blizzard"
 fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
 
+    // Vérifie les deux branches (32 bits et 64 bits) du registre
     for uninstall_path in [
         r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
@@ -36,7 +36,7 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 continue;
             };
 
-            // Filtrer par Publisher = Blizzard Entertainment
+            // Filtre par éditeur : ne retient que les entrées Blizzard Entertainment
             let publisher: String = subkey
                 .get_value("Publisher")
                 .unwrap_or_default();
@@ -53,7 +53,7 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 continue;
             }
 
-            // Ignorer le launcher lui-même
+            // Ignore le launcher Battle.net lui-même, on ne veut que les jeux
             if display_name.to_lowercase().contains("battle.net") {
                 continue;
             }
@@ -62,13 +62,14 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 .get_value("InstallLocation")
                 .unwrap_or_default();
 
-            // Vérifier que le dossier existe si on en a un
+            // Vérifie que le dossier d'installation existe vraiment sur le disque
             if !install_location.is_empty()
                 && !std::path::Path::new(&install_location).is_dir()
             {
                 continue;
             }
 
+            // Dérive l'URL de lancement battlenet:// depuis le nom du jeu
             let launch_url = game_uid(&display_name).map(|uid| format!("battlenet://{uid}"));
             let id = format!(
                 "battlenet-{}",
@@ -88,7 +89,7 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
     }
 }
 
-/// Ancienne méthode : HKLM\SOFTWARE\WOW6432Node\Blizzard Entertainment\<Game>
+// Méthode legacy : cherche directement sous HKLM\SOFTWARE\WOW6432Node\Blizzard Entertainment
 fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
 
@@ -97,6 +98,7 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
     };
 
     for key_name in blizzard.enum_keys().flatten() {
+        // Ignore la sous-clé Battle.net (le launcher lui-même)
         if key_name.eq_ignore_ascii_case("Battle.net") {
             continue;
         }
@@ -109,6 +111,7 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
             continue;
         };
 
+        // Ignore les entrées dont le dossier n'existe plus (jeux désinstallés)
         if !std::path::Path::new(&install_path).is_dir() {
             continue;
         }
@@ -131,6 +134,7 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
     }
 }
 
+// Retourne l'identifiant Battle.net (UID) d'un jeu Blizzard connu à partir de son nom
 fn game_uid(name: &str) -> Option<&'static str> {
     match name.to_lowercase().trim() {
         "world of warcraft" => Some("Wow"),

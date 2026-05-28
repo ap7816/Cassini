@@ -4,11 +4,13 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
+// Scanne les jeux Epic Games installés en lisant les fichiers .item du dossier Manifests
 pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
     let manifests_path = find_manifests_path()
         .ok_or_else(|| "Epic Games Launcher not found on this PC.".to_string())?;
 
     let mut games: Vec<GameDto> = Vec::new();
+    // Évite les doublons si un même jeu apparaît dans plusieurs fichiers .item
     let mut seen_ids: HashSet<String> = HashSet::new();
 
     let entries = fs::read_dir(&manifests_path)
@@ -18,6 +20,7 @@ pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
         let Ok(entry) = entry else { continue };
         let path = entry.path();
 
+        // Traite uniquement les fichiers .item (manifestes de jeux Epic)
         if path.extension().and_then(|e| e.to_str()) != Some("item") {
             continue;
         }
@@ -37,15 +40,16 @@ pub fn scan_epic_games() -> Result<Vec<GameDto>, String> {
     Ok(games)
 }
 
+// Parse un fichier .item Epic et retourne un GameDto si c'est un jeu valide et installé
 fn parse_item_file(content: &str) -> Option<GameDto> {
     let v: Value = serde_json::from_str(content).ok()?;
 
-    // Seulement les vraies applis (jeux), pas les outils/plugins
+    // Filtre : seulement les vraies applications (jeux), exclut les outils et plugins DLC
     if v.get("bIsApplication").and_then(|b| b.as_bool()) != Some(true) {
         return None;
     }
 
-    // Ignorer les installations incomplètes
+    // Ignore les installations incomplètes ou corrompues
     if v.get("bIsIncompleteInstall").and_then(|b| b.as_bool()) == Some(true) {
         return None;
     }
@@ -57,8 +61,8 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         .unwrap_or(&app_name)
         .to_string();
 
-    // Vérifier que le dossier d'installation existe vraiment sur le disque
-    // (les .item restent après désinstallation)
+    // Vérifie que le dossier d'installation existe vraiment sur le disque
+    // (les fichiers .item persistent après désinstallation)
     let install_location = v.get("InstallLocation")?.as_str()?;
     if !std::path::Path::new(install_location).is_dir() {
         return None;
@@ -70,6 +74,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         platform: "Epic".to_string(),
         installed: true,
         last_played_at: None,
+        // URL de lancement via le protocole com.epicgames.launcher://
         launch_url: Some(format!(
             "com.epicgames.launcher://apps/{}?action=launch&silent=true",
             app_name
@@ -78,6 +83,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
     })
 }
 
+// Localise le dossier Manifests d'Epic Games Launcher dans ProgramData
 fn find_manifests_path() -> Option<PathBuf> {
     let programdata =
         std::env::var("PROGRAMDATA").unwrap_or_else(|_| r"C:\ProgramData".to_string());

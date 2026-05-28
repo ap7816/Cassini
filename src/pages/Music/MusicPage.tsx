@@ -13,7 +13,7 @@ type SortBy  = 'name' | 'dur' | 'ext';
 type SortDir = 'asc'  | 'desc';
 type TrackWithIdx = TrackDto & { originalIndex: number };
 
-/* ─── Color palette ─────────────────────────────────────────── */
+// Palette de couleurs disponibles pour personnaliser chaque dossier musical
 const PALETTE = [
   '#e6a817', // Jaune (défaut)
   '#e07020', // Orange
@@ -31,7 +31,7 @@ import { useDialog } from '../../hooks/useDialog';
 import { AppDialog } from '../../components/AppDialog/AppDialog';
 import { useToast } from '../../features/toast/ToastContext';
 
-/* ─── Tree ──────────────────────────────────────────────────── */
+// Structure arborescente représentant la hiérarchie des dossiers et pistes audio
 interface FolderNode {
   name: string;
   fullPath: string;
@@ -39,11 +39,13 @@ interface FolderNode {
   children: FolderNode[];
 }
 
+// Construit l'arbre de dossiers à partir des pistes et des dossiers vides connus
 function buildTree(tracks: TrackWithIdx[], extraDirs: string[] = []): FolderNode {
   const root: FolderNode = { name: '', fullPath: '', tracks: [], children: [] };
   const map = new Map<string, FolderNode>();
   map.set('', root);
 
+  // Crée récursivement les nœuds parents manquants si nécessaire
   function ensureNode(path: string): FolderNode {
     if (map.has(path)) return map.get(path)!;
     const parts = path.split('/');
@@ -57,11 +59,12 @@ function buildTree(tracks: TrackWithIdx[], extraDirs: string[] = []): FolderNode
   }
 
   for (const t of tracks) ensureNode(t.folder).tracks.push(t);
-  // Also ensure empty directories appear in the tree
+  // Inclut aussi les dossiers vides pour qu'ils apparaissent dans l'arbre
   for (const dir of extraDirs) if (dir) ensureNode(dir);
   return root;
 }
 
+// Traverse l'arbre en suivant le chemin de navigation et retourne le nœud correspondant
 function getNodeAtPath(tree: FolderNode, path: string[]): FolderNode {
   let node = tree;
   for (const seg of path) {
@@ -72,27 +75,30 @@ function getNodeAtPath(tree: FolderNode, path: string[]): FolderNode {
   return node;
 }
 
+// Vérifie si un nœud ou l'un de ses enfants contient la piste actuellement en lecture
 function hasActive(node: FolderNode, idx: number): boolean {
   if (node.tracks.some(t => t.originalIndex === idx)) return true;
   return node.children.some(c => hasActive(c, idx));
 }
 
+// Compte récursivement toutes les pistes dans un nœud et ses enfants
 function countTracks(node: FolderNode): number {
   return node.tracks.length + node.children.reduce((s, c) => s + countTracks(c), 0);
 }
 
-/* ─── Helpers ───────────────────────────────────────────────── */
+// Formate une durée en secondes au format MM:SS pour l'affichage
 function fmt(sec: number): string {
   if (!isFinite(sec) || isNaN(sec) || sec <= 0) return '';
   const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Construit un chemin absolu en combinant la racine et un chemin relatif
 function absPath(root: string, rel: string) {
   return rel ? `${root}/${rel}` : root;
 }
 
-/* ─── Equalizer ─────────────────────────────────────────────── */
+// Composant animé représentant un égaliseur graphique pour la piste en lecture
 function Equalizer() {
   return (
     <span className={css.equalizer} aria-hidden="true">
@@ -103,7 +109,7 @@ function Equalizer() {
   );
 }
 
-/* ─── Breadcrumb ────────────────────────────────────────────── */
+// Composant de navigation en fil d'Ariane pour le navigateur de dossiers
 function Breadcrumb({ rootName, path, onNavigate }: {
   rootName: string; path: string[]; onNavigate: (idx: number) => void;
 }) {
@@ -124,9 +130,10 @@ function Breadcrumb({ rootName, path, onNavigate }: {
   );
 }
 
-/* ─── Context menu ──────────────────────────────────────────── */
+// Menu contextuel affiché au clic-droit sur un dossier : couleur, renommer, supprimer
 type CtxMenu = { x: number; y: number; node: FolderNode };
 
+// Composant menu contextuel de dossier avec sélecteur de couleur natif et actions
 function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorPreview, onColorSave }: {
   menu: CtxMenu;
   currentColor: string;
@@ -140,7 +147,7 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
   const menuRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLInputElement>(null);
 
-  // Close when clicking outside
+  // Ferme le menu quand l'utilisateur clique en dehors
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
@@ -149,7 +156,7 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
     return () => window.removeEventListener('mousedown', h);
   }, [onClose]);
 
-  // Native 'change' fires only when the picker is dismissed → save then
+  // L'événement natif 'change' se déclenche uniquement à la fermeture du sélecteur → persiste alors
   useEffect(() => {
     const input = colorRef.current;
     if (!input) return;
@@ -192,7 +199,7 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
   );
 }
 
-/* ─── Folder card ───────────────────────────────────────────── */
+// Carte de dossier dans la grille : affiche l'égaliseur si actif, accepte le glisser-déposer
 function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClick, onContextMenu, onDragOver, onDragLeave, onDrop }: {
   folder: FolderNode; color: string; currentIndex: number; isPlaying: boolean;
   isDragOver: boolean;
@@ -230,7 +237,7 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
   );
 }
 
-/* ─── Track card ────────────────────────────────────────────── */
+// Carte de piste dans la grille : affiche la pochette (ID3 ou enrichie), l'artiste et la durée
 function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched }: {
   track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
   onSelect: () => void;
@@ -238,15 +245,16 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched
   enriched: EnrichedData | null;
 }) {
   const cardRef = useRef<HTMLButtonElement>(null);
+  // Charge la pochette ID3 uniquement quand la carte est visible (lazy loading)
   const coverArt = useLazyCoverArt(track.path, cardRef);
   const duration = meta?.durationSecs ?? undefined;
 
-  // Use embedded cover first; fall back to enriched URL
+  // Priorité pochette : ID3 embarquée > URL enrichie iTunes/Deezer
   const effectiveCover = coverArt ?? enriched?.coverUrl ?? null;
-  // Use tag artist first; fall back to enriched artist if missing
+  // Priorité artiste : tag ID3 > artiste enrichi
   const displayArtist = meta?.artist ?? enriched?.artist ?? null;
 
-  // Scroll active track into view
+  // Fait défiler automatiquement pour centrer la piste active dans la vue
   useEffect(() => {
     if (!isActive) return;
     const t = setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
@@ -292,7 +300,7 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched
   );
 }
 
-/* ─── Sort dropdown (style Explorateur Windows) ─────────────── */
+// Menu déroulant de tri : critère (nom/durée/type) et direction (croissant/décroissant)
 function SortDropdown({ sortBy, sortDir, onChange }: {
   sortBy: SortBy; sortDir: SortDir;
   onChange: (by: SortBy, dir: SortDir) => void;
@@ -345,7 +353,7 @@ function SortDropdown({ sortBy, sortDir, onChange }: {
   );
 }
 
-/* ─── Main page ─────────────────────────────────────────────── */
+// Page principale de la bibliothèque musicale : navigateur de dossiers, lecture et enrichissement
 export function MusicPage() {
   const { t } = useTranslation();
   const music = useMusicPlayer();
@@ -359,7 +367,7 @@ export function MusicPage() {
     paths: trackPaths, getMeta, enabled: !metaLoading,
   });
 
-  // Bar state derived from enrichProgress
+  // État de la barre de progression d'enrichissement dérivé d'enrichProgress
   const showBar          = enrichProgress !== null;
   const barLabel         = "Recherche d'illustrations…";
   const barDone          = enrichProgress?.done  ?? 0;
@@ -376,10 +384,10 @@ export function MusicPage() {
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const [allDirs, setAllDirs] = useState<string[]>([]);
 
-  // Reset path when root folder changes
+  // Réinitialise la navigation quand le dossier racine change
   useEffect(() => { setCurrentPath([]); }, [music.folderPath]);
 
-  // Load all subdirectory paths (including empty ones)
+  // Charge tous les sous-dossiers (y compris les vides) pour les afficher dans l'arbre
   useEffect(() => {
     if (!music.folderPath || music.loading) return;
     invoke<string[]>('list_music_dirs', { root: music.folderPath })
@@ -387,7 +395,7 @@ export function MusicPage() {
       .catch(() => setAllDirs([]));
   }, [music.folderPath, music.loading, music.tracks.length]);
 
-  // Handle ?navTo= from mini-player
+  // Gère le paramètre ?navTo= envoyé par le mini-lecteur pour naviguer vers la piste active
   useEffect(() => {
     const navTo = searchParams.get('navTo');
     if (!navTo) return;
@@ -396,6 +404,7 @@ export function MusicPage() {
     p.delete('navTo'); setSearchParams(p, { replace: true });
   }, [searchParams]);
 
+  // Met à jour le critère et la direction de tri dans les paramètres d'URL
   function setSort(by: SortBy, dir: SortDir) {
     const p = new URLSearchParams(searchParams);
     if (by  === 'name') p.delete('sb'); else p.set('sb', by);
@@ -403,6 +412,7 @@ export function MusicPage() {
     setSearchParams(p, { replace: true });
   }
 
+  // Ouvre un sélecteur de dossier natif et charge la bibliothèque musicale
   async function handleChooseFolder() {
     const selected = await open({ directory: true, multiple: false });
     if (selected && typeof selected === 'string') {
@@ -411,18 +421,18 @@ export function MusicPage() {
     }
   }
 
-  // ── Folder color ──────────────────────────────────────────────
+  // Retourne la couleur d'un dossier depuis la map locale ou la couleur par défaut
   const getFolderColor = useCallback(
     (fullPath: string) => folderColors[fullPath] ?? PALETTE[0],
     [folderColors],
   );
 
-  // Live preview while dragging: update React state only (no localStorage write)
+  // Prévisualisation live pendant la sélection : met à jour React uniquement, sans persister
   function previewFolderColor(folderPath: string, color: string) {
     setFolderColors(prev => ({ ...prev, [folderPath]: color }));
   }
 
-  // Called when the native picker is dismissed: persist to storage
+  // Appelé à la fermeture du sélecteur natif : persiste la couleur dans le stockage
   function saveFolderColor(folderPath: string, color: string) {
     setFolderColors(prev => {
       const next = { ...prev, [folderPath]: color };
@@ -431,7 +441,7 @@ export function MusicPage() {
     });
   }
 
-  // ── Create folder ─────────────────────────────────────────────
+  // Demande un nom via dialog et crée le sous-dossier dans le répertoire courant
   async function handleCreateFolder() {
     const name = await prompt(t('music.newFolderPrompt'));
     if (!name) return;
@@ -444,7 +454,7 @@ export function MusicPage() {
     } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
-  // ── Rename folder ─────────────────────────────────────────────
+  // Renomme un dossier et met à jour le chemin de navigation si celui-ci est un ancêtre courant
   async function handleRenameFolder(node: FolderNode) {
     const newName = await prompt(t('music.renameFolderPrompt'), node.name);
     if (!newName || newName === node.name) return;
@@ -453,7 +463,7 @@ export function MusicPage() {
     try {
       await invoke('rename_music_folder', { path: absPath(root, node.fullPath), newName });
 
-      // Update navigation path if the renamed folder is an ancestor of currentPath
+      // Met à jour le chemin de navigation si le dossier renommé est un ancêtre du chemin courant
       const nodeSegs = node.fullPath ? node.fullPath.split('/') : [];
       const matchesPrefix = nodeSegs.length > 0 && nodeSegs.every((seg, i) => currentPath[i] === seg);
       if (matchesPrefix) {
@@ -466,7 +476,7 @@ export function MusicPage() {
     } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
-  // ── Delete folder ─────────────────────────────────────────────
+  // Demande confirmation et supprime récursivement un dossier avec tout son contenu
   async function handleDeleteFolder(node: FolderNode) {
     const n = countTracks(node);
     const msg = n > 0
@@ -482,7 +492,7 @@ export function MusicPage() {
     } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
-  // ── Drag & drop ───────────────────────────────────────────────
+  // Déplace un fichier audio dans un dossier via glisser-déposer
   async function handleDropOnFolder(folder: FolderNode, e: React.DragEvent) {
     e.preventDefault();
     setDragOverPath(null);
@@ -495,12 +505,12 @@ export function MusicPage() {
     } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
   }
 
-  // ── Tree ──────────────────────────────────────────────────────
+  // Construction de l'arbre, du nœud courant et des listes triées
   const allTracks = useMemo(() => music.tracks.map((t, i) => ({ ...t, originalIndex: i })), [music.tracks]);
   const tree = useMemo(() => buildTree(allTracks, allDirs), [allTracks, allDirs]);
   const currentNode = useMemo(() => getNodeAtPath(tree, currentPath), [tree, currentPath]);
 
-  // Helpers d'extraction
+  // Extrait l'extension d'un chemin de fichier audio
   const trackExt = (path: string) => path.split('.').pop()?.toLowerCase() ?? '';
 
   const sortedFolders = useMemo(() => {
@@ -524,7 +534,7 @@ export function MusicPage() {
       }
       return dir * a.title.localeCompare(b.title); // 'name' (défaut)
     });
-    // getMeta reads from module-level cache; metaLoading triggers re-sort when batch completes
+    // getMeta lit depuis le cache module ; metaLoading force le re-tri quand le batch se termine
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNode.tracks, sortBy, sortDir, metaLoading]);
 

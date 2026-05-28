@@ -15,9 +15,11 @@ import { clearRawgCache } from '../../features/Library/services/rawgService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 
+// Dimensions maximales et qualité JPEG pour la compression des images de fond
 const MAX_DIM = 1920;
 const JPEG_QUALITY = 0.85;
 
+// Redimensionne et compresse une image choisie par l'utilisateur en JPEG base64 data-URL
 function compressImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -45,6 +47,7 @@ function compressImageFile(file: File): Promise<string> {
   });
 }
 
+// Palette des couleurs d'accent prédéfinies disponibles dans les paramètres
 const ACCENT_COLORS: { labelKey: string; value: string }[] = [
   { labelKey: 'settings.colorNeutre', value: '#e5e7eb' },
   { labelKey: 'settings.colorViolet', value: '#8b5cf6' },
@@ -55,13 +58,16 @@ const ACCENT_COLORS: { labelKey: string; value: string }[] = [
   { labelKey: 'settings.colorRouge', value: '#ef4444' },
 ];
 
+// Vérifie si une couleur hex correspond à une couleur prédéfinie de la palette
 const isPresetColor = (color: string) => ACCENT_COLORS.some((c) => c.value === color);
 
+// Page des paramètres avec filtrage par recherche et sections pour apparence, système et intégrations
 export function SettingsPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const q = (searchParams.get('q') ?? '').trim().toLowerCase();
 
+  // Retourne true si au moins une des clés i18n correspond à la recherche courante (ou si pas de recherche)
   function matches(...keys: string[]): boolean {
     if (!q) return true;
     return keys.some((k) => t(k).toLowerCase().includes(q));
@@ -91,6 +97,7 @@ export function SettingsPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
 
+  // Vérifie les mises à jour disponibles et propose de télécharger+installer si une existe
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
     try {
@@ -131,6 +138,7 @@ export function SettingsPage() {
     }
   }
 
+  // Charge, compresse et applique une image de fond choisie par l'utilisateur
   async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -149,12 +157,14 @@ export function SettingsPage() {
     }
   }
 
+  // Sauvegarde la clé API RAWG et affiche un feedback visuel temporaire
   function handleSaveRawgKey() {
     setRawgApiKey(rawgKeyInput.trim());
     setRawgKeySaved(true);
     setTimeout(() => setRawgKeySaved(false), 2000);
   }
 
+  // Vide le cache RAWG et réinitialise la clé API dans les paramètres
   function handleClearCache() {
     clearRawgCache();
     setRawgApiKey('');
@@ -163,12 +173,14 @@ export function SettingsPage() {
     setTimeout(() => setCacheCleared(false), 2000);
   }
 
+  // Vide le cache de navigation de la WebView (cookies, stockage, etc.)
   async function handleClearWebviewCache() {
     await getCurrentWebviewWindow().clearAllBrowsingData();
     setWebviewCacheCleared(true);
     setTimeout(() => setWebviewCacheCleared(false), 2000);
   }
 
+  // Efface toutes les données utilisateur après confirmation, en conservant la clé RAWG
   async function handleClearAllData() {
     const ok = await confirm(t('settings.clearAllConfirm'), { danger: true });
     if (!ok) return;
@@ -180,6 +192,7 @@ export function SettingsPage() {
     window.location.reload();
   }
 
+  // Change la langue de l'interface et met à jour l'état local
   function handleLanguageChange(lang: 'fr' | 'en') {
     setLanguage(lang);
     setCurrentLang(lang);
