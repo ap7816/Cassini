@@ -19,6 +19,8 @@ export const STORAGE_KEYS = {
   musicLastTrack:      'music_last_track',
   musicColors:         'music_folder_colors',
   musicEnrichedMeta:   'music_enriched_meta',
+  musicShuffle:        'music_shuffle',
+  musicRepeat:         'music_repeat',
   language:            'arctive.language',
   patchNotesSeen:      'arctive.patchNotes.seen',
 } as const;
@@ -162,6 +164,26 @@ export function readMusicFolderColors(): Record<string, string> {
 }
 export function writeMusicFolderColors(colors: Record<string, string>): void {
   writeJSON(STORAGE_KEYS.musicColors, colors);
+}
+
+// Lecture/écriture du mode aléatoire (shuffle) du lecteur
+export function readMusicShuffle(): boolean {
+  return rawRead(STORAGE_KEYS.musicShuffle) === 'true';
+}
+export function writeMusicShuffle(v: boolean): void {
+  rawWrite(STORAGE_KEYS.musicShuffle, String(v));
+}
+
+// Type des modes de répétition du lecteur
+export type RepeatMode = 'none' | 'one' | 'all';
+
+// Lecture/écriture du mode de répétition ('none' | 'one' | 'all')
+export function readMusicRepeat(): RepeatMode {
+  const v = rawRead(STORAGE_KEYS.musicRepeat);
+  return (v === 'one' || v === 'all') ? v : 'none';
+}
+export function writeMusicRepeat(v: RepeatMode): void {
+  rawWrite(STORAGE_KEYS.musicRepeat, v);
 }
 
 // Lecture/écriture des métadonnées enrichies (iTunes/Deezer) persistées entre les sessions

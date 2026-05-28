@@ -554,6 +554,15 @@ export function MusicPage() {
       {/* ── Header ── */}
       <div className={css.header}>
         <button className={css.chooseBtn} onClick={handleChooseFolder}>{t('music.chooseFolder')}</button>
+        {/* Recharge le dossier actuel sans en choisir un nouveau */}
+        {music.folderPath && (
+          <button
+            className={css.refreshBtn}
+            onClick={() => music.loadFolder(music.folderPath)}
+            disabled={music.loading}
+            title={t('music.refresh')}
+          >{t('music.refresh')}</button>
+        )}
         {folderName && <span className={css.selectedFolderName} title={music.folderPath}>{folderName}</span>}
         {music.loading && <span className={css.loadingText}>{t('music.scanning')}</span>}
         {!music.loading && music.tracks.length > 0 && (

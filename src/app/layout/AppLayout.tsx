@@ -111,9 +111,26 @@ export function AppLayout() {
 
   const volumeBarRef = useRef<HTMLDivElement>(null);
 
-  function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
+  // Drag sur la barre de progression : pause pendant le glisser pour éviter le scrubbing audio
+  function handleProgressMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    music.seekTo((e.clientX - rect.left) / rect.width);
+    function calc(clientX: number) {
+      return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    }
+    // Mémorise l'état et met en pause immédiatement — le seek reste silencieux
+    const wasPlaying = music.isPlaying;
+    if (wasPlaying) music.togglePlayPause();
+    music.seekTo(calc(e.clientX));
+    function onMove(ev: MouseEvent) { music.seekTo(calc(ev.clientX)); }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      // Reprend la lecture uniquement si elle était active avant le drag
+      if (wasPlaying) music.togglePlayPause();
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   }
 
   function handleVolumeMouseDown(e: React.MouseEvent<HTMLDivElement>) {
@@ -239,34 +256,59 @@ export function AppLayout() {
             </div>
 
             <div className={css.miniControls}>
+              {/* Shuffle : actif = surligné avec accent */}
+              <button
+                className={`${css.miniBtn} ${music.shuffleMode ? css.miniBtnActive : ''}`}
+                onClick={music.toggleShuffle}
+                title={music.shuffleMode ? 'Aléatoire activé' : 'Aléatoire désactivé'}
+              >🔀</button>
+
+              {/* Précédent : désactivé en séquentiel sans repeat sur la première piste */}
               <button
                 className={css.miniBtn}
                 onClick={music.prevTrack}
-                disabled={music.currentIndex <= 0}
+                disabled={!music.shuffleMode && music.currentIndex <= 0 && music.repeatMode !== 'all'}
                 title="Précédent"
               >⏮</button>
+
               <button
                 className={`${css.miniBtn} ${css.miniPlayBtn}`}
                 onClick={music.togglePlayPause}
                 title={music.isPlaying ? 'Pause' : 'Lecture'}
               >{music.isPlaying ? '⏸' : '▶'}</button>
+
+              {/* Suivant : désactivé en séquentiel sans repeat sur la dernière piste */}
               <button
                 className={css.miniBtn}
                 onClick={music.nextTrack}
-                disabled={music.currentIndex >= music.tracks.length - 1}
+                disabled={!music.shuffleMode && music.currentIndex >= music.tracks.length - 1 && music.repeatMode !== 'all'}
                 title="Suivant"
               >⏭</button>
+
+              {/* Repeat : 🔂 = one, 🔁 = all/none ; actif si repeat ≠ none */}
+              <button
+                className={`${css.miniBtn} ${music.repeatMode !== 'none' ? css.miniBtnActive : ''}`}
+                onClick={music.cycleRepeat}
+                title={
+                  music.repeatMode === 'none' ? 'Répétition désactivée'
+                  : music.repeatMode === 'all' ? 'Répéter tout'
+                  : 'Répéter la piste'
+                }
+              >{music.repeatMode === 'one' ? '🔂' : '🔁'}</button>
             </div>
 
             <div className={css.miniProgress}>
               <span className={css.miniTime}>{formatTime(music.progress)}</span>
               <div
                 className={css.miniProgressBar}
-                onClick={handleProgressClick}
+                onMouseDown={handleProgressMouseDown}
                 style={{
                   background: `linear-gradient(to right, var(--accent, #6c8efb) 0%, var(--accent, #6c8efb) ${progressPct}%, rgba(255,255,255,0.18) ${progressPct}%, rgba(255,255,255,0.18) 100%)`,
                 }}
-              />
+              >
+                {/* Rond de position — suit la progression, cliquable/draggable via le parent */}
+                <div className={css.miniProgressThumb} style={{ left: `${progressPct}%` }} />
+              </div>
               <span className={css.miniTime}>{formatTime(music.duration)}</span>
             </div>
 
@@ -280,7 +322,9 @@ export function AppLayout() {
                 style={{
                   background: `linear-gradient(to right, var(--accent, #6c8efb) 0%, var(--accent, #6c8efb) ${volPct}%, rgba(255,255,255,0.22) ${volPct}%, rgba(255,255,255,0.22) 100%)`,
                 }}
-              />
+              >
+                <div className={css.miniVolumeThumb} style={{ left: `${volPct}%` }} />
+              </div>
             </div>
 
             <button

@@ -88,6 +88,7 @@
   },
   "music": {
     "chooseFolder": "Choose folder",
+    "refresh": "↻ Refresh",
     "scanning": "Scanning…",
     "trackCount": "{{count}} track(s)",
     "noAudio": "No audio files found.",
@@ -185,8 +186,14 @@
       "new_0": "Automatic artwork search via iTunes for all music tracks",
       "new_1": "Online artwork now appears in the mini-player at the bottom of the screen",
       "new_2": "App launch progress bar now fills from 0 to 100 % smoothly",
+      "new_3": "Shuffle and repeat modes (none / all / one) for the music player",
+      "new_4": "Shuffle 🔀 and repeat 🔁/🔂 buttons in the mini-player, state saved between sessions",
+      "new_5": "Draggable thumb on the mini-player progress and volume bars",
+      "new_6": "Refresh button on the Music page to rescan the folder without reselecting it",
       "fix_0": "Steam game images stay visible even after uninstalling the game",
       "fix_1": "Music enrichment now processes all tracks from app startup",
+      "fix_2": "No more audio scrubbing when dragging the progress bar (auto-pause during drag)",
+      "fix_3": "Play/pause reliably resumes after seeking (DOM state used instead of stale React state)",
       "perf_0": "Stricter artwork matching: shows nothing rather than a wrong cover"
     },
     "v1_1_1": {

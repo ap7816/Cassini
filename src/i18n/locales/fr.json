@@ -88,6 +88,7 @@
   },
   "music": {
     "chooseFolder": "Choisir un dossier",
+    "refresh": "↻ Actualiser",
     "scanning": "Scan en cours…",
     "trackCount": "{{count}} piste(s)",
     "noAudio": "Aucun fichier audio trouvé.",
@@ -185,8 +186,14 @@
       "new_0": "Recherche automatique de pochettes via iTunes pour toutes les pistes musicales",
       "new_1": "La pochette trouvée en ligne s'affiche dans le mini-lecteur en bas de l'écran",
       "new_2": "Barre de chargement au lancement de 0 à 100 % (remplace l'animation gauche-droite)",
+      "new_3": "Mode aléatoire (shuffle) et répétition (none / tout / piste) pour le lecteur musical",
+      "new_4": "Boutons shuffle 🔀 et repeat 🔁/🔂 dans le mini-lecteur, état sauvegardé entre les sessions",
+      "new_5": "Rond de position draggable sur les barres de progression et de volume du mini-lecteur",
+      "new_6": "Bouton Actualiser sur la page Musique pour rescanner le dossier sans le rechoisir",
       "fix_0": "Les images des jeux Steam restent affichées même après désinstallation",
       "fix_1": "L'enrichissement musical traite désormais toutes les pistes dès le démarrage",
+      "fix_2": "Plus de son parasite lors du glisser sur la barre de progression (pause auto pendant le drag)",
+      "fix_3": "Lecture/pause fiable après un seek (état DOM utilisé à la place du state React périmé)",
       "perf_0": "Correspondance plus stricte : affiche rien plutôt qu'une mauvaise pochette"
     },
     "v1_1_1": {

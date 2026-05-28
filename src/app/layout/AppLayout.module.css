@@ -335,6 +335,18 @@
   color: #0f141a;
 }
 
+/* Bouton actif (shuffle activé ou repeat ≠ none) */
+.miniBtnActive {
+  background: rgba(108, 142, 251, 0.2);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 70%, transparent);
+  color: var(--accent, #6c8efb);
+}
+
+.miniBtnActive:hover:not(:disabled) {
+  background: rgba(108, 142, 251, 0.35);
+  color: var(--accent, #6c8efb);
+}
+
 .miniProgress {
   display: flex;
   align-items: center;
@@ -352,10 +364,31 @@
 
 .miniProgressBar {
   flex: 1;
-  height: 5px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   cursor: pointer;
   min-width: 60px;
+  position: relative;
+  overflow: visible;
+}
+
+/* Rond de position qui suit la progression */
+.miniProgressThumb {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--accent, #6c8efb);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.1s;
+}
+
+.miniProgressBar:hover .miniProgressThumb {
+  transform: translate(-50%, -50%) scale(1.25);
 }
 
 .miniVolume {
@@ -372,11 +405,32 @@
 
 .miniVolumeBar {
   width: 70px;
-  height: 5px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   cursor: ew-resize;
   user-select: none;
   flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+}
+
+/* Rond de position pour la barre de volume */
+.miniVolumeThumb {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--accent, #6c8efb);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.1s;
+}
+
+.miniVolumeBar:hover .miniVolumeThumb {
+  transform: translate(-50%, -50%) scale(1.25);
 }
 
 .miniStopBtn {
