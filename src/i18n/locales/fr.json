@@ -199,6 +199,14 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v1_1_3": {
+      "new_0": "Section « Récemment écoutés » dans la page Musique (10 dernières pistes, persistées, mise à jour automatiquement)",
+      "new_1": "Animations de transition entre les pages (fondu + glissement vers le haut)",
+      "new_2": "Mini-lecteur animé : apparition par le bas au démarrage d'une piste, disparition à l'arrêt",
+      "fix_0": "Les boutons du mini-lecteur ne se décalent plus selon la longueur du titre",
+      "fix_1": "Correction d'un problème empêchant l'app de rester en arrière-plan à la fermeture (permission manquante)",
+      "change_0": "Refonte visuelle globale : sidebar, typographie, scrollbars, focus, animations de survol"
+    },
     "v1_1_2": {
       "new_0": "Recherche automatique de pochettes via iTunes pour toutes les pistes musicales",
       "new_1": "La pochette trouvée en ligne s'affiche dans le mini-lecteur en bas de l'écran",

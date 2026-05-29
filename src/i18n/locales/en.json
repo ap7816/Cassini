@@ -199,6 +199,14 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v1_1_3": {
+      "new_0": "\"Recently played\" section on the Music page (last 10 tracks, persisted, updated automatically)",
+      "new_1": "Page transition animations (fade + slide up on route change)",
+      "new_2": "Animated mini-player: slides up when a track starts, slides down when stopped",
+      "fix_0": "Mini-player buttons no longer shift depending on the track title length",
+      "fix_1": "Fixed app not staying in background on close (missing permission)",
+      "change_0": "Global visual redesign: sidebar, typography, scrollbars, focus rings, hover animations"
+    },
     "v1_1_2": {
       "new_0": "Automatic artwork search via iTunes for all music tracks",
       "new_1": "Online artwork now appears in the mini-player at the bottom of the screen",

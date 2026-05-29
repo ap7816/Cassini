@@ -88,12 +88,15 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Image de fond personnalisée avec opacité réglable                | ✅ Done    |
 | Réinitialisation complète de l'appli                             | ✅ Done    |
 | Architecture deux-repos (`.exe` privé + `latest.json` public)    | ✅ Done    |
-| Page Mini-jeu avec intégration Unity WebGL (Netlify)             | ✅ Done    |
 | Lecteur de musique MP3 avec scan récursif des sous-dossiers      | ✅ Done    |
 | Lecteur: dossiers repliables, recherche, mini-player persistant  | ✅ Done    |
 | Lecteur: mémorisation dernière piste + volume                    | ✅ Done    |
 | Lancement automatique au démarrage de Windows                    | ✅ Done    |
 | Rester en arrière-plan (icône tray)                              | ✅ Done    |
+| Lecteur: section « Récemment écoutés » (10 dernières pistes)     | ✅ Done    |
+| Animations de transition entre pages                             | ✅ Done    |
+| Mini-lecteur animé (slide-up/down)                               | ✅ Done    |
+| Refonte visuelle globale (sidebar, typo, scrollbars, animations) | ✅ Done    |
 | Taille des jeux sur disque                                       | ❌ À faire |
 | Vue Système Solaire                                              | ❌ À faire |
 | Statistiques de jeu (temps joué, graphiques)                     | ❌ À faire |
@@ -119,7 +122,7 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Lecteur: affichage pochette d'album (ID3 tags embarqués)         | ✅ Done    |
 | Lecteur: enrichissement iTunes (pochette en ligne pour toutes)   | ✅ Done    |
 | Lecteur: pochette enrichie visible dans le mini-lecteur          | ✅ Done    |
-| Lecteur: mode aléatoire / répétition                             | ❌ À faire |
+| Lecteur: mode aléatoire / répétition                             | ✅ Done    |
 | Lecteur: arborescence / grandes icônes de dossier                | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans)                      | ❌ À faire |
 
@@ -164,9 +167,6 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 - **Notes par jeu**
   Ajouter `notes: string` dans le type `Game`. UI : zone de texte dans un panneau latéral ou modal ouvert depuis `GameCard` (bouton "📝"). Auto-save avec debounce 500 ms. Les notes sont stockées en `localStorage` comme les autres données utilisateur. Afficher un indicateur visuel (point coloré) sur les cartes qui ont des notes.
-
-- **Lecteur : mode shuffle / repeat**
-  Dans `MusicContext`, ajouter `shuffleMode: boolean` et `repeatMode: 'none' | 'one' | 'all'`. Quand shuffle est actif, `nextTrack()` pioche un index aléatoire parmi les pistes restantes (avec mémoire pour ne pas repasser deux fois la même). Boutons dans le mini-player et dans `MusicPage`. Icônes : 🔀 shuffle, 🔁 repeat all, 🔂 repeat one. Mémoriser les modes en `localStorage`.
 
 - **Lecteur : arborescence / grandes icônes de dossier**
   Vue alternative dans `MusicPage` (bouton toggle). Mode "grandes icônes" : afficher chaque dossier comme une tuile avec la pochette du premier album trouvé, le nom du dossier et le nombre de pistes. Clic → déplie les pistes en dessous (accordion). Utile quand on a beaucoup de dossiers et qu'on veut naviguer visuellement.
