@@ -118,7 +118,8 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Mise à jour du statut installé en temps réel                     | ❌ À faire |
 | Cache RAWG avec TTL (expiration automatique)                     | ❌ À faire |
 | Lecteur: couleur personnalisée par dossier (clic droit)          | ✅ Done    |
-| Lecteur: glisser-déposer de pistes entre dossiers                | ✅ Done    |
+| Lecteur: déplacer une piste via clic droit → modale de sélection | ✅ Done    |
+| Lecteur: clic sur le titre du mini-lecteur → navigue dans le bon dossier | ✅ Done    |
 | Lecteur: affichage pochette d'album (ID3 tags embarqués)         | ✅ Done    |
 | Lecteur: enrichissement iTunes (pochette en ligne pour toutes)   | ✅ Done    |
 | Lecteur: pochette enrichie visible dans le mini-lecteur          | ✅ Done    |

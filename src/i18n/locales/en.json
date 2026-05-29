@@ -205,58 +205,60 @@
   },
   "changelog": {
     "v1_1_3": {
-      "new_0": "\"Recently played\" section on the Music page (last 10 tracks, persisted, updated automatically)",
-      "new_1": "Page transition animations (fade + slide up on route change)",
-      "new_2": "Animated mini-player: slides up when a track starts, slides down when stopped",
-      "fix_0": "Mini-player buttons no longer shift depending on the track title length",
-      "fix_1": "Fixed app not staying in background on close (missing permission)",
-      "change_0": "Global visual redesign: sidebar, typography, scrollbars, focus rings, hover animations"
+      "new_0": "[Music] \"Recently played\" strip: last 10 tracks, persisted across sessions and updated automatically",
+      "new_1": "[Navigation] Page transition animations (smooth fade on every route change)",
+      "new_2": "[Mini-player] Animated bar: slides up when a track starts, slides down when stopped",
+      "new_3": "[Music] Right-click a track → \"Move to…\": folder picker modal with search",
+      "fix_0": "[Mini-player] Play/pause/prev/next buttons no longer shift based on track title length",
+      "fix_1": "[Settings → System] App now correctly stays in background on window close (missing permission fixed)",
+      "fix_2": "[Mini-player] Clicking the track title now navigates to the correct folder (no more root redirect or flickering)",
+      "change_0": "[Global] Visual redesign: sidebar, typography, scrollbars, focus rings, hover animations"
     },
     "v1_1_2": {
-      "new_0": "Automatic artwork search via iTunes for all music tracks",
-      "new_1": "Online artwork now appears in the mini-player at the bottom of the screen",
-      "new_2": "App launch progress bar now fills from 0 to 100 % smoothly",
-      "new_3": "Shuffle and repeat modes (none / all / one) for the music player",
-      "new_4": "Shuffle 🔀 and repeat 🔁/🔂 buttons in the mini-player, state saved between sessions",
-      "new_5": "Draggable thumb on the mini-player progress and volume bars",
-      "new_6": "Refresh button on the Music page to rescan the folder without reselecting it",
-      "fix_0": "Steam game images stay visible even after uninstalling the game",
-      "fix_1": "Music enrichment now processes all tracks from app startup",
-      "fix_2": "No more audio scrubbing when dragging the progress bar (auto-pause during drag)",
-      "fix_3": "Play/pause reliably resumes after seeking (DOM state used instead of stale React state)",
-      "perf_0": "Stricter artwork matching: shows nothing rather than a wrong cover"
+      "new_0": "[Music] Automatic artwork search via iTunes for all tracks",
+      "new_1": "[Mini-player] Online artwork now displayed in the bottom bar",
+      "new_2": "[Startup] Launch progress bar fills from 0 to 100% (replaces left-right sweep)",
+      "new_3": "[Music] Shuffle and repeat modes (off / all / one track)",
+      "new_4": "[Mini-player] Shuffle 🔀 and repeat 🔁/🔂 buttons, state saved between sessions",
+      "new_5": "[Mini-player] Draggable thumb on progress and volume bars",
+      "new_6": "[Music] Refresh button to rescan the folder without reselecting it",
+      "fix_0": "[Library] Steam game images stay visible even after uninstalling",
+      "fix_1": "[Music] Enrichment now processes all tracks from app startup",
+      "fix_2": "[Mini-player] No more audio scrubbing when dragging the progress bar",
+      "fix_3": "[Mini-player] Play/pause reliably resumes after seeking",
+      "perf_0": "[Music] Stricter artwork matching: nothing shown rather than a wrong cover"
     },
     "v1_1_1": {
-      "new_0": "Release notes shown on every new version",
-      "perf_0": "Large music libraries load much faster",
-      "perf_1": "Album artwork loads gradually as you scroll",
-      "perf_2": "Progress bar while track information is loading",
+      "new_0": "[Settings] Release notes displayed on every new version",
+      "perf_0": "[Music] Large music libraries load much faster",
+      "perf_1": "[Music] Album artwork loads progressively as you scroll",
+      "perf_2": "[Music] Progress bar while track metadata is loading",
       "fix_0": "Minor bug fixes"
     },
     "v1_1_0": {
-      "new_0": "Track information (title, artist, album, duration) now displays automatically",
-      "new_1": "Album artwork shown in full on track cards, with duration overlaid",
-      "new_2": "Text stays readable even on tracks with light-coloured artwork",
-      "new_3": "Support for the .opus audio format"
+      "new_0": "[Music] Track info (title, artist, album, duration) displayed automatically",
+      "new_1": "[Music] Full album artwork on track cards with duration overlay",
+      "new_2": "[Music] Text stays readable on light-coloured artwork",
+      "new_3": "[Music] Support for the .opus audio format"
     },
     "v1_0_51": {
-      "new_0": "Built-in dialogs, no more browser popups",
-      "new_1": "Visual notifications for confirmations and action feedback",
-      "new_2": "Update notification with download progress",
-      "new_3": "Persistent mini-player with artwork, artist name and volume control",
-      "new_4": "Customisable colour per music folder via right-click",
-      "new_5": "Drag and drop tracks between folders",
-      "change_0": "Track durations stay visible when navigating between pages",
-      "change_1": "Sort tracks by name, duration or file type"
+      "new_0": "[Global] Built-in dialogs, no more browser popups",
+      "new_1": "[Global] Visual notifications for confirmations and action feedback",
+      "new_2": "[Settings] Update available notification with download progress",
+      "new_3": "[Mini-player] Artwork, artist name and volume control in the persistent bar",
+      "new_4": "[Music] Customisable colour per folder via right-click",
+      "new_5": "[Music] Drag and drop tracks between folders",
+      "change_0": "[Music] Track durations stay visible when navigating between pages",
+      "change_1": "[Music] Sort tracks by name, duration or file type"
     },
     "v1_0_0": {
-      "new_0": "Game library with automatic detection of Steam, Epic Games and Battle.net",
-      "new_1": "Built-in music player with folder management",
-      "new_2": "Automatic detection of installed launchers",
-      "new_3": "Customisable background image and accent colour",
-      "new_4": "Automatic launch of ArcHive on Windows startup",
-      "new_5": "Minimise to system tray when closing the window",
-      "new_6": "Available in French and English"
+      "new_0": "[Library] Game library with automatic detection of Steam, Epic Games and Battle.net",
+      "new_1": "[Music] Built-in music player with folder management",
+      "new_2": "[Launchers] Automatic detection of installed launchers",
+      "new_3": "[Settings] Customisable background image and accent colour",
+      "new_4": "[Settings] Automatic launch of ArcHive on Windows startup",
+      "new_5": "[Settings] Minimise to system tray when closing the window",
+      "new_6": "[Global] Available in French and English"
     }
   },
   "updater": {
