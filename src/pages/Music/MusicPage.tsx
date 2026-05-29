@@ -369,7 +369,7 @@ export function MusicPage() {
 
   // État de la barre de progression d'enrichissement dérivé d'enrichProgress
   const showBar          = enrichProgress !== null;
-  const barLabel         = "Recherche d'illustrations…";
+  const barLabel         = t('music.enrichSearching');
   const barDone          = enrichProgress?.done  ?? 0;
   const barTotal         = enrichProgress?.total ?? 1;
   const barPct           = barTotal > 0 ? Math.round((barDone / barTotal) * 100) : 0;
@@ -707,7 +707,7 @@ export function MusicPage() {
           <span className={css.enrichBarLabel}>{barLabel}</span>
 
           <span className={css.enrichBarPct}>
-            {barIndeterminate ? 'En cours…' : `${barPct} %`}
+            {barIndeterminate ? t('music.enrichInProgress') : `${barPct} %`}
           </span>
 
           <div className={css.enrichBarTrack}>

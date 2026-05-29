@@ -1,6 +1,6 @@
-import { NavLink, Outlet, useSearchParams, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import logo from '../../assets/favicon.png';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
@@ -51,6 +51,7 @@ export function AppLayout() {
   ];
 
   const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(navItems, 900);
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get('q') ?? '';
 
@@ -102,9 +103,36 @@ export function AppLayout() {
   const music = useMusicPlayer();
   const progressPct = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
   const currentTrack = music.currentIndex >= 0 ? music.tracks[music.currentIndex] : null;
-  const miniMeta = useSingleMeta(currentTrack?.path ?? null);
+
+  // Conserve la dernière piste connue pour l'afficher pendant l'animation de sortie
+  const lastTrackRef = useRef(currentTrack);
+  if (currentTrack) lastTrackRef.current = currentTrack;
+  const displayTrack = currentTrack ?? lastTrackRef.current;
+
+  // Gère le fade-out du mini-player quand la piste s'arrête
+  const [playerVisible, setPlayerVisible] = useState(false);
+  const [playerLeaving, setPlayerLeaving] = useState(false);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (currentTrack) {
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+      setPlayerLeaving(false);
+      setPlayerVisible(true);
+    } else if (playerVisible) {
+      setPlayerLeaving(true);
+      leaveTimerRef.current = setTimeout(() => {
+        setPlayerVisible(false);
+        setPlayerLeaving(false);
+      }, 280);
+    }
+    return () => { if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTrack]);
+
+  const miniMeta = useSingleMeta(displayTrack?.path ?? null);
   // Cover enrichie (iTunes/Deezer) utilisée si pas de cover embarquée dans le fichier
-  const enrichedCover = currentTrack ? (getEnriched(currentTrack.path)?.coverUrl ?? null) : null;
+  const enrichedCover = displayTrack ? (getEnriched(displayTrack.path)?.coverUrl ?? null) : null;
   const miniCover = miniMeta?.coverDataUrl ?? enrichedCover;
   const volPct = music.volume * 100;
 
@@ -229,12 +257,15 @@ export function AppLayout() {
         </header>
 
         <section className={css.content}>
-          <Outlet />
+          {/* Clé = location.key → force le remount de l'animation à chaque changement de route */}
+          <div key={location.key} className={css.pageTransition}>
+            <Outlet />
+          </div>
         </section>
 
-        {/* Persistent mini-player */}
-        {currentTrack && (
-          <div className={css.miniPlayer}>
+        {/* Persistent mini-player — animé à l'entrée et à la sortie */}
+        {playerVisible && (
+          <div className={`${css.miniPlayer} ${playerLeaving ? css.miniPlayerLeaving : ''}`}>
             <div className={css.miniTrackInfo}>
               {miniCover
                 ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" />
@@ -242,14 +273,14 @@ export function AppLayout() {
               }
               <button
                 className={css.miniTitle}
-                title={currentTrack.title}
+                title={displayTrack?.title}
                 onClick={() => {
                   const folder = music.tracks[music.currentIndex]?.folder;
                   const params = folder ? `?navTo=${encodeURIComponent(folder)}` : '';
                   navigate('/music' + params);
                 }}
               >
-                <span className={css.miniTitleText}>{currentTrack.title}</span>
+                <span className={css.miniTitleText}>{displayTrack?.title}</span>
                 {miniMeta?.artist && <span className={css.miniArtist}>{miniMeta.artist}</span>}
               </button>
             </div>

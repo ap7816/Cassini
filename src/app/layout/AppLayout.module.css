@@ -1,3 +1,4 @@
+/* ── Shell ────────────────────────────────────────────────── */
 .shell {
   display: flex;
   height: 100vh;
@@ -23,98 +24,149 @@
   z-index: 1;
 }
 
-/* Sidebar */
+/* ── Sidebar ──────────────────────────────────────────────── */
 .sidebar {
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  gap: 16px;
+  padding: 16px 12px;
+  gap: 12px;
   box-sizing: border-box;
-  background: rgba(15, 20, 26, 1);
+  background: linear-gradient(
+    180deg,
+    rgba(12, 17, 24, 0.98) 0%,
+    rgba(10, 14, 20, 0.98) 100%
+  );
 }
 
 .sidebarDesktop {
-  width: 260px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  width: 220px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
 }
 
 .sidebarMobile {
-  width: 260px;
+  width: 220px;
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
   z-index: 50;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 160ms ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
 }
 
-.sidebarMobileOpen {
-  transform: translateX(0);
-}
-
-.sidebarMobileClosed {
-  transform: translateX(-110%);
-}
+.sidebarMobileOpen  { transform: translateX(0); }
+.sidebarMobileClosed { transform: translateX(-110%); }
 
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
   z-index: 40;
+  animation: backdropIn 200ms ease;
 }
 
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Brand ────────────────────────────────────────────────── */
 .brand {
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 14px 12px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
 }
 
 .logo {
-  width: 128px;
-  height: 128px;
-  margin-bottom: 8px;
+  width: 72px;
+  height: 72px;
   display: block;
+  filter: drop-shadow(0 4px 12px rgba(108, 142, 251, 0.2));
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 6px 18px rgba(108, 142, 251, 0.35));
+  transform: scale(1.04);
 }
 
 .brandSubtitle {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(224, 230, 240, 0.35);
 }
 
+/* ── Navigation ───────────────────────────────────────────── */
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .navItem {
   text-decoration: none;
-  color: inherit;
-  padding: 10px 12px;
+  color: rgba(224, 230, 240, 0.6);
+  padding: 9px 14px;
   border-radius: 10px;
   background: transparent;
   border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, padding-left 0.15s;
+  position: relative;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(224, 230, 240, 0.9);
 }
 
 .navItemActive {
-  background: color-mix(in srgb, var(--accent, #e5e7eb) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent, #e5e7eb) 30%, transparent);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 25%, transparent);
+  color: rgba(224, 230, 240, 0.95);
+  padding-left: 18px;
 }
 
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent, #6c8efb);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #6c8efb) 60%, transparent);
+}
+
+/* ── Sidebar footer ───────────────────────────────────────── */
 .sidebarFooter {
   margin-top: auto;
-  padding-top: 8px;
+  padding: 8px 4px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .muted {
-  font-size: 12px;
-  opacity: 0.65;
+  font-size: 11px;
+  color: rgba(224, 230, 240, 0.28);
+  letter-spacing: 0.03em;
 }
 
-/* Main */
+/* ── Main area ────────────────────────────────────────────── */
 .main {
   flex: 1;
   display: flex;
@@ -122,16 +174,19 @@
   min-width: 0;
 }
 
+/* ── Header ───────────────────────────────────────────────── */
 .header {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   box-sizing: border-box;
-  background: rgba(10, 14, 20, 0.55);
-  backdrop-filter: blur(16px);
+  background: rgba(8, 12, 18, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
 }
 
 .headerLeft {
@@ -142,28 +197,34 @@
 }
 
 .headerTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: rgba(224, 230, 240, 0.9);
 }
 
 .burger {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
   cursor: pointer;
-
-  /* Fix centrage */
   display: grid;
   place-items: center;
   padding: 0;
   line-height: 1;
-  font-size: 18px;
+  font-size: 17px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.burger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .burgerIcon {
@@ -172,43 +233,76 @@
 }
 
 .search {
-  width: min(520px, 55vw);
-  padding: 10px 12px;
+  width: min(480px, 50vw);
+  padding: 9px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
-  color: inherit;
-  outline: none;
-  box-shadow: none;
+  color: rgba(224, 230, 240, 0.85);
+  font-size: 0.875rem;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
+.search::placeholder {
+  color: rgba(224, 230, 240, 0.28);
+}
+
+.search:focus {
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 50%, transparent);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6c8efb) 15%, transparent);
+  outline: none;
+}
+
+/* ── Page content ─────────────────────────────────────────── */
 .content {
   flex: 1;
-  padding: 16px;
   overflow: auto;
   min-width: 0;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
 }
 
-@media (max-width: 900px) {
-  .search {
-    width: min(420px, 60vw);
+/* Wrapper animé — remplacé à chaque changement de route via key */
+.pageTransition {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  animation: pageEnter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  min-height: 0;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* ─── Mini Player ─────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .search { width: min(380px, 56vw); }
+}
+
+/* ── Mini Player ──────────────────────────────────────────── */
 .miniPlayer {
+  animation: playerSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 18px;
-  background: rgba(8, 12, 18, 0.97);
-  border-top: 1px solid rgba(108, 142, 251, 0.25);
+  padding: 10px 20px;
+  background: rgba(6, 10, 16, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -1px 0 0 color-mix(in srgb, var(--accent, #6c8efb) 20%, transparent),
+              0 -8px 24px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
   flex-wrap: nowrap;
-  min-height: 52px;
+  min-height: 56px;
   position: relative;
   z-index: 10;
 }
@@ -216,33 +310,34 @@
 .miniTrackInfo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 150px;
-  max-width: 220px;
-  flex-shrink: 0;
+  gap: 10px;
+  /* Largeur fixe — empêche le titre de déplacer les contrôles */
+  flex: 0 0 200px;
+  width: 200px;
   overflow: hidden;
 }
 
 .miniArt {
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .miniArtPlaceholder {
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  color: rgba(224, 230, 240, 0.3);
+  color: rgba(224, 230, 240, 0.25);
   flex-shrink: 0;
 }
 
@@ -250,7 +345,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
   background: none;
@@ -259,7 +354,6 @@
   cursor: pointer;
   text-align: left;
   overflow: hidden;
-  transition: opacity 0.15s;
 }
 
 .miniTitle:hover .miniTitleText {
@@ -268,7 +362,8 @@
 
 .miniTitleText {
   font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.85);
+  font-weight: 500;
+  color: rgba(224, 230, 240, 0.88);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -278,7 +373,7 @@
 
 .miniArtist {
   font-size: 0.68rem;
-  color: rgba(224, 230, 240, 0.42);
+  color: rgba(224, 230, 240, 0.38);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -287,7 +382,7 @@
 
 .miniFolderTag {
   font-size: 0.7rem;
-  background: rgba(108, 142, 251, 0.2);
+  background: rgba(108, 142, 251, 0.18);
   color: var(--accent, #6c8efb);
   padding: 1px 6px;
   border-radius: 4px;
@@ -295,71 +390,83 @@
   flex-shrink: 0;
 }
 
+/* ── Mini controls ────────────────────────────────────────── */
 .miniControls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
 }
 
 .miniBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-  color: #e0e6f0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(224, 230, 240, 0.7);
   cursor: pointer;
-  font-size: 0.85rem;
-  padding: 4px 9px;
+  font-size: 0.82rem;
+  padding: 5px 10px;
   line-height: 1;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.1s;
 }
 
 .miniBtn:hover:not(:disabled) {
-  background: rgba(108, 142, 251, 0.2);
+  background: rgba(108, 142, 251, 0.15);
+  border-color: rgba(108, 142, 251, 0.25);
   color: var(--accent, #6c8efb);
+  transform: scale(1.05);
+}
+
+.miniBtn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .miniBtn:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: default;
 }
 
 .miniPlayBtn {
-  background: rgba(108, 142, 251, 0.18);
-  border-color: var(--accent, #6c8efb);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
   color: var(--accent, #6c8efb);
+  padding: 5px 14px;
 }
 
 .miniPlayBtn:hover:not(:disabled) {
   background: var(--accent, #6c8efb);
-  color: #0f141a;
+  border-color: var(--accent, #6c8efb);
+  color: #0b0f16;
 }
 
-/* Bouton actif (shuffle activé ou repeat ≠ none) */
+/* Bouton actif : shuffle on ou repeat ≠ none */
 .miniBtnActive {
-  background: rgba(108, 142, 251, 0.2);
-  border-color: color-mix(in srgb, var(--accent, #6c8efb) 70%, transparent);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
   color: var(--accent, #6c8efb);
 }
 
 .miniBtnActive:hover:not(:disabled) {
-  background: rgba(108, 142, 251, 0.35);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 28%, transparent);
   color: var(--accent, #6c8efb);
 }
 
+/* ── Barre de progression ─────────────────────────────────── */
 .miniProgress {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
   min-width: 100px;
 }
 
 .miniTime {
-  font-size: 0.7rem;
-  color: rgba(224, 230, 240, 0.6);
+  font-size: 0.68rem;
+  color: rgba(224, 230, 240, 0.4);
   white-space: nowrap;
-  min-width: 28px;
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .miniProgressBar {
@@ -370,9 +477,13 @@
   min-width: 60px;
   position: relative;
   overflow: visible;
+  transition: height 0.15s;
 }
 
-/* Rond de position qui suit la progression */
+.miniProgressBar:hover {
+  height: 10px;
+}
+
 .miniProgressThumb {
   position: absolute;
   top: 50%;
@@ -381,30 +492,36 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--accent, #6c8efb);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0);
   pointer-events: none;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-  transition: transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .miniProgressBar:hover .miniProgressThumb {
-  transform: translate(-50%, -50%) scale(1.25);
+  transform: translate(-50%, -50%) scale(1);
 }
 
+/* ── Barre de volume ──────────────────────────────────────── */
 .miniVolume {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .miniVolumeIcon {
-  font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.7);
+  font-size: 0.82rem;
+  color: rgba(224, 230, 240, 0.5);
+  transition: color 0.15s;
+}
+
+.miniVolume:hover .miniVolumeIcon {
+  color: rgba(224, 230, 240, 0.8);
 }
 
 .miniVolumeBar {
-  width: 70px;
+  width: 72px;
   height: 8px;
   border-radius: 4px;
   cursor: ew-resize;
@@ -412,9 +529,13 @@
   flex-shrink: 0;
   position: relative;
   overflow: visible;
+  transition: height 0.15s;
 }
 
-/* Rond de position pour la barre de volume */
+.miniVolumeBar:hover {
+  height: 10px;
+}
+
 .miniVolumeThumb {
   position: absolute;
   top: 50%;
@@ -423,52 +544,83 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--accent, #6c8efb);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0);
   pointer-events: none;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
-  transition: transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .miniVolumeBar:hover .miniVolumeThumb {
-  transform: translate(-50%, -50%) scale(1.25);
+  transform: translate(-50%, -50%) scale(1);
 }
 
+/* Animation sortie mini-player */
+.miniPlayerLeaving {
+  animation: playerSlideDown 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes playerSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes playerSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+/* ── Bouton stop ──────────────────────────────────────────── */
 .miniStopBtn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
-  color: rgba(224, 230, 240, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(224, 230, 240, 0.35);
   cursor: pointer;
-  font-size: 0.75rem;
-  padding: 4px 8px;
+  font-size: 0.72rem;
+  padding: 5px 9px;
   line-height: 1;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
   flex-shrink: 0;
 }
 
 .miniStopBtn:hover {
-  background: rgba(220, 60, 60, 0.18);
-  border-color: rgba(220, 60, 60, 0.4);
+  background: rgba(220, 60, 60, 0.15);
+  border-color: rgba(220, 60, 60, 0.35);
   color: #ff7a7a;
 }
 
-/* ─── Update banner ───────────────────────────────────────── */
+/* ── Update banner ────────────────────────────────────────── */
 .updateBanner {
   position: fixed;
-  top: 72px;
-  right: 18px;
+  top: 68px;
+  right: 16px;
   z-index: 9001;
-  width: 270px;
-  background: rgba(16, 20, 34, 0.98);
-  border: 1px solid color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
-  border-radius: 12px;
+  width: 272px;
+  background: rgba(12, 16, 28, 0.97);
+  border: 1px solid color-mix(in srgb, var(--accent, #6c8efb) 40%, transparent);
+  border-radius: 14px;
   padding: 14px 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(108, 142, 251, 0.08);
-  backdrop-filter: blur(16px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(108, 142, 251, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: bannerSlide 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: bannerSlide 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .updateHeader {
@@ -486,14 +638,14 @@
 .updateDismiss {
   background: none;
   border: none;
-  color: rgba(224, 230, 240, 0.3);
+  color: rgba(224, 230, 240, 0.25);
   font-size: 0.7rem;
   cursor: pointer;
   padding: 0;
   line-height: 1;
   transition: color 0.12s;
 }
-.updateDismiss:hover { color: rgba(224, 230, 240, 0.75); }
+.updateDismiss:hover { color: rgba(224, 230, 240, 0.7); }
 
 .updateVersion {
   font-size: 0.75rem;
@@ -502,10 +654,10 @@
 }
 
 .updateBody {
-  font-size: 0.75rem;
-  color: rgba(224, 230, 240, 0.55);
+  font-size: 0.74rem;
+  color: rgba(224, 230, 240, 0.5);
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.5;
   max-height: 56px;
   overflow: hidden;
   display: -webkit-box;
@@ -518,23 +670,23 @@
   padding: 7px 14px;
   border-radius: 8px;
   border: 1px solid var(--accent, #6c8efb);
-  background: rgba(108, 142, 251, 0.16);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 15%, transparent);
   color: var(--accent, #6c8efb);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.15s, color 0.15s;
 }
 .updateBtn:hover {
   background: var(--accent, #6c8efb);
-  color: #0f141a;
+  color: #0b0f16;
 }
 
 .updateProgressBar {
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
   margin-top: 4px;
 }
@@ -542,15 +694,15 @@
   height: 100%;
   border-radius: 3px;
   background: var(--accent, #6c8efb);
-  transition: width 0.3s ease;
+  transition: width 0.35s ease;
 }
 .updatePct {
-  font-size: 0.72rem;
-  color: rgba(224, 230, 240, 0.5);
+  font-size: 0.7rem;
+  color: rgba(224, 230, 240, 0.45);
   text-align: right;
 }
 
 @keyframes bannerSlide {
-  from { transform: translateX(20px) translateY(-8px); opacity: 0; }
-  to   { transform: translateX(0)    translateY(0);    opacity: 1; }
+  from { transform: translateX(16px) translateY(-6px); opacity: 0; }
+  to   { transform: translateX(0) translateY(0);       opacity: 1; }
 }

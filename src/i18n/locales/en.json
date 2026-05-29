@@ -109,6 +109,8 @@
     "sortAsc": "Ascending",
     "sortDesc": "Descending",
     "recentlyPlayed": "Recently played",
+    "enrichSearching": "Searching for artwork…",
+    "enrichInProgress": "In progress…",
     "shuffleOn": "Shuffle on",
     "shuffleOff": "Shuffle off",
     "prevTrack": "Previous",

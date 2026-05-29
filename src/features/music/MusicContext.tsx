@@ -84,12 +84,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const shuffleQueueRef = useRef<number[]>([]);
   // Historique des pistes jouées en mode shuffle (pour revenir en arrière)
   const shuffleHistoryRef = useRef<number[]>([]);
+  // Ref de l'historique récent — accessible dans onEnded sans closure stale
+  const recentlyPlayedRef = useRef<string[]>(readMusicRecentlyPlayed());
 
   // Synchronisation des refs avec les états correspondants
   useEffect(() => { tracksRef.current = tracks; }, [tracks]);
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { shuffleModeRef.current = shuffleMode; }, [shuffleMode]);
   useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
+  useEffect(() => { recentlyPlayedRef.current = recentlyPlayed; }, [recentlyPlayed]);
 
   // Applique le volume sauvegardé à l'élément audio dès le montage
   useEffect(() => {
@@ -161,6 +164,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         currentIndexRef.current = next;
         setCurrentIndex(next);
         writeMusicLastTrack(next);
+
+        // Ajoute la piste suivante dans l'historique récent (même logique que selectTrack)
+        const nextPath = ts[next].path;
+        const updatedRecent = [nextPath, ...recentlyPlayedRef.current.filter(p => p !== nextPath)].slice(0, 10);
+        recentlyPlayedRef.current = updatedRecent;
+        setRecentlyPlayed(updatedRecent);
+        writeMusicRecentlyPlayed(updatedRecent);
+
         setTimeout(() => {
           audio.src = convertFileSrc(ts[next].path);
           audio.load();

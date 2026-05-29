@@ -109,6 +109,8 @@
     "sortAsc": "Croissant",
     "sortDesc": "Décroissant",
     "recentlyPlayed": "Récemment écoutés",
+    "enrichSearching": "Recherche d'illustrations…",
+    "enrichInProgress": "En cours…",
     "shuffleOn": "Aléatoire activé",
     "shuffleOff": "Aléatoire désactivé",
     "prevTrack": "Précédent",
