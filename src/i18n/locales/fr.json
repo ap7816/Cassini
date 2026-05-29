@@ -122,6 +122,11 @@
     "repeatOne": "Répéter la piste",
     "volumeLabel": "Volume : {{pct}} %",
     "stop": "Arrêter la musique",
+    "ctxMove": "📁 Déplacer vers…",
+    "moveModalTitle": "Déplacer « {{title}} »",
+    "moveModalSearch": "Rechercher un dossier…",
+    "moveModalRoot": "Racine (dossier principal)",
+    "moveModalConfirm": "Déplacer ici",
     "ctxColor": "🎨 Couleur",
     "ctxRename": "✏️ Renommer",
     "ctxDelete": "🗑️ Supprimer"

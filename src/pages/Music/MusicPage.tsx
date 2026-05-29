@@ -199,36 +199,29 @@ function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorP
   );
 }
 
-// Carte de dossier dans la grille : affiche l'égaliseur si actif, accepte le glisser-déposer
-function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClick, onContextMenu, onDragOver, onDragLeave, onDrop }: {
+// Carte de dossier dans la grille : affiche l'égaliseur si actif
+function FolderCard({ folder, color, currentIndex, isPlaying, onClick, onContextMenu }: {
   folder: FolderNode; color: string; currentIndex: number; isPlaying: boolean;
-  isDragOver: boolean;
   onClick: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
-  onDragOver: () => void; onDragLeave: () => void; onDrop: (e: React.DragEvent<HTMLButtonElement>) => void;
 }) {
   const active = hasActive(folder, currentIndex);
   const total = countTracks(folder);
 
   return (
     <button
-      className={`${css.gridItem} ${active ? css.gridItemFolderActive : ''} ${isDragOver ? css.gridItemDropTarget : ''}`}
+      className={`${css.gridItem} ${active ? css.gridItemFolderActive : ''}`}
       onClick={onClick}
       onContextMenu={e => { e.preventDefault(); onContextMenu(e); }}
-      onDragOver={e => { e.preventDefault(); onDragOver(); }}
-      onDragLeave={onDragLeave}
-      onDrop={e => { e.preventDefault(); onDrop(e); }}
     >
       <div className={css.folderShape} style={{ '--fc': color, '--fc-dark': color + 'bb' } as React.CSSProperties}>
         <div className={css.folderShapeTab} />
         <div className={css.folderShapeBody}>
-          {isDragOver
-            ? <span className={css.dropHint}>+</span>
-            : active && isPlaying
-              ? <Equalizer />
-              : active
-                ? <span className={css.folderActiveDot} />
-                : <span className={css.folderCount}>{total}</span>
+          {active && isPlaying
+            ? <Equalizer />
+            : active
+              ? <span className={css.folderActiveDot} />
+              : <span className={css.folderCount}>{total}</span>
           }
         </div>
       </div>
@@ -237,12 +230,122 @@ function FolderCard({ folder, color, currentIndex, isPlaying, isDragOver, onClic
   );
 }
 
+// Menu contextuel affiché au clic-droit sur une piste
+function TrackContextMenu({ x, y, track, onClose, onMove }: {
+  x: number; y: number; track: TrackWithIdx;
+  onClose: () => void;
+  onMove: () => void;
+}) {
+  const { t } = useTranslation();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Ferme le menu quand l'utilisateur clique en dehors
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    window.addEventListener('mousedown', h);
+    return () => window.removeEventListener('mousedown', h);
+  }, [onClose]);
+
+  return (
+    <div ref={menuRef} className={css.ctxMenu} style={{ left: x, top: y }}
+      onClick={e => e.stopPropagation()}>
+      <button className={css.ctxItem} onClick={() => { onClose(); onMove(); }}>
+        {t('music.ctxMove')}
+      </button>
+    </div>
+  );
+}
+
+// Modale de sélection de dossier pour déplacer une piste
+function FolderPickerModal({ track, allDirs, rootName, folderPath, onClose, onConfirm }: {
+  track: TrackWithIdx;
+  allDirs: string[];
+  rootName: string;
+  folderPath: string;
+  onClose: () => void;
+  onConfirm: (destRelPath: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<string | null>(null);
+
+  // Construit la liste : dossier racine + tous les sous-dossiers sauf le dossier actuel de la piste
+  const folders = useMemo(() => {
+    const list = ['', ...allDirs].filter(f => f !== track.folder);
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter(f => {
+      const label = f ? f.split('/').pop()! : rootName;
+      return label.toLowerCase().includes(q) || f.toLowerCase().includes(q);
+    });
+  }, [allDirs, track.folder, rootName, search]);
+
+  return (
+    <div className={css.moveOverlay} onClick={onClose}>
+      <div className={css.moveModal} onClick={e => e.stopPropagation()}>
+        <div className={css.moveModalHeader}>
+          {t('music.moveModalTitle', { title: track.title })}
+        </div>
+
+        <input
+          className={css.moveModalSearch}
+          placeholder={t('music.moveModalSearch')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          autoFocus
+        />
+
+        <ul className={css.moveFolderList}>
+          {folders.map(f => {
+            const label = f ? f.split('/').pop()! : t('music.moveModalRoot');
+            const sub   = f ? f : '';
+            return (
+              <li
+                key={f}
+                className={`${css.moveFolderItem} ${selected === f ? css.moveFolderItemSelected : ''}`}
+                onClick={() => setSelected(f)}
+                title={sub ? `${folderPath}/${sub}` : folderPath}
+              >
+                <span className={css.moveFolderIcon}>📁</span>
+                <div className={css.moveFolderLabels}>
+                  <span className={css.moveFolderName}>{label}</span>
+                  {sub && <span className={css.moveFolderPath}>{sub}</span>}
+                </div>
+              </li>
+            );
+          })}
+          {folders.length === 0 && (
+            <li className={css.moveFolderEmpty}>—</li>
+          )}
+        </ul>
+
+        <div className={css.moveModalActions}>
+          <button className={css.moveModalCancel} onClick={onClose}>
+            {t('dialog.cancel')}
+          </button>
+          <button
+            className={css.moveModalConfirm}
+            disabled={selected === null}
+            onClick={() => selected !== null && onConfirm(selected)}
+          >
+            {t('music.moveModalConfirm')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Carte de piste dans la grille : affiche la pochette (ID3 ou enrichie), l'artiste et la durée
-function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched }: {
+function TrackCard({ track, index, isActive, isPlaying, onSelect, onContextMenu, meta, enriched, scrollTarget = false }: {
   track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
   onSelect: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
   meta: TrackMeta | null;
   enriched: EnrichedData | null;
+  scrollTarget?: boolean; // true = cible du scroll navTo (grille principale uniquement)
 }) {
   const cardRef = useRef<HTMLButtonElement>(null);
   // Charge la pochette ID3 uniquement quand la carte est visible (lazy loading)
@@ -266,16 +369,12 @@ function TrackCard({ track, index, isActive, isPlaying, onSelect, meta, enriched
       ref={cardRef}
       className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${effectiveCover ? css.gridItemWithArt : ''}`}
       onClick={onSelect}
-      draggable
-      onDragStart={e => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('trackPath', track.path);
-        e.dataTransfer.setData('trackIdx', String(track.originalIndex));
-      }}
+      onContextMenu={e => { e.preventDefault(); onContextMenu(e); }}
+      data-trackactive={isActive && scrollTarget ? 'true' : undefined}
     >
       <div className={`${css.trackShape}${effectiveCover ? ` ${css.trackShapeWithArt}` : ''}`}>
         {effectiveCover && (
-          <img src={effectiveCover} className={css.trackArt} alt="" aria-hidden="true" />
+          <img src={effectiveCover} className={css.trackArt} alt="" aria-hidden="true" draggable={false} />
         )}
         {/* Overlay: active state or no-art fallback */}
         <div className={`${css.trackShapeContent}${effectiveCover && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
@@ -381,8 +480,12 @@ export function MusicPage() {
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [folderColors, setFolderColors] = useState<Record<string, string>>(readMusicFolderColors);
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const [allDirs, setAllDirs] = useState<string[]>([]);
+
+  // État du menu contextuel de piste et de la modale de déplacement
+  type TrackCtx = { x: number; y: number; track: TrackWithIdx };
+  const [trackCtxMenu, setTrackCtxMenu] = useState<TrackCtx | null>(null);
+  const [moveTarget, setMoveTarget] = useState<TrackWithIdx | null>(null);
 
   // Réinitialise la navigation quand le dossier racine change
   useEffect(() => { setCurrentPath([]); }, [music.folderPath]);
@@ -395,14 +498,31 @@ export function MusicPage() {
       .catch(() => setAllDirs([]));
   }, [music.folderPath, music.loading, music.tracks.length]);
 
-  // Gère le paramètre ?navTo= envoyé par le mini-lecteur pour naviguer vers la piste active
+  // Navigation depuis le mini-lecteur : applique le dossier cible et scroll jusqu'à la piste active
+  function applyMusicNav(folder: string) {
+    setCurrentPath(folder ? folder.split('/').filter(Boolean) : []);
+    setTimeout(() => {
+      const card = document.querySelector('[data-maingrid="true"] [data-trackactive="true"]');
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+  }
+
+  // Au montage : consomme une navigation en attente si elle a été émise avant le montage du composant
   useEffect(() => {
-    const navTo = searchParams.get('navTo');
-    if (!navTo) return;
-    setCurrentPath(navTo.split('/').filter(Boolean));
-    const p = new URLSearchParams(searchParams);
-    p.delete('navTo'); setSearchParams(p, { replace: true });
-  }, [searchParams]);
+    const win = window as unknown as Record<string, unknown>;
+    if (win.__musicNavTo !== undefined) {
+      applyMusicNav(win.__musicNavTo as string);
+      delete win.__musicNavTo;
+    }
+    // Écoute les navigations quand MusicPage est déjà monté (pas de delete ici — évite la race)
+    function onMusicNav(e: Event) {
+      const folder = (e as CustomEvent<{ folder: string }>).detail.folder;
+      applyMusicNav(folder);
+    }
+    window.addEventListener('music-nav-to', onMusicNav);
+    return () => window.removeEventListener('music-nav-to', onMusicNav);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Met à jour le critère et la direction de tri dans les paramètres d'URL
   function setSort(by: SortBy, dir: SortDir) {
@@ -492,16 +612,15 @@ export function MusicPage() {
     } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
   }
 
-  // Déplace un fichier audio dans un dossier via glisser-déposer
-  async function handleDropOnFolder(folder: FolderNode, e: React.DragEvent) {
-    e.preventDefault();
-    setDragOverPath(null);
-    const trackPath = e.dataTransfer.getData('trackPath');
-    if (!trackPath || !music.folderPath) return;
-    const dstAbs = absPath(music.folderPath, folder.fullPath);
+  // Déplace une piste vers le dossier sélectionné dans la modale
+  async function handleMoveTrack(track: TrackWithIdx, destRelPath: string) {
+    const root = music.folderPath;
+    if (!root) return;
+    const dstAbs = destRelPath ? `${root}/${destRelPath}` : root;
     try {
-      await invoke('move_music_file', { src: trackPath, dstFolder: dstAbs });
-      await music.loadFolder(music.folderPath);
+      await invoke('move_music_file', { src: track.path, dstFolder: dstAbs });
+      setMoveTarget(null);
+      await music.loadFolder(root);
     } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
   }
 
@@ -549,7 +668,7 @@ export function MusicPage() {
   const isEmpty = !music.loading && music.tracks.length === 0;
 
   return (
-    <div className={css.page} onClick={() => setCtxMenu(null)}>
+    <div className={css.page} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
 
       {/* ── Header ── */}
       <div className={css.header}>
@@ -612,6 +731,7 @@ export function MusicPage() {
                   isActive={track.originalIndex === music.currentIndex}
                   isPlaying={music.isPlaying}
                   onSelect={() => music.selectTrack(track.originalIndex)}
+                  onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                   meta={getMeta(track.path)}
                   enriched={getEnriched(track.path)}
                 />
@@ -637,6 +757,7 @@ export function MusicPage() {
                     isActive={track.originalIndex === music.currentIndex}
                     isPlaying={music.isPlaying}
                     onSelect={() => music.selectTrack(track.originalIndex)}
+                    onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                     meta={getMeta(track.path)}
                     enriched={getEnriched(track.path)}
                   />
@@ -648,7 +769,7 @@ export function MusicPage() {
       {/* ── Grid browser ── */}
       {!isEmpty && !query && (
         <div className={css.gridScroll}>
-          <div className={css.fileGrid}>
+          <div className={css.fileGrid} data-maingrid="true">
             {sortedFolders.map(folder => (
               <FolderCard
                 key={folder.fullPath}
@@ -656,12 +777,8 @@ export function MusicPage() {
                 color={getFolderColor(folder.fullPath)}
                 currentIndex={music.currentIndex}
                 isPlaying={music.isPlaying}
-                isDragOver={dragOverPath === folder.fullPath}
                 onClick={() => setCurrentPath([...currentPath, folder.name])}
                 onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
-                onDragOver={() => setDragOverPath(folder.fullPath)}
-                onDragLeave={() => setDragOverPath(null)}
-                onDrop={e => { void handleDropOnFolder(folder, e); }}
               />
             ))}
             {sortedTracks.map((track, idx) => {
@@ -674,8 +791,10 @@ export function MusicPage() {
                   isActive={isActive}
                   isPlaying={music.isPlaying}
                   onSelect={() => music.selectTrack(track.originalIndex)}
+                  onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                   meta={getMeta(track.path)}
                   enriched={getEnriched(track.path)}
+                  scrollTarget
                 />
               );
             })}
@@ -720,6 +839,29 @@ export function MusicPage() {
 
           <span className={css.enrichBarCount}>{barDone} / {barTotal}</span>
         </div>
+      )}
+
+      {/* ── Menu contextuel de piste ── */}
+      {trackCtxMenu && (
+        <TrackContextMenu
+          x={trackCtxMenu.x}
+          y={trackCtxMenu.y}
+          track={trackCtxMenu.track}
+          onClose={() => setTrackCtxMenu(null)}
+          onMove={() => setMoveTarget(trackCtxMenu.track)}
+        />
+      )}
+
+      {/* ── Modale de déplacement de piste ── */}
+      {moveTarget && folderName && (
+        <FolderPickerModal
+          track={moveTarget}
+          allDirs={allDirs}
+          rootName={folderName}
+          folderPath={music.folderPath}
+          onClose={() => setMoveTarget(null)}
+          onConfirm={dest => void handleMoveTrack(moveTarget, dest)}
+        />
       )}
 
       {/* ── In-app dialog (prompt / confirm) ── */}

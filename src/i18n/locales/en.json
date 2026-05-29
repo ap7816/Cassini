@@ -122,6 +122,11 @@
     "repeatOne": "Repeat track",
     "volumeLabel": "Volume: {{pct}}%",
     "stop": "Stop music",
+    "ctxMove": "📁 Move to…",
+    "moveModalTitle": "Move «{{title}}»",
+    "moveModalSearch": "Search a folder…",
+    "moveModalRoot": "Root (main folder)",
+    "moveModalConfirm": "Move here",
     "ctxColor": "🎨 Color",
     "ctxRename": "✏️ Rename",
     "ctxDelete": "🗑️ Delete"

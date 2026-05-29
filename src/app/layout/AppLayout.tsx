@@ -257,8 +257,8 @@ export function AppLayout() {
         </header>
 
         <section className={css.content}>
-          {/* Clé = location.key → force le remount de l'animation à chaque changement de route */}
-          <div key={location.key} className={css.pageTransition}>
+          {/* Clé = pathname seul → animation uniquement au changement de route, pas sur même page */}
+          <div key={location.pathname} className={css.pageTransition}>
             <Outlet />
           </div>
         </section>
@@ -268,16 +268,18 @@ export function AppLayout() {
           <div className={`${css.miniPlayer} ${playerLeaving ? css.miniPlayerLeaving : ''}`}>
             <div className={css.miniTrackInfo}>
               {miniCover
-                ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" />
+                ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" draggable={false} />
                 : <div className={css.miniArtPlaceholder}>♪</div>
               }
               <button
                 className={css.miniTitle}
                 title={displayTrack?.title}
                 onClick={() => {
-                  const folder = music.tracks[music.currentIndex]?.folder;
-                  const params = folder ? `?navTo=${encodeURIComponent(folder)}` : '';
-                  navigate('/music' + params);
+                  const folder = displayTrack?.folder ?? '';
+                  // Stocke le dossier cible pour que MusicPage le lise au montage ou immédiatement
+                  (window as unknown as Record<string, unknown>).__musicNavTo = folder;
+                  window.dispatchEvent(new CustomEvent('music-nav-to', { detail: { folder } }));
+                  navigate('/music');
                 }}
               >
                 <span className={css.miniTitleText}>{displayTrack?.title}</span>
