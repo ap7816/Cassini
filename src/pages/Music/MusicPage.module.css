@@ -877,6 +877,38 @@
   100% { left: 100%; }
 }
 
+/* ─── Récemment écoutés ──────────────────────────────────── */
+.recentSection {
+  flex-shrink: 0;
+  padding: 12px 20px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.recentTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(224, 230, 240, 0.45);
+  margin-bottom: 10px;
+}
+
+/* Défilement horizontal — une seule ligne de cartes */
+.recentStrip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+
+/* Fixe la largeur des cartes pour éviter qu'elles s'étirent */
+.recentStrip > * {
+  flex: 0 0 100px;
+  width: 100px;
+}
+
 /* ─── Enrichment progress bar (bottom) ──────────────────── */
 .enrichBar {
   flex-shrink: 0;

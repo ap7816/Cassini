@@ -291,14 +291,14 @@ export function LibraryPage() {
             {launchOverlay.phase === 'opening' ? (
               <>
                 <div className={css.launchSpinner} />
-                <div className={css.launchText}>Ouverture de</div>
+                <div className={css.launchText}>{t('library.launchOpening')}</div>
                 <div className={css.launchTitle}>{launchOverlay.title}</div>
               </>
             ) : (
               <>
                 <div className={css.launchCheck}>✓</div>
                 <div className={css.launchTitle}>{launchOverlay.title}</div>
-                <div className={css.launchText}>lancé</div>
+                <div className={css.launchText}>{t('library.launchDone')}</div>
               </>
             )}
           </div>

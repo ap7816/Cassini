@@ -47,7 +47,6 @@ export function AppLayout() {
     { to: '/library', label: t('nav.library') },
     { to: '/launchers', label: t('nav.launchers') },
     { to: '/music', label: t('nav.music') },
-    { to: '/game', label: t('nav.game') },
     { to: '/settings', label: t('nav.settings') },
   ];
 
@@ -260,7 +259,7 @@ export function AppLayout() {
               <button
                 className={`${css.miniBtn} ${music.shuffleMode ? css.miniBtnActive : ''}`}
                 onClick={music.toggleShuffle}
-                title={music.shuffleMode ? 'Aléatoire activé' : 'Aléatoire désactivé'}
+                title={music.shuffleMode ? t('music.shuffleOn') : t('music.shuffleOff')}
               >🔀</button>
 
               {/* Précédent : désactivé en séquentiel sans repeat sur la première piste */}
@@ -268,13 +267,13 @@ export function AppLayout() {
                 className={css.miniBtn}
                 onClick={music.prevTrack}
                 disabled={!music.shuffleMode && music.currentIndex <= 0 && music.repeatMode !== 'all'}
-                title="Précédent"
+                title={t('music.prevTrack')}
               >⏮</button>
 
               <button
                 className={`${css.miniBtn} ${css.miniPlayBtn}`}
                 onClick={music.togglePlayPause}
-                title={music.isPlaying ? 'Pause' : 'Lecture'}
+                title={music.isPlaying ? t('music.pauseTitle') : t('music.playTitle')}
               >{music.isPlaying ? '⏸' : '▶'}</button>
 
               {/* Suivant : désactivé en séquentiel sans repeat sur la dernière piste */}
@@ -282,7 +281,7 @@ export function AppLayout() {
                 className={css.miniBtn}
                 onClick={music.nextTrack}
                 disabled={!music.shuffleMode && music.currentIndex >= music.tracks.length - 1 && music.repeatMode !== 'all'}
-                title="Suivant"
+                title={t('music.nextTrack')}
               >⏭</button>
 
               {/* Repeat : 🔂 = one, 🔁 = all/none ; actif si repeat ≠ none */}
@@ -290,9 +289,9 @@ export function AppLayout() {
                 className={`${css.miniBtn} ${music.repeatMode !== 'none' ? css.miniBtnActive : ''}`}
                 onClick={music.cycleRepeat}
                 title={
-                  music.repeatMode === 'none' ? 'Répétition désactivée'
-                  : music.repeatMode === 'all' ? 'Répéter tout'
-                  : 'Répéter la piste'
+                  music.repeatMode === 'none' ? t('music.repeatOff')
+                  : music.repeatMode === 'all' ? t('music.repeatAll')
+                  : t('music.repeatOne')
                 }
               >{music.repeatMode === 'one' ? '🔂' : '🔁'}</button>
             </div>
@@ -318,7 +317,7 @@ export function AppLayout() {
                 ref={volumeBarRef}
                 className={css.miniVolumeBar}
                 onMouseDown={handleVolumeMouseDown}
-                title={`Volume : ${Math.round(music.volume * 100)}%`}
+                title={t('music.volumeLabel', { pct: Math.round(music.volume * 100) })}
                 style={{
                   background: `linear-gradient(to right, var(--accent, #6c8efb) 0%, var(--accent, #6c8efb) ${volPct}%, rgba(255,255,255,0.22) ${volPct}%, rgba(255,255,255,0.22) 100%)`,
                 }}
@@ -330,7 +329,7 @@ export function AppLayout() {
             <button
               className={css.miniStopBtn}
               onClick={music.stop}
-              title="Arrêter la musique"
+              title={t('music.stop')}
             >✕</button>
           </div>
         )}

@@ -593,6 +593,34 @@ export function MusicPage() {
         </div>
       )}
 
+      {/* ── Récemment écoutés ── */}
+      {!query && music.recentlyPlayed.length > 0 && (() => {
+        // Résout les chemins en pistes valides (filtre les pistes supprimées ou non chargées)
+        const recentTracks = music.recentlyPlayed
+          .map(path => allTracks.find(t => t.path === path))
+          .filter((t): t is TrackWithIdx => t !== undefined);
+        if (recentTracks.length === 0) return null;
+        return (
+          <div className={css.recentSection}>
+            <div className={css.recentTitle}>{t('music.recentlyPlayed')}</div>
+            <div className={css.recentStrip}>
+              {recentTracks.map((track, idx) => (
+                <TrackCard
+                  key={track.path}
+                  track={track}
+                  index={idx}
+                  isActive={track.originalIndex === music.currentIndex}
+                  isPlaying={music.isPlaying}
+                  onSelect={() => music.selectTrack(track.originalIndex)}
+                  meta={getMeta(track.path)}
+                  enriched={getEnriched(track.path)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {isEmpty && <div className={css.emptyState}>{music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}</div>}
 
       {/* ── Search results ── */}

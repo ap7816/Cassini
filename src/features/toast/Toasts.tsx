@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useToast } from './ToastContext';
 import css from './Toasts.module.css';
 
@@ -6,6 +7,7 @@ const ICONS: Record<string, string> = { success: '✓', error: '✕', info: 'ℹ
 
 // Affiche la pile de toasts actifs dans le coin de l'écran — invisible si aucun toast en cours
 export function Toasts() {
+  const { t } = useTranslation();
   const { toasts, dismiss } = useToast();
   if (!toasts.length) return null;
 
@@ -15,7 +17,7 @@ export function Toasts() {
         <div key={t.id} className={`${css.toast} ${css[t.kind]}`}>
           <span className={css.icon}>{ICONS[t.kind]}</span>
           <span className={css.msg}>{t.message}</span>
-          <button className={css.close} onClick={() => dismiss(t.id)} aria-label="Fermer">✕</button>
+          <button className={css.close} onClick={() => dismiss(t.id)} aria-label={t('patchNotes.close')}>✕</button>
         </div>
       ))}
     </div>

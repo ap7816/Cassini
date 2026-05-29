@@ -171,7 +171,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
               disabled={!canPlay || isLaunching}
               title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
             >
-              {isLaunching ? 'Opening...' : t('gameCard.play')}
+              {isLaunching ? t('gameCard.opening') : t('gameCard.play')}
             </button>
 
             <button

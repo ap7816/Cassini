@@ -375,7 +375,7 @@ export function SettingsPage() {
             disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
           >
             {updateStatus === 'checking' ? t('settings.updateChecking')
-              : updateStatus === 'downloading' ? `Téléchargement... ${downloadProgress}%`
+              : updateStatus === 'downloading' ? t('settings.updateDownloading', { pct: downloadProgress })
               : updateStatus === 'upToDate' ? t('settings.updateUpToDate')
               : updateStatus === 'error' ? t('settings.updateError')
               : t('settings.updateCheck')}

@@ -7,6 +7,7 @@ import {
   readMusicLastTrack, writeMusicLastTrack,
   readMusicShuffle, writeMusicShuffle,
   readMusicRepeat, writeMusicRepeat,
+  readMusicRecentlyPlayed, writeMusicRecentlyPlayed,
   type RepeatMode,
 } from '../../services/storage';
 
@@ -30,6 +31,7 @@ interface MusicContextType {
   error: string | null;
   shuffleMode: boolean;
   repeatMode: RepeatMode;
+  recentlyPlayed: string[];
   loadFolder: (path: string) => Promise<void>;
   selectTrack: (index: number) => void;
   togglePlayPause: () => void;
@@ -67,6 +69,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [shuffleMode, setShuffleModeState] = useState<boolean>(readMusicShuffle);
   const [repeatMode, setRepeatModeState] = useState<RepeatMode>(readMusicRepeat);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<string[]>(readMusicRecentlyPlayed);
 
   // Élément <audio> persistent — ne jamais recréer pour éviter les coupures
   const audioRef = useRef<HTMLAudioElement>(new Audio());
@@ -228,6 +231,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     audio.play().catch(() => {});
     setIsPlaying(true);
     setProgress(0);
+
+    // Ajoute la piste en tête de l'historique récent (dédoublonnage + limite 10)
+    const path = ts[index].path;
+    setRecentlyPlayed(prev => {
+      const next = [path, ...prev.filter(p => p !== path)].slice(0, 10);
+      writeMusicRecentlyPlayed(next);
+      return next;
+    });
   }
 
   // Lance la première piste si aucune n'est sélectionnée, sinon alterne lecture/pause
@@ -361,7 +372,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider value={{
       tracks, folderPath, currentIndex, isPlaying, progress, duration, volume, loading, error,
-      shuffleMode, repeatMode,
+      shuffleMode, repeatMode, recentlyPlayed,
       loadFolder, selectTrack, togglePlayPause, prevTrack, nextTrack, setVolume, seekTo, stop,
       toggleShuffle, cycleRepeat,
     }}>

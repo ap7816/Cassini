@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   musicEnrichedMeta:   'music_enriched_meta',
   musicShuffle:        'music_shuffle',
   musicRepeat:         'music_repeat',
+  musicRecentlyPlayed: 'music_recently_played',
   language:            'arctive.language',
   patchNotesSeen:      'arctive.patchNotes.seen',
 } as const;
@@ -184,6 +185,14 @@ export function readMusicRepeat(): RepeatMode {
 }
 export function writeMusicRepeat(v: RepeatMode): void {
   rawWrite(STORAGE_KEYS.musicRepeat, v);
+}
+
+// Lecture/écriture des 10 dernières pistes écoutées (chemins absolus, ordre antéchronologique)
+export function readMusicRecentlyPlayed(): string[] {
+  return readJSON<string[]>(STORAGE_KEYS.musicRecentlyPlayed) ?? [];
+}
+export function writeMusicRecentlyPlayed(paths: string[]): void {
+  writeJSON(STORAGE_KEYS.musicRecentlyPlayed, paths);
 }
 
 // Lecture/écriture des métadonnées enrichies (iTunes/Deezer) persistées entre les sessions
