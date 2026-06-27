@@ -583,7 +583,74 @@ async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
     })
 }
 
-// Commande Tauri : enrichit les métadonnées d'une piste via iTunes puis Deezer en fallback
+// Sémaphore global : limite MusicBrainz à 1 requête simultanée pour respecter leur rate-limit (1 req/s)
+static MB_SEMAPHORE: std::sync::OnceLock<tokio::sync::Semaphore> = std::sync::OnceLock::new();
+
+fn get_mb_semaphore() -> &'static tokio::sync::Semaphore {
+    MB_SEMAPHORE.get_or_init(|| tokio::sync::Semaphore::new(1))
+}
+
+// Interroge l'API MusicBrainz en dernier recours — plus lent (rate-limit 1 req/s) mais plus précis
+// Ne fonctionne que sur le format "Artiste - Titre" (sans artiste → résultats trop ambigus)
+async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMetaResult> {
+    // Un seul permit à la fois + délai pour respecter le rate-limit MusicBrainz
+    let _permit = get_mb_semaphore().acquire().await.ok()?;
+    tokio::time::sleep(std::time::Duration::from_millis(1100)).await;
+
+    // Requête structurée "Artiste - Titre" uniquement
+    let (artist_part, title_part) = {
+        let dash = term.find(" - ")?; // retourne None si pas de " - " → pas de recherche MB
+        (&term[..dash], &term[dash + 3..])
+    };
+    // Supprime les suffixes entre parenthèses (remix, remaster…) pour améliorer le match
+    let title_clean = {
+        let cut = title_part.find('(').or_else(|| title_part.find('['));
+        cut.map(|i| title_part[..i].trim_end()).unwrap_or(title_part)
+    };
+    let query = format!("recording:\"{}\" AND artist:\"{}\"", title_clean, artist_part);
+
+    let resp = client
+        .get("https://musicbrainz.org/ws/2/recording/")
+        .header("User-Agent", "ArcHive/1.1.3 (desktop; noreply@example.com)")
+        .query(&[("query", query.as_str()), ("fmt", "json"), ("limit", "5")])
+        .timeout(std::time::Duration::from_secs(10))
+        .send()
+        .await
+        .ok()?;
+
+    if !resp.status().is_success() { return None; }
+
+    let json: serde_json::Value = resp.json().await.ok()?;
+    let recordings = json["recordings"].as_array()?;
+
+    // Score MusicBrainz : 0-100 — seuil 80 pour limiter les faux positifs
+    let best = recordings.iter()
+        .filter(|r| r["score"].as_u64().unwrap_or(0) >= 80)
+        .max_by_key(|r| r["score"].as_u64().unwrap_or(0))?;
+
+    let artist = best["artist-credit"]
+        .as_array()
+        .and_then(|a| a.first())
+        .and_then(|a| a["name"].as_str())
+        .map(String::from);
+
+    let release = best["releases"].as_array().and_then(|r| r.first());
+    let album = release
+        .and_then(|r| r["title"].as_str())
+        .map(String::from);
+
+    // Cover Art Archive : pochette 500px depuis l'ID de release MusicBrainz
+    let cover_url = release
+        .and_then(|r| r["id"].as_str())
+        .map(|rid| format!("https://coverartarchive.org/release/{}/front-500", rid));
+
+    // Rejette si pas d'artiste ni de pochette (résultat inutile)
+    if artist.is_none() && cover_url.is_none() { return None; }
+
+    Some(MusicMetaResult { artist, album, cover_url, source: "musicbrainz".into() })
+}
+
+// Commande Tauri : enrichit les métadonnées d'une piste via iTunes, Deezer puis MusicBrainz en fallback
 // S'exécute côté Rust pour contourner les restrictions CORS du navigateur
 // term doit déjà être nettoyé (sans extension, sans numéro de piste)
 #[tauri::command]
@@ -603,9 +670,162 @@ async fn search_itunes(term: String) -> Result<Option<MusicMetaResult>, String> 
     }
 
     // 2. Deezer en fallback : meilleure couverture des titres non-anglophones
-    Ok(try_deezer(&client, &term).await)
+    if let Some(result) = try_deezer(&client, &term).await {
+        return Ok(Some(result));
+    }
+
+    // 3. MusicBrainz en dernier recours : open-source, très précis, rate-limité à 1 req/s
+    Ok(try_musicbrainz(&client, &term).await)
 }
 
+// Commande Tauri : écrit artiste, album et pochette directement dans les tags du fichier audio
+// Utilise lofty pour supporter MP3 (ID3v2), FLAC, OGG, M4A, Opus
+// Permet de ne plus jamais refaire la recherche réseau pour une piste déjà enrichie
+#[tauri::command]
+async fn write_audio_tags(
+    path: String,
+    artist: Option<String>,
+    album: Option<String>,
+    cover_url: Option<String>,
+) -> Result<(), String> {
+    use lofty::prelude::*;
+    use lofty::probe::Probe;
+    use lofty::picture::{Picture, PictureType, MimeType};
+    use lofty::config::WriteOptions;
+
+    // Télécharge la pochette si une URL est fournie (avant d'ouvrir le fichier pour éviter les conflits)
+    let cover_bytes: Option<(Vec<u8>, MimeType)> = if let Some(ref url) = cover_url {
+        let dl_client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(15))
+            .build()
+            .map_err(|e| e.to_string())?;
+        match dl_client.get(url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                let mime = resp.headers()
+                    .get(reqwest::header::CONTENT_TYPE)
+                    .and_then(|v| v.to_str().ok())
+                    .map(|s| if s.contains("png") { MimeType::Png } else { MimeType::Jpeg })
+                    .unwrap_or(MimeType::Jpeg);
+                match resp.bytes().await {
+                    Ok(b) if !b.is_empty() => Some((b.to_vec(), mime)),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
+    } else {
+        None
+    };
+
+    // Rien à écrire → succès silencieux
+    if artist.is_none() && album.is_none() && cover_bytes.is_none() {
+        return Ok(());
+    }
+
+    // Lecture du fichier audio existant
+    let mut tagged_file = Probe::open(&path)
+        .map_err(|e| format!("Ouverture impossible ({path}): {e}"))?
+        .guess_file_type()
+        .map_err(|e| format!("Format inconnu ({path}): {e}"))?
+        .read()
+        .map_err(|e| format!("Lecture échouée ({path}): {e}"))?;
+
+    // Crée un tag vide si le fichier n'en a aucun
+    if tagged_file.primary_tag().is_none() && tagged_file.first_tag().is_none() {
+        let tag_type = tagged_file.primary_tag_type();
+        tagged_file.insert_tag(lofty::tag::Tag::new(tag_type));
+    }
+
+    // Modifie le tag en place (n'écrase que les champs fournis)
+    // On vérifie d'abord quel tag est disponible, puis on le modifie (évite le double borrow mutable)
+    let has_primary = tagged_file.primary_tag().is_some();
+    if let Some(tag) = if has_primary {
+        tagged_file.primary_tag_mut()
+    } else {
+        tagged_file.first_tag_mut()
+    } {
+        if let Some(a) = artist { tag.set_artist(a); }
+        if let Some(a) = album  { tag.set_album(a);  }
+        if let Some((bytes, mime)) = cover_bytes {
+            tag.remove_picture_type(PictureType::CoverFront);
+            tag.push_picture(Picture::new_unchecked(
+                PictureType::CoverFront,
+                Some(mime),
+                None,
+                bytes,
+            ));
+        }
+    }
+
+    // Écrit les modifications dans le fichier
+    tagged_file
+        .save_to_path(&path, WriteOptions::default())
+        .map_err(|e| format!("Écriture échouée ({path}): {e}"))
+}
+
+
+// Commande Tauri : remplace la pochette d'un fichier audio par une image choisie localement
+// Lit l'image depuis le disque (pas de réseau), supportée sur tous les formats gérés par lofty
+#[tauri::command]
+fn write_audio_cover_from_file(audio_path: String, image_path: String) -> Result<(), String> {
+    use lofty::prelude::*;
+    use lofty::probe::Probe;
+    use lofty::picture::{Picture, PictureType, MimeType};
+    use lofty::config::WriteOptions;
+
+    // Lit les octets de l'image depuis le disque local
+    let image_data = std::fs::read(&image_path)
+        .map_err(|e| format!("Lecture image impossible : {e}"))?;
+    if image_data.is_empty() {
+        return Err("Fichier image vide".to_string());
+    }
+
+    // Déduit le type MIME depuis l'extension du fichier image
+    let mime = match std::path::Path::new(&image_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_lowercase())
+        .as_deref()
+    {
+        Some("png") => MimeType::Png,
+        Some("gif") => MimeType::Gif,
+        Some("bmp") => MimeType::Bmp,
+        _           => MimeType::Jpeg, // jpg, jpeg, webp…
+    };
+
+    // Lit le fichier audio existant
+    let mut tagged_file = Probe::open(&audio_path)
+        .map_err(|e| format!("Ouverture impossible : {e}"))?
+        .guess_file_type()
+        .map_err(|e| format!("Format inconnu : {e}"))?
+        .read()
+        .map_err(|e| format!("Lecture échouée : {e}"))?;
+
+    // Crée un tag si le fichier n'en a aucun
+    if tagged_file.primary_tag().is_none() && tagged_file.first_tag().is_none() {
+        let tag_type = tagged_file.primary_tag_type();
+        tagged_file.insert_tag(lofty::tag::Tag::new(tag_type));
+    }
+
+    let has_primary = tagged_file.primary_tag().is_some();
+    if let Some(tag) = if has_primary {
+        tagged_file.primary_tag_mut()
+    } else {
+        tagged_file.first_tag_mut()
+    } {
+        tag.remove_picture_type(PictureType::CoverFront);
+        tag.push_picture(Picture::new_unchecked(
+            PictureType::CoverFront,
+            Some(mime),
+            None,
+            image_data,
+        ));
+    }
+
+    tagged_file
+        .save_to_path(&audio_path, WriteOptions::default())
+        .map_err(|e| format!("Écriture échouée : {e}"))
+}
 
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -661,7 +881,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

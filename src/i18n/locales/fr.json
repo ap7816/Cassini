@@ -123,6 +123,7 @@
     "volumeLabel": "Volume : {{pct}} %",
     "stop": "Arrêter la musique",
     "ctxMove": "📁 Déplacer vers…",
+    "ctxChangeArt": "🖼️ Changer l'illustration…",
     "moveModalTitle": "Déplacer « {{title}} »",
     "moveModalSearch": "Rechercher un dossier…",
     "moveModalRoot": "Racine (dossier principal)",
@@ -204,6 +205,12 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v1_2_0": {
+      "new_0": "[Musique] Les métadonnées trouvées sont sauvegardées directement dans les fichiers audio — plus de recherche réseau à chaque démarrage",
+      "new_1": "[Musique] Clic droit sur une piste → « Changer l'illustration… » : choisissez une image locale embedée dans le fichier",
+      "new_2": "[Musique] MusicBrainz ajouté comme 3ème source d'illustrations (open source, sans clé API)",
+      "fix_0": "[Musique] Seuil de correspondance relevé — moins de pochettes incorrectes affichées"
+    },
     "v1_1_3": {
       "new_0": "[Musique] Section « Récemment écoutés » : les 10 dernières pistes jouées, persistées et mises à jour automatiquement",
       "new_1": "[Navigation] Animations de transition entre les pages (fondu doux au changement de route)",

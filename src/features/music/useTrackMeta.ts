@@ -102,6 +102,24 @@ async function fetchCover(path: string): Promise<string | null> {
   });
 }
 
+// Listeners notifiés quand une pochette est rafraîchie manuellement (ex: après "Changer l'illustration")
+const _coverListeners = new Map<string, Set<(url: string | null) => void>>();
+
+// Abonne un callback aux mises à jour de pochette pour un chemin donné — retourne la désinscription
+function subscribeCoverRefresh(path: string, fn: (url: string | null) => void): () => void {
+  if (!_coverListeners.has(path)) _coverListeners.set(path, new Set());
+  _coverListeners.get(path)!.add(fn);
+  return () => _coverListeners.get(path)?.delete(fn);
+}
+
+// Force le rechargement de la pochette d'une piste depuis le fichier et notifie les composants abonnés
+export async function refreshCover(path: string): Promise<void> {
+  const entry = _cache.get(path);
+  if (entry) { entry.coverLoaded = false; entry.coverDataUrl = null; }
+  const dataUrl = await fetchCover(path);
+  _coverListeners.get(path)?.forEach(fn => fn(dataUrl));
+}
+
 // Charge titre/artiste/album/durée pour toutes les pistes en un seul appel Rust parallèle
 // Retourne un getter synchrone (depuis le cache) et un indicateur de chargement
 export function useBasicBatch(paths: string[]): {
@@ -161,6 +179,12 @@ export function useLazyCoverArt(
     return () => observer.disconnect();
     // ref est stable pendant toute la durée de vie du composant — omis intentionnellement des deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  // Écoute les refreshes manuels de pochette (ex: "Changer l'illustration")
+  useEffect(() => {
+    if (!path) return;
+    return subscribeCoverRefresh(path, setCover);
   }, [path]);
 
   return cover;

@@ -123,6 +123,7 @@
     "volumeLabel": "Volume: {{pct}}%",
     "stop": "Stop music",
     "ctxMove": "📁 Move to…",
+    "ctxChangeArt": "🖼️ Change artwork…",
     "moveModalTitle": "Move «{{title}}»",
     "moveModalSearch": "Search a folder…",
     "moveModalRoot": "Root (main folder)",
@@ -204,6 +205,12 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v1_2_0": {
+      "new_0": "[Music] Found metadata is now saved directly into audio files — no more network search on every startup",
+      "new_1": "[Music] Right-click a track → \"Change artwork…\": pick a local image and embed it in the file",
+      "new_2": "[Music] MusicBrainz added as a 3rd artwork source (open source, no API key required)",
+      "fix_0": "[Music] Raised match threshold — fewer incorrect covers displayed"
+    },
     "v1_1_3": {
       "new_0": "[Music] \"Recently played\" strip: last 10 tracks, persisted across sessions and updated automatically",
       "new_1": "[Navigation] Page transition animations (smooth fade on every route change)",

@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { useBasicBatch, useLazyCoverArt, type TrackMeta } from '../../features/music/useTrackMeta';
+import { useBasicBatch, useLazyCoverArt, refreshCover, type TrackMeta } from '../../features/music/useTrackMeta';
 import { useAutoEnrich } from '../../features/music/useAutoEnrich';
 import type { EnrichedData } from '../../features/music/enrichMeta';
+import { resetEnrichment } from '../../features/music/enrichMeta';
 import css from './MusicPage.module.css';
 
 type SortBy  = 'name' | 'dur' | 'ext';
@@ -231,10 +232,11 @@ function FolderCard({ folder, color, currentIndex, isPlaying, onClick, onContext
 }
 
 // Menu contextuel affiché au clic-droit sur une piste
-function TrackContextMenu({ x, y, track, onClose, onMove }: {
+function TrackContextMenu({ x, y, track, onClose, onMove, onChangeArt }: {
   x: number; y: number; track: TrackWithIdx;
   onClose: () => void;
   onMove: () => void;
+  onChangeArt: () => void;
 }) {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -253,6 +255,9 @@ function TrackContextMenu({ x, y, track, onClose, onMove }: {
       onClick={e => e.stopPropagation()}>
       <button className={css.ctxItem} onClick={() => { onClose(); onMove(); }}>
         {t('music.ctxMove')}
+      </button>
+      <button className={css.ctxItem} onClick={() => { onClose(); onChangeArt(); }}>
+        {t('music.ctxChangeArt')}
       </button>
     </div>
   );
@@ -624,6 +629,21 @@ export function MusicPage() {
     } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
   }
 
+  // Ouvre un sélecteur de fichier image, embede la pochette choisie dans le fichier audio
+  // et met à jour l'affichage immédiatement sans rechargement
+  async function handleChangeArtwork(track: TrackWithIdx) {
+    const selected = await open({
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }],
+      multiple: false,
+    });
+    if (!selected || typeof selected !== 'string') return;
+    try {
+      await invoke('write_audio_cover_from_file', { audioPath: track.path, imagePath: selected });
+      resetEnrichment(track.path);
+      await refreshCover(track.path);
+    } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
+  }
+
   // Construction de l'arbre, du nœud courant et des listes triées
   const allTracks = useMemo(() => music.tracks.map((t, i) => ({ ...t, originalIndex: i })), [music.tracks]);
   const tree = useMemo(() => buildTree(allTracks, allDirs), [allTracks, allDirs]);
@@ -849,6 +869,7 @@ export function MusicPage() {
           track={trackCtxMenu.track}
           onClose={() => setTrackCtxMenu(null)}
           onMove={() => setMoveTarget(trackCtxMenu.track)}
+          onChangeArt={() => void handleChangeArtwork(trackCtxMenu.track)}
         />
       )}
 
