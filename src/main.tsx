@@ -9,9 +9,8 @@ import { initStorage } from './services/storage';
 import './i18n';
 import './App.css';
 
-// Initialise le store de persistance AVANT le premier rendu React
-// pour que tous les useState() lisent déjà les bonnes valeurs depuis le cache mémoire
 initStorage().then(() => {
+  // Rend React immédiatement (caché derrière le preloader)
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
       <ToastProvider>
@@ -26,23 +25,39 @@ initStorage().then(() => {
     </React.StrictMode>,
   );
 
-  // Anime la barre de chargement vers 100 % puis retire le preloader de l'écran
-  const pre = document.getElementById('app-preloader');
-  if (pre) {
-    const fill = pre.querySelector('.bar-fill') as HTMLElement | null;
-    if (fill) {
-      // Gèle la position courante de l'animation CSS, puis la transite vers 100 %
-      const currentW = window.getComputedStyle(fill).width;
-      fill.style.width = currentW;
-      fill.style.animation = 'none';
-      void fill.offsetWidth;
-      fill.style.transition = 'width 0.22s ease';
-      fill.style.width = '100%';
-    }
-    // Attend que la barre atteigne 100 % avant de lancer le fade-out
-    window.setTimeout(() => {
-      pre.classList.add('preloader--done');
-      window.setTimeout(() => pre.remove(), 260);
-    }, 240);
+  const pre     = document.getElementById('app-preloader');
+  const fill    = pre?.querySelector('.bar-fill') as HTMLElement | null;
+  const bar     = document.getElementById('preloader-bar');
+  const subEl   = document.getElementById('preloader-sub');
+  const welcome = document.getElementById('preloader-welcome');
+
+  // 1 — Complète la barre à 100 %
+  if (fill) {
+    const currentW = window.getComputedStyle(fill).width;
+    fill.style.width = currentW;
+    fill.style.animation = 'none';
+    void fill.offsetWidth;
+    fill.style.transition = 'width 0.35s ease';
+    fill.style.width = '100%';
   }
+
+  // 2 — Barre à 100 % atteinte : "Starting…" et barre disparaissent
+  window.setTimeout(() => {
+    bar?.classList.add('leaving');
+    subEl?.classList.add('leaving');
+
+    // 3 — Après la transition de sortie : "Bienvenue sur ArcHive" apparaît
+    window.setTimeout(() => {
+      welcome?.classList.add('entering');
+
+      // 4 — 3 secondes de bienvenue, puis l'app monte
+      window.setTimeout(() => {
+        requestAnimationFrame(() => {
+          document.getElementById('root')?.classList.add('app-entering');
+        });
+        pre?.classList.add('preloader--done');
+        window.setTimeout(() => pre?.remove(), 500);
+      }, 3000);
+    }, 450);
+  }, 400);
 });

@@ -11,6 +11,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { clearAllStorage, writeSettingsRaw } from '../../services/storage';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
+import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
 import { clearRawgCache } from '../../features/Library/services/rawgService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
@@ -87,6 +88,8 @@ export function SettingsPage() {
     setRunInBackground,
   } = useAppSettings();
 
+  const ambient = useAmbientPlayer();
+
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [rawgKeyInput, setRawgKeyInput] = useState(settings.rawgApiKey);
   const [rawgKeySaved, setRawgKeySaved] = useState(false);
@@ -96,6 +99,7 @@ export function SettingsPage() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
+  const [tab, setTab] = useState<'perso' | 'params'>('perso');
 
   // Vérifie les mises à jour disponibles et propose de télécharger+installer si une existe
   async function handleCheckUpdate() {
@@ -202,10 +206,30 @@ export function SettingsPage() {
     <div className={css.page}>
       {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
       <h1 className={css.title}>{t('settings.title')}</h1>
-      <p className={css.subtitle}>{t('settings.subtitle')}</p>
+
+      {!q && (
+        <div className={css.tabs}>
+          <button
+            type="button"
+            className={[css.tab, tab === 'perso' ? css.tabActive : ''].filter(Boolean).join(' ')}
+            onClick={() => setTab('perso')}
+          >
+            {t('settings.tabPerso')}
+          </button>
+          <button
+            type="button"
+            className={[css.tab, tab === 'params' ? css.tabActive : ''].filter(Boolean).join(' ')}
+            onClick={() => setTab('params')}
+          >
+            {t('settings.tabParams')}
+          </button>
+        </div>
+      )}
+
+      {/* ── Personnalisation ─────────────────────────────────── */}
 
       {/* Apparence */}
-      {matches('settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
       <div className={css.card}>
         {/* Image de fond */}
         {matches('settings.bgLabel', 'settings.bgHint') && (
@@ -357,8 +381,10 @@ export function SettingsPage() {
       </div>
       )}
 
+      {/* ── Paramètres ───────────────────────────────────────── */}
+
       {/* Mises à jour */}
-      {matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint', 'settings.patchNotesLabel', 'settings.patchNotesHint') && (
+      {(tab === 'params' || !!q) && matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint', 'settings.patchNotesLabel', 'settings.patchNotesHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
 
@@ -402,8 +428,53 @@ export function SettingsPage() {
       </div>
       )}
 
+      {/* Ambiance */}
+      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
+
+        {matches('settings.ambientLabel', 'settings.ambientHint') && (
+        <div className={css.row}>
+          <div>
+            <div className={css.label}>{t('settings.ambientLabel')}</div>
+            <div className={css.hint}>{t('settings.ambientHint')}</div>
+          </div>
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={ambient.enabled}
+              onChange={e => ambient.setEnabled(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </div>
+        )}
+
+        {matches('settings.ambientVolumeLabel') && (
+        <>
+          <div className={css.divider} />
+          <div className={css.row}>
+            <div>
+              <div className={css.label}>{t('settings.ambientVolumeLabel')}</div>
+            </div>
+            <div className={css.sliderRow}>
+              <input
+                type="range" min={0} max={100}
+                value={Math.round(ambient.volume * 100)}
+                disabled={!ambient.enabled}
+                className={css.slider}
+                onChange={e => ambient.setVolume(Number(e.target.value) / 100)}
+              />
+              <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
+            </div>
+          </div>
+        </>
+        )}
+      </div>
+      )}
+
       {/* Système */}
-      {matches('settings.systemTitle', 'settings.autostartLabel', 'settings.autostartHint', 'settings.runInBgLabel', 'settings.runInBgHint') && (
+      {(tab === 'params' || !!q) && matches('settings.systemTitle', 'settings.autostartLabel', 'settings.autostartHint', 'settings.runInBgLabel', 'settings.runInBgHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.systemTitle')}</div>
 
@@ -450,7 +521,7 @@ export function SettingsPage() {
       )}
 
       {/* Zone de danger */}
-      {matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint', 'settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
+      {(tab === 'params' || !!q) && matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint', 'settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
 
@@ -491,7 +562,7 @@ export function SettingsPage() {
       )}
 
       {/* Intégrations */}
-      {matches('settings.integrationsTitle', 'settings.rawgLabel', 'settings.rawgHint') && (
+      {(tab === 'params' || !!q) && matches('settings.integrationsTitle', 'settings.rawgLabel', 'settings.rawgHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
 

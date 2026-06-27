@@ -9,6 +9,8 @@ import { useUpdater, type UpdaterState } from '../../features/updater/useUpdater
 import { useMusicPlayer } from '../../features/music/MusicContext';
 import { useSingleMeta } from '../../features/music/useTrackMeta';
 import { getEnriched } from '../../features/music/enrichMeta';
+import { initAmbient, pauseAmbientForMusic, resumeAmbientAfterMusic } from '../../features/ambient/ambientPlayer';
+import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 
 // Bandeau de mise à jour affiché en haut de la sidebar quand une mise à jour est disponible ou en cours
@@ -99,8 +101,20 @@ export function AppLayout() {
     return () => { mounted = false; unlisten?.(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Démarre la musique d'ambiance une seule fois après le premier rendu
+  useEffect(() => { initAmbient(); }, []);
+
   // Music player
   const music = useMusicPlayer();
+
+  // Coupe l'ambiance quand une musique joue, la reprend quand elle s'arrête
+  useEffect(() => {
+    if (music.isPlaying) {
+      pauseAmbientForMusic();
+    } else {
+      resumeAmbientAfterMusic();
+    }
+  }, [music.isPlaying]);
   const progressPct = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
   const currentTrack = music.currentIndex >= 0 ? music.tracks[music.currentIndex] : null;
 
@@ -368,6 +382,7 @@ export function AppLayout() {
         )}
       </main>
 
+      <MusicVisualizer />
       <UpdateBanner u={updater} />
       <Toasts />
     </div>

@@ -56,6 +56,48 @@ function buildShuffleQueue(total: number, excludeIndex: number): number[] {
   return arr;
 }
 
+// Fondus sur l'élément audio — annule tout fondu en cours avant d'en démarrer un nouveau.
+// _musicTargetVol conserve le volume voulu par l'utilisateur même quand audio.volume est à 0.
+let _musicFadeTimer: ReturnType<typeof setInterval> | null = null;
+let _musicTargetVol = 1;
+
+function clearMusicFade(): void {
+  if (_musicFadeTimer) { clearInterval(_musicFadeTimer); _musicFadeTimer = null; }
+}
+
+function fadeInPlay(audio: HTMLAudioElement): void {
+  clearMusicFade();
+  if (audio.volume > 0) _musicTargetVol = audio.volume;
+  audio.volume = 0;
+  audio.play().catch(() => {});
+  let step = 0;
+  const STEPS = 30;
+  _musicFadeTimer = setInterval(() => {
+    step++;
+    audio.volume = Math.min(_musicTargetVol, (step / STEPS) * _musicTargetVol);
+    if (step >= STEPS) { audio.volume = _musicTargetVol; clearMusicFade(); }
+  }, 600 / STEPS);
+}
+
+function fadeOutPause(audio: HTMLAudioElement, onDone?: () => void): void {
+  clearMusicFade();
+  if (audio.paused) { onDone?.(); return; }
+  if (audio.volume > 0) _musicTargetVol = audio.volume;
+  const startVol = audio.volume;
+  let step = 0;
+  const STEPS = 30;
+  _musicFadeTimer = setInterval(() => {
+    step++;
+    audio.volume = Math.max(0, startVol * (1 - step / STEPS));
+    if (step >= STEPS) {
+      clearMusicFade();
+      audio.pause();
+      audio.volume = _musicTargetVol; // restaure pour le prochain fadeInPlay
+      onDone?.();
+    }
+  }, 600 / STEPS);
+}
+
 // Gère la lecture audio, la liste des pistes, le volume, la progression, shuffle et repeat
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [folderPath, setFolderPath] = useState<string>(readMusicFolder);
@@ -175,7 +217,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         setTimeout(() => {
           audio.src = convertFileSrc(ts[next].path);
           audio.load();
-          audio.play().catch(() => {});
+          fadeInPlay(audio);
           setIsPlaying(true);
         }, 0);
       } else {
@@ -239,7 +281,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     writeMusicLastTrack(index);
     audio.src = convertFileSrc(ts[index].path);
     audio.load();
-    audio.play().catch(() => {});
+    fadeInPlay(audio);
     setIsPlaying(true);
     setProgress(0);
 
@@ -261,10 +303,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!audio.paused) {
-      audio.pause();
       setIsPlaying(false);
+      fadeOutPause(audio);
     } else {
-      audio.play().catch(() => {});
+      fadeInPlay(audio);
       setIsPlaying(true);
     }
   }
@@ -327,6 +369,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Met à jour le volume de l'élément audio et le persiste dans le stockage
   function setVolume(v: number) {
+    _musicTargetVol = v;
     setVolumeState(v);
     audioRef.current.volume = v;
     writeMusicVolume(v);
@@ -343,9 +386,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Arrête la lecture, vide la source et remet l'état à zéro (y compris shuffle/historique)
   function stop() {
     const audio = audioRef.current;
-    audio.pause();
-    audio.src = '';
-    setIsPlaying(false);
+    setIsPlaying(false); // déclenche le fondu entrant de l'ambiance immédiatement
+    fadeOutPause(audio, () => { audio.src = ''; });
     currentIndexRef.current = -1;
     setCurrentIndex(-1);
     setProgress(0);

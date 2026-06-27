@@ -45,8 +45,24 @@
 
       #app-preloader.preloader--done {
         opacity: 0;
-        transform: translateY(-4px);
         pointer-events: none;
+        transition: opacity 0.45s ease !important;
+      }
+
+      /* Animation d'entrée de l'application (montée depuis le bas) */
+      @keyframes appRiseUp {
+        from {
+          transform: translateY(100vh);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      #root.app-entering {
+        animation: appRiseUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
       .preloader-wrap {
@@ -109,20 +125,13 @@
       }
 
       .sub {
-        font-family:
-          Inter,
-          system-ui,
-          -apple-system,
-          Segoe UI,
-          Roboto,
-          Arial,
-          sans-serif;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         font-size: 12px;
         opacity: 0;
-
         transform: translateY(6px);
         animation: subIn 420ms ease forwards;
         animation-delay: 820ms;
+        transition: opacity 0.38s ease, transform 0.38s ease;
       }
 
       /* Petite barre de chargement */
@@ -134,10 +143,11 @@
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.08);
         opacity: 0;
-
         animation: subIn 420ms ease forwards;
         animation-delay: 900ms;
+        transition: opacity 0.38s ease, transform 0.38s ease;
       }
+
       .bar-fill {
         height: 100%;
         width: 0%;
@@ -147,27 +157,44 @@
         animation-delay: 900ms;
       }
 
+      /* Classe ajoutée par JS pour faire disparaître la barre et le texte */
+      .leaving {
+        opacity: 0 !important;
+        transform: translateY(10px) !important;
+        animation: none !important;
+      }
+
+      /* Texte de bienvenue — initialement invisible */
+      .welcome {
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        font-size: 20px;
+        font-weight: 300;
+        letter-spacing: 0.1em;
+        opacity: 0;
+        transform: translateY(-10px);
+        filter: blur(6px);
+        transition:
+          opacity   0.65s ease,
+          transform 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+          filter    0.65s ease;
+      }
+
+      .welcome.entering {
+        opacity: 0.92;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+
       @keyframes logoIn {
-        to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-          filter: blur(0);
-        }
+        to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
       }
 
       @keyframes wordIn {
-        to {
-          opacity: 1;
-          transform: translateY(0);
-          filter: blur(0);
-        }
+        to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
 
       @keyframes subIn {
-        to {
-          opacity: 0.75;
-          transform: translateY(0);
-        }
+        to { opacity: 0.75; transform: translateY(0); }
       }
 
       @keyframes fillProgress {
@@ -175,13 +202,8 @@
         100% { width: 85%; }
       }
 
-      /* Accessibilité: réduit les animations si demandé */
       @media (prefers-reduced-motion: reduce) {
-        .preloader-logo,
-        .word,
-        .sub,
-        .bar,
-        .bar-fill {
+        .preloader-logo, .word, .sub, .bar, .bar-fill {
           animation: none !important;
           opacity: 1 !important;
           transform: none !important;
@@ -207,47 +229,34 @@
           <span class="word word--arc">Arc</span><span class="word word--hive">Hive</span>
         </div>
 
-        <div class="sub">Starting…</div>
+        <div class="sub" id="preloader-sub">Starting…</div>
 
-        <div class="bar" aria-hidden="true">
+        <div class="bar" id="preloader-bar" aria-hidden="true">
           <div class="bar-fill"></div>
         </div>
+
+        <div class="welcome" id="preloader-welcome">Bienvenue sur ArcHive</div>
       </div>
     </div>
+    <!-- Audio d'ambiance démarré pendant le splash (adopté par ambientPlayer au montage React) -->
+    <audio id="preloader-ambient" src="./ambiant.mp3" loop preload="auto" style="display:none"></audio>
+
     <div id="root"></div>
     <script type="module">
-      function startApp() {
-        import('/src/main.tsx');
+      const _t0 = performance.now();
+
+      // Lance la musique d'ambiance dès le splash
+      const _ambientAudio = document.getElementById('preloader-ambient');
+      if (_ambientAudio) {
+        _ambientAudio.volume = 0.25;
+        _ambientAudio.play().catch(() => {
+          // Retry sur la première interaction si autoplay bloqué
+          window.addEventListener('click', () => _ambientAudio.play().catch(() => {}), { once: true });
+        });
       }
 
-      function waitForPreloaderThenStart() {
-        const pre = document.getElementById('app-preloader');
-        if (!pre) return startApp();
-
-        const last = pre.querySelector('.word--hive');
-
-        const FALLBACK_MS = 3000;
-        const timer = window.setTimeout(() => {
-          startApp();
-        }, FALLBACK_MS);
-
-        if (!last) {
-          return;
-        }
-
-        const onEnd = () => {
-          window.clearTimeout(timer);
-          startApp();
-        };
-
-        last.addEventListener('animationend', onEnd, { once: true });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', waitForPreloaderThenStart, { once: true });
-      } else {
-        waitForPreloaderThenStart();
-      }
+      // Charge le bundle React immédiatement (en parallèle du splash)
+      import('/src/main.tsx');
     </script>
   </body>
 </html>

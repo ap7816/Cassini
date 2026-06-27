@@ -20,6 +20,8 @@ export const STORAGE_KEYS = {
   musicColors:         'music_folder_colors',
   musicEnrichedMeta:   'music_enriched_meta',
   musicShuffle:        'music_shuffle',
+  ambientEnabled:      'ambient_enabled',
+  ambientVolume:       'ambient_volume',
   musicRepeat:         'music_repeat',
   musicRecentlyPlayed: 'music_recently_played',
   language:            'arctive.language',
@@ -202,6 +204,19 @@ export function readMusicEnrichedMetaRaw(): string | null {
 export function writeMusicEnrichedMetaRaw(json: string): void {
   rawWrite(STORAGE_KEYS.musicEnrichedMeta, json);
 }
+
+// Lecture/écriture de la musique d'ambiance (activée par défaut, volume 0.25)
+export function readAmbientEnabled(): boolean {
+  const v = rawRead(STORAGE_KEYS.ambientEnabled);
+  return v === null ? true : v === 'true';
+}
+export function writeAmbientEnabled(v: boolean): void { rawWrite(STORAGE_KEYS.ambientEnabled, String(v)); }
+
+export function readAmbientVolume(): number {
+  const v = parseFloat(rawRead(STORAGE_KEYS.ambientVolume) ?? '');
+  return isNaN(v) ? 0.25 : Math.max(0, Math.min(1, v));
+}
+export function writeAmbientVolume(v: number): void { rawWrite(STORAGE_KEYS.ambientVolume, String(v)); }
 
 // Lecture/écriture de la langue de l'interface
 export function readLanguage(): string | null { return rawRead(STORAGE_KEYS.language); }
