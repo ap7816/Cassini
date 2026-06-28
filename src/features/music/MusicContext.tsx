@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { initMusicAnalyser, loadTrackForAnalysis, setMusicPlaying } from './musicAnalyser';
 import {
   readMusicFolder,
   readMusicVolume, writeMusicVolume,
@@ -136,9 +137,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
   useEffect(() => { recentlyPlayedRef.current = recentlyPlayed; }, [recentlyPlayed]);
 
-  // Applique le volume sauvegardé à l'élément audio dès le montage
+  // Applique le volume sauvegardé à l'élément audio dès le montage + init analyser
   useEffect(() => {
     audioRef.current.volume = readMusicVolume();
+    initMusicAnalyser(audioRef.current);
   }, []);
 
   // Recharge le dossier musical au démarrage si un chemin était déjà sauvegardé
@@ -171,7 +173,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (repeat === 'one') {
         audio.currentTime = 0;
         audio.play().catch(() => {});
-        setIsPlaying(true);
+        setIsPlaying(true); setMusicPlaying(true);
         return;
       }
 
@@ -215,13 +217,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         writeMusicRecentlyPlayed(updatedRecent);
 
         setTimeout(() => {
-          audio.src = convertFileSrc(ts[next].path);
+          const assetUrl = convertFileSrc(ts[next].path);
+          audio.src = assetUrl;
           audio.load();
           fadeInPlay(audio);
-          setIsPlaying(true);
+          setIsPlaying(true); setMusicPlaying(true);
+          void loadTrackForAnalysis(assetUrl);
         }, 0);
       } else {
-        setIsPlaying(false);
+        setIsPlaying(false); setMusicPlaying(false);
       }
     }
 
@@ -279,11 +283,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     currentIndexRef.current = index;
     setCurrentIndex(index);
     writeMusicLastTrack(index);
-    audio.src = convertFileSrc(ts[index].path);
+    const assetUrl = convertFileSrc(ts[index].path);
+    audio.src = assetUrl;
     audio.load();
     fadeInPlay(audio);
-    setIsPlaying(true);
+    setIsPlaying(true); setMusicPlaying(true);
     setProgress(0);
+    void loadTrackForAnalysis(assetUrl);
 
     // Ajoute la piste en tête de l'historique récent (dédoublonnage + limite 10)
     const path = ts[index].path;
@@ -303,11 +309,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!audio.paused) {
-      setIsPlaying(false);
+      setIsPlaying(false); setMusicPlaying(false);
       fadeOutPause(audio);
     } else {
       fadeInPlay(audio);
-      setIsPlaying(true);
+      setIsPlaying(true); setMusicPlaying(true);
     }
   }
 
@@ -386,7 +392,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Arrête la lecture, vide la source et remet l'état à zéro (y compris shuffle/historique)
   function stop() {
     const audio = audioRef.current;
-    setIsPlaying(false); // déclenche le fondu entrant de l'ambiance immédiatement
+    setIsPlaying(false); setMusicPlaying(false); // déclenche le fondu entrant de l'ambiance immédiatement
     fadeOutPause(audio, () => { audio.src = ''; });
     currentIndexRef.current = -1;
     setCurrentIndex(-1);

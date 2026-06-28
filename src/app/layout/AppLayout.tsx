@@ -11,6 +11,7 @@ import { useSingleMeta } from '../../features/music/useTrackMeta';
 import { getEnriched } from '../../features/music/enrichMeta';
 import { initAmbient, pauseAmbientForMusic, resumeAmbientAfterMusic } from '../../features/ambient/ambientPlayer';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
+import { MusicBarsVisualizer } from '../../features/music/MusicBarsVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 
 // Bandeau de mise à jour affiché en haut de la sidebar quand une mise à jour est disponible ou en cours
@@ -152,23 +153,18 @@ export function AppLayout() {
 
   const volumeBarRef = useRef<HTMLDivElement>(null);
 
-  // Drag sur la barre de progression : pause pendant le glisser pour éviter le scrubbing audio
+  // Drag sur la barre de progression — seek sans couper la lecture
   function handleProgressMouseDown(e: React.MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
     function calc(clientX: number) {
       return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
     }
-    // Mémorise l'état et met en pause immédiatement — le seek reste silencieux
-    const wasPlaying = music.isPlaying;
-    if (wasPlaying) music.togglePlayPause();
     music.seekTo(calc(e.clientX));
     function onMove(ev: MouseEvent) { music.seekTo(calc(ev.clientX)); }
     function onUp() {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
-      // Reprend la lecture uniquement si elle était active avant le drag
-      if (wasPlaying) music.togglePlayPause();
     }
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -280,6 +276,7 @@ export function AppLayout() {
         {/* Persistent mini-player — animé à l'entrée et à la sortie */}
         {playerVisible && (
           <div className={`${css.miniPlayer} ${playerLeaving ? css.miniPlayerLeaving : ''}`}>
+            <MusicBarsVisualizer />
             <div className={css.miniTrackInfo}>
               {miniCover
                 ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" draggable={false} />
