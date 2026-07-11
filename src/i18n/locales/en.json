@@ -217,6 +217,8 @@
       "new_0": "[Music] Found metadata is now saved directly into audio files — no more network search on every startup",
       "new_1": "[Music] Right-click a track → \"Change artwork…\": pick a local image and embed it in the file",
       "new_2": "[Music] MusicBrainz added as a 3rd artwork source (open source, no API key required)",
+      "new_3": "[Music] Animated snow particles in the background of the music page",
+      "new_4": "[Settings] Option to disable music particles (Ambiance → Music particles)",
       "fix_0": "[Music] Raised match threshold — fewer incorrect covers displayed"
     },
     "v1_1_3": {

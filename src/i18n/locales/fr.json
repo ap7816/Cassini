@@ -217,6 +217,8 @@
       "new_0": "[Musique] Les métadonnées trouvées sont sauvegardées directement dans les fichiers audio — plus de recherche réseau à chaque démarrage",
       "new_1": "[Musique] Clic droit sur une piste → « Changer l'illustration… » : choisissez une image locale embedée dans le fichier",
       "new_2": "[Musique] MusicBrainz ajouté comme 3ème source d'illustrations (open source, sans clé API)",
+      "new_3": "[Musique] Particules de neige animées en arrière-plan de la page musique",
+      "new_4": "[Paramètres] Option pour désactiver les particules musicales (Ambiance → Particules musicales)",
       "fix_0": "[Musique] Seuil de correspondance relevé — moins de pochettes incorrectes affichées"
     },
     "v1_1_3": {
