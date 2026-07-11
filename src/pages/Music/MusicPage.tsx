@@ -234,8 +234,8 @@ function FolderCard({ folder, color, currentIndex, isPlaying, onClick, onContext
 }
 
 // Menu contextuel affiché au clic-droit sur une piste
-function TrackContextMenu({ x, y, track, onClose, onMove, onChangeArt }: {
-  x: number; y: number; track: TrackWithIdx;
+function TrackContextMenu({ x, y, onClose, onMove, onChangeArt }: {
+  x: number; y: number; track?: TrackWithIdx;
   onClose: () => void;
   onMove: () => void;
   onChangeArt: () => void;

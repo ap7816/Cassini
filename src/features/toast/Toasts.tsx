@@ -13,11 +13,11 @@ export function Toasts() {
 
   return (
     <div className={css.stack}>
-      {toasts.map(t => (
-        <div key={t.id} className={`${css.toast} ${css[t.kind]}`}>
-          <span className={css.icon}>{ICONS[t.kind]}</span>
-          <span className={css.msg}>{t.message}</span>
-          <button className={css.close} onClick={() => dismiss(t.id)} aria-label={t('patchNotes.close')}>✕</button>
+      {toasts.map(item => (
+        <div key={item.id} className={`${css.toast} ${css[item.kind]}`}>
+          <span className={css.icon}>{ICONS[item.kind]}</span>
+          <span className={css.msg}>{item.message}</span>
+          <button className={css.close} onClick={() => dismiss(item.id)} aria-label={t('patchNotes.close')}>✕</button>
         </div>
       ))}
     </div>
