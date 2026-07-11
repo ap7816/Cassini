@@ -214,46 +214,46 @@
   },
   "changelog": {
     "v1_2_0": {
-      "new_0": "[Musique] Les métadonnées trouvées sont sauvegardées directement dans les fichiers audio — plus de recherche réseau à chaque démarrage",
-      "new_1": "[Musique] Clic droit sur une piste → « Changer l'illustration… » : choisissez une image locale embedée dans le fichier",
-      "new_2": "[Musique] MusicBrainz ajouté comme 3ème source d'illustrations (open source, sans clé API)",
+      "new_0": "[Musique] Métadonnées sauvegardées directement dans les fichiers audio",
+      "new_1": "[Musique] Changement d'illustration via clic droit, intégrée dans le fichier audio",
+      "new_2": "[Musique] MusicBrainz ajouté comme 3ème source d'illustrations",
       "new_3": "[Musique] Particules de neige animées en arrière-plan de la page musique",
-      "new_4": "[Paramètres] Option pour désactiver les particules musicales (Ambiance → Particules musicales)",
-      "fix_0": "[Musique] Seuil de correspondance relevé — moins de pochettes incorrectes affichées"
+      "new_4": "[Paramètres] Option pour désactiver les particules animées dans la section Ambiance",
+      "fix_0": "[Musique] Seuil de correspondance relevé pour moins de pochettes incorrectes"
     },
     "v1_1_3": {
-      "new_0": "[Musique] Section « Récemment écoutés » : les 10 dernières pistes jouées, persistées et mises à jour automatiquement",
-      "new_1": "[Navigation] Animations de transition entre les pages (fondu doux au changement de route)",
-      "new_2": "[Mini-lecteur] Barre animée : slide depuis le bas à l'ouverture, disparition à l'arrêt",
-      "new_3": "[Musique] Clic droit sur une piste → « Déplacer vers… » : modale de sélection de dossier avec recherche",
+      "new_0": "[Musique] Section des 10 dernières pistes écoutées, persistée entre les sessions",
+      "new_1": "[Navigation] Animations de transition entre les pages",
+      "new_2": "[Mini-lecteur] Apparition et disparition animées de la barre persistante",
+      "new_3": "[Musique] Déplacer une piste vers un autre dossier via clic droit",
       "fix_0": "[Mini-lecteur] Les boutons play/pause/prev/next ne se décalent plus selon la longueur du titre",
-      "fix_1": "[Paramètres → Système] L'application reste bien en arrière-plan à la fermeture (permission manquante corrigée)",
-      "fix_2": "[Mini-lecteur] Clic sur le titre de la piste : navigue désormais dans le bon dossier (plus de retour à la racine ni de clignotement)",
-      "change_0": "[Interface] Refonte visuelle globale : sidebar, typographie, scrollbars, focus, animations de survol"
+      "fix_1": "[Paramètres] L'application reste correctement en arrière-plan à la fermeture",
+      "fix_2": "[Mini-lecteur] Clic sur le titre de la piste navigue désormais vers le bon dossier",
+      "change_0": "[Interface] Refonte visuelle globale de la sidebar, typographie, scrollbars et animations"
     },
     "v1_1_2": {
       "new_0": "[Musique] Recherche automatique de pochettes via iTunes pour toutes les pistes",
       "new_1": "[Mini-lecteur] La pochette trouvée en ligne s'affiche dans la barre en bas de l'écran",
-      "new_2": "[Démarrage] Barre de chargement de 0 à 100 % (remplace l'animation gauche-droite)",
-      "new_3": "[Musique] Mode aléatoire (shuffle) et répétition (aucune / tout / piste)",
-      "new_4": "[Mini-lecteur] Boutons shuffle 🔀 et repeat 🔁/🔂, état sauvegardé entre les sessions",
-      "new_5": "[Mini-lecteur] Rond de position draggable sur les barres de progression et de volume",
+      "new_2": "[Démarrage] Barre de chargement précise de 0 à 100 %",
+      "new_3": "[Musique] Modes lecture aléatoire et répétition de piste",
+      "new_4": "[Mini-lecteur] Boutons lecture aléatoire et répétition, état sauvegardé entre les sessions",
+      "new_5": "[Mini-lecteur] Curseur glissable sur les barres de progression et de volume",
       "new_6": "[Musique] Bouton Actualiser pour rescanner le dossier sans le rechoisir",
       "fix_0": "[Bibliothèque] Les images des jeux Steam restent affichées même après désinstallation",
       "fix_1": "[Musique] L'enrichissement traite désormais toutes les pistes dès le démarrage",
       "fix_2": "[Mini-lecteur] Plus de son parasite lors du glisser sur la barre de progression",
-      "fix_3": "[Mini-lecteur] Lecture/pause fiable après un seek (état DOM au lieu du state React périmé)",
-      "perf_0": "[Musique] Correspondance plus stricte : aucune pochette plutôt qu'une mauvaise"
+      "fix_3": "[Mini-lecteur] Lecture et pause fiables après un déplacement dans la piste",
+      "perf_0": "[Musique] Correspondance des pochettes plus stricte pour éviter les résultats incorrects"
     },
     "v1_1_1": {
       "new_0": "[Paramètres] Notes de mise à jour affichées à chaque nouvelle version",
       "perf_0": "[Musique] Chargement des grandes bibliothèques musicales beaucoup plus rapide",
       "perf_1": "[Musique] Les pochettes se chargent progressivement lors du défilement",
       "perf_2": "[Musique] Barre de progression pendant le chargement des informations des pistes",
-      "fix_0": "Corrections de bugs mineurs"
+      "fix_0": "[Global] Corrections de bugs mineurs"
     },
     "v1_1_0": {
-      "new_0": "[Musique] Informations des pistes (titre, artiste, album, durée) affichées automatiquement",
+      "new_0": "[Musique] Affichage automatique du titre, artiste, album et durée de chaque piste",
       "new_1": "[Musique] Pochettes d'album en plein format sur les cartes, avec la durée incrustée",
       "new_2": "[Musique] Le texte reste lisible même sur les pochettes aux couleurs claires",
       "new_3": "[Musique] Support du format audio .opus"
