@@ -11,6 +11,7 @@ export type AppSettingsContextValue = {
   setRawgApiKey: (key: string) => void;
   setAutostart: (enabled: boolean) => void;
   setRunInBackground: (enabled: boolean) => void;
+  setMusicParticles: (enabled: boolean) => void;
 };
 
 // Contexte React pour les paramètres globaux de l'application (null tant que le provider n'est pas monté)

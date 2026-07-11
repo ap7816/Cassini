@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { MusicSnowVisualizer } from '../../features/music/MusicSnowVisualizer';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
@@ -8,6 +9,7 @@ import { useBasicBatch, useLazyCoverArt, refreshCover, type TrackMeta } from '..
 import { useAutoEnrich } from '../../features/music/useAutoEnrich';
 import type { EnrichedData } from '../../features/music/enrichMeta';
 import { resetEnrichment } from '../../features/music/enrichMeta';
+import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import css from './MusicPage.module.css';
 
 type SortBy  = 'name' | 'dur' | 'ext';
@@ -460,6 +462,7 @@ function SortDropdown({ sortBy, sortDir, onChange }: {
 // Page principale de la bibliothèque musicale : navigateur de dossiers, lecture et enrichissement
 export function MusicPage() {
   const { t } = useTranslation();
+  const { settings } = useAppSettings();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
   const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
@@ -688,7 +691,8 @@ export function MusicPage() {
   const isEmpty = !music.loading && music.tracks.length === 0;
 
   return (
-    <div className={css.page} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
+    <div className={css.page} style={{ position: 'relative' }} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
+      {settings.musicParticles && <MusicSnowVisualizer />}
 
       {/* ── Header ── */}
       <div className={css.header}>

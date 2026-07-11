@@ -190,6 +190,8 @@
     "ambientLabel": "Musique d'ambiance",
     "ambientHint": "Joue une musique de fond douce en boucle dans toute l'application.",
     "ambientVolumeLabel": "Volume d'ambiance",
+    "musicParticlesLabel": "Particules musicales",
+    "musicParticlesHint": "Affiche des particules de neige animées en arrière-plan de la page musique.",
     "systemTitle": "Système",
     "autostartLabel": "Lancement au démarrage",
     "autostartHint": "Démarre automatiquement ArcHive au démarrage de Windows.",

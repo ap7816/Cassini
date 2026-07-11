@@ -14,6 +14,11 @@ let _enabled = false;
 let _volume = 0.25;
 const _listeners = new Set<() => void>();
 
+// Retourne true si l'ambiance est active et en lecture
+export function isAmbientPlaying(): boolean {
+  return _enabled && !!_audio && !_audio.paused;
+}
+
 function notify(): void {
   _listeners.forEach(fn => fn());
 }
@@ -51,6 +56,7 @@ export function initAmbient(): void {
   } else {
     audio.pause();
   }
+
 }
 
 export function getAmbientEnabled(): boolean { return _enabled; }

@@ -47,6 +47,11 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, runInBackground: enabled }));
   }
 
+  // Active ou désactive les particules de neige sur la page musique
+  function setMusicParticles(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, musicParticles: enabled }));
+  }
+
   // Mémoïse l'objet de contexte pour éviter des re-rendus inutiles chez tous les consommateurs
   const value = useMemo(
     () => ({
@@ -58,6 +63,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setRawgApiKey,
       setAutostart,
       setRunInBackground,
+      setMusicParticles,
     }),
     [settings],
   );

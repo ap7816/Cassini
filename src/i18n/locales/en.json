@@ -190,6 +190,8 @@
     "ambientLabel": "Ambient music",
     "ambientHint": "Plays a soft background music on loop throughout the app.",
     "ambientVolumeLabel": "Ambient volume",
+    "musicParticlesLabel": "Music particles",
+    "musicParticlesHint": "Show animated snow particles in the background of the music page.",
     "systemTitle": "System",
     "autostartLabel": "Launch on startup",
     "autostartHint": "Automatically start ArcHive when Windows boots.",

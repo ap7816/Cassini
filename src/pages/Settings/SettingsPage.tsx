@@ -86,6 +86,7 @@ export function SettingsPage() {
     setRawgApiKey,
     setAutostart,
     setRunInBackground,
+    setMusicParticles,
   } = useAppSettings();
 
   const ambient = useAmbientPlayer();
@@ -429,7 +430,7 @@ export function SettingsPage() {
       )}
 
       {/* Ambiance */}
-      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel') && (
+      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musicParticlesLabel', 'settings.musicParticlesHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
 
@@ -467,6 +468,26 @@ export function SettingsPage() {
               />
               <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
             </div>
+          </div>
+        </>
+        )}
+
+        {matches('settings.musicParticlesLabel', 'settings.musicParticlesHint') && (
+        <>
+          <div className={css.divider} />
+          <div className={css.row}>
+            <div>
+              <div className={css.label}>{t('settings.musicParticlesLabel')}</div>
+              <div className={css.hint}>{t('settings.musicParticlesHint')}</div>
+            </div>
+            <label className={css.toggle}>
+              <input
+                type="checkbox"
+                checked={settings.musicParticles}
+                onChange={e => setMusicParticles(e.target.checked)}
+              />
+              <span className={css.toggleSlider} />
+            </label>
           </div>
         </>
         )}

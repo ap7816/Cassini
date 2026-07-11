@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   rawgApiKey: '',
   autostart: false,
   runInBackground: false,
+  musicParticles: true,
 };
 
 // Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
@@ -39,6 +40,8 @@ export function loadSettings(): AppSettings {
       typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
     const runInBackground =
       typeof parsed.runInBackground === 'boolean' ? parsed.runInBackground : false;
+    const musicParticles =
+      typeof parsed.musicParticles === 'boolean' ? parsed.musicParticles : true;
 
     return {
       backgroundImageDataUrl: bg,
@@ -47,6 +50,7 @@ export function loadSettings(): AppSettings {
       rawgApiKey,
       autostart,
       runInBackground,
+      musicParticles,
     };
   } catch {
     return DEFAULT_SETTINGS;

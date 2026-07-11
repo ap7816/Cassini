@@ -22,4 +22,5 @@ export type AppSettings = {
   rawgApiKey: string;
   autostart: boolean;
   runInBackground: boolean;
+  musicParticles: boolean;
 };

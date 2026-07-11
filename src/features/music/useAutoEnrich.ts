@@ -37,8 +37,14 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
   useEffect(() => {
     if (!enabled || !paths.length) return;
 
-    // Filtre uniquement les pistes non encore tentées cette session
-    const toEnrich = paths.filter(p => needsEnrichment(p));
+    // Filtre uniquement les pistes non encore tentées ET sans cover embarquée
+    const toEnrich = paths.filter(p => {
+      if (!needsEnrichment(p)) return false;
+      // Si la piste a déjà une cover dans ses tags (coverDataUrl), on skip
+      const meta = getMeta(p);
+      if (meta?.coverDataUrl) return false;
+      return true;
+    });
     if (!toEnrich.length) return;
 
     let cancelled = false;

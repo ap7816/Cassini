@@ -11,7 +11,6 @@ import { useSingleMeta } from '../../features/music/useTrackMeta';
 import { getEnriched } from '../../features/music/enrichMeta';
 import { initAmbient, pauseAmbientForMusic, resumeAmbientAfterMusic } from '../../features/ambient/ambientPlayer';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
-import { MusicBarsVisualizer } from '../../features/music/MusicBarsVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 
 // Bandeau de mise à jour affiché en haut de la sidebar quand une mise à jour est disponible ou en cours
@@ -276,7 +275,6 @@ export function AppLayout() {
         {/* Persistent mini-player — animé à l'entrée et à la sortie */}
         {playerVisible && (
           <div className={`${css.miniPlayer} ${playerLeaving ? css.miniPlayerLeaving : ''}`}>
-            <MusicBarsVisualizer />
             <div className={css.miniTrackInfo}>
               {miniCover
                 ? <img src={miniCover} className={css.miniArt} alt="" aria-hidden="true" draggable={false} />
