@@ -827,6 +827,53 @@ fn write_audio_cover_from_file(audio_path: String, image_path: String) -> Result
         .map_err(|e| format!("Écriture échouée : {e}"))
 }
 
+// Structure renvoyée au frontend avec les informations d'espace disque
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiskInfo {
+    pub free_bytes: u64,
+    pub total_bytes: u64,
+}
+
+// Commande Tauri : retourne l'espace libre et total du lecteur système (ex: C:\)
+#[tauri::command]
+fn get_disk_free_space() -> Result<DiskInfo, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::ffi::OsStr;
+        use std::os::windows::ffi::OsStrExt;
+        use windows::core::PCWSTR;
+        use windows::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+
+        let drive = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".to_string());
+        let path = format!("{}\\", drive);
+
+        let wide: Vec<u16> = OsStr::new(&path)
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+
+        let mut free_bytes: u64 = 0;
+        let mut total_bytes: u64 = 0;
+
+        unsafe {
+            GetDiskFreeSpaceExW(
+                PCWSTR(wide.as_ptr()),
+                Some(std::ptr::addr_of_mut!(free_bytes)),
+                Some(std::ptr::addr_of_mut!(total_bytes)),
+                None,
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        Ok(DiskInfo { free_bytes, total_bytes })
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Unsupported platform".to_string())
+    }
+}
+
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -881,7 +928,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file, get_disk_free_space])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

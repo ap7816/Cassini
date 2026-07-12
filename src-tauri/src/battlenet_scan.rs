@@ -76,6 +76,14 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 display_name.to_lowercase().replace([' ', ':', '.'], "-")
             );
 
+            let size_on_disk = if !install_location.is_empty() {
+                let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_location));
+                if sz > 0 { Some(sz) } else { None }
+            } else {
+                None
+            };
+            let install_path = if !install_location.is_empty() { Some(install_location.clone()) } else { None };
+
             games.push(GameDto {
                 id,
                 title: display_name,
@@ -84,6 +92,8 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 last_played_at: None,
                 launch_url,
                 steam_app_id: None,
+                size_on_disk,
+                install_path,
             });
         }
     }
@@ -122,6 +132,7 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
             key_name.to_lowercase().replace([' ', ':'], "-")
         );
 
+        let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_path));
         games.push(GameDto {
             id,
             title: key_name,
@@ -130,6 +141,8 @@ fn scan_blizzard_legacy_keys(games: &mut Vec<GameDto>) {
             last_played_at: None,
             launch_url,
             steam_app_id: None,
+            size_on_disk: if sz > 0 { Some(sz) } else { None },
+            install_path: Some(install_path.clone()),
         });
     }
 }

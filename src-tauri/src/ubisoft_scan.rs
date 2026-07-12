@@ -58,6 +58,7 @@ pub fn scan_ubisoft_games() -> Result<Vec<GameDto>, String> {
             game_id
         );
 
+        let sz = crate::steam_scan::dir_size(std::path::Path::new(install_dir));
         games.push(GameDto {
             id,
             title,
@@ -66,6 +67,8 @@ pub fn scan_ubisoft_games() -> Result<Vec<GameDto>, String> {
             last_played_at: None,
             launch_url,
             steam_app_id: None,
+            size_on_disk: if sz > 0 { Some(sz) } else { None },
+            install_path: Some(install_dir.clone()),
         });
     }
 

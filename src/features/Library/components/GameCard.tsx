@@ -18,6 +18,23 @@ type Props = {
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
+type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
+async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
+  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
+  const mod = await import('@tauri-apps/api/core');
+  return (mod.invoke as unknown as TauriInvoke)<T>(cmd, args);
+}
+
+const GB = 1024 ** 3;
+const TB = 1024 ** 4;
+
+function fmtBytes(b: number): string {
+  if (b >= TB) return `${(b / TB).toFixed(1)} TB`;
+  if (b >= GB) return `${(b / GB).toFixed(1)} GB`;
+  return `${(b / (1024 ** 2)).toFixed(0)} MB`;
+}
+
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey, isLaunching = false }: Props) {
   const { t } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
@@ -160,6 +177,12 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
               <span className={css.muted}>
                 {game.installed ? t('gameCard.installed') : t('gameCard.notInstalled')}
               </span>
+              {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
+                <>
+                  <span className={css.dot} aria-hidden="true">•</span>
+                  <span className={css.muted}>{fmtBytes(game.sizeOnDisk)}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -173,6 +196,18 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             >
               {isLaunching ? t('gameCard.opening') : t('gameCard.play')}
             </button>
+
+            {game.installPath && (
+              <button
+                type="button"
+                className={css.folder}
+                onClick={() => void tauriInvoke('open_folder', { path: game.installPath })}
+                aria-label={t('gameCard.openFolder')}
+                title={t('gameCard.openFolder')}
+              >
+                📁
+              </button>
+            )}
 
             <button
               type="button"

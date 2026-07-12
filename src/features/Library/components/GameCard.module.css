@@ -405,6 +405,29 @@
   to { transform: translateY(-50%) rotate(360deg); }
 }
 
+.folder {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 15px;
+  box-shadow: none;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.folder:hover {
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
 .remove {
   width: 34px;
   height: 34px;

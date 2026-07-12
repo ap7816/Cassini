@@ -68,6 +68,8 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
         return None;
     }
 
+    let size_on_disk = v.get("InstallSize").and_then(|s| s.as_u64());
+
     Some(GameDto {
         id: format!("epic-{}", app_name),
         title,
@@ -80,6 +82,8 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
             app_name
         )),
         steam_app_id: None,
+        size_on_disk,
+        install_path: Some(install_location.to_string()),
     })
 }
 

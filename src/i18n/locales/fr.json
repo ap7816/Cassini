@@ -26,7 +26,9 @@
     "goToGames": "Voir les jeux",
     "noResultsTitle": "Aucun résultat",
     "noResultsText": "Aucun jeu ne correspond à",
-    "clearSearch": "Effacer la recherche"
+    "clearSearch": "Effacer la recherche",
+    "diskUsed": "{{size}} utilisés",
+    "diskFree": "{{free}} libres"
   },
   "gameCard": {
     "neverPlayed": "Jamais joué",
@@ -46,7 +48,8 @@
     "imageUrlPrompt": "URL de l'image :",
     "imageButton": "+ image",
     "opening": "Ouverture…",
-    "removeConfirm": "Supprimer \"{{name}}\" de la bibliothèque ?"
+    "removeConfirm": "Supprimer \"{{name}}\" de la bibliothèque ?",
+    "openFolder": "Ouvrir le dossier"
   },
   "emptyState": {
     "title": "Votre bibliothèque est vide",

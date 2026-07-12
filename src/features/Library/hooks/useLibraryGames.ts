@@ -110,17 +110,21 @@ export function useLibraryGames() {
 
   const isEmpty = games.length === 0;
 
-  // Calcule le nombre de jeux installés et en favoris pour l'affichage dans l'en-tête
-  const { installedCount, favoritesCount } = useMemo(() => {
+  // Calcule le nombre de jeux installés, en favoris, et la taille totale occupée sur le disque
+  const { installedCount, favoritesCount, totalSizeBytes } = useMemo(() => {
     let installed = 0;
     let favorites = 0;
+    let totalSize = 0;
 
     for (const g of games) {
-      if (g.installed) installed += 1;
+      if (g.installed) {
+        installed += 1;
+        if (g.sizeOnDisk) totalSize += g.sizeOnDisk;
+      }
       if (g.favorite) favorites += 1;
     }
 
-    return { installedCount: installed, favoritesCount: favorites };
+    return { installedCount: installed, favoritesCount: favorites, totalSizeBytes: totalSize };
   }, [games]);
 
   // Remplace la bibliothèque par les jeux d'exemple pour illustrer l'interface
@@ -435,6 +439,7 @@ export function useLibraryGames() {
     isEmpty,
     installedCount,
     favoritesCount,
+    totalSizeBytes,
 
     loadSamples,
     clearLibrary,

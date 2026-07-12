@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useEffect, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
@@ -10,6 +10,24 @@ import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import { useToast } from '../../features/toast/ToastContext';
+
+type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
+
+async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
+  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
+  const mod = await import('@tauri-apps/api/core');
+  return (mod.invoke as unknown as TauriInvoke)<T>(cmd, args);
+}
+
+const GB = 1024 ** 3;
+const TB = 1024 ** 4;
+
+function fmtBytes(b: number): string {
+  if (b >= TB) return `${(b / TB).toFixed(1)} TB`;
+  if (b >= GB) return `${(b / GB).toFixed(1)} GB`;
+  return `${(b / (1024 ** 2)).toFixed(0)} MB`;
+}
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Other';
@@ -57,6 +75,7 @@ export function LibraryPage() {
     isEmpty,
     installedCount,
     favoritesCount,
+    totalSizeBytes,
     loadSamples,
     removeGame,
     toggleFavorite,
@@ -71,6 +90,14 @@ export function LibraryPage() {
     isScanning,
     scanError,
   } = useLibraryGames();
+
+  const [diskInfo, setDiskInfo] = useState<{ freeBytes: number; totalBytes: number } | null>(null);
+
+  useEffect(() => {
+    tauriInvoke<{ freeBytes: number; totalBytes: number }>('get_disk_free_space')
+      .then(setDiskInfo)
+      .catch(() => {});
+  }, []);
 
   // Lance un rescan simultané sur toutes les plateformes
   async function handleRefresh() {
@@ -174,6 +201,13 @@ export function LibraryPage() {
         <div>
           <h1 className={css.title}>{t('library.title')}</h1>
           <p className={css.subtitle}>{subtitleText}</p>
+          {(totalSizeBytes > 0 || diskInfo) && (
+            <p className={css.diskLine}>
+              {totalSizeBytes > 0 && t('library.diskUsed', { size: fmtBytes(totalSizeBytes) })}
+              {totalSizeBytes > 0 && diskInfo && ' · '}
+              {diskInfo && t('library.diskFree', { free: fmtBytes(diskInfo.freeBytes) })}
+            </p>
+          )}
         </div>
         <button
           type="button"

@@ -64,6 +64,14 @@ pub fn scan_riot_games() -> Result<Vec<GameDto>, String> {
                 None => find_main_exe_in_dir(&install_location),
             };
 
+            let size_on_disk = if !install_location.is_empty() {
+                let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_location));
+                if sz > 0 { Some(sz) } else { None }
+            } else {
+                None
+            };
+            let install_path = if !install_location.is_empty() { Some(install_location.clone()) } else { None };
+
             games.push(GameDto {
                 id: id_key,
                 title: display_name,
@@ -72,6 +80,8 @@ pub fn scan_riot_games() -> Result<Vec<GameDto>, String> {
                 last_played_at: None,
                 launch_url,
                 steam_app_id: None,
+                size_on_disk,
+                install_path,
             });
         }
     }

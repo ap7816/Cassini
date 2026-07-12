@@ -12,6 +12,8 @@ export type Game = {
   favorite?: boolean;
   customImageUrl?: string | null;
   steamAppId?: string | null;
+  sizeOnDisk?: number | null;
+  installPath?: string | null;
 };
 
 // Paramètres de personnalisation et de comportement de l'application

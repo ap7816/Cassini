@@ -26,7 +26,9 @@
     "goToGames": "Go to games",
     "noResultsTitle": "No results",
     "noResultsText": "Nothing matches",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "diskUsed": "{{size}} used",
+    "diskFree": "{{free}} free"
   },
   "gameCard": {
     "neverPlayed": "Never played",
@@ -46,7 +48,8 @@
     "imageUrlPrompt": "Image URL:",
     "imageButton": "+ image",
     "opening": "Opening…",
-    "removeConfirm": "Remove \"{{name}}\" from your library?"
+    "removeConfirm": "Remove \"{{name}}\" from your library?",
+    "openFolder": "Open folder"
   },
   "emptyState": {
     "title": "Your library is empty",

@@ -17,6 +17,27 @@ pub struct GameDto {
     pub last_played_at: Option<String>,
     pub launch_url: Option<String>,
     pub steam_app_id: Option<String>,
+    pub size_on_disk: Option<u64>,
+    pub install_path: Option<String>,
+}
+
+// Calcule récursivement la taille totale d'un dossier (somme de tous les fichiers)
+pub fn dir_size(path: &std::path::Path) -> u64 {
+    if !path.is_dir() {
+        return 0;
+    }
+    let mut total: u64 = 0;
+    if let Ok(entries) = std::fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_dir() {
+                total += dir_size(&p);
+            } else if let Ok(meta) = entry.metadata() {
+                total += meta.len();
+            }
+        }
+    }
+    total
 }
 
 // Scanne toutes les bibliothèques Steam et retourne la liste des jeux installés
@@ -46,7 +67,7 @@ pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
 
             let content =
                 fs::read_to_string(&path).map_err(|e| format!("read_to_string failed: {e}"))?;
-            if let Some(game) = parse_appmanifest(&content) {
+            if let Some(game) = parse_appmanifest(&content, &steamapps) {
                 if seen_ids.insert(game.id.clone()) {
                     games.push(game);
                 }
@@ -66,12 +87,14 @@ fn is_appmanifest(path: &Path) -> bool {
     false
 }
 
-// Parse un fichier ACF Steam et retourne un GameDto avec appid, nom et date de dernière partie
-fn parse_appmanifest(content: &str) -> Option<GameDto> {
+// Parse un fichier ACF Steam et retourne un GameDto avec appid, nom, date de dernière partie et chemin
+fn parse_appmanifest(content: &str, steamapps: &Path) -> Option<GameDto> {
     // Format ACF : lignes de type "appid" "570" / "name" "Dota 2"
     let mut appid: Option<String> = None;
     let mut name: Option<String> = None;
     let mut last_played: Option<i64> = None;
+    let mut size_on_disk: Option<u64> = None;
+    let mut install_dir: Option<String> = None;
 
     for line in content.lines() {
         let line = line.trim();
@@ -91,6 +114,7 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
         match key {
             "appid" => appid = Some(val.to_string()),
             "name" => name = Some(val.to_string()),
+            "installdir" => install_dir = Some(val.to_string()),
             // Timestamp Unix de la dernière session de jeu
             "LastPlayed" => {
                 if let Ok(ts) = val.parse::<i64>() {
@@ -99,12 +123,21 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
                     }
                 }
             }
+            "SizeOnDisk" => {
+                if let Ok(sz) = val.parse::<u64>() {
+                    size_on_disk = Some(sz);
+                }
+            }
             _ => {}
         }
     }
 
     let appid = appid?;
     let title = name.unwrap_or_else(|| format!("Steam App {}", appid));
+
+    let install_path = install_dir.map(|d| {
+        steamapps.join("common").join(d).to_string_lossy().to_string()
+    });
 
     Some(GameDto {
         id: format!("steam-{}", appid),
@@ -117,6 +150,8 @@ fn parse_appmanifest(content: &str) -> Option<GameDto> {
             .map(|dt| dt.to_rfc3339()),
         launch_url: Some(format!("steam://rungameid/{}", appid)),
         steam_app_id: Some(appid.clone()),
+        size_on_disk,
+        install_path,
     })
 }
 

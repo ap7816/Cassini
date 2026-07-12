@@ -104,6 +104,12 @@
   margin: 6px 0 0 0;
 }
 
+.diskLine {
+  font-size: 11px;
+  opacity: 0.45;
+  margin: 3px 0 0 0;
+}
+
 .actions {
   display: flex;
   gap: 10px;
