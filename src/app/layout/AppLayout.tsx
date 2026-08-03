@@ -55,6 +55,7 @@ export function AppLayout() {
   const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(navItems, 900);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [solarLaunching, setSolarLaunching] = useState(false);
   const q = searchParams.get('q') ?? '';
 
   function handleSearchChange(nextValue: string) {
@@ -233,6 +234,28 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          type="button"
+          className={[
+            css.solarBtn,
+            solarLaunching ? css.solarBtnLaunching : '',
+            location.pathname === '/solar' ? css.solarBtnActive : '',
+          ].filter(Boolean).join(' ')}
+          onClick={() => {
+            if (solarLaunching) return;
+            setSolarLaunching(true);
+            setTimeout(() => {
+              setSolarLaunching(false);
+              navigate('/solar');
+            }, 520);
+          }}
+          title="Système Solaire"
+        >
+          <span className={css.solarBtnOrbit} aria-hidden="true" />
+          <span className={css.solarBtnIcon}>🪐</span>
+          <span className={css.solarBtnLabel}>Système Solaire</span>
+        </button>
 
         <div className={css.sidebarFooter}>
           <div className={css.muted}>v{__APP_VERSION__}</div>
