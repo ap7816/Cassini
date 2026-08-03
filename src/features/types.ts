@@ -21,7 +21,7 @@ export type AppSettings = {
   backgroundImageDataUrl: string | null;
   accentColor: string;
   bgOverlayOpacity: number;
-  rawgApiKey: string;
+  sgdbApiKey: string;
   autostart: boolean;
   runInBackground: boolean;
   musicParticles: boolean;

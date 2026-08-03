@@ -32,9 +32,9 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, bgOverlayOpacity: opacity }));
   }
 
-  // Met à jour la clé API RAWG utilisée pour récupérer les images des jeux non-Steam
-  function setRawgApiKey(key: string) {
-    setSettings((prev) => ({ ...prev, rawgApiKey: key }));
+  // Met à jour la clé API SteamGridDB utilisée pour récupérer les images des jeux non-Steam
+  function setSgdbApiKey(key: string) {
+    setSettings((prev) => ({ ...prev, sgdbApiKey: key }));
   }
 
   // Active ou désactive le démarrage automatique de l'application avec Windows
@@ -60,7 +60,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       clearBackgroundImage,
       setAccentColor,
       setBgOverlayOpacity,
-      setRawgApiKey,
+      setSgdbApiKey,
       setAutostart,
       setRunInBackground,
       setMusicParticles,

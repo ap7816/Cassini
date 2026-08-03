@@ -83,7 +83,7 @@ export function SettingsPage() {
     clearBackgroundImage,
     setAccentColor,
     setBgOverlayOpacity,
-    setRawgApiKey,
+    setSgdbApiKey,
     setAutostart,
     setRunInBackground,
     setMusicParticles,
@@ -92,8 +92,8 @@ export function SettingsPage() {
   const ambient = useAmbientPlayer();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [rawgKeyInput, setRawgKeyInput] = useState(settings.rawgApiKey);
-  const [rawgKeySaved, setRawgKeySaved] = useState(false);
+  const [sgdbKeyInput, setSgdbKeyInput] = useState(settings.sgdbApiKey);
+  const [sgdbKeySaved, setSgdbKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
@@ -162,18 +162,18 @@ export function SettingsPage() {
     }
   }
 
-  // Sauvegarde la clé API RAWG et affiche un feedback visuel temporaire
-  function handleSaveRawgKey() {
-    setRawgApiKey(rawgKeyInput.trim());
-    setRawgKeySaved(true);
-    setTimeout(() => setRawgKeySaved(false), 2000);
+  // Sauvegarde la clé API SteamGridDB et affiche un feedback visuel temporaire
+  function handleSaveSgdbKey() {
+    setSgdbApiKey(sgdbKeyInput.trim());
+    setSgdbKeySaved(true);
+    setTimeout(() => setSgdbKeySaved(false), 2000);
   }
 
-  // Vide le cache RAWG et réinitialise la clé API dans les paramètres
+  // Vide le cache SteamGridDB et réinitialise la clé API dans les paramètres
   function handleClearCache() {
     clearRawgCache();
-    setRawgApiKey('');
-    setRawgKeyInput('');
+    setSgdbApiKey('');
+    setSgdbKeyInput('');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 2000);
   }
@@ -185,14 +185,14 @@ export function SettingsPage() {
     setTimeout(() => setWebviewCacheCleared(false), 2000);
   }
 
-  // Efface toutes les données utilisateur après confirmation, en conservant la clé RAWG
+  // Efface toutes les données utilisateur après confirmation, en conservant la clé SteamGridDB
   async function handleClearAllData() {
     const ok = await confirm(t('settings.clearAllConfirm'), { danger: true });
     if (!ok) return;
-    const rawgKey = settings.rawgApiKey;
+    const sgdbKey = settings.sgdbApiKey;
     await clearAllStorage();
-    if (rawgKey) {
-      writeSettingsRaw(JSON.stringify({ rawgApiKey: rawgKey }));
+    if (sgdbKey) {
+      writeSettingsRaw(JSON.stringify({ sgdbApiKey: sgdbKey }));
     }
     window.location.reload();
   }
@@ -583,23 +583,23 @@ export function SettingsPage() {
       )}
 
       {/* Intégrations */}
-      {(tab === 'params' || !!q) && matches('settings.integrationsTitle', 'settings.rawgLabel', 'settings.rawgHint') && (
+      {(tab === 'params' || !!q) && matches('settings.integrationsTitle', 'settings.sgdbLabel', 'settings.sgdbHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
 
-        {matches('settings.rawgLabel', 'settings.rawgHint') && (
+        {matches('settings.sgdbLabel', 'settings.sgdbHint') && (
         <div className={css.row}>
           <div>
-            <div className={css.label}>{t('settings.rawgLabel')}</div>
+            <div className={css.label}>{t('settings.sgdbLabel')}</div>
             <div className={css.hint}>
-              {t('settings.rawgHint')}{' '}
+              {t('settings.sgdbHint')}{' '}
               <a
-                href="https://rawg.io/apidocs"
+                href="https://www.steamgriddb.com/api/v2"
                 target="_blank"
                 rel="noreferrer"
                 className={css.link}
               >
-                {t('settings.rawgLink')}
+                {t('settings.sgdbLink')}
               </a>
             </div>
           </div>
@@ -608,29 +608,29 @@ export function SettingsPage() {
             <input
               type="password"
               className={css.apiKeyInput}
-              placeholder={t('settings.rawgPlaceholder')}
-              value={rawgKeyInput}
+              placeholder={t('settings.sgdbPlaceholder')}
+              value={sgdbKeyInput}
               onChange={(e) => {
-                setRawgKeyInput(e.target.value);
-                setRawgKeySaved(false);
+                setSgdbKeyInput(e.target.value);
+                setSgdbKeySaved(false);
               }}
               autoComplete="off"
             />
             <button
               type="button"
               className={css.primary}
-              onClick={handleSaveRawgKey}
-              disabled={rawgKeyInput.trim() === settings.rawgApiKey}
+              onClick={handleSaveSgdbKey}
+              disabled={sgdbKeyInput.trim() === settings.sgdbApiKey}
             >
-              {rawgKeySaved ? t('settings.rawgSaved') : t('settings.rawgSave')}
+              {sgdbKeySaved ? t('settings.sgdbSaved') : t('settings.sgdbSave')}
             </button>
             <button
               type="button"
               className={css.button}
               onClick={handleClearCache}
-              title={t('settings.rawgClearCache')}
+              title={t('settings.sgdbClearCache')}
             >
-              {cacheCleared ? t('settings.rawgCleared') : t('settings.rawgClearCache')}
+              {cacheCleared ? t('settings.sgdbCleared') : t('settings.sgdbClearCache')}
             </button>
           </div>
         </div>

@@ -12,7 +12,7 @@ type Props = {
   onPlay: (game: Game) => void;
   onToggleFavorite: (id: string) => void;
   onSetImageUrl: (id: string, url: string | null) => void;
-  rawgApiKey: string;
+  sgdbApiKey: string;
   isLaunching?: boolean;
 };
 
@@ -35,7 +35,7 @@ function fmtBytes(b: number): string {
   return `${(b / (1024 ** 2)).toFixed(0)} MB`;
 }
 
-export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, rawgApiKey, isLaunching = false }: Props) {
+export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, sgdbApiKey, isLaunching = false }: Props) {
   const { t } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
 
@@ -76,14 +76,14 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
       return;
     }
 
-    if (!isSteam && rawgApiKey) {
+    if (!isSteam && sgdbApiKey) {
       let cancelled = false;
-      fetchRawgImage(game.title, rawgApiKey).then((url) => {
+      fetchRawgImage(game.title, sgdbApiKey).then((url) => {
         if (!cancelled) setImgSrc(url ?? null);
       });
       return () => { cancelled = true; };
     }
-  }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, rawgApiKey]);
+  }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbApiKey]);
 
   function handleImgError() {
     if (game.customImageUrl) { setImgSrc(null); return; }
@@ -94,16 +94,20 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
       if (imgSrc !== portrait) {
         setImgSrc(portrait);
       } else {
-        // Les deux URLs Steam ont échoué (réseau coupé etc.) → pas d'image
-        setImgSrc(null);
+        // Les deux URLs Steam ont échoué → tenter SteamGridDB en dernier recours
+        if (sgdbApiKey) {
+          fetchRawgImage(game.title, sgdbApiKey).then((url) => setImgSrc(url ?? null));
+        } else {
+          setImgSrc(null);
+        }
       }
       return;
     }
 
     // Non-Steam : vider le cache et retenter via RAWG
     clearRawgCacheEntry(game.title.toLowerCase());
-    if (rawgApiKey) {
-      fetchRawgImage(game.title, rawgApiKey).then((url) => setImgSrc(url ?? null));
+    if (sgdbApiKey) {
+      fetchRawgImage(game.title, sgdbApiKey).then((url) => setImgSrc(url ?? null));
     } else {
       setImgSrc(null);
     }

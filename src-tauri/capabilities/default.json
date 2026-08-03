@@ -82,6 +82,8 @@
     "dialog:allow-confirm",
     "dialog:allow-ask",
     "updater:default",
+    "store:default",
+    "core:event:default",
     "core:webview:allow-clear-all-browsing-data",
     "core:window:allow-hide"
   ]

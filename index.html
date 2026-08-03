@@ -245,14 +245,18 @@
     <script type="module">
       const _t0 = performance.now();
 
-      // Lance la musique d'ambiance dès le splash
+      // Lance la musique d'ambiance dès le splash, seulement si activée
       const _ambientAudio = document.getElementById('preloader-ambient');
       if (_ambientAudio) {
-        _ambientAudio.volume = 0.25;
-        _ambientAudio.play().catch(() => {
-          // Retry sur la première interaction si autoplay bloqué
-          window.addEventListener('click', () => _ambientAudio.play().catch(() => {}), { once: true });
-        });
+        const _ambientEnabled = localStorage.getItem('ambient_enabled');
+        const _ambientVolume  = parseFloat(localStorage.getItem('ambient_volume') ?? '');
+        if (_ambientEnabled !== 'false') {
+          _ambientAudio.volume = isNaN(_ambientVolume) ? 0.25 : Math.max(0, Math.min(1, _ambientVolume));
+          _ambientAudio.play().catch(() => {
+            // Retry sur la première interaction si autoplay bloqué
+            window.addEventListener('click', () => _ambientAudio.play().catch(() => {}), { once: true });
+          });
+        }
       }
 
       // Charge le bundle React immédiatement (en parallèle du splash)

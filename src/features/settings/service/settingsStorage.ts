@@ -6,7 +6,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
   accentColor: '#e5e7eb',
   bgOverlayOpacity: 0.55,
-  rawgApiKey: '',
+  sgdbApiKey: '',
   autostart: false,
   runInBackground: false,
   musicParticles: true,
@@ -34,7 +34,8 @@ export function loadSettings(): AppSettings {
       typeof parsed.bgOverlayOpacity === 'number'
         ? parsed.bgOverlayOpacity
         : DEFAULT_SETTINGS.bgOverlayOpacity;
-    const rawgApiKey =
+    const sgdbApiKey =
+      typeof parsed.sgdbApiKey === 'string' ? parsed.sgdbApiKey :
       typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
     const autostart =
       typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
@@ -47,7 +48,7 @@ export function loadSettings(): AppSettings {
       backgroundImageDataUrl: bg,
       accentColor,
       bgOverlayOpacity,
-      rawgApiKey,
+      sgdbApiKey,
       autostart,
       runInBackground,
       musicParticles,

@@ -827,6 +827,109 @@ fn write_audio_cover_from_file(audio_path: String, image_path: String) -> Result
         .map_err(|e| format!("Écriture échouée : {e}"))
 }
 
+// Recherche un jeu sur SteamGridDB et retourne l'URL de la meilleure bannière (460×215).
+// Appelé depuis le frontend pour contourner les restrictions CORS du navigateur.
+async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &str) -> Option<String> {
+    let encoded = urlencoding::encode(title);
+    let search_url = format!("https://www.steamgriddb.com/api/v2/search/autocomplete/{}", encoded);
+
+    let resp = client
+        .get(&search_url)
+        .header("Authorization", format!("Bearer {}", api_key))
+        .send()
+        .await
+        .ok()?;
+
+    if !resp.status().is_success() {
+        eprintln!("[sgdb] search HTTP {} for «{}»", resp.status(), title);
+        return None;
+    }
+
+    let data: serde_json::Value = resp.json().await.ok()?;
+    let results = data["data"].as_array()?;
+
+    if results.is_empty() {
+        eprintln!("[sgdb] «{}» → no results", title);
+        return None;
+    }
+
+    let first = &results[0];
+    let game_id = first["id"].as_u64()?;
+    let matched_name = first["name"].as_str().unwrap_or("?");
+    eprintln!("[sgdb] «{}» → matched «{}» (id {})", title, matched_name, game_id);
+
+    // Tentative 1 : bannières paysage standard (460×215 ou 920×430)
+    let grids_url = format!(
+        "https://www.steamgriddb.com/api/v2/grids/game/{}?dimensions=460x215,920x430&nsfw=false",
+        game_id
+    );
+
+    let resp = client
+        .get(&grids_url)
+        .header("Authorization", format!("Bearer {}", api_key))
+        .send()
+        .await
+        .ok()?;
+
+    if resp.status().is_success() {
+        let data: serde_json::Value = resp.json().await.ok()?;
+        if let Some(url) = data["data"].as_array().and_then(|a| a.first()).and_then(|g| g["url"].as_str()) {
+            eprintln!("[sgdb] «{}» → image found ✓", title);
+            return Some(url.to_string());
+        }
+    }
+
+    // Tentative 2 : n'importe quelle grille si pas de taille standard disponible
+    let grids_url2 = format!(
+        "https://www.steamgriddb.com/api/v2/grids/game/{}?nsfw=false&limit=1",
+        game_id
+    );
+
+    let resp2 = client
+        .get(&grids_url2)
+        .header("Authorization", format!("Bearer {}", api_key))
+        .send()
+        .await
+        .ok()?;
+
+    if !resp2.status().is_success() {
+        eprintln!("[sgdb] grids HTTP {} for «{}»", resp2.status(), title);
+        return None;
+    }
+
+    let data2: serde_json::Value = resp2.json().await.ok()?;
+    let url = data2["data"].as_array()?.first()?["url"].as_str().map(|s| s.to_string());
+
+    if url.is_some() {
+        eprintln!("[sgdb] «{}» → image found (non-standard size) ✓", title);
+    } else {
+        eprintln!("[sgdb] «{}» → matched but no grid image", title);
+    }
+
+    url
+}
+
+#[tauri::command]
+async fn fetch_sgdb_image(title: String, api_key: String) -> Result<Option<String>, String> {
+    let client = reqwest::Client::new();
+
+    if let Some(url) = sgdb_search_and_fetch(&client, &title, &api_key).await {
+        return Ok(Some(url));
+    }
+
+    // 2ème tentative sans les chiffres finaux (ex: "Call of Duty 2" → "Call of Duty")
+    let stripped = title.trim_end_matches(|c: char| c.is_ascii_digit()).trim_end();
+    if !stripped.is_empty() && stripped != title.as_str() {
+        eprintln!("[sgdb] «{}» → retrying as «{}»", title, stripped);
+        if let Some(url) = sgdb_search_and_fetch(&client, stripped, &api_key).await {
+            return Ok(Some(url));
+        }
+    }
+
+    eprintln!("[sgdb] «{}» → not found", title);
+    Ok(None)
+}
+
 // Structure renvoyée au frontend avec les informations d'espace disque
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -928,7 +1031,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file, get_disk_free_space])
+        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file, get_disk_free_space, fetch_sgdb_image])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

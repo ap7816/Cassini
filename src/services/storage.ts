@@ -94,13 +94,13 @@ function rawRead(key: string): string | null {
   return mem[key] ?? null;
 }
 
-// Écrit une valeur en mémoire immédiatement, puis la persiste de façon asynchrone dans le store
+// Écrit une valeur en mémoire immédiatement, puis la persiste de façon asynchrone dans le store.
+// Toujours mirrée dans localStorage pour que le preloader HTML puisse la lire sans attendre le store.
 function rawWrite(key: string, value: string): void {
   mem[key] = value;
+  try { window.localStorage?.setItem(key, value); } catch { /* quota dépassé */ }
   if (store) {
     store.set(key, value).catch(err => console.error('[storage] write error', err));
-  } else {
-    try { window.localStorage?.setItem(key, value); } catch { /* quota dépassé */ }
   }
 }
 

@@ -41,4 +41,5 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 tauri-plugin-store = "2"
 reqwest = { version = "0.12", features = ["json"] }
+urlencoding = "2"
 tokio = { version = "1", features = ["time", "sync"] }
