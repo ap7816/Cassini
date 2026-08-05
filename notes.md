@@ -66,66 +66,66 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ## Tableau des fonctionnalités
 
-| Fonctionnalité                                                   | Statut     |
-| ---------------------------------------------------------------- | ---------- |
-| Scan automatique (Steam, Epic, BattleNet, Ubisoft, Riot, Rockstar) | ✅ Done    |
-| Déduplication intelligente des jeux multi-plateformes            | ✅ Done    |
-| Lancement de jeux avec overlay d'animation                       | ✅ Done    |
-| Historique de dernière session par jeu                           | ✅ Done    |
-| Système de favoris                                               | ✅ Done    |
-| Images: CDN Steam (direct, même désinstallé) + RAWG + perso      | ✅ Done    |
-| Cache RAWG en localStorage                                       | ✅ Done    |
-| Vider le cache RAWG                                              | ✅ Done    |
-| Vider le cache WebView                                           | ✅ Done    |
-| Recherche temps réel par titre                                   | ✅ Done    |
-| Onglet Favoris                                                   | ✅ Done    |
-| Ajout manuel d'un jeu via sélecteur de fichier `.exe`            | ✅ Done    |
-| Export / import de la bibliothèque en JSON                       | ✅ Done    |
-| Onglet Launchers avec ouverture directe et accès au dossier      | ✅ Done    |
-| Mise à jour automatique (tauri-plugin-updater + GitHub Releases) | ✅ Done    |
-| Interface multilingue FR / EN                                    | ✅ Done    |
-| Couleur d'accent personnalisable (palettes + color picker)       | ✅ Done    |
-| Image de fond personnalisée avec opacité réglable                | ✅ Done    |
-| Réinitialisation complète de l'appli                             | ✅ Done    |
-| Architecture deux-repos (`.exe` privé + `latest.json` public)    | ✅ Done    |
-| Lecteur de musique MP3 avec scan récursif des sous-dossiers      | ✅ Done    |
-| Lecteur: dossiers repliables, recherche, mini-player persistant  | ✅ Done    |
-| Lecteur: mémorisation dernière piste + volume                    | ✅ Done    |
-| Lancement automatique au démarrage de Windows                    | ✅ Done    |
-| Rester en arrière-plan (icône tray)                              | ✅ Done    |
-| Lecteur: section « Récemment écoutés » (10 dernières pistes)     | ✅ Done    |
-| Animations de transition entre pages                             | ✅ Done    |
-| Mini-lecteur animé (slide-up/down)                               | ✅ Done    |
-| Refonte visuelle globale (sidebar, typo, scrollbars, animations) | ✅ Done    |
-| Taille des jeux sur disque                                       | ❌ À faire |
-| Vue Système Solaire                                              | ❌ À faire |
-| Statistiques de jeu (temps joué, graphiques)                     | ❌ À faire |
-| Catégories / tags par genre ou état                              | ❌ À faire |
-| Tri des jeux (A-Z, Z-A, joué récemment)                          | ✅ Done    |
-| Filtres par plateforme et statut installé / non installé         | ✅ Done    |
-| Tri avancé (par taille disque, temps joué total)                 | ❌ À faire |
-| Notifications (jeu prêt à jouer)                                 | ❌ À faire |
-| Mode sombre / clair                                              | ❌ À faire |
-| Support GOG Galaxy                                               | ❌ À faire |
-| Support Ubisoft Connect                                          | ✅ Done    |
-| Support Riot Games                                               | ✅ Done    |
-| Support Rockstar Games Launcher                                  | ✅ Done    |
-| Support Xbox / Microsoft Store (Game Pass)                       | ❌ À faire |
-| Raccourcis clavier                                               | ❌ À faire |
-| Vue liste (alternative à la grille)                              | ❌ À faire |
-| Notes par jeu                                                    | ❌ À faire |
-| Scan en arrière-plan automatique                                 | ❌ À faire |
-| Mise à jour du statut installé en temps réel                     | ❌ À faire |
-| Cache RAWG avec TTL (expiration automatique)                     | ❌ À faire |
-| Lecteur: couleur personnalisée par dossier (clic droit)          | ✅ Done    |
-| Lecteur: déplacer une piste via clic droit → modale de sélection | ✅ Done    |
+| Fonctionnalité                                                           | Statut     |
+| ------------------------------------------------------------------------ | ---------- |
+| Scan automatique (Steam, Epic, BattleNet, Ubisoft, Riot, Rockstar)       | ✅ Done    |
+| Déduplication intelligente des jeux multi-plateformes                    | ✅ Done    |
+| Lancement de jeux avec overlay d'animation                               | ✅ Done    |
+| Historique de dernière session par jeu                                   | ✅ Done    |
+| Système de favoris                                                       | ✅ Done    |
+| Images: CDN Steam (direct, même désinstallé) + RAWG + perso              | ✅ Done    |
+| Cache RAWG en localStorage                                               | ✅ Done    |
+| Vider le cache RAWG                                                      | ✅ Done    |
+| Vider le cache WebView                                                   | ✅ Done    |
+| Recherche temps réel par titre                                           | ✅ Done    |
+| Onglet Favoris                                                           | ✅ Done    |
+| Ajout manuel d'un jeu via sélecteur de fichier `.exe`                    | ✅ Done    |
+| Export / import de la bibliothèque en JSON                               | ✅ Done    |
+| Onglet Launchers avec ouverture directe et accès au dossier              | ✅ Done    |
+| Mise à jour automatique (tauri-plugin-updater + GitHub Releases)         | ✅ Done    |
+| Interface multilingue FR / EN                                            | ✅ Done    |
+| Couleur d'accent personnalisable (palettes + color picker)               | ✅ Done    |
+| Image de fond personnalisée avec opacité réglable                        | ✅ Done    |
+| Réinitialisation complète de l'appli                                     | ✅ Done    |
+| Architecture deux-repos (`.exe` privé + `latest.json` public)            | ✅ Done    |
+| Lecteur de musique MP3 avec scan récursif des sous-dossiers              | ✅ Done    |
+| Lecteur: dossiers repliables, recherche, mini-player persistant          | ✅ Done    |
+| Lecteur: mémorisation dernière piste + volume                            | ✅ Done    |
+| Lancement automatique au démarrage de Windows                            | ✅ Done    |
+| Rester en arrière-plan (icône tray)                                      | ✅ Done    |
+| Lecteur: section « Récemment écoutés » (10 dernières pistes)             | ✅ Done    |
+| Animations de transition entre pages                                     | ✅ Done    |
+| Mini-lecteur animé (slide-up/down)                                       | ✅ Done    |
+| Refonte visuelle globale (sidebar, typo, scrollbars, animations)         | ✅ Done    |
+| Taille des jeux sur disque                                               | ❌ À faire |
+| Vue Système Solaire                                                      | ❌ À faire |
+| Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
+| Catégories / tags par genre ou état                                      | ❌ À faire |
+| Tri des jeux (A-Z, Z-A, joué récemment)                                  | ✅ Done    |
+| Filtres par plateforme et statut installé / non installé                 | ✅ Done    |
+| Tri avancé (par taille disque, temps joué total)                         | ❌ À faire |
+| Notifications (jeu prêt à jouer)                                         | ❌ À faire |
+| Mode sombre / clair                                                      | ❌ À faire |
+| Support GOG Galaxy                                                       | ❌ À faire |
+| Support Ubisoft Connect                                                  | ✅ Done    |
+| Support Riot Games                                                       | ✅ Done    |
+| Support Rockstar Games Launcher                                          | ✅ Done    |
+| Support Xbox / Microsoft Store (Game Pass)                               | ❌ À faire |
+| Raccourcis clavier                                                       | ❌ À faire |
+| Vue liste (alternative à la grille)                                      | ❌ À faire |
+| Notes par jeu                                                            | ❌ À faire |
+| Scan en arrière-plan automatique                                         | ❌ À faire |
+| Mise à jour du statut installé en temps réel                             | ❌ À faire |
+| Cache RAWG avec TTL (expiration automatique)                             | ❌ À faire |
+| Lecteur: couleur personnalisée par dossier (clic droit)                  | ✅ Done    |
+| Lecteur: déplacer une piste via clic droit → modale de sélection         | ✅ Done    |
 | Lecteur: clic sur le titre du mini-lecteur → navigue dans le bon dossier | ✅ Done    |
-| Lecteur: affichage pochette d'album (ID3 tags embarqués)         | ✅ Done    |
-| Lecteur: enrichissement iTunes (pochette en ligne pour toutes)   | ✅ Done    |
-| Lecteur: pochette enrichie visible dans le mini-lecteur          | ✅ Done    |
-| Lecteur: mode aléatoire / répétition                             | ✅ Done    |
-| Lecteur: arborescence / grandes icônes de dossier                | ❌ À faire |
-| Tests unitaires (déduplication, tri, scans)                      | ❌ À faire |
+| Lecteur: affichage pochette d'album (ID3 tags embarqués)                 | ✅ Done    |
+| Lecteur: enrichissement iTunes (pochette en ligne pour toutes)           | ✅ Done    |
+| Lecteur: pochette enrichie visible dans le mini-lecteur                  | ✅ Done    |
+| Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
+| Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
+| Tests unitaires (déduplication, tri, scans)                              | ❌ À faire |
 
 ---
 
