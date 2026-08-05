@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router-dom';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import css from './LaunchersPage.module.css';
 import { invoke, isTauri } from '@tauri-apps/api/core';
-import { openPath, openUrl } from '@tauri-apps/plugin-opener';
 import {
   getCachedLauncherIconsById,
   pruneLauncherIconCache,
@@ -27,18 +26,13 @@ type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
 type InstalledFilter = 'all' | 'yes';
 type SortMode = 'default' | 'az';
 
-// Détecte si une cible est une URL (protocole://) plutôt qu'un chemin de fichier
-function isUrlTarget(target: string): boolean {
-  return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(target);
-}
-
-// Ouvre une cible soit comme URL (openUrl) soit comme chemin exe (openPath)
+// Ouvre un launcher via la commande Rust, qui le lance détaché d'ArcHive.
+//
+// Le plugin opener démarrait le launcher depuis notre propre processus : il
+// héritait alors du job Windows de l'application et se fermait avec elle —
+// fermer ArcHive éteignait Steam.
 async function openTarget(target: string): Promise<void> {
-  if (isUrlTarget(target)) {
-    await openUrl(target);
-  } else {
-    await openPath(target);
-  }
+  await invoke('launch_target', { target });
 }
 
 // Page des launchers : liste, icônes et boutons d'ouverture pour chaque launcher détecté

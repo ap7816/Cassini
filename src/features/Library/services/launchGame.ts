@@ -1,6 +1,5 @@
 import type { Game } from '../../types';
 import { isTauri, invoke } from '@tauri-apps/api/core';
-import { openPath, openUrl } from '@tauri-apps/plugin-opener';
 
 export type LaunchResult =
   | { ok: true }
@@ -41,13 +40,13 @@ async function openExternal(target: string): Promise<void> {
       return;
     }
 
-    if (isUrlTarget(target)) {
-      await openUrl(target);
-      return;
-    }
-
-    // Chemin local (C:\...) ou autre — ouverture via le plugin opener de Tauri
-    await openPath(target);
+    // Tout le reste (steam://, epic://, chemins locaux) passe par la commande
+    // Rust, qui lance la cible détachée du processus ArcHive.
+    //
+    // Le plugin opener lançait le programme depuis notre propre processus :
+    // celui-ci héritait du job Windows de l'application et se fermait avec
+    // elle — c'est ce qui éteignait Steam à la fermeture d'ArcHive.
+    await invoke('launch_target', { target });
     return;
   }
 

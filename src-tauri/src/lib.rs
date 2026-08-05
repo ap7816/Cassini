@@ -1,5 +1,6 @@
 // Modules de scan par plateforme et utilitaires d'extraction d'icônes
 mod battlenet_scan;
+mod detached;
 mod epic_scan;
 mod icon_extract;
 mod launcher_scan;
@@ -226,28 +227,7 @@ fn open_folder(path: String) -> Result<(), String> {
     // canonicalize renvoie un préfixe \\?\ sur Windows qu'explorer ne comprend pas
     let final_path = canonical.to_string_lossy().replace(r"\\?\", "");
 
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("explorer")
-            .arg(&final_path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&final_path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&final_path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(())
+    detached::open_via_shell(&final_path)
 }
 
 // Commande Tauri de test (non utilisée en prod) — conservée pour compatibilité
@@ -481,12 +461,8 @@ fn launch_battlenet_game(uid: String) -> Result<(), String> {
         .find(|p| std::path::Path::new(p).exists())
         .ok_or_else(|| "Battle.net.exe introuvable".to_string())?;
 
-    std::process::Command::new(exe)
-        .arg(format!("--exec=launch {uid}"))
-        .spawn()
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    // Détaché : sinon Battle.net se ferme en même temps qu'ArcHive
+    detached::spawn_detached(exe, &[&format!("--exec=launch {uid}")])
 }
 
 // Commande Tauri : lance un jeu Riot via RiotClientServices.exe avec le product ID et la patchline live
@@ -497,13 +473,13 @@ fn launch_riot_game(product: String) -> Result<(), String> {
     let exe = riot_scan::find_riot_client_exe()
         .ok_or_else(|| "RiotClientServices.exe introuvable".to_string())?;
 
-    std::process::Command::new(&exe)
-        .arg(format!("--launch-product={}", product))
-        .arg("--launch-patchline=live")
-        .spawn()
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+    detached::spawn_detached(
+        &exe.to_string_lossy(),
+        &[
+            &format!("--launch-product={}", product),
+            "--launch-patchline=live",
+        ],
+    )
 }
 
 // Commande Tauri : lance un jeu Ubisoft via le protocole uplay://
@@ -516,52 +492,57 @@ fn launch_riot_game(product: String) -> Result<(), String> {
 #[tauri::command]
 fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
     security::validate_numeric_id(&game_id)?;
-    let url = format!("uplay://launch/{}/0", game_id);
+    detached::open_via_shell(&format!("uplay://launch/{}/0", game_id))
+}
 
-    #[cfg(target_os = "windows")]
-    {
-        use std::os::windows::ffi::OsStrExt;
-        use windows::core::PCWSTR;
-        use windows::Win32::UI::Shell::ShellExecuteW;
-        use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+// Protocoles de lancement acceptés par `launch_target`. Liste identique à
+// celle du frontend, revalidée ici : une commande Tauri est appelable
+// directement depuis la webview, la validation JS n'est pas une barrière.
+const LAUNCH_SCHEMES: [&str; 5] = [
+    "steam://",
+    "com.epicgames.launcher://",
+    "battlenet://",
+    "riotclient://",
+    "uplay://",
+];
 
-        fn wide(s: &str) -> Vec<u16> {
-            std::ffi::OsStr::new(s)
-                .encode_wide()
-                .chain(std::iter::once(0))
-                .collect()
+// Commande Tauri : ouvre une cible de lancement (URL de protocole ou
+// exécutable local) de façon totalement détachée.
+//
+// Remplace `openUrl`/`openPath` du plugin opener, qui lançaient le programme
+// depuis notre propre processus : celui-ci héritait alors du job Windows
+// d'ArcHive et se fermait avec lui — c'est ce qui éteignait Steam.
+#[tauri::command]
+fn launch_target(target: String) -> Result<(), String> {
+    let t = target.trim();
+    if t.is_empty() || t.len() > 2048 {
+        return Err("Cible de lancement invalide".into());
+    }
+    // Les caractères de contrôle n'ont rien à faire dans une cible
+    if t.chars().any(|c| c.is_control()) {
+        return Err("Cible de lancement invalide".into());
+    }
+
+    let lower = t.to_ascii_lowercase();
+    let is_scheme = LAUNCH_SCHEMES.iter().any(|s| lower.starts_with(s));
+
+    if !is_scheme {
+        // Chemin local uniquement : on refuse les chemins UNC (\\serveur\...),
+        // qui feraient exécuter un binaire hébergé à distance.
+        let local = t.len() > 2
+            && t.as_bytes()[1] == b':'
+            && (t.as_bytes()[2] == b'\\' || t.as_bytes()[2] == b'/')
+            && t.as_bytes()[0].is_ascii_alphabetic();
+
+        if !local || t.contains("..") {
+            return Err("Cible de lancement non autorisée".into());
         }
-
-        let verb = wide("open");
-        let file = wide(&url);
-
-        // SAFETY : les deux chaînes sont terminées par un NUL et vivent
-        // jusqu'à la fin de l'appel ; l'URL est validée juste au-dessus.
-        let result = unsafe {
-            ShellExecuteW(
-                None,
-                PCWSTR(verb.as_ptr()),
-                PCWSTR(file.as_ptr()),
-                PCWSTR::null(),
-                PCWSTR::null(),
-                SW_SHOWNORMAL,
-            )
-        };
-
-        // ShellExecuteW renvoie une valeur > 32 en cas de succès
-        if result.0 as usize <= 32 {
-            return Err(format!("Lancement Ubisoft échoué (code {})", result.0 as usize));
+        if !std::path::Path::new(t).exists() {
+            return Err("Fichier introuvable".into());
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        let _ = url;
-        return Err("Ubisoft Connect n'est disponible que sur Windows".into());
-    }
-
-    #[allow(unreachable_code)]
-    Ok(())
+    detached::open_via_shell(t)
 }
 
 // Résultat d'enrichissement renvoyé au frontend : artiste, album, URL de pochette et source API
@@ -1276,6 +1257,7 @@ pub fn run() {
             scan_riot_games, scan_rockstar_games, scan_ubisoft_games,
             scan_launchers, get_file_icon_data_url, open_folder,
             launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
+            launch_target,
             scan_music_folder, get_autostart, set_autostart, list_music_dirs,
             set_music_root,
             create_music_folder, delete_music_folder, rename_music_folder,
