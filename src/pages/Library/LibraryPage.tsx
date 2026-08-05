@@ -311,7 +311,7 @@ export function LibraryPage() {
               onPlay={handlePlay}
               onToggleFavorite={toggleFavorite}
               onSetImageUrl={setGameImageUrl}
-              sgdbApiKey={settings.sgdbApiKey}
+              sgdbKeySet={settings.sgdbKeySet}
               isLaunching={launchingId === g.id}
             />
           ))}

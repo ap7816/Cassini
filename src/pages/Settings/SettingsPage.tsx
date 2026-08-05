@@ -8,7 +8,7 @@ import { AppDialog } from '../../components/AppDialog/AppDialog';
 import { useToast } from '../../features/toast/ToastContext';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
-import { clearAllStorage, writeSettingsRaw } from '../../services/storage';
+import { clearAllStorage } from '../../services/storage';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
@@ -92,7 +92,8 @@ export function SettingsPage() {
   const ambient = useAmbientPlayer();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [sgdbKeyInput, setSgdbKeyInput] = useState(settings.sgdbApiKey);
+  // Champ toujours vide au chargement : la clé enregistrée n'est jamais relue
+  const [sgdbKeyInput, setSgdbKeyInput] = useState('');
   const [sgdbKeySaved, setSgdbKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
@@ -162,17 +163,19 @@ export function SettingsPage() {
     }
   }
 
-  // Sauvegarde la clé API SteamGridDB et affiche un feedback visuel temporaire
-  function handleSaveSgdbKey() {
-    setSgdbApiKey(sgdbKeyInput.trim());
+  // Enregistre la clé dans le coffre système puis vide immédiatement le champ :
+  // la valeur ne reste ni à l'écran, ni dans l'état React.
+  async function handleSaveSgdbKey() {
+    await setSgdbApiKey(sgdbKeyInput.trim());
+    setSgdbKeyInput('');
     setSgdbKeySaved(true);
     setTimeout(() => setSgdbKeySaved(false), 2000);
   }
 
-  // Vide le cache SteamGridDB et réinitialise la clé API dans les paramètres
-  function handleClearCache() {
+  // Vide le cache SteamGridDB et supprime la clé du coffre système
+  async function handleClearCache() {
     clearRawgCache();
-    setSgdbApiKey('');
+    await setSgdbApiKey('');
     setSgdbKeyInput('');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 2000);
@@ -185,15 +188,13 @@ export function SettingsPage() {
     setTimeout(() => setWebviewCacheCleared(false), 2000);
   }
 
-  // Efface toutes les données utilisateur après confirmation, en conservant la clé SteamGridDB
+  // Efface toutes les données utilisateur après confirmation.
+  // La clé SteamGridDB vit désormais dans le coffre système : elle survit
+  // sans qu'on ait à la relire ni à la réécrire ici.
   async function handleClearAllData() {
     const ok = await confirm(t('settings.clearAllConfirm'), { danger: true });
     if (!ok) return;
-    const sgdbKey = settings.sgdbApiKey;
     await clearAllStorage();
-    if (sgdbKey) {
-      writeSettingsRaw(JSON.stringify({ sgdbApiKey: sgdbKey }));
-    }
     window.location.reload();
   }
 
@@ -608,7 +609,11 @@ export function SettingsPage() {
             <input
               type="password"
               className={css.apiKeyInput}
-              placeholder={t('settings.sgdbPlaceholder')}
+              placeholder={
+                settings.sgdbKeySet
+                  ? '•••••••• (clé enregistrée)'
+                  : t('settings.sgdbPlaceholder')
+              }
               value={sgdbKeyInput}
               onChange={(e) => {
                 setSgdbKeyInput(e.target.value);
@@ -620,7 +625,7 @@ export function SettingsPage() {
               type="button"
               className={css.primary}
               onClick={handleSaveSgdbKey}
-              disabled={sgdbKeyInput.trim() === settings.sgdbApiKey}
+              disabled={!sgdbKeyInput.trim()}
             >
               {sgdbKeySaved ? t('settings.sgdbSaved') : t('settings.sgdbSave')}
             </button>

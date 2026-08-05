@@ -245,6 +245,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setError(null);
     setFolderPath(path);
     try {
+      // Déclare la racine autorisée côté Rust : toutes les opérations d'écriture
+      // (création, suppression, renommage, tags) y seront confinées.
+      await invoke('set_music_root', { path });
+
       const result = await invoke<TrackDto[]>('scan_music_folder', { path });
       tracksRef.current = result;
       setTracks(result);

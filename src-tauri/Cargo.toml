@@ -43,3 +43,5 @@ tauri-plugin-store = "2"
 reqwest = { version = "0.12", features = ["json"] }
 urlencoding = "2"
 tokio = { version = "1", features = ["time", "sync"] }
+# Coffre à secrets de l'OS (Windows Credential Manager) pour la clé SteamGridDB
+keyring = { version = "3", features = ["windows-native"] }

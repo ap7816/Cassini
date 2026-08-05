@@ -23,8 +23,14 @@
   pointer-events: none;
 }
 
-/* Orbit ring platform labels */
+/* Orbit ring platform labels.
+   Positioned at the origin and moved with transform each frame — transform is
+   compositor-driven, so it doesn't trigger layout and stays rock steady. */
 .orbitLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
   font: 600 11px/1 Inter, sans-serif;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -35,6 +41,10 @@
 
 /* Planet name labels — shown below each planet sphere */
 .planetLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
   font: 700 11px/1 Inter, sans-serif;
   color: #ffffff;
   pointer-events: none;
@@ -47,6 +57,77 @@
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(4px);
+}
+
+/* ── Launcher selector (top-left overlay) ─────────────────── */
+.selector {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(8, 12, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.selectorLabel {
+  font: 600 10px/1 Inter, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.selectorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectorDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.select {
+  appearance: none;
+  min-width: 180px;
+  padding: 7px 30px 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.92);
+  font: 600 13px/1 Inter, sans-serif;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.5) 50%),
+                    linear-gradient(135deg, rgba(255,255,255,0.5) 50%, transparent 50%);
+  background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  transition: background-color 140ms, border-color 140ms;
+}
+
+.select:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.select option {
+  background: #0b1018;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.selectorHint {
+  font: 500 11px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.34);
 }
 
 /* Hover tooltip when cursor is over a planet */
@@ -186,83 +267,60 @@
 }
 .panelClose:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.95); }
 
-/* Body */
+/* Body — mirrors GameCard .body */
 .panelBody {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0,1fr);
+  gap: 6px;
+  padding: 10px;
+}
+
+/* topRow: title+meta on left, buttons on right — mirrors GameCard .topRow */
+.panelTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panelTitleWrap {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 12px 14px 16px;
-  overflow-y: auto;
 }
 
 .panelTitleRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
 .panelTitle {
-  flex: 1;
-  min-width: 0;
   font-size: 16px;
   font-weight: 700;
-  color: rgba(255,255,255,0.96);
-  line-height: 1.25;
-  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.panelFavBtn {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.9);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  box-shadow: none;
-  font-size: 17px;
-  transition: transform 120ms, background 120ms;
-}
-.panelFavBtn:hover { background: rgba(255,255,255,0.07); transform: scale(1.05); }
-.panelFavBtnActive {
-  color: #ffd56a;
-  border-color: rgba(255,213,106,0.55);
-  background: rgba(255,213,106,0.1);
-  transform: scale(1.08);
-  animation: favPulse 1.6s ease-in-out infinite;
-}
-@keyframes favPulse {
-  0%,100% { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(255,213,106,0.55)); }
-  50%     { transform: scale(1.14); filter: drop-shadow(0 0 10px rgba(255,213,106,0.7)); }
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
 .panelMeta {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 4px;
   flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .panelBadge {
   font-size: 12px;
   padding: 3px 8px;
   border-radius: 999px;
-  border: 1px solid;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
 }
 
 .panelFavPill {
@@ -273,23 +331,51 @@
   background: rgba(255,255,255,0.09);
 }
 
-.panelDot { opacity: 0.4; font-size: 12px; }
+.panelDot { opacity: 0.5; }
+.panelMuted { opacity: 0.75; font-size: 12px; }
+.panelLastPlayed { font-size: 12px; opacity: 0.75; }
 
-.panelMuted { font-size: 12px; opacity: 0.72; }
-
-.panelLastPlayed { font-size: 12px; opacity: 0.72; }
-
-/* Actions row — pushed to the bottom of the body */
+/* Actions column — mirrors GameCard .actions */
 .panelActions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 8px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
+/* Fav button — mirrors GameCard .fav */
+.panelFavBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: none;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 120ms, background 120ms, border-color 120ms, filter 120ms;
+}
+.panelFavBtn:hover { background: rgba(255,255,255,0.07); transform: scale(1.03); }
+.panelFavBtnActive {
+  color: #ffd56a;
+  border-color: rgba(255,213,106,0.55);
+  background: rgba(255,213,106,0.1);
+  filter: drop-shadow(0 0 6px rgba(255,213,106,0.55)) drop-shadow(0 0 14px rgba(255,213,106,0.25));
+  transform: scale(1.08);
+  animation: favPulse 1.6s ease-in-out infinite;
+}
+@keyframes favPulse {
+  0%,100% { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(255,213,106,0.55)) drop-shadow(0 0 14px rgba(255,213,106,0.25)); }
+  50%     { transform: scale(1.14); filter: drop-shadow(0 0 10px rgba(255,213,106,0.7)) drop-shadow(0 0 18px rgba(255,213,106,0.35)); }
+}
+
+/* Play button — mirrors GameCard .play */
 .panelPlay {
-  flex: 1;
   height: 34px;
   padding: 0 12px;
   border-radius: 10px;
@@ -300,13 +386,11 @@
   display: grid;
   place-items: center;
   box-shadow: none;
-  font-size: 0.87rem;
-  font-weight: 600;
   position: relative;
   transition: background 120ms, transform 120ms;
 }
-.panelPlay:hover { background: rgba(255,255,255,0.11); transform: translateY(-1px); }
-.panelPlay:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.panelPlay:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+.panelPlay:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .panelPlayLaunching { cursor: progress; pointer-events: none; opacity: 0.85; padding-left: 28px; }
 .panelPlayLaunching::before {
   content: '';
@@ -320,10 +404,10 @@
 }
 @keyframes spinPlay { to { transform: translateY(-50%) rotate(360deg); } }
 
+/* Folder + Remove — mirror GameCard .folder / .remove */
 .panelFolder, .panelRemove {
   width: 34px;
   height: 34px;
-  flex-shrink: 0;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04);
@@ -337,6 +421,6 @@
   transition: background 120ms, transform 120ms;
 }
 .panelFolder:hover, .panelRemove:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.07);
   transform: translateY(-1px);
 }

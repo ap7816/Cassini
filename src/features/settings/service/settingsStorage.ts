@@ -1,12 +1,13 @@
 import type { AppSettings } from '../../types';
 import { readSettingsRaw, writeSettingsRaw } from '../../../services/storage';
+import { invoke } from '@tauri-apps/api/core';
 
 // Valeurs par défaut utilisées si le stockage est vide ou corrompu
 const DEFAULT_SETTINGS: AppSettings = {
   backgroundImageDataUrl: null,
   accentColor: '#e5e7eb',
   bgOverlayOpacity: 0.55,
-  sgdbApiKey: '',
+  sgdbKeySet: false,
   autostart: false,
   runInBackground: false,
   musicParticles: true,
@@ -34,9 +35,6 @@ export function loadSettings(): AppSettings {
       typeof parsed.bgOverlayOpacity === 'number'
         ? parsed.bgOverlayOpacity
         : DEFAULT_SETTINGS.bgOverlayOpacity;
-    const sgdbApiKey =
-      typeof parsed.sgdbApiKey === 'string' ? parsed.sgdbApiKey :
-      typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
     const autostart =
       typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
     const runInBackground =
@@ -48,7 +46,8 @@ export function loadSettings(): AppSettings {
       backgroundImageDataUrl: bg,
       accentColor,
       bgOverlayOpacity,
-      sgdbApiKey,
+      // Renseigné après coup par migrateAndCheckKey()
+      sgdbKeySet: false,
       autostart,
       runInBackground,
       musicParticles,
@@ -58,7 +57,45 @@ export function loadSettings(): AppSettings {
   }
 }
 
-// Sérialise les paramètres et les écrit dans le stockage persistant
+// Sérialise les paramètres et les écrit dans le stockage persistant.
+// `sgdbKeySet` est un état dérivé du coffre système : on ne le persiste pas,
+// pour qu'il ne puisse jamais diverger de la réalité.
 export function saveSettings(settings: AppSettings): void {
-  writeSettingsRaw(JSON.stringify(settings));
+  const { sgdbKeySet: _omit, ...persisted } = settings;
+  void _omit;
+  writeSettingsRaw(JSON.stringify(persisted));
+}
+
+// Déplace une éventuelle clé stockée en clair (versions ≤ 1.2.0) vers le
+// coffre système, puis l'efface définitivement du stockage applicatif.
+// Retourne true si une clé est disponible après l'opération.
+export async function migrateAndCheckKey(): Promise<boolean> {
+  const raw = readSettingsRaw();
+
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (isRecord(parsed)) {
+        const legacy =
+          typeof parsed.sgdbApiKey === 'string' ? parsed.sgdbApiKey :
+          typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
+
+        if (legacy.trim()) {
+          await invoke('set_sgdb_key', { key: legacy.trim() });
+          // Réécrit les réglages sans la clé — plus aucune trace en clair
+          delete parsed.sgdbApiKey;
+          delete parsed.rawgApiKey;
+          writeSettingsRaw(JSON.stringify(parsed));
+          // Purge aussi la copie miroir laissée dans localStorage
+          try { window.localStorage?.removeItem('arctive.settings.v1'); } catch { /* ignore */ }
+        }
+      }
+    } catch { /* réglages illisibles : rien à migrer */ }
+  }
+
+  try {
+    return await invoke<boolean>('has_sgdb_key');
+  } catch {
+    return false;
+  }
 }

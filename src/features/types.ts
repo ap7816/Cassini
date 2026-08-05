@@ -21,7 +21,10 @@ export type AppSettings = {
   backgroundImageDataUrl: string | null;
   accentColor: string;
   bgOverlayOpacity: number;
-  sgdbApiKey: string;
+  // La clé SteamGridDB elle-même n'est jamais exposée au frontend : elle vit
+  // dans le gestionnaire d'identifiants Windows. On ne garde ici que
+  // l'information « une clé est configurée », suffisante pour l'interface.
+  sgdbKeySet: boolean;
   autostart: boolean;
   runInBackground: boolean;
   musicParticles: boolean;

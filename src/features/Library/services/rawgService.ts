@@ -70,8 +70,11 @@ export function steamPortraitUrl(appId: string): string {
 // Récupère l'URL de couverture d'un jeu :
 // - Jeux Steam → CDN Valve directement (pas d'appel API)
 // - Autres → commande Tauri fetch_sgdb_image (Rust, pas de CORS)
-// Cache persistant (localStorage) + cache mémoire en session
-export async function fetchRawgImage(title: string, apiKey: string, steamAppId?: string | null): Promise<string | null> {
+//
+// La clé API n'est plus un paramètre : Rust la lit depuis le coffre système
+// au moment de la requête. Elle ne transite jamais par le JavaScript.
+// Cache persistant + cache mémoire en session.
+export async function fetchRawgImage(title: string, steamAppId?: string | null): Promise<string | null> {
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
   if (persistentCache.has(cacheKey)) return persistentCache.get(cacheKey)!;
   if (notFoundCache.has(cacheKey)) return null;
@@ -83,12 +86,8 @@ export async function fetchRawgImage(title: string, apiKey: string, steamAppId?:
     return steamUrl;
   }
 
-  if (!apiKey) { console.log('[sgdb] no api key, skipping', title); return null; }
-
-  console.log('[sgdb] calling tauri for', title);
   try {
-    const url = await tauriInvoke<string | null>('fetch_sgdb_image', { title, apiKey });
-    console.log('[sgdb] result for', title, '→', url);
+    const url = await tauriInvoke<string | null>('fetch_sgdb_image', { title });
     if (url) {
       persistentCache.set(cacheKey, url);
       saveCache();

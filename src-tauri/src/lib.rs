@@ -5,8 +5,11 @@ mod icon_extract;
 mod launcher_scan;
 mod riot_scan;
 mod rockstar_scan;
+mod secret_store;
+mod security;
 mod steam_scan;
 mod ubisoft_scan;
+use security::MusicRoot;
 use tauri_plugin_log;
 
 // Métadonnées audio renvoyées au frontend pour chaque piste
@@ -87,17 +90,38 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
 
 // Commande Tauri : retourne les métadonnées complètes d'une piste (avec pochette) pour le mini-lecteur
 #[tauri::command]
-fn get_track_metadata(path: String) -> TrackMetadata {
-    read_track_metadata(&path, true)
+fn get_track_metadata(root: tauri::State<'_, MusicRoot>, path: String) -> TrackMetadata {
+    let music_root = security::current_root(&root);
+    match security::readable_path_with(&path, music_root) {
+        Ok(p) => read_track_metadata(&p.to_string_lossy(), true),
+        // Chemin hors périmètre : on renvoie une fiche vide plutôt qu'une
+        // erreur, pour ne pas révéler l'existence ou non du fichier.
+        Err(_) => TrackMetadata {
+            path,
+            title: None, artist: None, album: None,
+            cover_data_url: None, duration_secs: None,
+        },
+    }
 }
 
 // Commande Tauri : retourne titre/artiste/album/durée pour toutes les pistes sans pochette
 // Traitement en parallèle via rayon pour ne pas bloquer le thread UI
 #[tauri::command]
-fn get_tracks_basic_batch(paths: Vec<String>) -> Vec<TrackMetadata> {
+fn get_tracks_basic_batch(
+    root: tauri::State<'_, MusicRoot>,
+    paths: Vec<String>,
+) -> Vec<TrackMetadata> {
     use rayon::prelude::*;
+    let music_root = security::current_root(&root);
     paths.par_iter()
-        .map(|p| read_track_metadata(p, false))
+        .map(|p| match security::readable_path_with(p, music_root.clone()) {
+            Ok(safe) => read_track_metadata(&safe.to_string_lossy(), false),
+            Err(_) => TrackMetadata {
+                path: p.clone(),
+                title: None, artist: None, album: None,
+                cover_data_url: None, duration_secs: None,
+            },
+        })
         .collect()
 }
 
@@ -164,30 +188,62 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
 // Commande Tauri : extrait l'icône d'un fichier .exe et la retourne en data-URL PNG 64×64
 #[tauri::command]
 fn get_file_icon_data_url(path: String) -> Result<String, String> {
-    icon_extract::file_icon_png_data_url(&path, 64)
+    let safe = security::readable_path(&path)?;
+    icon_extract::file_icon_png_data_url(&safe.to_string_lossy(), 64)
 }
 
 // Commande Tauri : ouvre un dossier dans l'explorateur de fichiers natif (cross-platform)
+// explorer.exe retombe silencieusement sur Documents si le chemin est invalide,
+// donc on normalise les séparateurs et on vérifie l'existence avant de lancer.
 #[tauri::command]
 fn open_folder(path: String) -> Result<(), String> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err("Empty path".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    let normalized = trimmed.replace('/', "\\");
+    #[cfg(not(target_os = "windows"))]
+    let normalized = trimmed.to_string();
+
+    let p = std::path::Path::new(&normalized);
+
+    // Si c'est un fichier (ex: .exe), ouvrir son dossier parent
+    let target = if p.is_file() {
+        p.parent()
+            .ok_or_else(|| format!("No parent directory for {}", normalized))?
+            .to_path_buf()
+    } else {
+        p.to_path_buf()
+    };
+
+    if !target.is_dir() {
+        return Err(format!("Folder not found: {}", target.display()));
+    }
+
+    let canonical = std::fs::canonicalize(&target).unwrap_or(target);
+    // canonicalize renvoie un préfixe \\?\ sur Windows qu'explorer ne comprend pas
+    let final_path = canonical.to_string_lossy().replace(r"\\?\", "");
+
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("explorer")
-            .arg(&path)
+            .arg(&final_path)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
-            .arg(&path)
+            .arg(&final_path)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
     #[cfg(target_os = "linux")]
     {
         std::process::Command::new("xdg-open")
-            .arg(&path)
+            .arg(&final_path)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
@@ -273,43 +329,72 @@ fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
     Ok(dirs)
 }
 
+// Commande Tauri : enregistre la racine du dossier musique après validation.
+// Toutes les commandes destructrices ci-dessous s'y réfèrent — sans racine
+// configurée, elles refusent de s'exécuter.
+#[tauri::command]
+fn set_music_root(root: tauri::State<'_, MusicRoot>, path: String) -> Result<(), String> {
+    security::set_root(&root, &path)
+}
+
 // Commande Tauri : crée un dossier musical (et ses parents si nécessaire)
 #[tauri::command]
-fn create_music_folder(path: String) -> Result<(), String> {
-    std::fs::create_dir_all(&path).map_err(|e| e.to_string())
+fn create_music_folder(root: tauri::State<'_, MusicRoot>, path: String) -> Result<(), String> {
+    let target = security::new_path_within_root(&root, &path)?;
+    std::fs::create_dir_all(&target).map_err(|e| e.to_string())
 }
 
 // Commande Tauri : supprime récursivement un dossier musical et tout son contenu
 #[tauri::command]
-fn delete_music_folder(path: String) -> Result<(), String> {
-    std::fs::remove_dir_all(&path).map_err(|e| e.to_string())
+fn delete_music_folder(root: tauri::State<'_, MusicRoot>, path: String) -> Result<(), String> {
+    let target = security::within_root(&root, &path)?;
+    if !target.is_dir() {
+        return Err("La cible n'est pas un dossier".into());
+    }
+    std::fs::remove_dir_all(&target).map_err(|e| e.to_string())
 }
 
 // Commande Tauri : renomme un dossier musical en vérifiant l'absence de conflit de noms
 #[tauri::command]
-fn rename_music_folder(path: String, new_name: String) -> Result<(), String> {
-    use std::path::Path;
-    let src = Path::new(&path);
+fn rename_music_folder(
+    root: tauri::State<'_, MusicRoot>,
+    path: String,
+    new_name: String,
+) -> Result<(), String> {
+    let src = security::within_root(&root, &path)?;
+
+    // Le nouveau nom ne doit pas pouvoir remonter l'arborescence
+    if new_name.trim().is_empty()
+        || new_name.contains(['/', '\\', ':'])
+        || new_name.contains("..")
+    {
+        return Err("Nom de dossier invalide".into());
+    }
+
     let parent = src.parent().ok_or_else(|| "Dossier sans parent".to_string())?;
-    let dst = parent.join(&new_name);
+    let dst = parent.join(new_name.trim());
     if dst.exists() {
         return Err(format!("Un dossier « {} » existe déjà", new_name));
     }
-    std::fs::rename(&path, &dst).map_err(|e| e.to_string())
+    std::fs::rename(&src, &dst).map_err(|e| e.to_string())
 }
 
 // Commande Tauri : déplace un fichier audio vers un autre dossier, renomme si conflit de noms
 #[tauri::command]
-fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
-    use std::path::Path;
-    let src_path = Path::new(&src);
+fn move_music_file(
+    root: tauri::State<'_, MusicRoot>,
+    src: String,
+    dst_folder: String,
+) -> Result<(), String> {
+    let src_path = security::within_root(&root, &src)?;
+    let dst_dir = security::new_path_within_root(&root, &dst_folder)?;
+
     let filename = src_path
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or_else(|| "Fichier source invalide".to_string())?;
 
-    let dst_dir = Path::new(&dst_folder);
-    std::fs::create_dir_all(dst_dir).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&dst_dir).map_err(|e| e.to_string())?;
 
     let mut dst_path = dst_dir.join(filename);
 
@@ -333,7 +418,7 @@ fn move_music_file(src: String, dst_folder: String) -> Result<(), String> {
         }
     }
 
-    std::fs::rename(&src, &dst_path).map_err(|e| e.to_string())
+    std::fs::rename(&src_path, &dst_path).map_err(|e| e.to_string())
 }
 
 // Commande Tauri : vérifie si ArcHive est configuré pour démarrer avec Windows
@@ -382,6 +467,10 @@ fn set_autostart(enabled: bool) -> Result<(), String> {
 // Commande Tauri : lance un jeu Battle.net via l'argument --exec=launch de Battle.net.exe
 #[tauri::command]
 fn launch_battlenet_game(uid: String) -> Result<(), String> {
+    // L'uid est concaténé dans un argument que Battle.net re-découpe : on
+    // interdit espaces, guillemets et métacaractères.
+    security::validate_token(&uid, "Identifiant Battle.net")?;
+
     let candidates = [
         r"C:\Program Files (x86)\Battle.net\Battle.net.exe",
         r"C:\Program Files\Battle.net\Battle.net.exe",
@@ -403,6 +492,8 @@ fn launch_battlenet_game(uid: String) -> Result<(), String> {
 // Commande Tauri : lance un jeu Riot via RiotClientServices.exe avec le product ID et la patchline live
 #[tauri::command]
 fn launch_riot_game(product: String) -> Result<(), String> {
+    security::validate_token(&product, "Produit Riot")?;
+
     let exe = riot_scan::find_riot_client_exe()
         .ok_or_else(|| "RiotClientServices.exe introuvable".to_string())?;
 
@@ -415,15 +506,61 @@ fn launch_riot_game(product: String) -> Result<(), String> {
     Ok(())
 }
 
-// Commande Tauri : lance un jeu Ubisoft via le protocole uplay:// (cmd /c start pour déclencher le handler Windows)
+// Commande Tauri : lance un jeu Ubisoft via le protocole uplay://
+//
+// Passait auparavant par `cmd /c start`, ce qui était injectable : cmd.exe
+// reparse sa ligne de commande et traite `&`, `|` et `^` comme des
+// séparateurs, y compris après l'échappement MSVCRT appliqué par Rust.
+// On valide donc l'identifiant, puis on appelle directement ShellExecuteW —
+// aucun interpréteur de commandes n'intervient.
 #[tauri::command]
 fn launch_ubisoft_game(game_id: String) -> Result<(), String> {
-    // uplay://launch/<id>/0 — cmd /c start est nécessaire pour activer le handler de protocole Windows
+    security::validate_numeric_id(&game_id)?;
     let url = format!("uplay://launch/{}/0", game_id);
-    std::process::Command::new("cmd")
-        .args(["/c", "start", "", &url])
-        .spawn()
-        .map_err(|e| e.to_string())?;
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::ffi::OsStrExt;
+        use windows::core::PCWSTR;
+        use windows::Win32::UI::Shell::ShellExecuteW;
+        use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+        fn wide(s: &str) -> Vec<u16> {
+            std::ffi::OsStr::new(s)
+                .encode_wide()
+                .chain(std::iter::once(0))
+                .collect()
+        }
+
+        let verb = wide("open");
+        let file = wide(&url);
+
+        // SAFETY : les deux chaînes sont terminées par un NUL et vivent
+        // jusqu'à la fin de l'appel ; l'URL est validée juste au-dessus.
+        let result = unsafe {
+            ShellExecuteW(
+                None,
+                PCWSTR(verb.as_ptr()),
+                PCWSTR(file.as_ptr()),
+                PCWSTR::null(),
+                PCWSTR::null(),
+                SW_SHOWNORMAL,
+            )
+        };
+
+        // ShellExecuteW renvoie une valeur > 32 en cas de succès
+        if result.0 as usize <= 32 {
+            return Err(format!("Lancement Ubisoft échoué (code {})", result.0 as usize));
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = url;
+        return Err("Ubisoft Connect n'est disponible que sur Windows".into());
+    }
+
+    #[allow(unreachable_code)]
     Ok(())
 }
 
@@ -683,6 +820,7 @@ async fn search_itunes(term: String) -> Result<Option<MusicMetaResult>, String> 
 // Permet de ne plus jamais refaire la recherche réseau pour une piste déjà enrichie
 #[tauri::command]
 async fn write_audio_tags(
+    root: tauri::State<'_, MusicRoot>,
     path: String,
     artist: Option<String>,
     album: Option<String>,
@@ -692,6 +830,20 @@ async fn write_audio_tags(
     use lofty::probe::Probe;
     use lofty::picture::{Picture, PictureType, MimeType};
     use lofty::config::WriteOptions;
+
+    // Écriture sur disque : confinée au dossier musique de l'utilisateur
+    let path = security::within_root(&root, &path)?
+        .to_string_lossy()
+        .to_string();
+
+    // La pochette est téléchargée depuis une URL fournie par le frontend :
+    // on n'autorise que HTTPS pour éviter de transformer cette commande en
+    // outil de requête arbitraire (fichiers locaux, réseau interne).
+    if let Some(ref url) = cover_url {
+        if !url.starts_with("https://") {
+            return Err("L'URL de pochette doit être en HTTPS".into());
+        }
+    }
 
     // Télécharge la pochette si une URL est fournie (avant d'ouvrir le fichier pour éviter les conflits)
     let cover_bytes: Option<(Vec<u8>, MimeType)> = if let Some(ref url) = cover_url {
@@ -767,11 +919,24 @@ async fn write_audio_tags(
 // Commande Tauri : remplace la pochette d'un fichier audio par une image choisie localement
 // Lit l'image depuis le disque (pas de réseau), supportée sur tous les formats gérés par lofty
 #[tauri::command]
-fn write_audio_cover_from_file(audio_path: String, image_path: String) -> Result<(), String> {
+fn write_audio_cover_from_file(
+    root: tauri::State<'_, MusicRoot>,
+    audio_path: String,
+    image_path: String,
+) -> Result<(), String> {
     use lofty::prelude::*;
     use lofty::probe::Probe;
     use lofty::picture::{Picture, PictureType, MimeType};
     use lofty::config::WriteOptions;
+
+    // Le fichier modifié doit être dans le dossier musique ; l'image source
+    // peut venir d'ailleurs mais reste cantonnée aux dossiers lisibles.
+    let audio_path = security::within_root(&root, &audio_path)?
+        .to_string_lossy()
+        .to_string();
+    let image_path = security::readable_path_with(&image_path, security::current_root(&root))?
+        .to_string_lossy()
+        .to_string();
 
     // Lit les octets de l'image depuis le disque local
     let image_data = std::fs::read(&image_path)
@@ -909,8 +1074,80 @@ async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &
     url
 }
 
+// Commande Tauri : télécharge une image et la renvoie en data-URL base64.
+//
+// Passer par Rust contourne le CORS : `THREE.TextureLoader` exige un en-tête
+// Access-Control-Allow-Origin que tous les CDN n'envoient pas (SteamGridDB
+// notamment), ce qui faisait échouer silencieusement le chargement des
+// textures. Un data-URL est de plus non « taintant », donc `getImageData`
+// reste utilisable pour analyser les couleurs de la jaquette.
 #[tauri::command]
-async fn fetch_sgdb_image(title: String, api_key: String) -> Result<Option<String>, String> {
+async fn fetch_image_base64(url: String) -> Result<String, String> {
+    use base64::Engine;
+
+    // Seul HTTPS est accepté : cette commande ne doit pas devenir un moyen de
+    // lire des fichiers locaux ou de sonder le réseau interne.
+    if !url.starts_with("https://") {
+        return Err("Seules les URLs HTTPS sont acceptées".into());
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("HTTP {}", resp.status()));
+    }
+
+    let mime = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("image/jpeg")
+        .split(';')
+        .next()
+        .unwrap_or("image/jpeg")
+        .to_string();
+
+    if !mime.starts_with("image/") {
+        return Err("La réponse n'est pas une image".into());
+    }
+
+    let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
+    // Garde-fou mémoire : une jaquette dépasse rarement quelques centaines de Ko
+    if bytes.is_empty() || bytes.len() > 12 * 1024 * 1024 {
+        return Err("Taille d'image invalide".into());
+    }
+
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(format!("data:{};base64,{}", mime, b64))
+}
+
+// Commande Tauri : enregistre la clé SteamGridDB dans le coffre système.
+// La clé n'est jamais relue par le frontend — voir `has_sgdb_key`.
+#[tauri::command]
+fn set_sgdb_key(key: String) -> Result<(), String> {
+    secret_store::set_key(&key)
+}
+
+// Commande Tauri : indique si une clé est configurée, sans jamais la révéler.
+#[tauri::command]
+fn has_sgdb_key() -> bool {
+    secret_store::has_key()
+}
+
+// Commande Tauri : recherche une jaquette sur SteamGridDB.
+// La clé API est lue depuis le coffre au moment de l'appel : elle ne transite
+// plus par le JavaScript et n'est jamais écrite en clair sur le disque.
+#[tauri::command]
+async fn fetch_sgdb_image(title: String) -> Result<Option<String>, String> {
+    let api_key = match secret_store::get_key() {
+        Some(k) => k,
+        None => return Ok(None),
+    };
+
     let client = reqwest::Client::new();
 
     if let Some(url) = sgdb_search_and_fetch(&client, &title, &api_key).await {
@@ -981,6 +1218,8 @@ fn get_disk_free_space() -> Result<DiskInfo, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Racine musique autorisée — partagée par les commandes fichier
+        .manage(MusicRoot::default())
         .setup(|app| {
             #[cfg(desktop)]
             {
@@ -1031,7 +1270,20 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet, scan_steam_games, scan_epic_games, scan_battlenet_games, scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_launchers, get_file_icon_data_url, open_folder, launch_battlenet_game, launch_riot_game, launch_ubisoft_game, scan_music_folder, get_autostart, set_autostart, list_music_dirs, create_music_folder, delete_music_folder, rename_music_folder, move_music_file, get_track_metadata, get_tracks_basic_batch, search_itunes, write_audio_tags, write_audio_cover_from_file, get_disk_free_space, fetch_sgdb_image])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            scan_steam_games, scan_epic_games, scan_battlenet_games,
+            scan_riot_games, scan_rockstar_games, scan_ubisoft_games,
+            scan_launchers, get_file_icon_data_url, open_folder,
+            launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
+            scan_music_folder, get_autostart, set_autostart, list_music_dirs,
+            set_music_root,
+            create_music_folder, delete_music_folder, rename_music_folder,
+            move_music_file, get_track_metadata, get_tracks_basic_batch,
+            search_itunes, write_audio_tags, write_audio_cover_from_file,
+            get_disk_free_space,
+            fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

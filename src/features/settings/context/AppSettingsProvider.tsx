@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import type { AppSettings } from '../../types';
-import { loadSettings, saveSettings } from '../service/settingsStorage';
+import { loadSettings, saveSettings, migrateAndCheckKey } from '../service/settingsStorage';
 import { AppSettingsContext } from './appSettingsContext';
 
 // Fournit les paramètres de l'application à tous les composants enfants et persiste les changements
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+
+  // Au démarrage : migre une éventuelle clé stockée en clair vers le coffre
+  // système, puis reflète sa présence dans l'état (jamais sa valeur).
+  useEffect(() => {
+    let cancelled = false;
+    void migrateAndCheckKey().then((present) => {
+      if (!cancelled) setSettings((prev) => ({ ...prev, sgdbKeySet: present }));
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // Sauvegarde automatique à chaque modification des paramètres
   useEffect(() => {
@@ -32,9 +43,13 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, bgOverlayOpacity: opacity }));
   }
 
-  // Met à jour la clé API SteamGridDB utilisée pour récupérer les images des jeux non-Steam
-  function setSgdbApiKey(key: string) {
-    setSettings((prev) => ({ ...prev, sgdbApiKey: key }));
+  // Enregistre la clé SteamGridDB dans le coffre système (chiffré par Windows).
+  // La valeur ne transite que jusqu'à Rust : elle n'est jamais conservée dans
+  // l'état React ni écrite dans le stockage applicatif.
+  async function setSgdbApiKey(key: string) {
+    await invoke('set_sgdb_key', { key });
+    const present = await invoke<boolean>('has_sgdb_key');
+    setSettings((prev) => ({ ...prev, sgdbKeySet: present }));
   }
 
   // Active ou désactive le démarrage automatique de l'application avec Windows
