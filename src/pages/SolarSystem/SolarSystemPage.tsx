@@ -8,6 +8,7 @@ import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { PLATFORM_CSS } from './constants';
 import { useSolarScene } from './scene/useSolarScene';
 import { GamePanel } from './components/GamePanel';
+import { GameList } from './components/GameList';
 import css from './SolarSystemPage.module.css';
 
 export function SolarSystemPage() {
@@ -15,6 +16,7 @@ export function SolarSystemPage() {
   const labelsRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const clearPlanetRef = useRef<() => void>(() => {});
+  const focusPlanetRef = useRef<(gameId: string) => void>(() => {});
 
   const [games, setGames] = useState<Game[]>(() => loadGamesFromStorage());
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -59,6 +61,7 @@ export function SolarSystemPage() {
     orbitLabelClass: css.orbitLabel,
     onSelect: handleSelect,
     clearRef: clearPlanetRef,
+    focusRef: focusPlanetRef,
   });
 
   function handleGameUpdate(updated: Game) {
@@ -116,6 +119,17 @@ export function SolarSystemPage() {
           {visibleGames.length} planète{visibleGames.length > 1 ? 's' : ''} en orbite
         </div>
       </div>
+
+      {/* Liste des jeux du launcher. Le panneau de détail vient se poser
+          par-dessus quand une planète est sélectionnée, et la fermer révèle
+          à nouveau la liste. */}
+      <GameList
+        games={visibleGames}
+        selectedId={selectedGame?.id ?? null}
+        platform={platform}
+        sgdbKeySet={settings.sgdbKeySet}
+        onPick={(id) => focusPlanetRef.current(id)}
+      />
 
       {selectedGame && (
         <GamePanel

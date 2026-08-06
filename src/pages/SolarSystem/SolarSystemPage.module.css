@@ -6,12 +6,22 @@
   inset: 0;
   overflow: hidden;
   background: #070b12;
+
+  /* Largeur de la colonne de droite, partagée par la liste, le panneau de
+     détail et la zone de rendu. Les modules enfants en héritent. */
+  --side-w: min(320px, 46vw);
 }
 
-/* Conteneur de la canvas Three.js */
+/* Conteneur de la canvas Three.js.
+   Il s'arrête avant la colonne de droite plutôt que de passer dessous :
+   le système reste ainsi centré dans la zone réellement visible, et le
+   pointage comme la projection des labels partent du même rectangle. */
 .canvas {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: var(--side-w);
   cursor: grab;
 }
 
@@ -19,10 +29,14 @@
   cursor: grabbing;
 }
 
-/* Calque des labels — pointer-events:none pour que les clics atteignent la 3D */
+/* Calque des labels — même géométrie que la canvas, sinon la projection
+   caméra décalerait le texte. pointer-events:none laisse passer les clics. */
 .labels {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: var(--side-w);
   pointer-events: none;
 }
 

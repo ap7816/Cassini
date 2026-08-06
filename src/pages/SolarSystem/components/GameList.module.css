@@ -1,0 +1,170 @@
+/* Liste des jeux du launcher courant, colonne de droite du système solaire. */
+
+.list {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--side-w, min(320px, 46vw));
+  z-index: 8;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 10px;
+
+  background: rgba(8, 12, 20, 0.82);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.headTitle {
+  font: 700 12px/1 Inter, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.headCount {
+  font: 500 11px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.search {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font: 500 12px/1 Inter, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.search:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* La liste seule défile : l'en-tête et la recherche restent visibles. */
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.items::-webkit-scrollbar {
+  width: 8px;
+}
+
+.items::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+}
+
+.items::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 7px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.itemActive {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+/* Rang orbital : la n-ième entrée est la n-ième orbite depuis le soleil */
+.orbitNum {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: right;
+  font: 600 10px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.28);
+  font-variant-numeric: tabular-nums;
+}
+
+.thumb,
+.thumbFallback {
+  flex-shrink: 0;
+  width: 48px;
+  height: 23px;
+  border-radius: 4px;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbFallback {
+  display: grid;
+  place-items: center;
+  font: 800 11px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font: 600 12px/1.25 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font: 500 10px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.fav {
+  color: #f0c040;
+}
+
+.empty {
+  padding: 18px 8px;
+  text-align: center;
+  font: 500 12px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .search { transition: none; }
+}

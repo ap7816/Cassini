@@ -74,29 +74,46 @@ export function steamPortraitUrl(appId: string): string {
 // La clé API n'est plus un paramètre : Rust la lit depuis le coffre système
 // au moment de la requête. Elle ne transite jamais par le JavaScript.
 // Cache persistant + cache mémoire en session.
-export async function fetchRawgImage(title: string, steamAppId?: string | null): Promise<string | null> {
+// Requêtes en cours, par clé de cache.
+//
+// Le cache ne se remplit qu'une fois la réponse arrivée : sans ce registre,
+// deux appelants demandant le même titre au même instant partaient tous les
+// deux sur le réseau. C'est exactement ce qui arrive sur la page du système
+// solaire, où les planètes et la liste latérale réclament les mêmes jaquettes
+// simultanément.
+const inFlight = new Map<string, Promise<string | null>>();
+
+export function fetchRawgImage(title: string, steamAppId?: string | null): Promise<string | null> {
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
-  if (persistentCache.has(cacheKey)) return persistentCache.get(cacheKey)!;
-  if (notFoundCache.has(cacheKey)) return null;
+
+  if (persistentCache.has(cacheKey)) return Promise.resolve(persistentCache.get(cacheKey)!);
+  if (notFoundCache.has(cacheKey)) return Promise.resolve(null);
 
   if (steamAppId) {
     const steamUrl = steamCdnUrl(steamAppId);
     persistentCache.set(cacheKey, steamUrl);
     saveCache();
-    return steamUrl;
+    return Promise.resolve(steamUrl);
   }
 
-  try {
-    const url = await tauriInvoke<string | null>('fetch_sgdb_image', { title });
-    if (url) {
-      persistentCache.set(cacheKey, url);
-      saveCache();
-      return url;
+  const running = inFlight.get(cacheKey);
+  if (running) return running;
+
+  const request = (async () => {
+    try {
+      const url = await tauriInvoke<string | null>('fetch_sgdb_image', { title });
+      if (url) {
+        persistentCache.set(cacheKey, url);
+        saveCache();
+        return url;
+      }
+    } catch (e) {
+      console.error('[sgdb] tauri invoke error for', title, e);
     }
-  } catch (e) {
-    console.error('[sgdb] tauri invoke error for', title, e);
-  }
+    notFoundCache.add(cacheKey);
+    return null;
+  })().finally(() => inFlight.delete(cacheKey));
 
-  notFoundCache.add(cacheKey);
-  return null;
+  inFlight.set(cacheKey, request);
+  return request;
 }

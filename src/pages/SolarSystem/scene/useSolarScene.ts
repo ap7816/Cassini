@@ -30,6 +30,12 @@ type Options = {
   onSelect: (game: Game | null) => void;
   /** Reçoit une fonction permettant de désélectionner depuis React. */
   clearRef: RefObject<() => void>;
+  /**
+   * Reçoit une fonction permettant de cibler une planète par identifiant de
+   * jeu — utilisée par la liste latérale, dont les clics doivent produire
+   * exactement le même effet qu'un clic sur la planète elle-même.
+   */
+  focusRef: RefObject<(gameId: string) => void>;
 };
 
 /**
@@ -48,6 +54,7 @@ export function useSolarScene({
   orbitLabelClass,
   onSelect,
   clearRef,
+  focusRef,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -77,6 +84,10 @@ export function useSolarScene({
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.minDistance = PLN_R * 2.5;
+    // Zoom volontairement lent : à la molette, le pas par défaut de
+    // three.js traverse la moitié du système d'un cran, ce qui rend le
+    // cadrage impossible à doser.
+    controls.zoomSpeed = 0.35;
     controls.target.copy(INIT_LOOK);
 
     // ── Dimensions du système ────────────────────────────────────────────
@@ -141,6 +152,13 @@ export function useSolarScene({
     const camDoneEps = Math.max(0.4, systemR * 0.004);
     const camOffset = new THREE.Vector3();
 
+    // Point de vue d'avant la sélection, restauré à la désélection : revenir
+    // systématiquement au cadrage d'origine annulait le déplacement que
+    // l'utilisateur venait de faire.
+    const savedPos = new THREE.Vector3();
+    const savedLook = new THREE.Vector3();
+    let hasSaved = false;
+
     function animateCam(pos: THREE.Vector3, look: THREE.Vector3) {
       animating = true;
       controls.enabled = false;
@@ -149,18 +167,49 @@ export function useSolarScene({
     }
 
     function selectPlanet(p: PlanetEntry) {
+      // Mémorisé au seul passage « libre → planète » : enchaîner deux planètes
+      // ne doit pas écraser le point de vue libre d'origine.
+      if (!hasSaved) {
+        savedPos.copy(camera.position);
+        savedLook.copy(controls.target);
+        hasSaved = true;
+      }
+
       for (const pl of planets) pl.paused = true;
       onSelect(p.game);
-      camOffset.set(0, p.radius * 3.2, p.radius * 7).add(p.mesh.position);
+
+      // On approche la planète en conservant la direction de vue courante.
+      // Un décalage fixe en coordonnées monde obligeait la caméra à faire le
+      // tour de la planète quand on l'avait pivotée au préalable.
+      camOffset.subVectors(camera.position, controls.target);
+      if (camOffset.lengthSq() < 1e-6) camOffset.set(0, 0.4, 1);
+      camOffset.normalize();
+      // Léger relèvement pour ne pas regarder la planète pile dans son plan
+      camOffset.y = Math.max(camOffset.y, 0.35);
+      camOffset.normalize().multiplyScalar(p.radius * 7).add(p.mesh.position);
+
       animateCam(camOffset, p.mesh.position);
     }
 
     function clearPlanet() {
       for (const pl of planets) pl.paused = false;
       onSelect(null);
-      animateCam(homeCam, INIT_LOOK);
+
+      if (hasSaved) {
+        animateCam(savedPos, savedLook);
+        hasSaved = false;
+      } else {
+        animateCam(homeCam, INIT_LOOK);
+      }
     }
     clearRef.current = clearPlanet;
+
+    // Sélection depuis la liste latérale : même trajet de caméra qu'un clic
+    // direct sur la planète, pour que les deux gestes soient indiscernables.
+    focusRef.current = (gameId: string) => {
+      const target = planets.find((p) => p.game.id === gameId);
+      if (target) selectPlanet(target);
+    };
 
     // ── Sélection et survol ──────────────────────────────────────────────
     const picker = createPicker({
@@ -209,18 +258,31 @@ export function useSolarScene({
       if (belt && !paused) belt.rotation.y += 0.0015 * dt;
 
       if (animating) {
-        camera.position.lerp(camTargetPos, 0.06);
-        controls.target.lerp(camTargetLook, 0.06);
+        // `controls.update()` est volontairement écarté pendant l'animation.
+        // Il recalcule la position de la caméra à partir de `controls.target`
+        // et de son état sphérique interne : déplacer la cible en même temps
+        // que la position ajoutait le décalage de cible au déplacement manuel,
+        // d'où une caméra qui partait vers la planète puis se faisait ramener,
+        // en tournant autour au passage.
+        camera.position.lerp(camTargetPos, 0.08);
+        controls.target.lerp(camTargetLook, 0.08);
+        camera.lookAt(controls.target);
+
         if (camera.position.distanceTo(camTargetPos) < camDoneEps) {
+          camera.position.copy(camTargetPos);
+          controls.target.copy(camTargetLook);
           animating = false;
           controls.enabled = true;
+          // Resynchronise l'état sphérique interne sur la position atteinte
+          controls.update();
         }
+      } else {
+        // Doit précéder la projection des labels : le damping déplace la
+        // caméra ici, et projeter avant utiliserait la matrice de la frame
+        // précédente, ce qui faisait vibrer le texte pendant les déplacements.
+        controls.update();
       }
 
-      // Doit précéder la projection des labels : le damping déplace la caméra
-      // ici, et projeter avant utiliserait la matrice de la frame précédente,
-      // ce qui faisait vibrer le texte pendant les déplacements.
-      controls.update();
       camera.updateMatrixWorld();
 
       picker.updateHover();
@@ -259,6 +321,6 @@ export function useSolarScene({
     };
   }, [
     games, platform, labelClass, orbitLabelClass,
-    mountRef, labelsRef, tooltipRef, onSelect, clearRef,
+    mountRef, labelsRef, tooltipRef, onSelect, clearRef, focusRef,
   ]);
 }
