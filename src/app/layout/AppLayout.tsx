@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useRef, useEffect } from 'react';
-import logo from '../../assets/favicon.png';
+import logo from '../../assets/logo.svg';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';

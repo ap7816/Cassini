@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024" role="img" aria-label="Cassini">
+  <title>Cassini</title>
+  <!--
+    Source de l'icône système : tuile sombre + marque claire.
+
+    La tuile n'est pas décorative. Une marque claire seule disparaît sur une
+    barre des tâches Windows en thème clair ; la tuile garantit le contraste
+    quel que soit le thème, sans avoir à maintenir deux couleurs de marque.
+    C'est le parti pris de VS Code, Discord ou Slack.
+
+    Le rayon de 14 sur 64 correspond aux proportions attendues par Windows 11.
+    La marque occupe 40 des 64 unités, soit 12 de marge — les icônes de la
+    barre des tâches sont rognées visuellement, mieux vaut ne pas coller aux
+    bords.
+
+    Régénérer les icônes après toute modification :
+      npx @tauri-apps/cli icon design/app-icon.svg
+  -->
+  <rect width="64" height="64" rx="14" fill="#111A2B"/>
+  <g fill="#E8ECF2" transform="translate(8.1 9.15) scale(0.714)">
+    <path d="M47.5 7.75
+             A28 28 0 1 0 59.81 41.58
+             L48.54 37.47
+             A16 16 0 1 1 41.5 18.14
+             Z"/>
+    <circle cx="33.5" cy="32" r="8"/>
+  </g>
+</svg>

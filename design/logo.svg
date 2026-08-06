@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024" role="img" aria-label="Cassini">
+  <title>Cassini</title>
+  <!--
+    Marque nue — utilisée dans l'application, sur fond sombre.
+    Pour l'icône système, voir app-icon.svg : elle ajoute une tuile, sans
+    laquelle une marque claire disparaît sur une barre des tâches en thème
+    clair.
+
+    Un C dont le contre-poinçon abrite un corps en orbite : la lettre porte
+    le nom, le point rappelle ce que l'application met en scène.
+
+    Géométrie : anneau extérieur r=28, intérieur r=16, ouverture 80° centrée
+    sur 20°, point central r=8. Le centre est décalé de +1.5 en x — centrage
+    optique, la masse étant à gauche et l'ouverture à droite.
+  -->
+  <g fill="#E8ECF2">
+    <path d="M47.5 7.75
+             A28 28 0 1 0 59.81 41.58
+             L48.54 37.47
+             A16 16 0 1 1 41.5 18.14
+             Z"/>
+    <circle cx="33.5" cy="32" r="8"/>
+  </g>
+</svg>
