@@ -1,463 +1,41 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MusicSnowVisualizer } from '../../features/music/MusicSnowVisualizer';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
-import { useMusicPlayer, TrackDto } from '../../features/music/MusicContext';
-import { useBasicBatch, useLazyCoverArt, refreshCover, type TrackMeta } from '../../features/music/useTrackMeta';
+
+import { MusicSnowVisualizer } from '../../features/music/MusicSnowVisualizer';
+import { useMusicPlayer } from '../../features/music/MusicContext';
+import { useBasicBatch, refreshCover } from '../../features/music/useTrackMeta';
 import { useAutoEnrich } from '../../features/music/useAutoEnrich';
-import type { EnrichedData } from '../../features/music/enrichMeta';
 import { resetEnrichment } from '../../features/music/enrichMeta';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
-import css from './MusicPage.module.css';
-
-type SortBy  = 'name' | 'dur' | 'ext';
-type SortDir = 'asc'  | 'desc';
-type TrackWithIdx = TrackDto & { originalIndex: number };
-
-// Palette de couleurs disponibles pour personnaliser chaque dossier musical
-const PALETTE = [
-  '#e6a817', // Jaune (défaut)
-  '#e07020', // Orange
-  '#d63b3b', // Rouge
-  '#d63b8c', // Rose
-  '#8c3bd6', // Violet
-  '#3b7fd6', // Bleu
-  '#3bbcd6', // Cyan
-  '#3bd67a', // Vert
-  '#6b7280', // Gris
-];
-
-import { readMusicFolderColors, writeMusicFolderColors, writeMusicFolder as storageWriteMusicFolder } from '../../services/storage';
+import { useToast } from '../../features/toast/ToastContext';
 import { useDialog } from '../../hooks/useDialog';
 import { AppDialog } from '../../components/AppDialog/AppDialog';
-import { useToast } from '../../features/toast/ToastContext';
+import {
+  readMusicFolderColors,
+  writeMusicFolderColors,
+  writeMusicFolder as storageWriteMusicFolder,
+} from '../../services/storage';
 
-// Structure arborescente représentant la hiérarchie des dossiers et pistes audio
-interface FolderNode {
-  name: string;
-  fullPath: string;
-  tracks: TrackWithIdx[];
-  children: FolderNode[];
-}
-
-// Construit l'arbre de dossiers à partir des pistes et des dossiers vides connus
-function buildTree(tracks: TrackWithIdx[], extraDirs: string[] = []): FolderNode {
-  const root: FolderNode = { name: '', fullPath: '', tracks: [], children: [] };
-  const map = new Map<string, FolderNode>();
-  map.set('', root);
-
-  // Crée récursivement les nœuds parents manquants si nécessaire
-  function ensureNode(path: string): FolderNode {
-    if (map.has(path)) return map.get(path)!;
-    const parts = path.split('/');
-    const name = parts[parts.length - 1];
-    const parentPath = parts.slice(0, -1).join('/');
-    const parent = ensureNode(parentPath);
-    const node: FolderNode = { name, fullPath: path, tracks: [], children: [] };
-    map.set(path, node);
-    parent.children.push(node);
-    return node;
-  }
-
-  for (const t of tracks) ensureNode(t.folder).tracks.push(t);
-  // Inclut aussi les dossiers vides pour qu'ils apparaissent dans l'arbre
-  for (const dir of extraDirs) if (dir) ensureNode(dir);
-  return root;
-}
-
-// Traverse l'arbre en suivant le chemin de navigation et retourne le nœud correspondant
-function getNodeAtPath(tree: FolderNode, path: string[]): FolderNode {
-  let node = tree;
-  for (const seg of path) {
-    const child = node.children.find(c => c.name === seg);
-    if (!child) return node;
-    node = child;
-  }
-  return node;
-}
-
-// Vérifie si un nœud ou l'un de ses enfants contient la piste actuellement en lecture
-function hasActive(node: FolderNode, idx: number): boolean {
-  if (node.tracks.some(t => t.originalIndex === idx)) return true;
-  return node.children.some(c => hasActive(c, idx));
-}
-
-// Compte récursivement toutes les pistes dans un nœud et ses enfants
-function countTracks(node: FolderNode): number {
-  return node.tracks.length + node.children.reduce((s, c) => s + countTracks(c), 0);
-}
-
-// Formate une durée en secondes au format MM:SS pour l'affichage
-function fmt(sec: number): string {
-  if (!isFinite(sec) || isNaN(sec) || sec <= 0) return '';
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-// Construit un chemin absolu en combinant la racine et un chemin relatif
-function absPath(root: string, rel: string) {
-  return rel ? `${root}/${rel}` : root;
-}
-
-// Composant animé représentant un égaliseur graphique pour la piste en lecture
-function Equalizer() {
-  return (
-    <span className={css.equalizer} aria-hidden="true">
-      <span className={css.eqBar} style={{ animationDelay: '0ms' }} />
-      <span className={css.eqBar} style={{ animationDelay: '180ms' }} />
-      <span className={css.eqBar} style={{ animationDelay: '90ms' }} />
-    </span>
-  );
-}
-
-// Composant de navigation en fil d'Ariane pour le navigateur de dossiers
-function Breadcrumb({ rootName, path, onNavigate }: {
-  rootName: string; path: string[]; onNavigate: (idx: number) => void;
-}) {
-  return (
-    <nav className={css.breadcrumb}>
-      {[rootName, ...path].map((seg, i, arr) => (
-        <span key={i} className={css.breadcrumbItem}>
-          {i > 0 && <span className={css.breadcrumbSep}>›</span>}
-          <button
-            className={`${css.breadcrumbBtn} ${i === arr.length - 1 ? css.breadcrumbCurrent : ''}`}
-            onClick={() => onNavigate(i - 1)}
-            disabled={i === arr.length - 1}
-            title={seg}
-          >{seg}</button>
-        </span>
-      ))}
-    </nav>
-  );
-}
-
-// Menu contextuel affiché au clic-droit sur un dossier : couleur, renommer, supprimer
-type CtxMenu = { x: number; y: number; node: FolderNode };
-
-// Composant menu contextuel de dossier avec sélecteur de couleur natif et actions
-function ContextMenu({ menu, currentColor, onClose, onRename, onDelete, onColorPreview, onColorSave }: {
-  menu: CtxMenu;
-  currentColor: string;
-  onClose: () => void;
-  onRename?: (node: FolderNode) => void;
-  onDelete?: (node: FolderNode) => void;
-  onColorPreview: (path: string, color: string) => void; // live, no localStorage
-  onColorSave: (path: string, color: string) => void;    // on picker close, writes localStorage
-}) {
-  const { t } = useTranslation();
-  const menuRef = useRef<HTMLDivElement>(null);
-  const colorRef = useRef<HTMLInputElement>(null);
-
-  // Ferme le menu quand l'utilisateur clique en dehors
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
-    };
-    window.addEventListener('mousedown', h);
-    return () => window.removeEventListener('mousedown', h);
-  }, [onClose]);
-
-  // L'événement natif 'change' se déclenche uniquement à la fermeture du sélecteur → persiste alors
-  useEffect(() => {
-    const input = colorRef.current;
-    if (!input) return;
-    const h = () => onColorSave(menu.node.fullPath, input.value);
-    input.addEventListener('change', h);
-    return () => input.removeEventListener('change', h);
-  }, [menu.node.fullPath, onColorSave]);
-
-  return (
-    <div ref={menuRef} className={css.ctxMenu} style={{ left: menu.x, top: menu.y }}
-      onClick={e => e.stopPropagation()}>
-
-      <label className={css.ctxColorRow}>
-        <span className={css.ctxColorLabel}>{t('music.ctxColor')}</span>
-        <input
-          ref={colorRef}
-          type="color"
-          className={css.ctxColorInput}
-          value={currentColor}
-          onChange={e => onColorPreview(menu.node.fullPath, e.target.value)}
-        />
-      </label>
-
-      <div className={css.ctxDivider} />
-
-      {onRename && (
-        <button className={css.ctxItem}
-          onClick={() => { onClose(); onRename(menu.node); }}>
-          {t('music.ctxRename')}
-        </button>
-      )}
-
-      {onDelete && (
-        <button className={`${css.ctxItem} ${css.ctxItemDanger}`}
-          onClick={() => { onClose(); onDelete(menu.node); }}>
-          {t('music.ctxDelete')}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// Carte de dossier dans la grille : affiche l'égaliseur si actif
-function FolderCard({ folder, color, currentIndex, isPlaying, onClick, onContextMenu }: {
-  folder: FolderNode; color: string; currentIndex: number; isPlaying: boolean;
-  onClick: () => void;
-  onContextMenu: (e: React.MouseEvent) => void;
-}) {
-  const active = hasActive(folder, currentIndex);
-  const total = countTracks(folder);
-
-  return (
-    <button
-      className={`${css.gridItem} ${active ? css.gridItemFolderActive : ''}`}
-      onClick={onClick}
-      onContextMenu={e => { e.preventDefault(); onContextMenu(e); }}
-    >
-      <div className={css.folderShape} style={{ '--fc': color, '--fc-dark': color + 'bb' } as React.CSSProperties}>
-        <div className={css.folderShapeTab} />
-        <div className={css.folderShapeBody}>
-          {active && isPlaying
-            ? <Equalizer />
-            : active
-              ? <span className={css.folderActiveDot} />
-              : <span className={css.folderCount}>{total}</span>
-          }
-        </div>
-      </div>
-      <span className={css.gridLabel}>{folder.name}</span>
-    </button>
-  );
-}
-
-// Menu contextuel affiché au clic-droit sur une piste
-function TrackContextMenu({ x, y, onClose, onMove, onChangeArt }: {
-  x: number; y: number; track?: TrackWithIdx;
-  onClose: () => void;
-  onMove: () => void;
-  onChangeArt: () => void;
-}) {
-  const { t } = useTranslation();
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Ferme le menu quand l'utilisateur clique en dehors
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
-    };
-    window.addEventListener('mousedown', h);
-    return () => window.removeEventListener('mousedown', h);
-  }, [onClose]);
-
-  return (
-    <div ref={menuRef} className={css.ctxMenu} style={{ left: x, top: y }}
-      onClick={e => e.stopPropagation()}>
-      <button className={css.ctxItem} onClick={() => { onClose(); onMove(); }}>
-        {t('music.ctxMove')}
-      </button>
-      <button className={css.ctxItem} onClick={() => { onClose(); onChangeArt(); }}>
-        {t('music.ctxChangeArt')}
-      </button>
-    </div>
-  );
-}
-
-// Modale de sélection de dossier pour déplacer une piste
-function FolderPickerModal({ track, allDirs, rootName, folderPath, onClose, onConfirm }: {
-  track: TrackWithIdx;
-  allDirs: string[];
-  rootName: string;
-  folderPath: string;
-  onClose: () => void;
-  onConfirm: (destRelPath: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
-
-  // Construit la liste : dossier racine + tous les sous-dossiers sauf le dossier actuel de la piste
-  const folders = useMemo(() => {
-    const list = ['', ...allDirs].filter(f => f !== track.folder);
-    if (!search.trim()) return list;
-    const q = search.toLowerCase();
-    return list.filter(f => {
-      const label = f ? f.split('/').pop()! : rootName;
-      return label.toLowerCase().includes(q) || f.toLowerCase().includes(q);
-    });
-  }, [allDirs, track.folder, rootName, search]);
-
-  return (
-    <div className={css.moveOverlay} onClick={onClose}>
-      <div className={css.moveModal} onClick={e => e.stopPropagation()}>
-        <div className={css.moveModalHeader}>
-          {t('music.moveModalTitle', { title: track.title })}
-        </div>
-
-        <input
-          className={css.moveModalSearch}
-          placeholder={t('music.moveModalSearch')}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          autoFocus
-        />
-
-        <ul className={css.moveFolderList}>
-          {folders.map(f => {
-            const label = f ? f.split('/').pop()! : t('music.moveModalRoot');
-            const sub   = f ? f : '';
-            return (
-              <li
-                key={f}
-                className={`${css.moveFolderItem} ${selected === f ? css.moveFolderItemSelected : ''}`}
-                onClick={() => setSelected(f)}
-                title={sub ? `${folderPath}/${sub}` : folderPath}
-              >
-                <span className={css.moveFolderIcon}>📁</span>
-                <div className={css.moveFolderLabels}>
-                  <span className={css.moveFolderName}>{label}</span>
-                  {sub && <span className={css.moveFolderPath}>{sub}</span>}
-                </div>
-              </li>
-            );
-          })}
-          {folders.length === 0 && (
-            <li className={css.moveFolderEmpty}>—</li>
-          )}
-        </ul>
-
-        <div className={css.moveModalActions}>
-          <button className={css.moveModalCancel} onClick={onClose}>
-            {t('dialog.cancel')}
-          </button>
-          <button
-            className={css.moveModalConfirm}
-            disabled={selected === null}
-            onClick={() => selected !== null && onConfirm(selected)}
-          >
-            {t('music.moveModalConfirm')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Carte de piste dans la grille : affiche la pochette (ID3 ou enrichie), l'artiste et la durée
-function TrackCard({ track, index, isActive, isPlaying, onSelect, onContextMenu, meta, enriched, scrollTarget = false }: {
-  track: TrackWithIdx; index: number; isActive: boolean; isPlaying: boolean;
-  onSelect: () => void;
-  onContextMenu: (e: React.MouseEvent) => void;
-  meta: TrackMeta | null;
-  enriched: EnrichedData | null;
-  scrollTarget?: boolean; // true = cible du scroll navTo (grille principale uniquement)
-}) {
-  const cardRef = useRef<HTMLButtonElement>(null);
-  // Charge la pochette ID3 uniquement quand la carte est visible (lazy loading)
-  const coverArt = useLazyCoverArt(track.path, cardRef);
-  const duration = meta?.durationSecs ?? undefined;
-
-  // Priorité pochette : ID3 embarquée > URL enrichie iTunes/Deezer
-  const effectiveCover = coverArt ?? enriched?.coverUrl ?? null;
-  // Priorité artiste : tag ID3 > artiste enrichi
-  const displayArtist = meta?.artist ?? enriched?.artist ?? null;
-
-  // Fait défiler automatiquement pour centrer la piste active dans la vue
-  useEffect(() => {
-    if (!isActive) return;
-    const t = setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
-    return () => clearTimeout(t);
-  }, [isActive]);
-
-  return (
-    <button
-      ref={cardRef}
-      className={`${css.gridItem} ${isActive ? css.gridItemTrackActive : ''} ${effectiveCover ? css.gridItemWithArt : ''}`}
-      onClick={onSelect}
-      onContextMenu={e => { e.preventDefault(); onContextMenu(e); }}
-      data-trackactive={isActive && scrollTarget ? 'true' : undefined}
-    >
-      <div className={`${css.trackShape}${effectiveCover ? ` ${css.trackShapeWithArt}` : ''}`}>
-        {effectiveCover && (
-          <img src={effectiveCover} className={css.trackArt} alt="" aria-hidden="true" draggable={false} />
-        )}
-        {/* Overlay: active state or no-art fallback */}
-        <div className={`${css.trackShapeContent}${effectiveCover && isActive ? ` ${css.trackShapeActiveArtOverlay}` : ''}`}>
-          {isActive && isPlaying
-            ? <Equalizer />
-            : !effectiveCover
-              ? <span className={css.trackNum}>{index + 1}</span>
-              : null
-          }
-          {!effectiveCover && duration != null && (
-            <span className={css.trackDurationGrid}>{fmt(duration)}</span>
-          )}
-        </div>
-        {/* Duration badge in corner (only when art is present) */}
-        {effectiveCover && duration != null && (
-          <span className={css.trackDurationBadge}>{fmt(duration)}</span>
-        )}
-      </div>
-      <span className={css.gridLabel}>{track.title}</span>
-      {displayArtist && <span className={css.trackArtist}>{displayArtist}</span>}
-    </button>
-  );
-}
-
-// Menu déroulant de tri : critère (nom/durée/type) et direction (croissant/décroissant)
-function SortDropdown({ sortBy, sortDir, onChange }: {
-  sortBy: SortBy; sortDir: SortDir;
-  onChange: (by: SortBy, dir: SortDir) => void;
-}) {
-  const { t } = useTranslation();
-  const SORT_BY_LABELS: Record<SortBy, string>  = { name: t('music.sortByName'), dur: t('music.sortByDuration'), ext: t('music.sortByType') };
-  const SORT_DIR_LABELS: Record<SortDir, string> = { asc: t('music.sortAsc'), desc: t('music.sortDesc') };
-
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    window.addEventListener('mousedown', h);
-    return () => window.removeEventListener('mousedown', h);
-  }, [open]);
-
-  return (
-    <div ref={rootRef} className={css.sortRoot}>
-      <button
-        className={`${css.sortBtn} ${open ? css.sortBtnOpen : ''}`}
-        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-      >
-        {t('music.sortBtn')} <span className={css.sortArrow}>↕</span>
-      </button>
-
-      {open && (
-        <div className={css.sortPanel} onClick={e => e.stopPropagation()}>
-          {/* Critère */}
-          {(['name', 'dur', 'ext'] as SortBy[]).map(v => (
-            <button key={v} className={css.sortOption} onClick={() => onChange(v, sortDir)}>
-              <span className={css.sortCheck}>{sortBy === v ? '●' : ''}</span>
-              {SORT_BY_LABELS[v]}
-            </button>
-          ))}
-          <div className={css.sortPanelDivider} />
-          {/* Direction */}
-          {(['asc', 'desc'] as SortDir[]).map(v => (
-            <button key={v} className={css.sortOption} onClick={() => onChange(sortBy, v)}>
-              <span className={css.sortCheck}>{sortDir === v ? '●' : ''}</span>
-              {SORT_DIR_LABELS[v]}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { PALETTE } from './constants';
+import {
+  buildTree,
+  countTracks,
+  getNodeAtPath,
+  type FolderNode,
+  type SortBy,
+  type SortDir,
+  type TrackWithIdx,
+} from './lib/folderTree';
+import { absPath } from './lib/format';
+import { Breadcrumb } from './components/Breadcrumb';
+import { FolderContextMenu, TrackContextMenu, type FolderCtxMenu } from './components/ContextMenus';
+import { FolderCard, TrackCard } from './components/GridCards';
+import { FolderPickerModal } from './components/FolderPickerModal';
+import { SortDropdown } from './components/SortDropdown';
+import css from './MusicPage.module.css';
 
 // Page principale de la bibliothèque musicale : navigateur de dossiers, lecture et enrichissement
 export function MusicPage() {
@@ -487,7 +65,7 @@ export function MusicPage() {
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [folderColors, setFolderColors] = useState<Record<string, string>>(readMusicFolderColors);
-  const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<FolderCtxMenu | null>(null);
   const [allDirs, setAllDirs] = useState<string[]>([]);
 
   // État du menu contextuel de piste et de la modale de déplacement
@@ -529,7 +107,6 @@ export function MusicPage() {
     }
     window.addEventListener('music-nav-to', onMusicNav);
     return () => window.removeEventListener('music-nav-to', onMusicNav);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Met à jour le critère et la direction de tri dans les paramètres d'URL
@@ -828,7 +405,7 @@ export function MusicPage() {
 
       {/* ── Context menu ── */}
       {ctxMenu && (
-        <ContextMenu
+        <FolderContextMenu
           menu={ctxMenu}
           currentColor={getFolderColor(ctxMenu.node.fullPath)}
           onClose={() => setCtxMenu(null)}
@@ -870,7 +447,6 @@ export function MusicPage() {
         <TrackContextMenu
           x={trackCtxMenu.x}
           y={trackCtxMenu.y}
-          track={trackCtxMenu.track}
           onClose={() => setTrackCtxMenu(null)}
           onMove={() => setMoveTarget(trackCtxMenu.track)}
           onChangeArt={() => void handleChangeArtwork(trackCtxMenu.track)}

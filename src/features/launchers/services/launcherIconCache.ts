@@ -53,7 +53,7 @@ export function getCachedLauncherIconsById(inputs: LauncherIconInput[]): {
   byId: Record<string, string>;
   missing: Array<{ id: string; iconPath: string }>;
 } {
-  let cache = pruneCache(readCache());
+  const cache = pruneCache(readCache());
   writeCache(cache);
 
   const byId: Record<string, string> = {};

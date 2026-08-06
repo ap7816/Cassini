@@ -75,7 +75,7 @@ interface MusicMetaInvokeResult {
 function buildSearchTerm(raw: string): string {
   return raw
     .replace(/\.[a-zA-Z0-9]{1,5}$/, '')
-    .replace(/^\d+[\s\-_\.]+/, '')
+    .replace(/^\d+[\s\-_.]+/, '')
     .replace(/\[.*?\]/g, ' ')
     .replace(/\((?:official|lyrics?|video|audio|hd|4k|hq|full|mv)\s*[^)]*\)/gi, ' ')
     .replace(/\s+/g, ' ')

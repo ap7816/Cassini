@@ -100,7 +100,7 @@ export function AppLayout() {
         });
     });
     return () => { mounted = false; unlisten?.(); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Démarre la musique d'ambiance une seule fois après le premier rendu
   useEffect(() => { initAmbient(); }, []);

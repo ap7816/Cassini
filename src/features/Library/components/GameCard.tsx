@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../types';
 import css from './GameCard.module.css';
@@ -63,25 +63,30 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
   // On ne passe jamais par le cache pour éviter que handleImgError ne la supprime.
   const steamDirectUrl = resolvedSteamAppId ? steamCdnUrl(resolvedSteamAppId) : null;
 
-  const [imgSrc, setImgSrc] = useState<string | null>(steamDirectUrl);
+  // Source résolue, étiquetée par l'identifiant du jeu : la carte est réutilisée
+  // d'un jeu à l'autre sans être remontée, l'étiquette garantit qu'on n'affiche
+  // jamais l'image du jeu précédent. Elle rend aussi inutile la réinitialisation
+  // par effet, qui provoquait un rendu en cascade.
+  const [resolved, setResolved] = useState<{ id: string; src: string | null } | null>(null);
+  const imgSrc = resolved?.id === game.id ? resolved.src : steamDirectUrl;
 
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
 
-  // Charge l'image : Steam → URL directe, non-Steam → RAWG (clé requise)
+  const setImgSrc = useCallback(
+    (src: string | null) => setResolved({ id: game.id, src }),
+    [game.id],
+  );
+
+  // Seul le cas non-Steam demande un aller-retour réseau : pour Steam, l'URL
+  // du CDN se calcule directement depuis l'appId.
   useEffect(() => {
     if (game.customImageUrl) return;
-
-    if (isSteam && resolvedSteamAppId) {
-      // L'URL CDN Steam est toujours disponible, aucun fetch async nécessaire
-      setImgSrc(steamCdnUrl(resolvedSteamAppId));
-      return;
-    }
-
+    if (isSteam && resolvedSteamAppId) return;
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
       fetchRawgImage(game.title).then((url) => {
-        if (!cancelled) setImgSrc(url ?? null);
+        if (!cancelled) setResolved({ id: game.id, src: url ?? null });
       });
       return () => { cancelled = true; };
     }

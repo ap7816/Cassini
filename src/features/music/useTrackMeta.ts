@@ -193,20 +193,24 @@ export function useLazyCoverArt(
 // Charge toutes les métadonnées d'une seule piste (incluant la couverture) immédiatement
 // Utilisé par le mini-player qui doit afficher la couverture de la piste courante sans délai
 export function useSingleMeta(path: string | null): TrackMeta | null {
-  const [meta, setMeta] = useState<TrackMeta | null>(() =>
-    path ? (_cache.get(path) ?? null) : null,
-  );
+  // Le résultat asynchrone est étiqueté par le chemin qui l'a produit : sans
+  // ça, changer de piste afficherait brièvement la pochette de la précédente.
+  const [fetched, setFetched] = useState<{ path: string; meta: TrackMeta | null } | null>(null);
 
   useEffect(() => {
-    if (!path) { setMeta(null); return; }
-    const existing = _cache.get(path);
-    if (existing?.coverLoaded) { setMeta(existing); return; }
+    if (!path) return;
+    // Déjà complet en cache : la valeur de repli ci-dessous suffit, inutile
+    // d'écrire l'état — le faire ici provoquait un rendu en cascade.
+    if (_cache.get(path)?.coverLoaded) return;
+
     let cancelled = false;
     fetchCover(path).then(() => {
-      if (!cancelled) setMeta(_cache.get(path) ?? null);
+      if (!cancelled) setFetched({ path, meta: _cache.get(path) ?? null });
     });
     return () => { cancelled = true; };
   }, [path]);
 
-  return meta;
+  if (!path) return null;
+  if (fetched && fetched.path === path) return fetched.meta;
+  return _cache.get(path) ?? null;
 }

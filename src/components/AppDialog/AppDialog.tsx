@@ -26,14 +26,21 @@ export function AppDialog({ state, onClose }: {
     return () => clearTimeout(t);
   }, []);
 
-  // Ferme le dialogue (annuler) quand l'utilisateur appuie sur Échap
+  // Ferme le dialogue (annuler) quand l'utilisateur appuie sur Échap.
+  //
+  // L'effet dépend explicitement de ce qu'il utilise : sans tableau de
+  // dépendances, l'écouteur était retiré puis réenregistré à chaque rendu du
+  // dialogue, y compris à chaque frappe dans le champ de saisie.
+  const isPrompt = state.type === 'prompt';
   useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); handleCancel(); }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      onClose(isPrompt ? null : false);
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  });
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isPrompt, onClose]);
 
   // Valide la saisie — retourne null si le champ est vide pour un prompt
   function handleSubmit(e?: React.FormEvent) {

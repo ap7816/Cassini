@@ -1,0 +1,85 @@
+/* Menus contextuels de la page musique (dossier et piste).
+   Extrait de MusicPage.module.css : le préfixe `ctx` devient inutile dans un
+   module dédié, les classes reprennent donc un nom simple. */
+
+.menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 185px;
+  background: #161a28;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: background 0.1s;
+}
+
+.colorRow:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.colorLabel {
+  font-size: 0.85rem;
+  color: rgba(224, 230, 240, 0.88);
+  pointer-events: none;
+}
+
+.colorInput {
+  width: 34px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px 3px;
+  background: none;
+}
+
+.colorInput::-webkit-color-swatch-wrapper { padding: 0; border-radius: 4px; }
+.colorInput::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: rgba(224, 230, 240, 0.88);
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 7px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.itemDanger {
+  color: #ff7a7a;
+}
+
+.itemDanger:hover {
+  background: rgba(220, 60, 60, 0.15);
+  color: #ff9999;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 3px 6px;
+}

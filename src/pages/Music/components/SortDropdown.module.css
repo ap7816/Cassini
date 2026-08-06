@@ -1,0 +1,92 @@
+/* Menu de tri de la page musique. Extrait de MusicPage.module.css — le
+   préfixe `sort` disparaît, le module suffit à qualifier les classes. */
+
+.root {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(224, 230, 240, 0.75);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  user-select: none;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(224, 230, 240, 1);
+}
+
+.btnOpen {
+  background: rgba(108, 142, 251, 0.14);
+  border-color: rgba(108, 142, 251, 0.35);
+  color: rgba(224, 230, 240, 1);
+}
+
+.arrow {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 9000;
+  min-width: 160px;
+  background: #161a28;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  color: rgba(224, 230, 240, 0.85);
+  font-size: 0.83rem;
+  cursor: pointer;
+  border-radius: 7px;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(224, 230, 240, 1);
+}
+
+.check {
+  width: 14px;
+  font-size: 0.55rem;
+  color: var(--accent, #6c8efb);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 3px 6px;
+}

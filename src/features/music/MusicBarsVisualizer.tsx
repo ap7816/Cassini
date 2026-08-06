@@ -9,10 +9,14 @@ const IDLE_SPEED  = 1.0;  // rad/s en veille
 export function MusicBarsVisualizer() {
   const containerRef  = useRef<HTMLDivElement>(null);
   const rafRef        = useRef<number>(0);
-  const prevTime      = useRef(performance.now());
 
-  // État du pic courant
-  const peakPos       = useRef(Math.floor(Math.random() * N_BARS));
+  // Initialisés dans l'effet et non ici : `performance.now()` et `Math.random()`
+  // sont impurs, les appeler pendant le rendu casse l'idempotence attendue par
+  // React (et empêche le compilateur de mémoïser le composant).
+  const prevTime      = useRef(0);
+
+  // État du pic courant — position tirée au hasard au premier passage
+  const peakPos       = useRef(-1);
   const energy        = useRef(0);      // énergie actuelle 0-1 (lerpée)
   const heights       = useRef<Float32Array>(new Float32Array(N_BARS).fill(0));
 
@@ -28,6 +32,10 @@ export function MusicBarsVisualizer() {
     const container = containerRef.current;
     if (!container) return;
     const bars = Array.from(container.children) as HTMLElement[];
+
+    // Amorçage des valeurs impures, hors phase de rendu
+    prevTime.current = performance.now();
+    if (peakPos.current < 0) peakPos.current = Math.floor(Math.random() * N_BARS);
 
     function frame() {
       rafRef.current = requestAnimationFrame(frame);

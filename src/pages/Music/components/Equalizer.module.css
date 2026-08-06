@@ -1,0 +1,29 @@
+.equalizer {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.eqBar {
+  display: block;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent, #6c8efb);
+  animation: eqBounce 0.8s ease-in-out infinite alternate;
+}
+
+.eqBar:nth-child(1) { height: 55%; }
+.eqBar:nth-child(2) { height: 100%; }
+.eqBar:nth-child(3) { height: 40%; }
+
+@keyframes eqBounce {
+  0%   { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eqBar { animation: none; }
+}

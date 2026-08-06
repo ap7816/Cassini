@@ -14,21 +14,23 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
   const { pathname } = useLocation();
 
   const [isMobile, setIsMobile] = useState(() => getInitialIsMobile(breakpointPx));
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Écoute les changements de taille de fenêtre pour basculer entre mobile et desktop
+  // On mémorise la route sur laquelle la sidebar a été ouverte plutôt qu'un
+  // simple booléen. L'ouverture devient alors une valeur dérivée : changer de
+  // route ou repasser en desktop la referme mécaniquement, sans effet qui
+  // écrive dans l'état — ce qui provoquait un rendu en cascade à chaque
+  // navigation.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const sidebarOpen = isMobile && openedOn === pathname;
+
+  // Écoute les changements de taille de fenêtre pour basculer mobile/desktop
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const mq = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      const matches = 'matches' in e ? e.matches : mq.matches;
-      setIsMobile(matches);
-      // Fermer la sidebar automatiquement quand on repasse en mode desktop
-      if (!matches) setSidebarOpen(false);
-    };
+    const onChange = () => setIsMobile(mq.matches);
 
-    onChange(mq);
+    onChange();
 
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else mq.addListener(onChange);
@@ -39,16 +41,11 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
     };
   }, [breakpointPx]);
 
-  // Ferme la sidebar à chaque changement de route sur mobile
-  useEffect(() => {
-    if (isMobile) setSidebarOpen(false);
-  }, [pathname, isMobile]);
-
   // Permet de fermer la sidebar avec la touche Échap
   useEffect(() => {
     if (!sidebarOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSidebarOpen(false);
+      if (e.key === 'Escape') setOpenedOn(null);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -65,7 +62,7 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
     isMobile,
     sidebarOpen,
     pageTitle,
-    openSidebar: () => setSidebarOpen(true),
-    closeSidebar: () => setSidebarOpen(false),
+    openSidebar: () => setOpenedOn(pathname),
+    closeSidebar: () => setOpenedOn(null),
   };
 }

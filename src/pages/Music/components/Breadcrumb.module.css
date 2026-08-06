@@ -1,0 +1,50 @@
+/* Fil d'Ariane du navigateur de dossiers. Extrait de MusicPage.module.css. */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.sep {
+  color: rgba(224, 230, 240, 0.25);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.btn {
+  background: none;
+  border: none;
+  color: rgba(224, 230, 240, 0.5);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.btn:hover:not(:disabled) {
+  color: rgba(224, 230, 240, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.current {
+  color: rgba(224, 230, 240, 0.92);
+  font-weight: 600;
+  cursor: default;
+}
