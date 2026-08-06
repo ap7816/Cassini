@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+﻿import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { check } from '@tauri-apps/plugin-updater';
@@ -9,6 +9,7 @@ import { useToast } from '../../features/toast/ToastContext';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
 import { clearAllStorage } from '../../services/storage';
+import { SettingRow } from './components/SettingRow';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
@@ -234,14 +235,7 @@ export function SettingsPage() {
       {(tab === 'perso' || !!q) && matches('settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
       <div className={css.card}>
         {/* Image de fond */}
-        {matches('settings.bgLabel', 'settings.bgHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.bgLabel')}</div>
-            <div className={css.hint}>{t('settings.bgHint')}</div>
-          </div>
-
-          <div className={css.actions}>
+        <SettingRow labelKey="settings.bgLabel" hintKey="settings.bgHint" query={q}><div className={css.actions}>
             <input
               ref={inputRef}
               className={css.hiddenInput}
@@ -261,8 +255,7 @@ export function SettingsPage() {
               {t('settings.bgRemove')}
             </button>
           </div>
-        </div>
-        )}
+        </SettingRow>
 
         {matches('settings.bgLabel', 'settings.bgHint') && (
           settings.backgroundImageDataUrl ? (
@@ -279,17 +272,9 @@ export function SettingsPage() {
           )
         )}
 
-        {matches('settings.bgLabel', 'settings.bgHint') && matches('settings.overlayLabel', 'settings.overlayHint') && <div className={css.divider} />}
 
         {/* Opacité */}
-        {matches('settings.overlayLabel', 'settings.overlayHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.overlayLabel')}</div>
-            <div className={css.hint}>{t('settings.overlayHint')}</div>
-          </div>
-
-          <div className={css.sliderRow}>
+        <SettingRow labelKey="settings.overlayLabel" hintKey="settings.overlayHint" query={q}><div className={css.sliderRow}>
             <input
               type="range"
               className={css.slider}
@@ -303,20 +288,11 @@ export function SettingsPage() {
             />
             <span className={css.sliderValue}>{Math.round(settings.bgOverlayOpacity * 100)}%</span>
           </div>
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.overlayLabel', 'settings.overlayHint') && matches('settings.accentLabel', 'settings.accentHint') && <div className={css.divider} />}
 
         {/* Couleur d'accent */}
-        {matches('settings.accentLabel', 'settings.accentHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.accentLabel')}</div>
-            <div className={css.hint}>{t('settings.accentHint')}</div>
-          </div>
-
-          <div className={css.swatches}>
+        <SettingRow labelKey="settings.accentLabel" hintKey="settings.accentHint" query={q}><div className={css.swatches}>
             {ACCENT_COLORS.map((c) => (
               <button
                 key={c.value}
@@ -357,20 +333,11 @@ export function SettingsPage() {
               />
             </div>
           </div>
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.accentLabel', 'settings.accentHint') && matches('settings.languageLabel', 'settings.languageHint') && <div className={css.divider} />}
 
         {/* Langue */}
-        {matches('settings.languageLabel', 'settings.languageHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.languageLabel')}</div>
-            <div className={css.hint}>{t('settings.languageHint')}</div>
-          </div>
-
-          <select
+        <SettingRow labelKey="settings.languageLabel" hintKey="settings.languageHint" query={q}><select
             className={css.langSelect}
             value={currentLang}
             onChange={(e) => handleLanguageChange(e.target.value as 'fr' | 'en')}
@@ -378,8 +345,7 @@ export function SettingsPage() {
             <option value="fr">🇫🇷 Français</option>
             <option value="en">🇬🇧 English</option>
           </select>
-        </div>
-        )}
+        </SettingRow>
       </div>
       )}
 
@@ -390,13 +356,7 @@ export function SettingsPage() {
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
 
-        {matches('settings.updateLabel', 'settings.updateHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.updateLabel')}</div>
-            <div className={css.hint}>{t('settings.updateHint')}</div>
-          </div>
-          <button
+        <SettingRow labelKey="settings.updateLabel" hintKey="settings.updateHint" query={q}><button
             type="button"
             className={updateStatus === 'error' ? css.danger : css.primary}
             onClick={() => { void handleCheckUpdate(); }}
@@ -411,22 +371,13 @@ export function SettingsPage() {
           {updateError && (
             <div className={css.updateErrorMsg}>{updateError}</div>
           )}
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.updateLabel', 'settings.updateHint') && matches('settings.patchNotesLabel', 'settings.patchNotesHint') && <div className={css.divider} />}
 
-        {matches('settings.patchNotesLabel', 'settings.patchNotesHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.patchNotesLabel')}</div>
-            <div className={css.hint}>{t('settings.patchNotesHint')}</div>
-          </div>
-          <button type="button" className={css.button} onClick={openPatchNotes}>
+        <SettingRow labelKey="settings.patchNotesLabel" hintKey="settings.patchNotesHint" query={q}><button type="button" className={css.button} onClick={openPatchNotes}>
             {t('settings.patchNotesBtn')}
           </button>
-        </div>
-        )}
+        </SettingRow>
       </div>
       )}
 
@@ -435,13 +386,7 @@ export function SettingsPage() {
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
 
-        {matches('settings.ambientLabel', 'settings.ambientHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.ambientLabel')}</div>
-            <div className={css.hint}>{t('settings.ambientHint')}</div>
-          </div>
-          <label className={css.toggle}>
+        <SettingRow labelKey="settings.ambientLabel" hintKey="settings.ambientHint" query={q}><label className={css.toggle}>
             <input
               type="checkbox"
               checked={ambient.enabled}
@@ -449,49 +394,35 @@ export function SettingsPage() {
             />
             <span className={css.toggleSlider} />
           </label>
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.ambientVolumeLabel') && (
-        <>
-          <div className={css.divider} />
-          <div className={css.row}>
-            <div>
-              <div className={css.label}>{t('settings.ambientVolumeLabel')}</div>
-            </div>
-            <div className={css.sliderRow}>
-              <input
-                type="range" min={0} max={100}
-                value={Math.round(ambient.volume * 100)}
-                disabled={!ambient.enabled}
-                className={css.slider}
-                onChange={e => ambient.setVolume(Number(e.target.value) / 100)}
-              />
-              <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
-            </div>
+        <SettingRow labelKey="settings.ambientVolumeLabel" query={q}>
+          <div className={css.sliderRow}>
+            <input
+              type="range" min={0} max={100}
+              value={Math.round(ambient.volume * 100)}
+              disabled={!ambient.enabled}
+              className={css.slider}
+              onChange={e => ambient.setVolume(Number(e.target.value) / 100)}
+            />
+            <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
           </div>
-        </>
-        )}
+        </SettingRow>
 
-        {matches('settings.musicParticlesLabel', 'settings.musicParticlesHint') && (
-        <>
-          <div className={css.divider} />
-          <div className={css.row}>
-            <div>
-              <div className={css.label}>{t('settings.musicParticlesLabel')}</div>
-              <div className={css.hint}>{t('settings.musicParticlesHint')}</div>
-            </div>
-            <label className={css.toggle}>
-              <input
-                type="checkbox"
-                checked={settings.musicParticles}
-                onChange={e => setMusicParticles(e.target.checked)}
-              />
-              <span className={css.toggleSlider} />
-            </label>
-          </div>
-        </>
-        )}
+        <SettingRow
+          labelKey="settings.musicParticlesLabel"
+          hintKey="settings.musicParticlesHint"
+          query={q}
+        >
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.musicParticles}
+              onChange={e => setMusicParticles(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
       </div>
       )}
 
@@ -500,13 +431,7 @@ export function SettingsPage() {
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.systemTitle')}</div>
 
-        {matches('settings.autostartLabel', 'settings.autostartHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.autostartLabel')}</div>
-            <div className={css.hint}>{t('settings.autostartHint')}</div>
-          </div>
-          <label className={css.toggle}>
+        <SettingRow labelKey="settings.autostartLabel" hintKey="settings.autostartHint" query={q}><label className={css.toggle}>
             <input
               type="checkbox"
               checked={settings.autostart}
@@ -518,18 +443,10 @@ export function SettingsPage() {
             />
             <span className={css.toggleSlider} />
           </label>
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.autostartLabel', 'settings.autostartHint') && matches('settings.runInBgLabel', 'settings.runInBgHint') && <div className={css.divider} />}
 
-        {matches('settings.runInBgLabel', 'settings.runInBgHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.runInBgLabel')}</div>
-            <div className={css.hint}>{t('settings.runInBgHint')}</div>
-          </div>
-          <label className={css.toggle}>
+        <SettingRow labelKey="settings.runInBgLabel" hintKey="settings.runInBgHint" query={q}><label className={css.toggle}>
             <input
               type="checkbox"
               checked={settings.runInBackground}
@@ -537,8 +454,7 @@ export function SettingsPage() {
             />
             <span className={css.toggleSlider} />
           </label>
-        </div>
-        )}
+        </SettingRow>
       </div>
       )}
 
@@ -547,39 +463,24 @@ export function SettingsPage() {
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
 
-        {matches('settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.clearWebviewCacheLabel')}</div>
-            <div className={css.hint}>{t('settings.clearWebviewCacheHint')}</div>
-          </div>
-          <button
+        <SettingRow labelKey="settings.clearWebviewCacheLabel" hintKey="settings.clearWebviewCacheHint" query={q}><button
             type="button"
             className={css.button}
             onClick={() => { void handleClearWebviewCache(); }}
           >
             {webviewCacheCleared ? t('settings.clearWebviewCacheCleared') : t('settings.clearWebviewCacheButton')}
           </button>
-        </div>
-        )}
+        </SettingRow>
 
-        {matches('settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && matches('settings.clearAllLabel', 'settings.clearAllHint') && <div className={css.divider} />}
 
-        {matches('settings.clearAllLabel', 'settings.clearAllHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.clearAllLabel')}</div>
-            <div className={css.hint}>{t('settings.clearAllHint')}</div>
-          </div>
-          <button
+        <SettingRow labelKey="settings.clearAllLabel" hintKey="settings.clearAllHint" query={q}><button
             type="button"
             className={css.danger}
             onClick={handleClearAllData}
           >
             {t('settings.clearAllButton')}
           </button>
-        </div>
-        )}
+        </SettingRow>
       </div>
       )}
 
@@ -588,11 +489,12 @@ export function SettingsPage() {
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
 
-        {matches('settings.sgdbLabel', 'settings.sgdbHint') && (
-        <div className={css.row}>
-          <div>
-            <div className={css.label}>{t('settings.sgdbLabel')}</div>
-            <div className={css.hint}>
+        <SettingRow
+          labelKey="settings.sgdbLabel"
+          hintKey="settings.sgdbHint"
+          query={q}
+          hint={
+            <>
               {t('settings.sgdbHint')}{' '}
               <a
                 href="https://www.steamgriddb.com/api/v2"
@@ -602,9 +504,9 @@ export function SettingsPage() {
               >
                 {t('settings.sgdbLink')}
               </a>
-            </div>
-          </div>
-
+            </>
+          }
+        >
           <div className={css.apiKeyRow}>
             <input
               type="password"
@@ -638,8 +540,7 @@ export function SettingsPage() {
               {cacheCleared ? t('settings.sgdbCleared') : t('settings.sgdbClearCache')}
             </button>
           </div>
-        </div>
-        )}
+        </SettingRow>
       </div>
       )}
     </div>

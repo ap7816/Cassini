@@ -1,0 +1,32 @@
+/* Ligne de réglage : libellé + explication à gauche, contrôle à droite. */
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Séparateur porté par le CSS plutôt que par des éléments <div> explicites.
+   Une ligne masquée par la recherche sort de la fratrie et son trait
+   disparaît avec elle — là où les séparateurs manuels devaient répéter les
+   conditions de recherche des deux lignes voisines.
+
+   Combinateur général (`~`) et non adjacent (`+`) : certaines cartes
+   intercalent un bloc d'aperçu entre deux réglages, `+` n'y verrait plus
+   deux lignes voisines et le trait disparaîtrait. */
+.row ~ .row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.label {
+  font-weight: 700;
+}
+
+.hint {
+  opacity: 0.75;
+  margin-top: 4px;
+  font-size: 12px;
+}

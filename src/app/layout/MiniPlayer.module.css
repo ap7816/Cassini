@@ -1,0 +1,314 @@
+/* Lecteur persistant. Extrait d'AppLayout.module.css. */
+/* ── Mini Player ──────────────────────────────────────────── */
+.player {
+  position: relative;
+  overflow: hidden;
+  animation: playerSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 20px;
+  background: rgba(6, 10, 16, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -1px 0 0 color-mix(in srgb, var(--accent, #6c8efb) 20%, transparent),
+              0 -8px 24px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  min-height: 56px;
+  position: relative;
+  z-index: 10;
+}
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Largeur fixe — empêche le titre de déplacer les contrôles */
+  flex: 0 0 200px;
+  width: 200px;
+  overflow: hidden;
+}
+
+.art {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.artPlaceholder {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: rgba(224, 230, 240, 0.25);
+  flex-shrink: 0;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+}
+
+.title:hover .titleText {
+  color: var(--accent, #6c8efb);
+}
+
+.titleText {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(224, 230, 240, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  transition: color 0.15s;
+}
+
+.artist {
+  font-size: 0.68rem;
+  color: rgba(224, 230, 240, 0.38);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.folderTag {
+  font-size: 0.7rem;
+  background: rgba(108, 142, 251, 0.18);
+  color: var(--accent, #6c8efb);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Mini controls ────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(224, 230, 240, 0.7);
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 5px 10px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(108, 142, 251, 0.15);
+  border-color: rgba(108, 142, 251, 0.25);
+  color: var(--accent, #6c8efb);
+  transform: scale(1.05);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.playBtn {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
+  color: var(--accent, #6c8efb);
+  padding: 5px 14px;
+}
+
+.playBtn:hover:not(:disabled) {
+  background: var(--accent, #6c8efb);
+  border-color: var(--accent, #6c8efb);
+  color: #0b0f16;
+}
+
+/* Bouton actif : shuffle on ou repeat ≠ none */
+.btnActive {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 45%, transparent);
+  color: var(--accent, #6c8efb);
+}
+
+.btnActive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 28%, transparent);
+  color: var(--accent, #6c8efb);
+}
+
+/* ── Barre de progression ─────────────────────────────────── */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 100px;
+}
+
+.time {
+  font-size: 0.68rem;
+  color: rgba(224, 230, 240, 0.4);
+  white-space: nowrap;
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 60px;
+  position: relative;
+  overflow: visible;
+  transition: height 0.15s;
+}
+
+.progressBar:hover {
+  height: 10px;
+}
+
+.progressThumb {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--accent, #6c8efb);
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progressBar:hover .progressThumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── Barre de volume ──────────────────────────────────────── */
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.volumeIcon {
+  font-size: 0.82rem;
+  color: rgba(224, 230, 240, 0.5);
+  transition: color 0.15s;
+}
+
+.volume:hover .volumeIcon {
+  color: rgba(224, 230, 240, 0.8);
+}
+
+.volumeBar {
+  width: 72px;
+  height: 8px;
+  border-radius: 4px;
+  cursor: ew-resize;
+  user-select: none;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  transition: height 0.15s;
+}
+
+.volumeBar:hover {
+  height: 10px;
+}
+
+.volumeThumb {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--accent, #6c8efb);
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.volumeBar:hover .volumeThumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Animation sortie mini-player */
+.playerLeaving {
+  animation: playerSlideDown 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* ── Bouton stop ──────────────────────────────────────────── */
+.stopBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(224, 230, 240, 0.35);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 5px 9px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+}
+
+.stopBtn:hover {
+  background: rgba(220, 60, 60, 0.15);
+  border-color: rgba(220, 60, 60, 0.35);
+  color: #ff7a7a;
+}
+
+@keyframes playerSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes playerSlideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}

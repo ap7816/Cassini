@@ -1,0 +1,95 @@
+/* Bouton Système Solaire de la sidebar. Extrait d'AppLayout.module.css. */
+/* ── Bouton Système Solaire ───────────────────────────────── */
+.btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(180, 120, 255, 0.25);
+  background: linear-gradient(
+    135deg,
+    rgba(100, 60, 200, 0.18) 0%,
+    rgba(200, 100, 50, 0.12) 100%
+  );
+  color: rgba(200, 170, 255, 0.9);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 0 0 0 rgba(160, 100, 255, 0);
+}
+
+.btn:hover {
+  border-color: rgba(180, 120, 255, 0.55);
+  background: linear-gradient(
+    135deg,
+    rgba(120, 70, 240, 0.28) 0%,
+    rgba(220, 110, 60, 0.18) 100%
+  );
+  box-shadow: 0 0 18px rgba(150, 90, 255, 0.25);
+  color: rgba(220, 190, 255, 1);
+}
+
+.btnActive {
+  border-color: rgba(180, 120, 255, 0.7);
+  background: linear-gradient(
+    135deg,
+    rgba(130, 80, 250, 0.38) 0%,
+    rgba(230, 120, 70, 0.22) 100%
+  );
+  box-shadow: 0 0 22px rgba(160, 100, 255, 0.35), inset 0 0 12px rgba(150, 90, 255, 0.1);
+  color: #e0c8ff;
+}
+
+.btnIcon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.btn:hover .btnIcon {
+  transform: rotate(15deg) scale(1.12);
+}
+
+.btnLabel {
+  flex: 1;
+  text-align: left;
+}
+
+/* Anneau orbital décoratif en arrière-plan du bouton */
+.btnOrbit {
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid rgba(180, 120, 255, 0.18);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.btn:hover .btnOrbit {
+  opacity: 0;
+}
+
+.btnLaunching {
+  animation: solarLaunch 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes solarLaunch {
+  0%   { transform: scale(1)    rotate(0deg); box-shadow: 0 0 0px rgba(160, 100, 255, 0); }
+  25%  { transform: scale(1.08) rotate(8deg);  box-shadow: 0 0 28px rgba(160, 100, 255, 0.55); }
+  55%  { transform: scale(0.94) rotate(-4deg); box-shadow: 0 0 14px rgba(160, 100, 255, 0.3); }
+  80%  { transform: scale(1.03) rotate(2deg);  box-shadow: 0 0 10px rgba(160, 100, 255, 0.2); }
+  100% { transform: scale(1)    rotate(0deg); box-shadow: 0 0 0px rgba(160, 100, 255, 0); }
+}
