@@ -73,6 +73,24 @@ fn canonical(path: &str) -> Result<PathBuf, String> {
     std::fs::canonicalize(trimmed).map_err(|e| format!("Chemin introuvable : {e}"))
 }
 
+/// Retire le préfixe `\\?\` que `canonicalize` ajoute systématiquement sur
+/// Windows.
+///
+/// Les API Win32 du shell — `SHGetFileInfoW`, `ShellExecuteW`, `explorer.exe` —
+/// ne comprennent pas cette forme dite « verbatim » et échouent en silence.
+/// La comparaison de confinement doit se faire sur la forme canonique, mais
+/// c'est la forme nettoyée qu'il faut transmettre à ces API.
+pub fn strip_verbatim(p: &Path) -> PathBuf {
+    let s = p.to_string_lossy();
+    if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        return PathBuf::from(format!(r"\\{rest}"));
+    }
+    if let Some(rest) = s.strip_prefix(r"\\?\") {
+        return PathBuf::from(rest);
+    }
+    p.to_path_buf()
+}
+
 /// Variante pour un chemin qui n'existe pas encore (cible d'une création ou
 /// d'un déplacement) : on résout le parent, qui lui doit exister.
 fn canonical_parent_of(path: &str) -> Result<PathBuf, String> {
@@ -208,10 +226,38 @@ pub fn readable_path_with(path: &str, extra_root: Option<PathBuf>) -> Result<Pat
     }
 }
 
-/// Variante sans racine musique, pour les chemins qui n'ont rien à voir
-/// avec la bibliothèque audio (icônes d'exécutables, par exemple).
-pub fn readable_path(path: &str) -> Result<PathBuf, String> {
-    readable_path_with(path, None)
+/// Extensions dont Windows sait extraire une icône.
+const ICON_EXTENSIONS: [&str; 4] = ["exe", "lnk", "ico", "dll"];
+
+/// Valide le chemin d'un fichier dont on veut extraire l'icône.
+///
+/// Volontairement plus permissif que `readable_path` : cette commande ne
+/// renvoie qu'un PNG de 64 pixels de côté, pas le contenu du fichier. Lui
+/// imposer une liste blanche de dossiers était disproportionné, et surtout
+/// cassait pour tout launcher installé ailleurs que dans les emplacements
+/// prévus — le scan de launchers lit le registre et trouve des chemins
+/// arbitraires par nature.
+///
+/// Le contrôle porte donc sur la nature du fichier, et le chemin renvoyé est
+/// débarrassé du préfixe `\\?\` que `SHGetFileInfoW` refuse.
+pub fn icon_source_path(path: &str) -> Result<PathBuf, String> {
+    let canon = canonical(path)?;
+
+    if !canon.is_file() {
+        return Err("La cible n'est pas un fichier".into());
+    }
+
+    let ext = canon
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase())
+        .unwrap_or_default();
+
+    if !ICON_EXTENSIONS.contains(&ext.as_str()) {
+        return Err(format!("Extension sans icône : .{ext}"));
+    }
+
+    Ok(strip_verbatim(&canon))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -241,4 +287,49 @@ pub fn validate_token(id: &str, field: &str) -> Result<(), String> {
         return Err(format!("{field} invalide"));
     }
     Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Le préfixe « verbatim » ajouté par `canonicalize` fait échouer en
+    /// silence les API Win32 du shell. Ce test garde le correctif : passer un
+    /// chemin préfixé à `SHGetFileInfoW` avait fait disparaître toutes les
+    /// icônes de launchers.
+    #[test]
+    fn strip_verbatim_retire_le_prefixe_disque() {
+        assert_eq!(
+            strip_verbatim(Path::new(r"\\?\C:\Program Files\Steam\steam.exe")),
+            PathBuf::from(r"C:\Program Files\Steam\steam.exe"),
+        );
+    }
+
+    #[test]
+    fn strip_verbatim_reconstruit_les_chemins_reseau() {
+        // Un simple remplacement de « \\?\ » laisserait « UNC\serveur\partage »
+        assert_eq!(
+            strip_verbatim(Path::new(r"\\?\UNC\serveur\partage\jeu.exe")),
+            PathBuf::from(r"\\serveur\partage\jeu.exe"),
+        );
+    }
+
+    #[test]
+    fn strip_verbatim_laisse_les_chemins_normaux_intacts() {
+        let p = Path::new(r"C:\Riot Games\Riot Client\RiotClientServices.exe");
+        assert_eq!(strip_verbatim(p), p.to_path_buf());
+    }
+
+    #[test]
+    fn identifiants_de_lancement_rejettent_les_metacaracteres() {
+        // La forme qui permettait l'injection via cmd.exe
+        assert!(validate_numeric_id(r#"1" & calc & ""#).is_err());
+        assert!(validate_numeric_id("").is_err());
+        assert!(validate_numeric_id("123456").is_ok());
+
+        assert!(validate_token("a b", "x").is_err());
+        assert!(validate_token("wow_enus", "x").is_ok());
+    }
 }

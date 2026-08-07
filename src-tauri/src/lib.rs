@@ -189,7 +189,7 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
 // Commande Tauri : extrait l'icône d'un fichier .exe et la retourne en data-URL PNG 64×64
 #[tauri::command]
 fn get_file_icon_data_url(path: String) -> Result<String, String> {
-    let safe = security::readable_path(&path)?;
+    let safe = security::icon_source_path(&path)?;
     icon_extract::file_icon_png_data_url(&safe.to_string_lossy(), 64)
 }
 
@@ -223,11 +223,13 @@ fn open_folder(path: String) -> Result<(), String> {
         return Err(format!("Folder not found: {}", target.display()));
     }
 
+    // canonicalize renvoie un préfixe \\?\ qu'explorer ne comprend pas.
+    // `strip_verbatim` le retire correctement, y compris pour les chemins
+    // réseau `\\?\UNC\serveur\partage` qu'un simple remplacement mutilerait.
     let canonical = std::fs::canonicalize(&target).unwrap_or(target);
-    // canonicalize renvoie un préfixe \\?\ sur Windows qu'explorer ne comprend pas
-    let final_path = canonical.to_string_lossy().replace(r"\\?\", "");
+    let final_path = security::strip_verbatim(&canonical);
 
-    detached::open_via_shell(&final_path)
+    detached::open_via_shell(&final_path.to_string_lossy())
 }
 
 // Commande Tauri de test (non utilisée en prod) — conservée pour compatibilité
