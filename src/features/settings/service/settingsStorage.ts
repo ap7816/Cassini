@@ -1,5 +1,5 @@
 import type { AppSettings } from '../../types';
-import { readSettingsRaw, writeSettingsRaw } from '../../../services/storage';
+import { readSettingsRaw, writeSettingsRaw, STORAGE_KEYS } from '../../../services/storage';
 import { invoke } from '@tauri-apps/api/core';
 
 // Valeurs par défaut utilisées si le stockage est vide ou corrompu
@@ -89,8 +89,12 @@ export async function migrateAndCheckKey(): Promise<boolean> {
           delete parsed.sgdbApiKey;
           delete parsed.rawgApiKey;
           writeSettingsRaw(JSON.stringify(parsed));
-          // Purge aussi la copie miroir laissée dans localStorage
-          try { window.localStorage?.removeItem('arctive.settings.v1'); } catch { /* ignore */ }
+          // Purge aussi les copies miroir de localStorage, sous les deux
+          // nommages : une installation ancienne peut n'avoir que l'ancien.
+          try {
+            window.localStorage?.removeItem(STORAGE_KEYS.settings);
+            window.localStorage?.removeItem('arctive.settings.v1');
+          } catch { /* quota ou mode privé : sans conséquence ici */ }
         }
       }
     } catch { /* réglages illisibles : rien à migrer */ }

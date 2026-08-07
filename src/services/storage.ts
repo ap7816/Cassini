@@ -8,25 +8,59 @@
 
 import { load, type Store } from '@tauri-apps/plugin-store';
 
-// Clés de stockage utilisées dans toute l'application — centralisées ici pour éviter les fautes de frappe
+// Clés de stockage utilisées dans toute l'application — centralisées ici pour
+// éviter les fautes de frappe, et toutes préfixées par `archive.` afin qu'une
+// inspection du store dise immédiatement d'où vient chaque entrée.
 export const STORAGE_KEYS = {
-  settings:            'arctive.settings.v1',
-  games:               'arctive.library.games.v1',
-  coverCache:           'arctive.rawg.cache.v5',
-  launcherIcons:       'arctive.launcherIcons.v1',
-  musicFolder:         'music_folder',
-  musicVolume:         'music_volume',
-  musicLastTrack:      'music_last_track',
-  musicColors:         'music_folder_colors',
-  musicEnrichedMeta:   'music_enriched_meta',
-  musicShuffle:        'music_shuffle',
-  ambientEnabled:      'ambient_enabled',
-  ambientVolume:       'ambient_volume',
-  musicRepeat:         'music_repeat',
-  musicRecentlyPlayed: 'music_recently_played',
-  language:            'arctive.language',
-  patchNotesSeen:      'arctive.patchNotes.seen',
+  settings:            'archive.settings.v1',
+  games:               'archive.library.games.v1',
+  coverCache:          'archive.coverArt.cache.v5',
+  launcherIcons:       'archive.launcherIcons.v1',
+  musicFolder:         'archive.music.folder',
+  musicVolume:         'archive.music.volume',
+  musicLastTrack:      'archive.music.lastTrack',
+  musicColors:         'archive.music.folderColors',
+  musicEnrichedMeta:   'archive.music.enrichedMeta',
+  musicShuffle:        'archive.music.shuffle',
+  musicRepeat:         'archive.music.repeat',
+  musicRecentlyPlayed: 'archive.music.recentlyPlayed',
+  ambientEnabled:      'archive.ambient.enabled',
+  ambientVolume:       'archive.ambient.volume',
+  language:            'archive.language',
+  patchNotesSeen:      'archive.patchNotes.seen',
 } as const;
+
+/**
+ * Nom historique de chaque clé, indexé par son nom actuel.
+ *
+ * Les anciennes clés portaient « arctive » — une coquille pour « archive » —
+ * et celles de la musique n'avaient aucun préfixe. Sans cette table, corriger
+ * les noms ferait perdre à toute installation existante sa bibliothèque, ses
+ * réglages et son dossier musique : le code chercherait des clés que le store
+ * ne contient pas.
+ *
+ * `initStorage` déplace la valeur sous le nouveau nom au premier démarrage,
+ * puis supprime l'ancienne entrée. La table peut disparaître quand plus aucune
+ * installation antérieure ne subsiste.
+ */
+const LEGACY_KEYS: Record<string, string> = {
+  'archive.settings.v1':            'arctive.settings.v1',
+  'archive.library.games.v1':       'arctive.library.games.v1',
+  'archive.coverArt.cache.v5':      'arctive.rawg.cache.v5',
+  'archive.launcherIcons.v1':       'arctive.launcherIcons.v1',
+  'archive.language':               'arctive.language',
+  'archive.patchNotes.seen':        'arctive.patchNotes.seen',
+  'archive.music.folder':           'music_folder',
+  'archive.music.volume':           'music_volume',
+  'archive.music.lastTrack':        'music_last_track',
+  'archive.music.folderColors':     'music_folder_colors',
+  'archive.music.enrichedMeta':     'music_enriched_meta',
+  'archive.music.shuffle':          'music_shuffle',
+  'archive.music.repeat':           'music_repeat',
+  'archive.music.recentlyPlayed':   'music_recently_played',
+  'archive.ambient.enabled':        'ambient_enabled',
+  'archive.ambient.volume':         'ambient_volume',
+};
 
 // Cache mémoire synchrone — toutes les lectures passent par ici pour éviter l'asynchronisme
 const mem: Record<string, string> = {};
@@ -46,46 +80,70 @@ export async function initStorage(): Promise<void> {
 
   if (!isTauri()) {
     // Mode navigateur (dev Vite) : lit directement depuis localStorage
-    for (const key of Object.values(STORAGE_KEYS)) {
-      const v = window.localStorage.getItem(key);
-      if (v !== null) mem[key] = v;
-    }
+    loadFromLocalStorage();
     return;
   }
 
   try {
     store = await load('archive.json', { autoSave: true, defaults: {} });
 
-    // Charge toutes les clés connues dans le cache mémoire
+    // Charge toutes les clés connues, en retombant sur leur nom historique
     let hasData = false;
+    const renames: Promise<void>[] = [];
+
     for (const key of Object.values(STORAGE_KEYS)) {
-      const val = await store.get<string>(key);
+      let val = await store.get<string>(key);
+
+      if (val === null || val === undefined) {
+        const legacy = LEGACY_KEYS[key];
+        if (legacy) {
+          const old = await store.get<string>(legacy);
+          if (old !== null && old !== undefined) {
+            val = old;
+            // Réécrit sous le nouveau nom, puis retire l'ancienne entrée
+            renames.push(store.set(key, old), store.delete(legacy).then(() => undefined));
+          }
+        }
+      }
+
       if (val !== null && val !== undefined) {
         mem[key] = val;
         hasData = true;
       }
     }
 
-    // Si le store est vierge (première installation), migre les données depuis localStorage
+    if (renames.length > 0) {
+      console.info(`[storage] ${renames.length / 2} clés migrées vers le nouveau nommage`);
+      await Promise.all(renames);
+    }
+
+    // Store vierge (première installation) : reprend ce qui traîne en localStorage
     if (!hasData) {
       console.info('[storage] Store vierge — migration depuis localStorage');
-      const migrations: Promise<void>[] = [];
-      for (const key of Object.values(STORAGE_KEYS)) {
-        const v = window.localStorage.getItem(key);
-        if (v !== null) {
-          mem[key] = v;
-          migrations.push(store.set(key, v));
-        }
-      }
-      await Promise.all(migrations);
+      loadFromLocalStorage();
+      await Promise.all(
+        Object.entries(mem).map(([key, value]) => store!.set(key, value)),
+      );
     }
   } catch (err) {
     console.warn('[storage] Tauri store indisponible, fallback localStorage', err);
     store = null;
-    for (const key of Object.values(STORAGE_KEYS)) {
-      const v = window.localStorage.getItem(key);
-      if (v !== null) mem[key] = v;
-    }
+    loadFromLocalStorage();
+  }
+}
+
+/**
+ * Remplit le cache mémoire depuis localStorage, en acceptant les noms
+ * historiques. Sert au mode navigateur et de filet quand le store Tauri est
+ * indisponible.
+ */
+function loadFromLocalStorage(): void {
+  for (const key of Object.values(STORAGE_KEYS)) {
+    const legacy = LEGACY_KEYS[key];
+    const v =
+      window.localStorage.getItem(key) ??
+      (legacy ? window.localStorage.getItem(legacy) : null);
+    if (v !== null) mem[key] = v;
   }
 }
 

@@ -38,7 +38,7 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
     }
 
     const path = await dialog.save({
-      defaultPath: 'arctive-library.json',
+      defaultPath: 'archive-library.json',
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
 
@@ -55,7 +55,7 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'arctive-library.json';
+  a.download = 'archive-library.json';
   document.body.appendChild(a);
   a.click();
   a.remove();
