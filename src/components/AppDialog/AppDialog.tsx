@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import css from './AppDialog.module.css';
 
@@ -58,7 +59,13 @@ export function AppDialog({ state, onClose }: {
     onClose(state.type === 'prompt' ? null : false);
   }
 
-  return (
+  // Rendu dans `document.body` et non sur place : l'overlay est en
+  // `position: fixed`, et un ancêtre porteur d'un `transform` devient son bloc
+  // conteneur — le dialogue se retrouve alors enfermé dans l'élément appelant,
+  // voire rogné si celui-ci masque son débordement. C'est le cas de la carte
+  // de détail du système solaire, repositionnée par transform à chaque frame.
+  // Les événements React continuent de remonter l'arbre des composants.
+  return createPortal(
     <div
       className={css.overlay}
       onMouseDown={e => { if (e.target === e.currentTarget) handleCancel(); }}
@@ -106,6 +113,7 @@ export function AppDialog({ state, onClose }: {
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

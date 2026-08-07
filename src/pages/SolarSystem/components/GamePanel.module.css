@@ -1,28 +1,29 @@
-/* Panneau latéral droit du système solaire.
+/* Popup de détail du système solaire — petite carte flottante ancrée
+   au-dessus de la planète sélectionnée (position gérée par useSolarScene).
    Extrait de SolarSystemPage.module.css : les styles du panneau y
    représentaient les deux tiers du fichier alors qu'ils ne servent qu'ici. */
 
 .panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  /* Même largeur que la liste qu'il recouvre, pour que la colonne de droite
-     garde une largeur constante quand le panneau s'ouvre et se ferme. */
-  width: var(--side-w, min(320px, 46vw));
+  position: relative;
+  width: 300px;
+  max-width: 80vw;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: rgba(8, 12, 20, 0.97);
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   backdrop-filter: blur(24px);
-  z-index: 10;
-  animation: panelIn 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  animation: panelIn 160ms ease-out forwards;
 }
 
+/* Apparition en opacité seule : l'ergot qui pointe vers la planète appartient
+   à l'ancre (voir .popupAnchor::after), tout mouvement de la carte pendant
+   l'animation l'en décollerait. */
 @keyframes panelIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Bannière (ratio 460/215, identique à la carte bibliothèque) ─────────── */
@@ -140,20 +141,8 @@
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  padding: 10px;
-}
-
-.topRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.titleWrap {
-  flex: 1;
-  min-width: 0;
+  gap: 8px;
+  padding: 11px 12px 12px;
 }
 
 .titleRow {
@@ -178,7 +167,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
   flex-wrap: wrap;
 }
 
@@ -204,16 +192,18 @@
 
 /* ── Actions ────────────────────────────────────────────────────────────── */
 
+/* Rangée pleine largeur, sous le titre. Côte à côte comme dans la carte de
+   bibliothèque, les trois boutons ne laissaient qu'une centaine de pixels au
+   titre : la carte fait 300 px de large, pas la largeur d'une colonne. */
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 8px;
 }
 
 .favBtn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
@@ -257,6 +247,8 @@
 }
 
 .play {
+  flex: 1;
+  min-width: 0;
   height: 34px;
   padding: 0 12px;
   border-radius: 10px;
@@ -309,6 +301,7 @@
 
 .folder,
 .remove {
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border-radius: 10px;

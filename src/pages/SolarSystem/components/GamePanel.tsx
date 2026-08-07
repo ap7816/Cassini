@@ -34,7 +34,12 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
-/** Panneau latéral droit — reprend les fonctionnalités de la carte bibliothèque. */
+/**
+ * Carte de détail flottante, ancrée à la planète sélectionnée — reprend les
+ * fonctionnalités de la carte de bibliothèque. Son placement à l'écran est
+ * l'affaire de la scène 3D (updatePopupAnchor dans useSolarScene) : elle-même
+ * ne connaît que son contenu.
+ */
 export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Props) {
   const { t } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
@@ -164,73 +169,70 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
       </div>
 
       <div className={css.body}>
-        <div className={css.topRow}>
-          <div className={css.titleWrap}>
-            <div className={css.titleRow}>
-              <h2 className={css.title}>{game.title}</h2>
-              <button
-                type="button"
-                className={[css.favBtn, game.favorite ? css.favBtnActive : ''].join(' ')}
-                onClick={() => onUpdate({ ...game, favorite: !game.favorite })}
-                aria-label={game.favorite ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
-                title={game.favorite ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
-              >
-                {game.favorite ? '★' : '☆'}
-              </button>
-            </div>
+        <div className={css.titleRow}>
+          <h2 className={css.title}>{game.title}</h2>
+          <button
+            type="button"
+            className={[css.favBtn, game.favorite ? css.favBtnActive : ''].join(' ')}
+            onClick={() => onUpdate({ ...game, favorite: !game.favorite })}
+            aria-label={game.favorite ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
+            title={game.favorite ? t('gameCard.removeFavorite') : t('gameCard.addFavorite')}
+          >
+            {game.favorite ? '★' : '☆'}
+          </button>
+        </div>
 
-            <div className={css.meta}>
-              <span
-                className={css.badge}
-                style={{ background: col + '28', borderColor: col + '55', color: col }}
-              >
-                {game.platform}
-              </span>
-              {game.favorite && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
+        <div className={css.meta}>
+          <span
+            className={css.badge}
+            style={{ background: col + '28', borderColor: col + '55', color: col }}
+          >
+            {game.platform}
+          </span>
+          {game.favorite && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
+          <span className={css.dot}>•</span>
+          <span className={css.muted}>
+            {game.installed ? t('gameCard.installed') : t('gameCard.notInstalled')}
+          </span>
+          {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
+            <>
               <span className={css.dot}>•</span>
-              <span className={css.muted}>
-                {game.installed ? t('gameCard.installed') : t('gameCard.notInstalled')}
-              </span>
-              {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
-                <>
-                  <span className={css.dot}>•</span>
-                  <span className={css.muted}>{fmtBytes(game.sizeOnDisk)}</span>
-                </>
-              )}
-            </div>
-          </div>
+              <span className={css.muted}>{fmtBytes(game.sizeOnDisk)}</span>
+            </>
+          )}
+        </div>
 
-          <div className={css.actions}>
+        {/* Rangée pleine largeur : le titre garde toute la sienne au-dessus. */}
+        <div className={css.actions}>
+          <button
+            type="button"
+            className={[css.play, launching ? css.playLaunching : ''].join(' ')}
+            onClick={handlePlay}
+            disabled={!canPlay || launching}
+            title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
+          >
+            {launching ? t('gameCard.opening') : t('gameCard.play')}
+          </button>
+
+          {game.installPath && (
             <button
               type="button"
-              className={[css.play, launching ? css.playLaunching : ''].join(' ')}
-              onClick={handlePlay}
-              disabled={!canPlay || launching}
-              title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
+              className={css.folder}
+              onClick={() => void tauriInvoke('open_folder', { path: game.installPath })}
+              title={t('gameCard.openFolder')}
             >
-              {launching ? t('gameCard.opening') : t('gameCard.play')}
+              📁
             </button>
+          )}
 
-            {game.installPath && (
-              <button
-                type="button"
-                className={css.folder}
-                onClick={() => void tauriInvoke('open_folder', { path: game.installPath })}
-                title={t('gameCard.openFolder')}
-              >
-                📁
-              </button>
-            )}
-
-            <button
-              type="button"
-              className={css.remove}
-              onClick={handleRemove}
-              title={t('gameCard.remove')}
-            >
-              ✕
-            </button>
-          </div>
+          <button
+            type="button"
+            className={css.remove}
+            onClick={handleRemove}
+            title={t('gameCard.remove')}
+          >
+            ✕
+          </button>
         </div>
 
         <div className={css.lastPlayed}>{lastPlayedLabel}</div>

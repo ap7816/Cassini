@@ -12,6 +12,7 @@ import {
   PLN_R_MAX,
 } from '../constants';
 import { orbitPos, orbitRadius } from '../lib/orbits';
+import { placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { createBelt, createStarfield, createSun } from './decor';
 import { createPlanets } from './planets';
@@ -36,6 +37,12 @@ type Options = {
    * exactement le même effet qu'un clic sur la planète elle-même.
    */
   focusRef: RefObject<(gameId: string) => void>;
+  /**
+   * Carte de détail flottante, repositionnée chaque frame au-dessus de la
+   * planète sélectionnée — même principe que les labels, pour qu'elle suive
+   * la planète quand la caméra continue de tourner après la sélection.
+   */
+  popupRef: RefObject<HTMLDivElement | null>;
 };
 
 /**
@@ -55,6 +62,7 @@ export function useSolarScene({
   onSelect,
   clearRef,
   focusRef,
+  popupRef,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -159,6 +167,29 @@ export function useSolarScene({
     const savedLook = new THREE.Vector3();
     let hasSaved = false;
 
+    // Planète actuellement sélectionnée — la carte de détail la suit chaque
+    // frame, y compris quand la caméra continue de tourner après le clic.
+    let selectedEntry: PlanetEntry | null = null;
+    const popupProj = new THREE.Vector3();
+    const popupEdge = new THREE.Vector3();
+
+    // Géométrie de la carte, mise en cache. La relire à chaque frame
+    // (`offsetWidth`) forcerait un recalcul de mise en page synchrone à 60 Hz,
+    // soit exactement ce que le reste du calque de labels évite déjà.
+    let popupW = 0;
+    let popupH = 0;
+    let popupShown = false;
+    let lastArrowY = -1;
+    let lastSide = '';
+
+    const popupRo = new ResizeObserver(() => {
+      const el = popupRef.current;
+      if (!el || !popupShown) return;
+      popupW = el.offsetWidth;
+      popupH = el.offsetHeight;
+    });
+    if (popupRef.current) popupRo.observe(popupRef.current);
+
     function animateCam(pos: THREE.Vector3, look: THREE.Vector3) {
       animating = true;
       controls.enabled = false;
@@ -176,6 +207,7 @@ export function useSolarScene({
       }
 
       for (const pl of planets) pl.paused = true;
+      selectedEntry = p;
       onSelect(p.game);
 
       // On approche la planète en conservant la direction de vue courante.
@@ -193,6 +225,7 @@ export function useSolarScene({
 
     function clearPlanet() {
       for (const pl of planets) pl.paused = false;
+      selectedEntry = null;
       onSelect(null);
 
       if (hasSaved) {
@@ -221,6 +254,89 @@ export function useSolarScene({
       tooltipRef,
       onClick: (hit) => (hit ? selectPlanet(hit) : clearPlanet()),
     });
+
+    function hidePopup(el: HTMLDivElement) {
+      if (!popupShown) return;
+      popupShown = false;
+      el.style.display = 'none';
+    }
+
+    /**
+     * Positionne la carte de détail à côté de la planète sélectionnée.
+     *
+     * Placement latéral et non au-dessus : la carte fait près de 300 px de
+     * haut, soit plus de 40 % d'une fenêtre courante. Ni au-dessus ni en
+     * dessous elle ne tient sans être recadrée contre un bord — et une carte
+     * recadrée ne désigne plus la planète. En largeur, la zone 3D en offre
+     * deux fois plus, et la caméra amène toujours la planète en son centre.
+     *
+     * L'écart à la planète est mesuré sur son bord apparent, obtenu en
+     * projetant un point décalé de `radius * 1.9` — la même valeur que le
+     * label de jeu (voir LabelLayer), pour que carte et label gardent le même
+     * dégagement autour de la sphère.
+     */
+    function updatePopupAnchor() {
+      const el = popupRef.current;
+      const host = labelsRef.current;
+      if (!el || !host) return;
+
+      if (!selectedEntry) {
+        hidePopup(el);
+        return;
+      }
+
+      const c = selectedEntry.mesh.position;
+
+      popupProj.copy(c).project(camera);
+      // Derrière la caméra, ou planète repoussée hors cadre à la souris :
+      // une carte collée au bord ne désignerait plus rien.
+      if (popupProj.z > 1 || Math.abs(popupProj.x) > 1.5 || Math.abs(popupProj.y) > 1.5) {
+        hidePopup(el);
+        return;
+      }
+
+      if (!popupShown) {
+        el.style.display = 'block';
+        popupW = el.offsetWidth;
+        popupH = el.offsetHeight;
+        // React n'a pas encore monté la carte : on réessaiera à la frame
+        // suivante plutôt que de la placer avec des dimensions nulles.
+        if (popupW === 0 || popupH === 0) {
+          el.style.display = 'none';
+          return;
+        }
+        popupShown = true;
+      }
+
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      const cx = popupProj.x * (w / 2) + w / 2;
+      const cy = -popupProj.y * (h / 2) + h / 2;
+
+      // Demi-largeur apparente de la planète, en pixels. La première colonne
+      // de `matrixWorld` est l'axe « droite » de la caméra : le décalage reste
+      // donc perpendiculaire au regard quel que soit l'angle de vue.
+      popupEdge.setFromMatrixColumn(camera.matrixWorld, 0)
+        .multiplyScalar(selectedEntry.radius * 1.9)
+        .add(c)
+        .project(camera);
+      const edge = Math.abs(popupEdge.x * (w / 2) + w / 2 - cx);
+
+      const { x, y, arrowY, side } = placePopup(cx, cy, edge, popupW, popupH, w, h);
+
+      el.style.transform = `translate(${x}px, ${y}px)`;
+
+      // Écritures conditionnelles : réécrire une propriété personnalisée
+      // invalide le style de la carte entière, ergot compris.
+      if (arrowY !== lastArrowY) {
+        el.style.setProperty('--arrow-y', `${arrowY}px`);
+        lastArrowY = arrowY;
+      }
+      if (side !== lastSide) {
+        el.dataset.side = side;
+        lastSide = side;
+      }
+    }
 
     // ── Redimensionnement ────────────────────────────────────────────────
     const ro = new ResizeObserver(() => {
@@ -287,6 +403,7 @@ export function useSolarScene({
 
       picker.updateHover();
       labelLayer.update(camera, systemR);
+      updatePopupAnchor();
 
       renderer.render(scene, camera);
     }
@@ -297,6 +414,7 @@ export function useSolarScene({
       disposed = true;
       cancelAnimationFrame(rafId);
       ro.disconnect();
+      popupRo.disconnect();
       picker.dispose();
       controls.dispose();
       labelLayer.dispose();
@@ -321,6 +439,6 @@ export function useSolarScene({
     };
   }, [
     games, platform, labelClass, orbitLabelClass,
-    mountRef, labelsRef, tooltipRef, onSelect, clearRef, focusRef,
+    mountRef, labelsRef, tooltipRef, onSelect, clearRef, focusRef, popupRef,
   ]);
 }

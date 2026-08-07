@@ -11,15 +11,58 @@ import { GamePanel } from './components/GamePanel';
 import { GameList } from './components/GameList';
 import css from './SolarSystemPage.module.css';
 
+/**
+ * Signature des seules propriétés dont dépend le rendu 3D : identité, nom,
+ * plateforme, taille sur disque (rayon de la planète) et sources de jaquette.
+ *
+ * Séparateurs NUL et saut de ligne : ni l'un ni l'autre ne peut apparaître
+ * dans un titre ou une URL, deux bibliothèques différentes ne peuvent donc pas
+ * produire la même signature.
+ */
+function sceneSignature(games: Game[]): string {
+  return games
+    .map((g) =>
+      [g.id, g.title, g.platform, g.sizeOnDisk ?? 0, g.customImageUrl ?? '', g.steamAppId ?? '']
+        .join('\u0000'),
+    )
+    .join('\n');
+}
+
+/**
+ * Fige l'identité du tableau de jeux tant que rien de ce que la scène affiche
+ * n'a changé.
+ *
+ * `useSolarScene` reconstruit le système entier dès que l'identité de `games`
+ * change — c'est voulu, la géométrie en dépend. Mais mettre un jeu en favori
+ * réécrit le tableau sans rien changer en 3D : la scène était rebâtie et la
+ * caméra revenait à son cadrage initial à chaque clic sur l'étoile.
+ */
+function useSceneGames(games: Game[]): Game[] {
+  const key = useMemo(() => sceneSignature(games), [games]);
+
+  // Mise à jour d'état pendant le rendu : le motif que React prévoit pour une
+  // valeur dérivée d'une entrée. Le rendu en cours renvoie déjà le nouveau
+  // tableau, la passe suivante le retrouve figé.
+  const [held, setHeld] = useState({ key, games });
+  if (held.key !== key) setHeld({ key, games });
+
+  return held.key === key ? held.games : games;
+}
+
 export function SolarSystemPage() {
   const mountRef = useRef<HTMLDivElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const clearPlanetRef = useRef<() => void>(() => {});
   const focusPlanetRef = useRef<(gameId: string) => void>(() => {});
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const [games, setGames] = useState<Game[]>(() => loadGamesFromStorage());
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  // Seul l'identifiant est mémorisé : la carte de détail lit ensuite le jeu
+  // dans `games`, et reflète donc toute modification sans qu'il faille
+  // resynchroniser deux états — la copie détenue par la scène 3D, elle, est
+  // volontairement figée (voir useSceneGames).
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
   const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
   const { settings } = useAppSettings();
@@ -47,21 +90,31 @@ export function SolarSystemPage() {
     [games, platform],
   );
 
+  // Le jeu affiché par la carte est relu dans `games` : la scène n'en détient
+  // qu'une copie figée, qui ignorerait un favori basculé entre-temps.
+  const selectedGame = useMemo(
+    () => games.find((g) => g.id === selectedId) ?? null,
+    [games, selectedId],
+  );
+
+  const sceneGames = useSceneGames(visibleGames);
+
   // Identités stables : la scène se reconstruit entièrement quand une de ses
   // dépendances change, il ne faut donc pas en recréer à chaque rendu.
-  const handleSelect = useCallback((game: Game | null) => setSelectedGame(game), []);
+  const handleSelect = useCallback((game: Game | null) => setSelectedId(game?.id ?? null), []);
 
   useSolarScene({
     mountRef,
     labelsRef,
     tooltipRef,
-    games: visibleGames,
+    games: sceneGames,
     platform,
     labelClass: css.planetLabel,
     orbitLabelClass: css.orbitLabel,
     onSelect: handleSelect,
     clearRef: clearPlanetRef,
     focusRef: focusPlanetRef,
+    popupRef,
   });
 
   function handleGameUpdate(updated: Game) {
@@ -70,7 +123,6 @@ export function SolarSystemPage() {
       saveGamesToStorage(next);
       return next;
     });
-    setSelectedGame(updated);
   }
 
   function handleGameRemove(id: string) {
@@ -120,27 +172,31 @@ export function SolarSystemPage() {
         </div>
       </div>
 
-      {/* Liste des jeux du launcher. Le panneau de détail vient se poser
-          par-dessus quand une planète est sélectionnée, et la fermer révèle
-          à nouveau la liste. */}
+      {/* Liste des jeux du launcher, toujours visible. */}
       <GameList
         games={visibleGames}
-        selectedId={selectedGame?.id ?? null}
+        selectedId={selectedId}
         platform={platform}
         sgdbKeySet={settings.sgdbKeySet}
         onPick={(id) => focusPlanetRef.current(id)}
       />
 
-      {selectedGame && (
-        <GamePanel
-          key={selectedGame.id}
-          game={selectedGame}
-          sgdbKeySet={settings.sgdbKeySet}
-          onClose={() => clearPlanetRef.current()}
-          onUpdate={handleGameUpdate}
-          onRemove={handleGameRemove}
-        />
-      )}
+      {/* Carte de détail — repositionnée chaque frame à côté de la planète
+          sélectionnée par useSolarScene, via `popupRef`. Son origine coïncide
+          avec celle de `labelsRef` (même coin haut-gauche de .page), donc la
+          projection calculée sur l'un s'applique telle quelle à l'autre. */}
+      <div ref={popupRef} className={css.popupAnchor}>
+        {selectedGame && (
+          <GamePanel
+            key={selectedGame.id}
+            game={selectedGame}
+            sgdbKeySet={settings.sgdbKeySet}
+            onClose={() => clearPlanetRef.current()}
+            onUpdate={handleGameUpdate}
+            onRemove={handleGameRemove}
+          />
+        )}
+      </div>
     </div>
   );
 }

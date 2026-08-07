@@ -7,9 +7,19 @@
   overflow: hidden;
   background: #070b12;
 
-  /* Largeur de la colonne de droite, partagée par la liste, le panneau de
-     détail et la zone de rendu. Les modules enfants en héritent. */
-  --side-w: min(320px, 46vw);
+  /* Largeur de la colonne de droite, partagée par la liste et la zone de
+     rendu. Les modules enfants en héritent.
+
+     Volontairement étroite : c'est une liste de navigation, pas un panneau de
+     détail (celui-ci flotte désormais près de sa planète). Chaque pixel repris
+     ici va au système solaire, qui est le sujet de la page.
+
+     Le plafond est en pourcentage et non en `vw` : la page est déjà amputée
+     de la navigation de l'application, et `vw` mesure la fenêtre entière — en
+     fenêtre étroite la liste finissait par occuper plus de place que la scène.
+     Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
+     sur `.page`, la valeur reste donc cohérente. */
+  --side-w: min(240px, 38%);
 }
 
 /* Conteneur de la canvas Three.js.
@@ -92,6 +102,59 @@
   border-radius: 6px;
   white-space: nowrap;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Ancre de la carte de détail — repositionnée par transform depuis la scène
+   (voir updatePopupAnchor dans useSolarScene). Son coin haut-gauche coïncide
+   avec celui de .labels, ce qui permet de réutiliser la même projection.
+   L'affichage est piloté en `display` inline par la scène ; la valeur `none`
+   ci-dessous n'est que l'état d'avant la première frame. */
+.popupAnchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 15;
+  display: none;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.popupAnchor > * {
+  pointer-events: auto;
+}
+
+/* Ergot pointant vers la planète.
+
+   Porté par l'ancre et non par la carte : celle-ci est en `overflow: hidden`
+   (sa bannière déborde de ses coins arrondis) et rognerait un pseudo-élément
+   débordant de son cadre.
+
+   `--arrow-y` est écrit par la scène, qui seule sait où se trouve la planète
+   une fois la carte recadrée dans la fenêtre ; `data-side` indique de quel
+   côté de la planète la carte a dû se placer. */
+.popupAnchor::after {
+  content: '';
+  position: absolute;
+  top: var(--arrow-y, 50%);
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: rgba(8, 12, 20, 0.97);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 3px;
+  /* Carte à droite de la planète, pointe vers la gauche : à 135°, les deux
+     bordures se retrouvent sur les faces gauches — les seules qui dépassent
+     de la carte — et le coin arrondi devient la pointe. */
+  transform: translateY(-50%) rotate(135deg);
+}
+
+/* Carte passée à gauche : −90° par rapport au cas précédent, les mêmes deux
+   bordures basculent sur les faces droites et la pointe part vers la droite. */
+.popupAnchor[data-side='left']::after {
+  left: auto;
+  right: -7px;
+  transform: translateY(-50%) rotate(315deg);
 }
 
 /* ── Sélecteur de launcher ──────────────────────────────────────────────── */
