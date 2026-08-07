@@ -6,7 +6,13 @@
       "Bash(gh pr:*)",
       "Bash(find C:UsersantonDesktopArcHive.claudeworktreesbold-pasteur -name *.tsx -type f)",
       "Bash(gh auth:*)",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(npm run *)",
+      "Bash(disown)",
+      "Read(//tmp/**)",
+      "Bash(powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 1420 -ErrorAction SilentlyContinue | Select-Object -First 5 OwningProcess | ForEach-Object { Get-Process -Id \\\\$_.OwningProcess | Select-Object Id,ProcessName,Path }\" 2>&1)"
     ]
   }
 }
