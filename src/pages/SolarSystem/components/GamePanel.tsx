@@ -6,12 +6,12 @@ import {
   fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/coverArtService';
-import { launchGame } from '../../../features/Library/services/launchGame';
+} from '../../../features/library/services/coverArtService';
+import { launchGame } from '../../../features/library/services/launchGame';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { PLATFORM_CSS } from '../constants';
-import { tauriInvoke } from '../lib/tauri';
+import { tauriInvoke } from '../../../services/tauri';
 import css from './GamePanel.module.css';
 
 const GB = 1024 ** 3;

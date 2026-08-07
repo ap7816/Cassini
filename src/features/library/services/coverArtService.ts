@@ -9,14 +9,7 @@
 // se calcule sans appel réseau, et SteamGridDB pour tous les autres.
 
 import { readCoverCacheRaw, writeCoverCacheRaw, removeCoverCache as storageRemoveCache } from '../../../services/storage';
-
-type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
-  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
-  const mod = await import('@tauri-apps/api/core');
-  return (mod.invoke as unknown as TauriInvoke)<T>(cmd, args);
-}
+import { tauriInvoke } from '../../../services/tauri';
 
 // URLs d'images trouvées → persistées dans le stockage entre les sessions
 const persistentCache = new Map<string, string>();

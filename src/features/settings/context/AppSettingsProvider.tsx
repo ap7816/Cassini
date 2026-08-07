@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import type { AppSettings } from '../../types';
-import { loadSettings, saveSettings, migrateAndCheckKey } from '../service/settingsStorage';
+import { loadSettings, saveSettings, migrateAndCheckKey } from '../services/settingsStorage';
 import { AppSettingsContext } from './appSettingsContext';
 
 // Fournit les paramètres de l'application à tous les composants enfants et persiste les changements

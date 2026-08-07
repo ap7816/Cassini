@@ -2,23 +2,15 @@ import { useEffect, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
-import { useLibraryGames } from '../../features/Library/hooks/useLibraryGames';
-import { EmptyState } from '../../features/Library/components/EmptyState';
-import { GameCard } from '../../features/Library/components/GameCard';
-import { launchGame } from '../../features/Library/services/launchGame';
+import { useLibraryGames } from '../../features/library/hooks/useLibraryGames';
+import { EmptyState } from '../../features/library/components/EmptyState';
+import { GameCard } from '../../features/library/components/GameCard';
+import { launchGame } from '../../features/library/services/launchGame';
 import type { Game } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import { useToast } from '../../features/toast/ToastContext';
-
-type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-
-async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
-  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
-  const mod = await import('@tauri-apps/api/core');
-  return (mod.invoke as unknown as TauriInvoke)<T>(cmd, args);
-}
+import { tauriInvoke } from '../../services/tauri';
 
 const GB = 1024 ** 3;
 const TB = 1024 ** 4;

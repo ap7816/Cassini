@@ -3,7 +3,7 @@ import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
   saveGamesToStorage,
-} from '../../features/Library/services/libraryStorage';
+} from '../../features/library/services/libraryStorage';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { PLATFORM_CSS } from './constants';
 import { useSolarScene } from './scene/useSolarScene';

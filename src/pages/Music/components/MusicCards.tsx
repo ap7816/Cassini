@@ -4,7 +4,7 @@ import type { EnrichedData } from '../../../features/music/enrichMeta';
 import { countTracks, hasActive, type FolderNode, type TrackWithIdx } from '../lib/folderTree';
 import { fmtDuration } from '../lib/format';
 import { Equalizer } from './Equalizer';
-import css from './GridCards.module.css';
+import css from './MusicCards.module.css';
 
 type FolderCardProps = {
   folder: FolderNode;

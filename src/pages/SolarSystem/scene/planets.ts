@@ -4,7 +4,7 @@ import {
   fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/coverArtService';
+} from '../../../features/library/services/coverArtService';
 import { PALETTES, PLN_R_MAX, PLN_R_MIN } from '../constants';
 import { hashStr, seededRng } from '../lib/random';
 import { GOLDEN_ANGLE, makeRadiusScale, orbitPos, orbitRadius } from '../lib/orbits';

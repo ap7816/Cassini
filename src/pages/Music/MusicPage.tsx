@@ -32,7 +32,7 @@ import {
 import { absPath } from './lib/format';
 import { Breadcrumb } from './components/Breadcrumb';
 import { FolderContextMenu, TrackContextMenu, type FolderCtxMenu } from './components/ContextMenus';
-import { FolderCard, TrackCard } from './components/GridCards';
+import { FolderCard, TrackCard } from './components/MusicCards';
 import { FolderPickerModal } from './components/FolderPickerModal';
 import { SortDropdown } from './components/SortDropdown';
 import css from './MusicPage.module.css';

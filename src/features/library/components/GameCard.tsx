@@ -5,6 +5,7 @@ import css from './GameCard.module.css';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/coverArtService';
+import { tauriInvoke } from '../../../services/tauri';
 
 type Props = {
   game: Game;
@@ -19,14 +20,6 @@ type Props = {
 };
 
 const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
-
-type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
-  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
-  const mod = await import('@tauri-apps/api/core');
-  return (mod.invoke as unknown as TauriInvoke)<T>(cmd, args);
-}
 
 const GB = 1024 ** 3;
 const TB = 1024 ** 4;

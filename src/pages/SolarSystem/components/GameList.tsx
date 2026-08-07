@@ -5,7 +5,7 @@ import {
   fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/coverArtService';
+} from '../../../features/library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
 import css from './GameList.module.css';
 

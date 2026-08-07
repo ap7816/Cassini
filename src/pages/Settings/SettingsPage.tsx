@@ -13,7 +13,7 @@ import { SettingRow } from './components/SettingRow';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
-import { clearCoverCache } from '../../features/Library/services/coverArtService';
+import { clearCoverCache } from '../../features/library/services/coverArtService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { seededRng } from '../lib/random';
-import { tauriInvoke } from '../lib/tauri';
+import { tauriInvoke } from '../../../services/tauri';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jaquette → texture de planète

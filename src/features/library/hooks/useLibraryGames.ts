@@ -5,18 +5,7 @@ import { loadGamesFromStorage, saveGamesToStorage } from '../services/librarySto
 import { exportLibraryToFile, importLibraryFromFile } from '../services/libraryFile';
 import { pickGameFile } from '../services/pickGameFile';
 import { createGameFromPath } from '../services/createGameFromPath';
-
-type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-
-// Résout invoke() soit depuis window.__TAURI__ (legacy), soit depuis @tauri-apps/api/core
-async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const tauri = window.__TAURI__ as unknown as { invoke?: TauriInvoke } | undefined;
-  if (tauri?.invoke) return tauri.invoke<T>(cmd, args);
-
-  const mod = await import('@tauri-apps/api/core');
-  const invoke = mod.invoke as unknown as TauriInvoke;
-  return invoke<T>(cmd, args);
-}
+import { tauriInvoke } from '../../../services/tauri';
 
 // Ordre de priorité pour la déduplication : Steam prime sur Epic, puis BattleNet, etc.
 const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5 };
