@@ -25,7 +25,17 @@ const ALLOWED_SCHEMES = [
 ] as const;
 
 // Chemin Windows local absolu sur un disque : C:\Jeux\jeu.exe
-const LOCAL_PATH_RE = /^[a-zA-Z]:\\(?!\\)/;
+//
+// Les deux séparateurs sont acceptés. Steam stocke son dossier d'installation
+// en barres obliques dans le registre (« c:/program files (x86)/steam ») ; les
+// chemins de jeux qui en dérivent sont donc mixtes, et n'exiger que l'antislash
+// les rejetait tous — le bouton « dossier du jeu » disparaissait pour toute la
+// bibliothèque Steam. Win32 traite les deux séparateurs indifféremment.
+//
+// Le préfixe de disque reste obligatoire : il exclut les chemins UNC
+// (\\serveur\partage, //serveur/partage), qui désigneraient une machine
+// distante.
+const LOCAL_PATH_RE = /^[a-zA-Z]:[\\/](?![\\/])/;
 
 function sanitizeLaunchUrl(v: unknown): string | null {
   const s = asString(v);
