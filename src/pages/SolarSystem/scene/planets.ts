@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import type { Game } from '../../../features/types';
 import {
-  fetchRawgImage,
+  fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/rawgService';
+} from '../../../features/Library/services/coverArtService';
 import { PALETTES, PLN_R_MAX, PLN_R_MIN } from '../constants';
 import { hashStr, seededRng } from '../lib/random';
 import { GOLDEN_ANGLE, makeRadiusScale, orbitPos, orbitRadius } from '../lib/orbits';
@@ -215,7 +215,7 @@ function loadCoverArt(
       if (await apply(steamCdnUrl(appId))) return;
       if (await apply(steamPortraitUrl(appId))) return;
     }
-    const sgdb = await fetchRawgImage(g.title, null);
+    const sgdb = await fetchCoverArt(g.title, null);
     if (sgdb && (await apply(sgdb))) return;
     if (!isDisposed()) setTexture(makeProcTexture(seed));
   })();

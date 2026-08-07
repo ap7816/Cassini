@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import {
-  fetchRawgImage,
+  fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/rawgService';
+} from '../../../features/Library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
 import css from './GameList.module.css';
 
@@ -44,7 +44,7 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
   useEffect(() => {
     if (game.customImageUrl || appId || !sgdbKeySet) return;
     let cancelled = false;
-    fetchRawgImage(game.title).then((url) => {
+    fetchCoverArt(game.title).then((url) => {
       if (!cancelled && url) setSrc(url);
     });
     return () => { cancelled = true; };
@@ -57,7 +57,7 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
       return;
     }
     if (sgdbKeySet) {
-      fetchRawgImage(game.title).then((url) => setSrc(url ?? null));
+      fetchCoverArt(game.title).then((url) => setSrc(url ?? null));
       return;
     }
     setSrc(null);

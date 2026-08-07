@@ -1,4 +1,14 @@
-import { readRawgCacheRaw, writeRawgCacheRaw, removeRawgCache as storageRemoveCache } from '../../../services/storage';
+// Résolution des jaquettes de jeux.
+//
+// Nommé d'après son rôle et non d'après son fournisseur : ce service s'est
+// déjà appelé « rawgService » du temps où il interrogeait RAWG.io, et le nom
+// est resté faux pendant tout le passage à SteamGridDB. Un nom fonctionnel
+// survit au changement de prestataire.
+//
+// Deux sources aujourd'hui : le CDN de Valve pour les jeux Steam, dont l'URL
+// se calcule sans appel réseau, et SteamGridDB pour tous les autres.
+
+import { readCoverCacheRaw, writeCoverCacheRaw, removeCoverCache as storageRemoveCache } from '../../../services/storage';
 
 type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
@@ -15,7 +25,7 @@ const notFoundCache = new Set<string>();
 
 function loadCache(): Map<string, string> {
   try {
-    const raw = readRawgCacheRaw();
+    const raw = readCoverCacheRaw();
     if (!raw) return new Map();
     const parsed = JSON.parse(raw) as Record<string, string | null>;
     const result = new Map<string, string>();
@@ -29,26 +39,26 @@ function loadCache(): Map<string, string> {
 }
 
 function saveCache() {
-  writeRawgCacheRaw(JSON.stringify(Object.fromEntries(persistentCache)));
+  writeCoverCacheRaw(JSON.stringify(Object.fromEntries(persistentCache)));
 }
 
 if (typeof window !== 'undefined') {
   for (const [k, v] of loadCache()) persistentCache.set(k, v);
 }
 
-export function clearRawgCache() {
+export function clearCoverCache() {
   persistentCache.clear();
   notFoundCache.clear();
   storageRemoveCache();
 }
 
-export function clearRawgCacheEntry(key: string) {
+export function clearCoverCacheEntry(key: string) {
   persistentCache.delete(key);
   notFoundCache.delete(key);
   saveCache();
 }
 
-export function setRawgCacheEntry(key: string, value: string | null) {
+export function setCoverCacheEntry(key: string, value: string | null) {
   if (value) {
     persistentCache.set(key, value);
     saveCache();
@@ -83,7 +93,7 @@ export function steamPortraitUrl(appId: string): string {
 // simultanément.
 const inFlight = new Map<string, Promise<string | null>>();
 
-export function fetchRawgImage(title: string, steamAppId?: string | null): Promise<string | null> {
+export function fetchCoverArt(title: string, steamAppId?: string | null): Promise<string | null> {
   const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
 
   if (persistentCache.has(cacheKey)) return Promise.resolve(persistentCache.get(cacheKey)!);

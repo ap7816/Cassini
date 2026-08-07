@@ -12,7 +12,7 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 export const STORAGE_KEYS = {
   settings:            'arctive.settings.v1',
   games:               'arctive.library.games.v1',
-  rawgCache:           'arctive.rawg.cache.v5',
+  coverCache:           'arctive.rawg.cache.v5',
   launcherIcons:       'arctive.launcherIcons.v1',
   musicFolder:         'music_folder',
   musicVolume:         'music_volume',
@@ -135,10 +135,10 @@ export function writeSettingsRaw(json: string): void { rawWrite(STORAGE_KEYS.set
 export function readGamesRaw(): string | null  { return rawRead(STORAGE_KEYS.games); }
 export function writeGamesRaw(json: string): void { rawWrite(STORAGE_KEYS.games, json); }
 
-// Lecture/écriture/suppression du cache d'images RAWG
-export function readRawgCacheRaw(): string | null  { return rawRead(STORAGE_KEYS.rawgCache); }
-export function writeRawgCacheRaw(json: string): void { rawWrite(STORAGE_KEYS.rawgCache, json); }
-export function removeRawgCache(): void { rawRemove(STORAGE_KEYS.rawgCache); }
+// Lecture/écriture/suppression du cache d'URLs de jaquettes
+export function readCoverCacheRaw(): string | null  { return rawRead(STORAGE_KEYS.coverCache); }
+export function writeCoverCacheRaw(json: string): void { rawWrite(STORAGE_KEYS.coverCache, json); }
+export function removeCoverCache(): void { rawRemove(STORAGE_KEYS.coverCache); }
 
 // Lecture/écriture du cache des icônes de launchers
 export function readLauncherIconsRaw(): string | null  { return rawRead(STORAGE_KEYS.launcherIcons); }
@@ -241,7 +241,7 @@ export async function clearAllStorage(): Promise<void> {
   }
 }
 
-// Supprime toutes les données sauf celles dont les clés sont dans keysToKeep (ex: clé RAWG)
+// Supprime toutes les données sauf celles dont les clés sont dans keysToKeep
 export async function clearStoragePreserving(keysToKeep: string[]): Promise<void> {
   const saved: Record<string, string> = {};
   for (const key of keysToKeep) {

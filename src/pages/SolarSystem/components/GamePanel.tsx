@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import {
-  clearRawgCacheEntry,
-  fetchRawgImage,
+  clearCoverCacheEntry,
+  fetchCoverArt,
   steamCdnUrl,
   steamPortraitUrl,
-} from '../../../features/Library/services/rawgService';
+} from '../../../features/Library/services/coverArtService';
 import { launchGame } from '../../../features/Library/services/launchGame';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
@@ -62,7 +62,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
     }
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
-      fetchRawgImage(game.title).then((url) => {
+      fetchCoverArt(game.title).then((url) => {
         if (!cancelled) setImgSrc(url ?? null);
       });
       return () => {
@@ -82,12 +82,12 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
         setImgSrc(portrait);
         return;
       }
-      if (sgdbKeySet) fetchRawgImage(game.title).then((url) => setImgSrc(url ?? null));
+      if (sgdbKeySet) fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
       else setImgSrc(null);
       return;
     }
-    clearRawgCacheEntry(game.title.toLowerCase());
-    if (sgdbKeySet) fetchRawgImage(game.title).then((url) => setImgSrc(url ?? null));
+    clearCoverCacheEntry(game.title.toLowerCase());
+    if (sgdbKeySet) fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
     else setImgSrc(null);
   }
 

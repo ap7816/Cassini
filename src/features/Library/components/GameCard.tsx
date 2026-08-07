@@ -4,7 +4,7 @@ import type { Game } from '../../types';
 import css from './GameCard.module.css';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
-import { fetchRawgImage, clearRawgCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/rawgService';
+import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/coverArtService';
 
 type Props = {
   game: Game;
@@ -85,7 +85,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     if (isSteam && resolvedSteamAppId) return;
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
-      fetchRawgImage(game.title).then((url) => {
+      fetchCoverArt(game.title).then((url) => {
         if (!cancelled) setResolved({ id: game.id, src: url ?? null });
       });
       return () => { cancelled = true; };
@@ -103,7 +103,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
       } else {
         // Les deux URLs Steam ont échoué → tenter SteamGridDB en dernier recours
         if (sgdbKeySet) {
-          fetchRawgImage(game.title).then((url) => setImgSrc(url ?? null));
+          fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
         } else {
           setImgSrc(null);
         }
@@ -112,9 +112,9 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     }
 
     // Non-Steam : vider le cache et retenter via SteamGridDB
-    clearRawgCacheEntry(game.title.toLowerCase());
+    clearCoverCacheEntry(game.title.toLowerCase());
     if (sgdbKeySet) {
-      fetchRawgImage(game.title).then((url) => setImgSrc(url ?? null));
+      fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
     } else {
       setImgSrc(null);
     }

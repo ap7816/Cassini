@@ -13,7 +13,7 @@ import { SettingRow } from './components/SettingRow';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
-import { clearRawgCache } from '../../features/Library/services/rawgService';
+import { clearCoverCache } from '../../features/Library/services/coverArtService';
 import { setLanguage, getCurrentLanguage } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 
@@ -175,7 +175,7 @@ export function SettingsPage() {
 
   // Vide le cache SteamGridDB et supprime la clé du coffre système
   async function handleClearCache() {
-    clearRawgCache();
+    clearCoverCache();
     await setSgdbApiKey('');
     setSgdbKeyInput('');
     setCacheCleared(true);

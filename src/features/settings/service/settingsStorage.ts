@@ -76,6 +76,9 @@ export async function migrateAndCheckKey(): Promise<boolean> {
     try {
       const parsed = JSON.parse(raw);
       if (isRecord(parsed)) {
+        // `rawgApiKey` est le nom qu'avait ce champ avant le passage à
+        // SteamGridDB. Il est relu tel quel : renommer la lecture ferait
+        // perdre sa clé à toute installation antérieure à ce changement.
         const legacy =
           typeof parsed.sgdbApiKey === 'string' ? parsed.sgdbApiKey :
           typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
