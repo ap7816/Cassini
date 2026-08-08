@@ -65,13 +65,17 @@ export class LabelLayer {
    * Reprojette tous les labels. Doit être appelé **après** `controls.update()`
    * et `camera.updateMatrixWorld()` : projeter avant utiliserait la matrice de
    * la frame précédente et ferait vibrer le texte pendant les déplacements.
+   *
+   * Les dimensions du calque sont fournies par l'appelant plutôt que relues
+   * ici : la boucle les regroupe avec ses autres lectures en tête de frame,
+   * avant toute écriture de style (voir tick dans useSolarScene).
    */
-  update(camera: THREE.Camera, systemR: number): void {
+  update(camera: THREE.Camera, systemR: number, width: number, height: number): void {
     const el = this.host;
     if (!el) return;
 
-    const w2 = el.clientWidth / 2;
-    const h2 = el.clientHeight / 2;
+    const w2 = width / 2;
+    const h2 = height / 2;
     const camDist = camera.position.length();
     const overview = camDist > systemR * 0.55;
     const maxDist = systemR * 2.6;

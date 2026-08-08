@@ -20,6 +20,48 @@ import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import type { PlanetEntry } from './types';
 
+/**
+ * Durées extrêmes d'un déplacement de caméra, en secondes, et distance de
+ * référence servant à répartir les trajets entre les deux.
+ *
+ * `CAM_REF` est exprimée en fractions du rayon du système : un trajet de
+ * `systemR * CAM_REF` dure une seconde, les autres au prorata, dans les
+ * bornes ci-dessus.
+ */
+const CAM_MIN_S = 1;
+const CAM_MAX_S = 2.2;
+const CAM_REF = 0.7;
+
+/**
+ * Cubique symétrique : vitesse nulle au départ **comme à l'arrivée**.
+ *
+ * C'est la propriété qui compte ici. Une courbe qui arrive avec de la vitesse
+ * donne l'impression d'un arrêt net, et une interpolation exponentielle, qui
+ * n'arrive jamais, oblige à trancher par un seuil — donc à sauter.
+ */
+function easeInOut(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(2 - 2 * t, 3) / 2;
+}
+
+/**
+ * Journalise la carte graphique effectivement utilisée par le contexte WebGL.
+ *
+ * `WEBGL_debug_renderer_info` n'est pas exposée par tous les moteurs ; son
+ * absence n'est pas une erreur, seulement une information indisponible.
+ */
+function logRenderer(renderer: THREE.WebGLRenderer): void {
+  try {
+    const gl = renderer.getContext();
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const nom = ext
+      ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
+      : gl.getParameter(gl.RENDERER);
+    console.info('[système solaire] rendu par :', nom);
+  } catch {
+    /* information de diagnostic : son absence ne doit rien interrompre */
+  }
+}
+
 type Options = {
   mountRef: RefObject<HTMLDivElement | null>;
   labelsRef: RefObject<HTMLDivElement | null>;
@@ -43,6 +85,14 @@ type Options = {
    * la planète quand la caméra continue de tourner après la sélection.
    */
   popupRef: RefObject<HTMLDivElement | null>;
+  /**
+   * Témoin portant la largeur animée de la colonne de droite. La scène le
+   * mesure chaque frame pour décaler sa projection, et suit ainsi exactement
+   * la transition CSS du repli.
+   */
+  sideProbeRef: RefObject<HTMLDivElement | null>;
+  /** Réceptacle du compteur d'images, écrit directement dans le DOM. */
+  fpsRef: RefObject<HTMLDivElement | null>;
 };
 
 /**
@@ -63,6 +113,8 @@ export function useSolarScene({
   clearRef,
   focusRef,
   popupRef,
+  sideProbeRef,
+  fpsRef,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -73,12 +125,23 @@ export function useSolarScene({
     const isDisposed = () => disposed;
 
     // ── Renderer, caméra, contrôles ──────────────────────────────────────
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      // Réclame la carte dédiée. Sur un portable à double GPU, le moteur de
+      // rendu web retient par défaut le circuit intégré pour économiser la
+      // batterie — soit, sur cette scène, un facteur plusieurs fois supérieur
+      // sur le seul poste qui compte ici, le remplissage de pixels.
+      powerPreference: 'high-performance',
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x070b12);
     container.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
+
+    // Trace le GPU réellement retenu : c'est la seule façon de savoir si la
+    // préférence ci-dessus a été honorée.
+    logRenderer(renderer);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -153,19 +216,44 @@ export function useSolarScene({
     camera.lookAt(INIT_LOOK);
     controls.maxDistance = Math.max(900, systemR * 3.5);
 
+    // Largeur actuellement masquée par la colonne de droite, en pixels.
+    let viewSide = 0;
+
+    /**
+     * Recentre le système dans la portion de canvas laissée visible par la
+     * colonne de droite, sans toucher à la surface de rendu.
+     *
+     * La caméra est cadrée comme si l'image faisait `w + side` pixels de large,
+     * et l'on n'en affiche que les `w` de droite. Le centre optique tombe alors
+     * à `(w + side) / 2 − side`, soit le milieu de la zone découverte.
+     *
+     * L'aspect vaut `(w + side) / h` et non `w / h` : c'est ce qui garde les
+     * pixels carrés. La fenêtre affichée ne retient que `w / (w + side)` de
+     * l'étendue horizontale, ce facteur doit être compensé en amont sous peine
+     * d'étirer la scène pendant tout le repli.
+     */
+    const applyView = (side: number, w: number, h: number, force = false) => {
+      if (w === 0 || h === 0) return;
+      if (!force && side === viewSide) return;
+
+      viewSide = side;
+      camera.aspect = (w + side) / h;
+      if (side > 0) camera.setViewOffset(w + side, h, side, 0, w, h);
+      else camera.clearViewOffset();
+      camera.updateProjectionMatrix();
+    };
+
     let animating = false;
     const camTargetPos = new THREE.Vector3().copy(homeCam);
     const camTargetLook = new THREE.Vector3().copy(INIT_LOOK);
-    // Seuil proportionnel : fixe, l'approche traînait sur les grands systèmes
-    const camDoneEps = Math.max(0.4, systemR * 0.004);
+    const camFromPos = new THREE.Vector3();
+    const camFromLook = new THREE.Vector3();
+    // Avancement du déplacement, en secondes, et durée visée
+    let camT = 0;
+    let camDur = 0;
     const camOffset = new THREE.Vector3();
-
-    // Point de vue d'avant la sélection, restauré à la désélection : revenir
-    // systématiquement au cadrage d'origine annulait le déplacement que
-    // l'utilisateur venait de faire.
-    const savedPos = new THREE.Vector3();
-    const savedLook = new THREE.Vector3();
-    let hasSaved = false;
+    // Distance du cadrage d'ensemble, relevée sur la position initiale.
+    const homeDist = homeCam.distanceTo(INIT_LOOK);
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
     // frame, y compris quand la caméra continue de tourner après le clic.
@@ -181,6 +269,8 @@ export function useSolarScene({
     let popupShown = false;
     let lastArrowY = -1;
     let lastSide = '';
+    let lastX = NaN;
+    let lastY = NaN;
 
     const popupRo = new ResizeObserver(() => {
       const el = popupRef.current;
@@ -190,22 +280,45 @@ export function useSolarScene({
     });
     if (popupRef.current) popupRo.observe(popupRef.current);
 
+    /**
+     * Lance un déplacement de caméra vers `pos`, regard sur `look`.
+     *
+     * Interpolation sur une durée, et non par rapprochement d'une fraction de
+     * la distance restante à chaque frame. Cette dernière méthode n'atteint
+     * jamais sa cible : il fallait couper sous un seuil, ce qui téléportait la
+     * caméra sur la distance restante — le à-coup en fin de course. Elle
+     * dépendait en plus de la fréquence d'affichage, et sa vitesse initiale
+     * était proportionnelle à la distance, d'où un retour au cadrage général
+     * qui partait en trombe.
+     */
     function animateCam(pos: THREE.Vector3, look: THREE.Vector3) {
-      animating = true;
-      controls.enabled = false;
+      camFromPos.copy(camera.position);
+      camFromLook.copy(controls.target);
       camTargetPos.copy(pos);
       camTargetLook.copy(look);
+
+      // Durée croissante avec la distance mais bornée : un saut entre deux
+      // planètes voisines ne doit pas traîner, une traversée du système ne
+      // doit pas se faire à toute allure.
+      const d = camFromPos.distanceTo(camTargetPos);
+      camDur = THREE.MathUtils.clamp(d / (systemR * CAM_REF), CAM_MIN_S, CAM_MAX_S);
+      camT = 0;
+
+      animating = true;
+      controls.enabled = false;
+    }
+
+    /** Rend la main à l'utilisateur, caméra laissée là où elle se trouve. */
+    function stopCam() {
+      if (!animating) return;
+      animating = false;
+      controls.enabled = true;
+      // Resynchronise l'état sphérique interne des contrôles sur la position
+      // atteinte, sans quoi le prochain glissement repartirait de l'ancienne.
+      controls.update();
     }
 
     function selectPlanet(p: PlanetEntry) {
-      // Mémorisé au seul passage « libre → planète » : enchaîner deux planètes
-      // ne doit pas écraser le point de vue libre d'origine.
-      if (!hasSaved) {
-        savedPos.copy(camera.position);
-        savedLook.copy(controls.target);
-        hasSaved = true;
-      }
-
       for (const pl of planets) pl.paused = true;
       selectedEntry = p;
       onSelect(p.game);
@@ -223,17 +336,38 @@ export function useSolarScene({
       animateCam(camOffset, p.mesh.position);
     }
 
+    /**
+     * Désélectionne : la carte se ferme, les orbites repartent et la caméra
+     * recule jusqu'au cadrage d'ensemble.
+     *
+     * Deux garde-fous, chacun corrigeant un travers de la version précédente :
+     *
+     *  - Sans planète sélectionnée, la caméra ne bouge pas. Elle repartait
+     *    auparavant au cadrage par défaut au moindre clic dans le vide, ce qui
+     *    annulait le déplacement en cours alors qu'il n'y avait rien à quitter.
+     *  - Le recul se fait dans l'axe de vue courant, et non vers une pose
+     *    mémorisée avant la sélection : on dézoome sans rien défaire de
+     *    l'orientation choisie entre-temps.
+     */
     function clearPlanet() {
+      const avaitSelection = selectedEntry !== null;
+
       for (const pl of planets) pl.paused = false;
       selectedEntry = null;
       onSelect(null);
 
-      if (hasSaved) {
-        animateCam(savedPos, savedLook);
-        hasSaved = false;
-      } else {
-        animateCam(homeCam, INIT_LOOK);
+      if (!avaitSelection) {
+        // Rien à quitter : on interrompt seulement une approche en vol, qui
+        // mènerait vers une planète désormais désélectionnée.
+        stopCam();
+        return;
       }
+
+      camOffset.subVectors(camera.position, controls.target);
+      if (camOffset.lengthSq() < 1e-6) camOffset.subVectors(homeCam, INIT_LOOK);
+      camOffset.normalize().multiplyScalar(homeDist).add(INIT_LOOK);
+
+      animateCam(camOffset, INIT_LOOK);
     }
     clearRef.current = clearPlanet;
 
@@ -275,10 +409,9 @@ export function useSolarScene({
      * label de jeu (voir LabelLayer), pour que carte et label gardent le même
      * dégagement autour de la sphère.
      */
-    function updatePopupAnchor() {
+    function updatePopupAnchor(w: number, h: number) {
       const el = popupRef.current;
-      const host = labelsRef.current;
-      if (!el || !host) return;
+      if (!el) return;
 
       if (!selectedEntry) {
         hidePopup(el);
@@ -308,8 +441,6 @@ export function useSolarScene({
         popupShown = true;
       }
 
-      const w = host.clientWidth;
-      const h = host.clientHeight;
       const cx = popupProj.x * (w / 2) + w / 2;
       const cy = -popupProj.y * (h / 2) + h / 2;
 
@@ -322,12 +453,21 @@ export function useSolarScene({
         .project(camera);
       const edge = Math.abs(popupEdge.x * (w / 2) + w / 2 - cx);
 
-      const { x, y, arrowY, side } = placePopup(cx, cy, edge, popupW, popupH, w, h);
+      // Le calque couvre toute la page, y compris sous la colonne de droite :
+      // la carte doit être recadrée sur la seule zone découverte.
+      const { x, y, arrowY, side } = placePopup(
+        cx, cy, edge, popupW, popupH, w - viewSide, h,
+      );
 
-      el.style.transform = `translate(${x}px, ${y}px)`;
-
-      // Écritures conditionnelles : réécrire une propriété personnalisée
-      // invalide le style de la carte entière, ergot compris.
+      // Écritures conditionnelles, comme pour les labels : réécrire un style
+      // inchangé 60 fois par seconde n'invalide rien de visible mais fait
+      // travailler le moteur pour rien, et une propriété personnalisée
+      // invalide en plus le style de toute la carte, ergot compris.
+      if (x !== lastX || y !== lastY) {
+        el.style.transform = `translate(${x}px, ${y}px)`;
+        lastX = x;
+        lastY = y;
+      }
       if (arrowY !== lastArrowY) {
         el.style.setProperty('--arrow-y', `${arrowY}px`);
         lastArrowY = arrowY;
@@ -343,9 +483,23 @@ export function useSolarScene({
       const w = container.clientWidth;
       const h = container.clientHeight;
       if (w === 0 || h === 0) return;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      applyView(viewSide, w, h, true);
+
+      // Redessin immédiat, dans le même rendu de frame.
+      //
+      // `setSize` réalloue le tampon de dessin, qui repart vide. Or les
+      // observateurs de redimensionnement sont livrés *après* le
+      // `requestAnimationFrame` de la frame en cours : sans ce rendu, le
+      // tampon vide serait affiché tel quel et la frame suivante seulement
+      // le remplirait — un aplat noir d'une frame.
+      //
+      // Ne concerne plus que les vrais redimensionnements de fenêtre : le
+      // repli de la liste ne change plus la taille de la canvas.
+      const host = labelsRef.current;
+      labelLayer.update(camera, systemR, host?.clientWidth ?? w, host?.clientHeight ?? h);
+      updatePopupAnchor(host?.clientWidth ?? w, host?.clientHeight ?? h);
+      renderer.render(scene, camera);
     });
     ro.observe(container);
 
@@ -353,10 +507,52 @@ export function useSolarScene({
     let prevT = performance.now();
     let rafId = 0;
 
-    function tick(t: number) {
+    // Compteur d'images. Écrit directement dans le DOM, jamais par un état
+    // React : re-rendre la page deux fois par seconde pour afficher un nombre
+    // fausserait la mesure autant qu'elle coûterait.
+    let fpsFrames = 0;
+    let fpsSince = prevT;
+    let fpsLast = -1;
+    // Valeur d'attente : la première mesure n'arrive qu'au bout d'une
+    // demi-seconde, et une pastille vide passe pour un défaut d'affichage.
+    if (fpsRef.current) fpsRef.current.textContent = '— FPS · — ms';
+
+    const tick = (t: number) => {
       rafId = requestAnimationFrame(tick);
       const dt = Math.min((t - prevT) / 1000, 0.1);
       prevT = t;
+
+      // ── Lectures de mise en page ───────────────────────────────────────
+      // Toutes regroupées ici, avant la moindre écriture de style. Le
+      // navigateur ne recalcule alors la mise en page qu'une fois : intercalée
+      // entre deux écritures, chaque lecture en forcerait un recalcul complet
+      // et synchrone. La boucle écrit les curseurs, l'infobulle, les labels et
+      // la carte — de quoi provoquer trois recalculs par frame.
+      const host = labelsRef.current;
+      const hostW = host ? host.clientWidth : 0;
+      const hostH = host ? host.clientHeight : 0;
+      const probeW = sideProbeRef.current?.offsetWidth ?? 0;
+      const viewW = container.clientWidth;
+      const viewH = container.clientHeight;
+
+      // ── Compteur d'images ──────────────────────────────────────────────
+      // Moyenné sur une demi-seconde : l'écart entre deux frames varie trop
+      // d'une à l'autre pour être lisible tel quel.
+      fpsFrames++;
+      if (t - fpsSince >= 500) {
+        const ecoule = t - fpsSince;
+        const fps = Math.round((fpsFrames * 1000) / ecoule);
+        const el = fpsRef.current;
+        if (el && fps !== fpsLast) {
+          // Le temps par image dit ce qu'il manque, là où le nombre d'images
+          // seul ne le dit pas : passer de 80 à 165 ne demande pas « deux fois
+          // plus », mais 6 ms de travail au lieu de 12.
+          el.textContent = `${fps} FPS · ${(ecoule / fpsFrames).toFixed(1)} ms`;
+          fpsLast = fps;
+        }
+        fpsFrames = 0;
+        fpsSince = t;
+      }
 
       // Tout se fige ensemble quand une planète est sélectionnée
       const paused = planets.length > 0 && planets[0].paused;
@@ -380,18 +576,17 @@ export function useSolarScene({
         // que la position ajoutait le décalage de cible au déplacement manuel,
         // d'où une caméra qui partait vers la planète puis se faisait ramener,
         // en tournant autour au passage.
-        camera.position.lerp(camTargetPos, 0.08);
-        controls.target.lerp(camTargetLook, 0.08);
+        camT += dt;
+        const k = camDur > 0 ? Math.min(camT / camDur, 1) : 1;
+        const e = easeInOut(k);
+
+        camera.position.lerpVectors(camFromPos, camTargetPos, e);
+        controls.target.lerpVectors(camFromLook, camTargetLook, e);
         camera.lookAt(controls.target);
 
-        if (camera.position.distanceTo(camTargetPos) < camDoneEps) {
-          camera.position.copy(camTargetPos);
-          controls.target.copy(camTargetLook);
-          animating = false;
-          controls.enabled = true;
-          // Resynchronise l'état sphérique interne sur la position atteinte
-          controls.update();
-        }
+        // `easeInOut(1)` vaut exactement 1 : la caméra est déjà sur sa cible,
+        // il n'y a rien à recaler et donc plus d'à-coup final.
+        if (k >= 1) stopCam();
       } else {
         // Doit précéder la projection des labels : le damping déplace la
         // caméra ici, et projeter avant utiliserait la matrice de la frame
@@ -399,14 +594,18 @@ export function useSolarScene({
         controls.update();
       }
 
+      // Suit le repli de la liste : le témoin porte la transition CSS, la
+      // scène n'a donc rien à interpoler.
+      applyView(probeW, viewW, viewH);
+
       camera.updateMatrixWorld();
 
       picker.updateHover();
-      labelLayer.update(camera, systemR);
-      updatePopupAnchor();
+      labelLayer.update(camera, systemR, hostW, hostH);
+      updatePopupAnchor(hostW, hostH);
 
       renderer.render(scene, camera);
-    }
+    };
     rafId = requestAnimationFrame(tick);
 
     // ── Nettoyage ────────────────────────────────────────────────────────
@@ -440,5 +639,6 @@ export function useSolarScene({
   }, [
     games, platform, labelClass, orbitLabelClass,
     mountRef, labelsRef, tooltipRef, onSelect, clearRef, focusRef, popupRef,
+    sideProbeRef, fpsRef,
   ]);
 }

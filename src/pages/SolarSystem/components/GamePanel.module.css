@@ -10,10 +10,16 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(8, 12, 20, 0.97);
+  /* Fond opaque, sans `backdrop-filter`.
+     Ce qui se trouve derrière la carte est la canvas WebGL, redessinée à
+     chaque frame : soleil qui pulse, planètes qui tournent, champ d'étoiles.
+     Un fond translucide — a fortiori flouté, le flou rééchantillonnant tout le
+     voisinage — laissait donc filtrer un bruit permanent, et la carte semblait
+     trembler alors que sa position ne bouge pas d'un pixel. À 97 % d'opacité,
+     le flou n'apportait de toute façon rien de visible. */
+  background: #080c14;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  backdrop-filter: blur(24px);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
   animation: panelIn 160ms ease-out forwards;
 }

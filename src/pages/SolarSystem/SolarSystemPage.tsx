@@ -56,6 +56,8 @@ export function SolarSystemPage() {
   const clearPlanetRef = useRef<() => void>(() => {});
   const focusPlanetRef = useRef<(gameId: string) => void>(() => {});
   const popupRef = useRef<HTMLDivElement>(null);
+  const sideProbeRef = useRef<HTMLDivElement>(null);
+  const fpsRef = useRef<HTMLDivElement>(null);
 
   const [games, setGames] = useState<Game[]>(() => loadGamesFromStorage());
   // Seul l'identifiant est mémorisé : la carte de détail lit ensuite le jeu
@@ -65,6 +67,7 @@ export function SolarSystemPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
   const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
+  const [listOpen, setListOpen] = useState(true);
   const { settings } = useAppSettings();
 
   // Plateformes présentes dans la bibliothèque, la plus fournie en premier
@@ -115,6 +118,8 @@ export function SolarSystemPage() {
     clearRef: clearPlanetRef,
     focusRef: focusPlanetRef,
     popupRef,
+    sideProbeRef,
+    fpsRef,
   });
 
   function handleGameUpdate(updated: Game) {
@@ -134,11 +139,18 @@ export function SolarSystemPage() {
   }
 
   return (
-    <div className={css.page}>
+    <div className={[css.page, listOpen ? '' : css.pageListHidden].filter(Boolean).join(' ')}>
       <div ref={mountRef} className={css.canvas} />
 
       {/* Labels HTML, positionnés par projection caméra depuis la scène */}
       <div ref={labelsRef} className={css.labels} />
+
+      {/* Témoin de la largeur animée de la colonne : la scène le mesure pour
+          décaler sa projection en suivant la transition CSS (voir applyView). */}
+      <div ref={sideProbeRef} className={css.sideProbe} />
+
+      {/* Compteur d'images, écrit par la scène sans passer par React. */}
+      <div ref={fpsRef} className={css.fps} />
 
       {/* Infobulle de survol — pilotée en direct par la scène, jamais par
           un état React : re-rendre la page à chaque pixel de souris coûtait
@@ -172,13 +184,15 @@ export function SolarSystemPage() {
         </div>
       </div>
 
-      {/* Liste des jeux du launcher, toujours visible. */}
+      {/* Liste des jeux du launcher, repliable par sa languette. */}
       <GameList
         games={visibleGames}
         selectedId={selectedId}
         platform={platform}
         sgdbKeySet={settings.sgdbKeySet}
         onPick={(id) => focusPlanetRef.current(id)}
+        open={listOpen}
+        onToggle={() => setListOpen((v) => !v)}
       />
 
       {/* Carte de détail — repositionnée chaque frame à côté de la planète

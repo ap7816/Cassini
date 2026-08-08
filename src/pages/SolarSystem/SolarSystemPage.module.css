@@ -19,19 +19,33 @@
      fenêtre étroite la liste finissait par occuper plus de place que la scène.
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
-  --side-w: min(240px, 38%);
+  --list-w: min(240px, 38%);
+  --side-w: var(--list-w);
+}
+
+/* Liste repliée : la zone 3D récupère toute la largeur.
+   Seule la place réservée tombe à zéro ; la liste garde sa largeur propre et
+   sort par translation. La rétrécir ferait déferler son contenu pendant
+   l'animation, titres tronqués et vignettes écrasées. */
+.pageListHidden {
+  --side-w: 0px;
 }
 
 /* Conteneur de la canvas Three.js.
-   Il s'arrête avant la colonne de droite plutôt que de passer dessous :
-   le système reste ainsi centré dans la zone réellement visible, et le
-   pointage comme la projection des labels partent du même rectangle. */
+
+   Il occupe toute la page, y compris sous la colonne de droite qui le
+   recouvre. Le système n'en reste pas moins centré dans la zone réellement
+   visible : c'est la projection de la caméra qui est décalée, pas la surface
+   de rendu (voir applyView dans useSolarScene).
+
+   L'inverse — faire s'arrêter la canvas avant la colonne — obligeait à la
+   redimensionner à chaque frame du repli. Or redimensionner réalloue le
+   tampon de dessin, soit une douzaine de réallocations de plusieurs mégaoctets
+   en 220 ms, et un rendu supplémentaire par frame pour ne pas afficher le
+   tampon vide. Décaler la projection ne coûte qu'une matrice. */
 .canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: var(--side-w);
+  inset: 0;
   cursor: grab;
 }
 
@@ -39,15 +53,33 @@
   cursor: grabbing;
 }
 
-/* Calque des labels — même géométrie que la canvas, sinon la projection
-   caméra décalerait le texte. pointer-events:none laisse passer les clics. */
+/* Calque des labels — exactement la géométrie de la canvas, sinon la
+   projection caméra décalerait le texte. pointer-events:none laisse passer
+   les clics. Il passe donc lui aussi sous la colonne de droite, qui le
+   recouvre : un label de planète masquée par la liste disparaît derrière elle,
+   comme la planète elle-même. */
 .labels {
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: var(--side-w);
+  inset: 0;
   pointer-events: none;
+}
+
+/* Témoin de largeur de la colonne de droite.
+
+   Sans dimension visible, il n'existe que pour porter la transition de
+   `--side-w` : la scène lit sa largeur à chaque frame et en déduit le décalage
+   de projection. Elle suit ainsi la courbe CSS au pixel près, sans qu'il
+   faille dupliquer durée et courbe d'accélération en JavaScript — deux
+   timelines indépendantes finissent toujours par se désynchroniser. */
+.sideProbe {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 0;
+  width: var(--side-w);
+  pointer-events: none;
+  visibility: hidden;
+  transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Labels positionnés via `transform` et non `left`/`top` : transform est géré
@@ -139,7 +171,8 @@
   left: -7px;
   width: 12px;
   height: 12px;
-  background: rgba(8, 12, 20, 0.97);
+  /* Opaque, comme le fond de la carte qu'il prolonge (voir GamePanel). */
+  background: #080c14;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0 0 3px;
@@ -227,4 +260,34 @@
 .selectorHint {
   font: 500 11px/1 Inter, sans-serif;
   color: rgba(255, 255, 255, 0.34);
+}
+
+/* Sans mouvement demandé, le décalage de projection prend sa valeur finale
+   immédiatement : la scène lit la largeur du témoin, qui ne transite plus. */
+@media (prefers-reduced-motion: reduce) {
+  .sideProbe {
+    transition: none;
+  }
+}
+
+/* Compteur d'images — coin bas gauche, discret mais lisible sur le fond
+   étoilé. Son contenu est écrit par la scène, jamais par React. */
+.fps {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  z-index: 12;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 12, 20, 0.82);
+  color: rgba(255, 255, 255, 0.82);
+  font: 700 12px/1 Inter, sans-serif;
+  /* Chiffres à chasse fixe : sans cela la pastille change de largeur à chaque
+     mise à jour, et sautille dans le coin de l'écran. */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
 }

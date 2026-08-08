@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import {
@@ -87,6 +87,9 @@ type Props = {
   sgdbKeySet: boolean;
   /** Cible la planète correspondante dans la scène. */
   onPick: (gameId: string) => void;
+  /** Liste dépliée. Repliée, elle sort par la droite et rend la place à la scène. */
+  open: boolean;
+  onToggle: () => void;
 };
 
 /**
@@ -95,10 +98,13 @@ type Props = {
  * Cliquer une entrée produit exactement le même effet qu'un clic sur la
  * planète : la caméra s'en approche et le panneau de détail s'ouvre.
  */
-export function GameList({ games, selectedId, platform, sgdbKeySet, onPick }: Props) {
+export function GameList({
+  games, selectedId, platform, sgdbKeySet, onPick, open, onToggle,
+}: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const color = PLATFORM_CSS[platform] ?? '#7a8a9a';
+  const listId = useId();
 
   // Même ordre que les orbites : la n-ième entrée est la n-ième planète.
   const shown = useMemo(() => {
@@ -108,54 +114,88 @@ export function GameList({ games, selectedId, platform, sgdbKeySet, onPick }: Pr
   }, [games, query]);
 
   return (
-    <aside className={css.list}>
-      <div className={css.head}>
-        <span className={css.headTitle} style={{ color }}>
-          {platform}
-        </span>
-        <span className={css.headCount}>
-          {games.length} {games.length > 1 ? 'jeux' : 'jeu'}
-        </span>
-      </div>
+    <>
+      <button
+        type="button"
+        className={css.toggle}
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={listId}
+        title={open ? 'Masquer la liste des jeux' : 'Afficher la liste des jeux'}
+      >
+        {/* Chevron vectoriel plutôt qu'un caractère : à cette taille, « › »
+            reste fin et dépend de la police disponible. Il pointe vers la
+            droite pour renvoyer la liste, et s'inverse pour la rappeler. */}
+        <svg
+          className={[css.toggleIcon, open ? '' : css.toggleIconFlipped].filter(Boolean).join(' ')}
+          width="11"
+          height="18"
+          viewBox="0 0 11 18"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M2.5 2L9 9l-6.5 7"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
 
-      <input
-        className={css.search}
-        placeholder={t('nav.searchPlaceholder')}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <aside
+        id={listId}
+        className={[css.list, open ? '' : css.listHidden].filter(Boolean).join(' ')}
+      >
+        <div className={css.head}>
+          <span className={css.headTitle} style={{ color }}>
+            {platform}
+          </span>
+          <span className={css.headCount}>
+            {games.length} {games.length > 1 ? 'jeux' : 'jeu'}
+          </span>
+        </div>
 
-      <ul className={css.items}>
-        {shown.map((g) => {
-          // Le rang dans la liste complète correspond au rang orbital
-          const orbit = games.indexOf(g) + 1;
-          return (
-            <li key={g.id}>
-              <button
-                type="button"
-                className={[css.item, g.id === selectedId ? css.itemActive : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => onPick(g.id)}
-                title={g.title}
-                style={g.id === selectedId ? { borderColor: color + '88' } : undefined}
-              >
-                <span className={css.orbitNum}>{orbit}</span>
-                <Thumb game={g} color={color} sgdbKeySet={sgdbKeySet} />
-                <span className={css.labels}>
-                  <span className={css.name}>{g.title}</span>
-                  <span className={css.meta}>
-                    {g.sizeOnDisk != null && g.sizeOnDisk > 0 ? fmtSize(g.sizeOnDisk) : '—'}
-                    {g.favorite && <span className={css.fav}> ★</span>}
+        <input
+          className={css.search}
+          placeholder={t('nav.searchPlaceholder')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+
+        <ul className={css.items}>
+          {shown.map((g) => {
+            // Le rang dans la liste complète correspond au rang orbital
+            const orbit = games.indexOf(g) + 1;
+            return (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  className={[css.item, g.id === selectedId ? css.itemActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => onPick(g.id)}
+                  title={g.title}
+                  style={g.id === selectedId ? { borderColor: color + '88' } : undefined}
+                >
+                  <span className={css.orbitNum}>{orbit}</span>
+                  <Thumb game={g} color={color} sgdbKeySet={sgdbKeySet} />
+                  <span className={css.labels}>
+                    <span className={css.name}>{g.title}</span>
+                    <span className={css.meta}>
+                      {g.sizeOnDisk != null && g.sizeOnDisk > 0 ? fmtSize(g.sizeOnDisk) : '—'}
+                      {g.favorite && <span className={css.fav}> ★</span>}
+                    </span>
                   </span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
+                </button>
+              </li>
+            );
+          })}
 
-        {shown.length === 0 && <li className={css.empty}>Aucun résultat</li>}
-      </ul>
-    </aside>
+          {shown.length === 0 && <li className={css.empty}>Aucun résultat</li>}
+        </ul>
+      </aside>
+    </>
   );
 }
