@@ -171,7 +171,12 @@ export function AppLayout() {
         <MiniPlayer />
       </main>
 
-      <MusicVisualizer />
+      {/* Champ d'étoiles de fond — retiré sur le système solaire, qui le
+          recouvre entièrement de son propre fond opaque. Il continuait sinon
+          d'effacer et de redessiner une canvas plein écran à chaque image,
+          mesuré à 0,6 ms, pour un résultat que personne ne voit — sans compter
+          la composition d'un calque plein écran qui change à chaque frame. */}
+      {location.pathname !== '/solar' && <MusicVisualizer />}
       <UpdateBanner u={updater} />
       <Toasts />
     </div>
