@@ -335,7 +335,15 @@ export function useSolarScene({
     // d'ensemble, comme celui de la plateforme courante.
     for (const e of portals?.entries ?? []) {
       labelLayer.addWorld(
-        e.position.clone().setY(e.position.y - outerR * 0.16),
+        // Décalage exprimé en rayons de portail, pas en fractions du système :
+        // c'est le halo qu'il faut dégager, et celui-ci s'étend à deux rayons.
+        // La caméra regardant de trois quarts, un décalage vertical dans le
+        // monde ne se traduit qu'à ~67 % à l'écran.
+        //
+        // Juste ce qu'il faut pour sortir du halo : plus bas, le libellé se
+        // détache de son portail et va se poser sur ses voisins, les portails
+        // étant volontairement dispersés.
+        e.position.clone().setY(e.position.y - portalR * 2.5),
         e.platform,
         orbitLabelClass,
         PLATFORM_CSS[e.platform] ?? '#7a8a9a',
