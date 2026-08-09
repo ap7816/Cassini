@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import type { RefObject } from 'react';
 import type { PlanetEntry } from './types';
 
 /** Rayon de tolérance, en pixels, autour du centre d'une planète. */
@@ -14,8 +13,12 @@ type Options = {
   /** Tableau figé pour le raycast — le reconstruire par événement allouait. */
   pickMeshes: THREE.Object3D[];
   meshToEntry: Map<THREE.Object3D, PlanetEntry>;
-  tooltipRef: RefObject<HTMLDivElement | null>;
+  /** Cibles des portails de phase, testées avant les planètes. */
+  portals: THREE.Object3D[];
+  /** Planète sous le curseur, ou `null`. Émis uniquement quand elle change. */
+  onHover: (hit: PlanetEntry | null) => void;
   onClick: (hit: PlanetEntry | null) => void;
+  onPortal: (target: THREE.Object3D) => void;
 };
 
 /**
@@ -26,12 +29,12 @@ type Options = {
  *  - Le survol est résolu **une fois par frame** et non par événement souris.
  *    Une souris à 1000 Hz déclenchait autant de raycasts par seconde, pour un
  *    résultat que l'écran ne peut afficher que 60 fois.
- *  - L'infobulle est écrite **directement dans le DOM**. La passer par un état
- *    React re-rendait toute la page à chaque pixel parcouru, ce qui coûtait
- *    plus cher que le rendu 3D lui-même.
+ *  - `onHover` n'est émis qu'au changement de planète, et l'affichage reste
+ *    hors de React. Le faire transiter par un état re-rendait toute la page à
+ *    chaque pixel parcouru, ce qui coûtait plus cher que le rendu 3D lui-même.
  */
 export function createPicker({
-  canvas, camera, planets, pickMeshes, meshToEntry, tooltipRef, onClick,
+  canvas, camera, planets, pickMeshes, meshToEntry, portals, onHover, onClick, onPortal,
 }: Options) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -42,17 +45,34 @@ export function createPicker({
   let hoverX = 0;
   let hoverY = 0;
   let hoverPending = false;
-  let shownTitle: string | null = null;
+  let shown: PlanetEntry | null = null;
 
-  function pick(clientX: number, clientY: number): PlanetEntry | null {
+  /** Place `ndc` sur la position pointée et arme le lanceur de rayons. */
+  function aim(clientX: number, clientY: number): DOMRect {
     const rect = canvas.getBoundingClientRect();
     ndc.set(
       ((clientX - rect.left) / rect.width) * 2 - 1,
       ((clientY - rect.top) / rect.height) * -2 + 1,
     );
+    raycaster.setFromCamera(ndc, camera);
+    return rect;
+  }
+
+  /**
+   * Le portail passe avant les planètes : il se trouve au-delà de l'orbite
+   * externe, mais la tolérance en pixels des planètes pourrait le recouvrir si
+   * l'une d'elles se projette juste devant.
+   */
+  function hitsPortal(clientX: number, clientY: number): THREE.Object3D | null {
+    if (portals.length === 0) return null;
+    aim(clientX, clientY);
+    return raycaster.intersectObjects(portals, false)[0]?.object ?? null;
+  }
+
+  function pick(clientX: number, clientY: number): PlanetEntry | null {
+    const rect = aim(clientX, clientY);
 
     // 1. Un impact géométrique exact l'emporte toujours
-    raycaster.setFromCamera(ndc, camera);
     const hits = raycaster.intersectObjects(pickMeshes, false);
     if (hits.length > 0) {
       const hit = meshToEntry.get(hits[0].object);
@@ -89,6 +109,11 @@ export function createPicker({
   function onMouseUp(e: MouseEvent) {
     // Un léger glissement reste un clic ; faire tourner la caméra n'en est pas un
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_TOLERANCE_PX) return;
+    const portail = hitsPortal(e.clientX, e.clientY);
+    if (portail) {
+      onPortal(portail);
+      return;
+    }
     onClick(pick(e.clientX, e.clientY));
   }
 
@@ -98,15 +123,16 @@ export function createPicker({
     hoverPending = true;
   }
 
-  function hideTooltip() {
-    const tip = tooltipRef.current;
-    if (tip && shownTitle !== null) tip.style.display = 'none';
-    shownTitle = null;
+  /** Signale la planète survolée, une seule fois par changement. */
+  function setHover(hit: PlanetEntry | null) {
+    if (hit === shown) return;
+    shown = hit;
+    onHover(hit);
   }
 
   function onMouseLeave() {
     hoverPending = false;
-    hideTooltip();
+    setHover(null);
     canvas.style.cursor = '';
   }
 
@@ -121,24 +147,15 @@ export function createPicker({
       if (!hoverPending) return;
       hoverPending = false;
 
-      const hit = pick(hoverX, hoverY);
-      canvas.style.cursor = hit ? 'pointer' : '';
-
-      const tip = tooltipRef.current;
-      if (!tip) return;
-
-      if (!hit) {
-        hideTooltip();
+      if (hitsPortal(hoverX, hoverY)) {
+        canvas.style.cursor = 'pointer';
+        setHover(null);
         return;
       }
 
-      // Le texte n'est réécrit que si la planète survolée change
-      if (hit.game.title !== shownTitle) {
-        tip.textContent = hit.game.title;
-        tip.style.display = '';
-        shownTitle = hit.game.title;
-      }
-      tip.style.transform = `translate(${hoverX + 12}px, ${hoverY - 8}px)`;
+      const hit = pick(hoverX, hoverY);
+      canvas.style.cursor = hit ? 'pointer' : '';
+      setHover(hit);
     },
 
     dispose() {

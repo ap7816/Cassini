@@ -28,6 +28,7 @@ export const STORAGE_KEYS = {
   ambientVolume:       'archive.ambient.volume',
   language:            'archive.language',
   patchNotesSeen:      'archive.patchNotes.seen',
+  solarFlyKeys:        'archive.solar.flyKeys.v1',
 } as const;
 
 /**
@@ -264,6 +265,19 @@ export function writeMusicEnrichedMetaRaw(json: string): void {
 }
 
 // Lecture/écriture de la musique d'ambiance (activée par défaut, volume 0.25)
+/**
+ * Touches de déplacement du système solaire, sérialisées en JSON.
+ *
+ * Pas de clé historique : le réglage n'existait pas avant, il n'y a donc rien
+ * à migrer.
+ */
+export function readSolarFlyKeys(): string | null {
+  return rawRead(STORAGE_KEYS.solarFlyKeys);
+}
+export function writeSolarFlyKeys(json: string): void {
+  rawWrite(STORAGE_KEYS.solarFlyKeys, json);
+}
+
 export function readAmbientEnabled(): boolean {
   const v = rawRead(STORAGE_KEYS.ambientEnabled);
   return v === null ? true : v === 'true';

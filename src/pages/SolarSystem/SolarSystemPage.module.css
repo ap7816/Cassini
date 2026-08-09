@@ -102,7 +102,9 @@
   opacity: 0.75;
 }
 
-/* Nom du jeu, sous chaque planète */
+/* Nom du jeu, sous sa planète — visible au seul survol.
+   L'opacité est pilotée par la scène (voir LabelLayer) ; la transition évite
+   qu'il ne clignote quand le curseur balaie plusieurs planètes. */
 .planetLabel {
   font: 700 11px/1 Inter, sans-serif;
   color: #fff;
@@ -115,25 +117,12 @@
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 130ms ease-out;
 }
 
-/* Infobulle de survol — positionnée en `transform` depuis la scène */
-.tooltip {
-  position: fixed;
-  top: 0;
-  left: 0;
-  will-change: transform;
-  pointer-events: none;
-  z-index: 20;
-  background: rgba(8, 12, 20, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  color: rgba(255, 255, 255, 0.9);
-  font: 500 11px/1 Inter, sans-serif;
-  padding: 5px 9px;
-  border-radius: 6px;
-  white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+@media (prefers-reduced-motion: reduce) {
+  .planetLabel { transition: none; }
 }
 
 /* Ancre de la carte de détail — repositionnée par transform depuis la scène
@@ -290,4 +279,33 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   pointer-events: none;
   user-select: none;
+}
+
+/* ── Voile de traversée du portail ──────────────────────────────────────── */
+
+/* Masque la destruction puis la reconstruction de la scène, que rien en 3D ne
+   peut couvrir puisque l'objet qui l'animerait disparaît en route.
+
+   Toujours monté, transparent au repos : le monter au moment du départ ferait
+   partir la transition depuis un élément qui vient d'apparaître, et le
+   navigateur sauterait le premier palier. */
+.warp {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  /* Éclat partant du portail, à droite : la lumière vient de là où l'on va. */
+  background:
+    radial-gradient(circle at 78% 45%, #fff 0%, var(--warp-tint, #7a8a9a) 22%, #050810 72%);
+  transition: opacity 520ms ease-in;
+}
+
+.warpOn {
+  opacity: 1;
+  pointer-events: auto; /* gèle les clics le temps du voyage */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warp { transition-duration: 120ms; }
 }

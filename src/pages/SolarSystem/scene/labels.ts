@@ -70,7 +70,13 @@ export class LabelLayer {
    * ici : la boucle les regroupe avec ses autres lectures en tête de frame,
    * avant toute écriture de style (voir tick dans useSolarScene).
    */
-  update(camera: THREE.Camera, systemR: number, width: number, height: number): void {
+  update(
+    camera: THREE.Camera,
+    systemR: number,
+    width: number,
+    height: number,
+    hovered: PlanetEntry | null,
+  ): void {
     const el = this.host;
     if (!el) return;
 
@@ -79,20 +85,28 @@ export class LabelLayer {
     const camDist = camera.position.length();
     const overview = camDist > systemR * 0.55;
     const maxDist = systemR * 2.6;
-    const fadeFrom = systemR * 0.5;
-    const fadeSpan = systemR * 1.8;
 
     for (const lbl of this.labels) {
       let show: boolean;
       let opacity = 1;
 
       if (lbl.entry) {
+        // Le nom du jeu ne s'affiche qu'au survol de sa planète. Affiché en
+        // permanence, il encombrait la vue d'ensemble d'autant d'étiquettes
+        // qu'il y a de jeux.
+        //
+        // L'apparition passe par l'opacité et non par `display`, seule façon
+        // de l'adoucir en CSS. Le label reste donc positionné tant qu'il est
+        // dans le champ, mais `display` continue d'écarter ceux qui sont
+        // derrière la caméra ou trop lointains — sauf celui qu'on survole,
+        // qui doit rester lisible quelle que soit la distance.
+        const survole = lbl.entry === hovered;
         this.proj.copy(lbl.entry.mesh.position);
         const dist = camera.position.distanceTo(this.proj);
         this.proj.y -= lbl.entry.radius * 1.9;
         this.proj.project(camera);
-        show = this.proj.z <= 1 && dist <= maxDist;
-        if (show) opacity = Math.max(0.18, Math.min(1, 1 - (dist - fadeFrom) / fadeSpan));
+        show = this.proj.z <= 1 && (survole || dist <= maxDist);
+        opacity = survole ? 1 : 0;
       } else if (lbl.world) {
         show = overview;
         if (show) {
@@ -129,14 +143,11 @@ export class LabelLayer {
         lbl.lastY = y;
       }
 
-      if (lbl.entry) {
-        // Quantifié par pas de 0,05 : inutile de réécrire le style pour une
-        // variation d'opacité invisible.
-        const q = Math.round(opacity * 20) / 20;
-        if (q !== lbl.lastOpacity) {
-          lbl.div.style.opacity = String(q);
-          lbl.lastOpacity = q;
-        }
+      // Opacité binaire depuis le passage au survol : elle ne vaut plus que 0
+      // ou 1, il suffit donc de n'écrire que sur changement d'état.
+      if (lbl.entry && opacity !== lbl.lastOpacity) {
+        lbl.div.style.opacity = String(opacity);
+        lbl.lastOpacity = opacity;
       }
     }
   }

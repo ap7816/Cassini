@@ -45,8 +45,23 @@ export function createStarfield(outerR: number): THREE.Points {
   );
 }
 
-/** Soleil et ses couches de couronne. `core` est animé (pulsation, rotation). */
-export function createSun(sunR: number): { group: THREE.Group; core: THREE.Mesh } {
+/**
+ * Soleil et ses couches de couronne. `core` est animé (pulsation, rotation).
+ *
+ * `haloMax` borne l'étendue de la couronne en unités monde. Sans cette borne,
+ * la couche externe atteint 3,4 fois le rayon solaire — ce qui va bien sur un
+ * grand système, mais couvrait **102 % du rayon de l'orbite** sur un système
+ * d'un seul jeu : le soleil avalait tout. Le plancher de `sunR` le rend en
+ * effet gros par rapport à un système minuscule.
+ *
+ * Les couches qui dépassent la borne sont simplement omises, plutôt que
+ * ramenées dessus : les empiler au même rayon produirait un cerne net au lieu
+ * d'un dégradé.
+ */
+export function createSun(
+  sunR: number,
+  haloMax: number,
+): { group: THREE.Group; core: THREE.Mesh } {
   const group = new THREE.Group();
 
   const core = new THREE.Mesh(
@@ -63,9 +78,11 @@ export function createSun(sunR: number): { group: THREE.Group; core: THREE.Mesh 
   ];
 
   for (const [scale, color, opacity] of corona) {
+    const rayon = sunR * scale;
+    if (rayon > haloMax) continue;
     group.add(
       new THREE.Mesh(
-        new THREE.SphereGeometry(sunR * scale, 32, 32),
+        new THREE.SphereGeometry(rayon, 32, 32),
         new THREE.MeshBasicMaterial({
           color,
           transparent: true,

@@ -11,6 +11,7 @@ import {
   PLN_R,
   PLN_R_MAX,
 } from '../constants';
+import type { FlySettings } from '../lib/flyKeys';
 import { orbitPos, orbitRadius } from '../lib/orbits';
 import { placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
@@ -18,6 +19,14 @@ import { createBelt, createStarfield, createSun } from './decor';
 import { createPlanets } from './planets';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
+import { createPostprocess } from './postprocess';
+import {
+  createPortals,
+  portalRadius,
+  portalRingRadius,
+  PORTAL_SPREAD,
+  type PortalTarget,
+} from './portal';
 import type { PlanetEntry } from './types';
 
 /**
@@ -33,6 +42,65 @@ const CAM_MAX_S = 2.2;
 const CAM_REF = 0.7;
 
 /**
+ * Traversée du portail, en secondes.
+ *
+ * `WARP_DIVE_S` doit rester inférieur au temps que met le voile à devenir
+ * opaque côté React : la caméra doit avoir fini sa plongée avant que la scène
+ * ne soit détruite, sinon on voit le mouvement s'interrompre.
+ *
+ * `ARRIVAL_S` est la seconde moitié du voyage. Elle joue aussi au premier
+ * affichage de la page, où elle sert de plan d'ouverture.
+ */
+const WARP_DIVE_S = 1;
+const ARRIVAL_S = 1.6;
+/** Éloignement du point d'entrée, en multiples du cadrage d'ensemble. */
+const ARRIVAL_ZOOM = 1.75;
+
+/**
+ * Vitesse de déplacement au clavier, en rayons de cadrage par seconde, et
+ * multiplicateur de la touche d'accélération.
+ *
+ * Rapportée au cadrage et non en unités absolues : une bibliothèque de deux
+ * cents jeux s'étend sur des milliers d'unités, une de trois sur quelques
+ * dizaines. Une vitesse fixe serait inutilisable dans l'un ou l'autre cas.
+ */
+const FLY_SPEED = 0.55;
+const FLY_BOOST = 3;
+
+/**
+ * Distance du pivot de rotation pendant le vol, en fractions du cadrage.
+ *
+ * OrbitControls fait tourner la caméra **autour de sa cible**. En vol libre,
+ * conserver la cible à la distance du système donne un rayon d'orbite énorme :
+ * mesuré sur onze jeux, un glissement de 90° faisait parcourir 962 unités à la
+ * caméra pour un système qui en fait 480 — elle était catapultée autour d'un
+ * point vide devant elle.
+ *
+ * Rapprocher le pivot ramène la rotation à un tour de tête : même vitesse
+ * angulaire, six fois moins de déplacement. L'image ne saute pas au moment où
+ * on le rapproche, puisqu'il reste sur l'axe du regard.
+ */
+const FLY_PIVOT = 0.22;
+
+/** Axe vertical du monde — le déplacement vertical l'utilise tel quel. */
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
+/**
+ * Vrai si la frappe est destinée à un champ de saisie.
+ *
+ * Sans ce garde-fou, taper « Dark Souls » dans la recherche ferait décoller la
+ * caméra à chaque lettre.
+ */
+function saisieEnCours(e: KeyboardEvent): boolean {
+  const el = e.target as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  return (
+    tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable
+  );
+}
+
+/**
  * Cubique symétrique : vitesse nulle au départ **comme à l'arrivée**.
  *
  * C'est la propriété qui compte ici. Une courbe qui arrive avec de la vitesse
@@ -41,6 +109,22 @@ const CAM_REF = 0.7;
  */
 function easeInOut(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(2 - 2 * t, 3) / 2;
+}
+
+/**
+ * Accélérante : vitesse nulle au départ, **maximale à l'arrivée**.
+ *
+ * Pour la plongée dans le portail. Une courbe qui s'arrête en douceur donnerait
+ * l'impression de se garer devant, alors qu'on le traverse : c'est lancé à
+ * pleine vitesse que le voile doit prendre le relais.
+ */
+function easeIn(t: number): number {
+  return t * t * t;
+}
+
+/** Décélérante, symétrique de la précédente — pour la sortie du portail. */
+function easeOut(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
 }
 
 /**
@@ -65,7 +149,6 @@ function logRenderer(renderer: THREE.WebGLRenderer): void {
 type Options = {
   mountRef: RefObject<HTMLDivElement | null>;
   labelsRef: RefObject<HTMLDivElement | null>;
-  tooltipRef: RefObject<HTMLDivElement | null>;
   games: Game[];
   platform: string;
   labelClass: string;
@@ -93,6 +176,24 @@ type Options = {
   sideProbeRef: RefObject<HTMLDivElement | null>;
   /** Réceptacle du compteur d'images, écrit directement dans le DOM. */
   fpsRef: RefObject<HTMLDivElement | null>;
+  /** Systèmes voisins, un portail chacun, teinté de leur couleur. */
+  destinations: PortalTarget[];
+  /** Un portail vient d'être franchi : la traversée est pilotée par React. */
+  onPortal: (platform: string) => void;
+  /**
+   * Touches de déplacement et sensibilité de la souris, lues à chaque frame.
+   *
+   * Passées par référence et non par valeur : les régler ne doit pas
+   * reconstruire la scène, alors que toute dépendance de l'effet le ferait.
+   */
+  flySettingsRef: RefObject<FlySettings>;
+  /**
+   * Système d'où l'on débarque, ou `null` au premier affichage.
+   *
+   * La caméra émerge alors du portail qui y ramène, au lieu d'entrer par le
+   * dehors — c'est la seconde moitié de la traversée.
+   */
+  arriveFrom: string | null;
 };
 
 /**
@@ -104,7 +205,6 @@ type Options = {
 export function useSolarScene({
   mountRef,
   labelsRef,
-  tooltipRef,
   games,
   platform,
   labelClass,
@@ -115,6 +215,10 @@ export function useSolarScene({
   popupRef,
   sideProbeRef,
   fpsRef,
+  destinations,
+  onPortal,
+  flySettingsRef,
+  arriveFrom,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -151,6 +255,12 @@ export function useSolarScene({
       20000,
     );
 
+    // Débordement lumineux et courbe de rendu filmique. Toute la scène passe
+    // par cette chaîne : plus aucun appel direct à `renderer.render`.
+    const post = createPostprocess(
+      renderer, scene, camera, container.clientWidth, container.clientHeight,
+    );
+
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
@@ -171,8 +281,12 @@ export function useSolarScene({
     const outerR = planetCount > 0 ? orbitRadius(planetCount - 1, orbStep) : ORB_BASE;
     // Le plancher garantit que le soleil reste plus gros que toute planète.
     const sunR = THREE.MathUtils.clamp(outerR * 0.055, PLN_R_MAX * 1.3, 26);
-    // Assez large pour englober la ceinture d'astéroïdes
-    const systemR = outerR * 1.55 + sunR * 2;
+    // Assez large pour englober la ceinture d'astéroïdes — et l'anneau de
+    // portails quand il existe, sans quoi le cadrage d'ensemble les laisserait
+    // hors champ, donc introuvables.
+    const anneauPortails =
+      destinations.length > 0 ? portalRingRadius(outerR, destinations.length) * PORTAL_SPREAD * 1.05 : 0;
+    const systemR = Math.max(outerR * 1.55, anneauPortails) + sunR * 2;
 
     // ── Décor ────────────────────────────────────────────────────────────
     const nebulaTex = makeNebulaTexture(tint);
@@ -183,11 +297,18 @@ export function useSolarScene({
     scene.add(new THREE.PointLight(0xfff2d8, 2.6, 0, 0));
     scene.add(createStarfield(outerR));
 
-    const sun = createSun(sunR);
+    // La couronne ne doit jamais mordre sur la première orbite.
+    const sun = createSun(sunR, outerR * 0.42);
     scene.add(sun.group);
 
     const belt = createBelt(outerR, planetCount);
     if (belt) scene.add(belt);
+
+    // Portails de phase — un par système voisin, absents s'il n'y a nulle
+    // part où aller.
+    const portalR = portalRadius(outerR);
+    const portals = destinations.length > 0 ? createPortals(outerR, destinations) : null;
+    if (portals) scene.add(portals.group);
 
     // ── Planètes et labels ───────────────────────────────────────────────
     const labelLayer = new LabelLayer(labelsRef.current);
@@ -208,11 +329,56 @@ export function useSolarScene({
       PLATFORM_CSS[platform] ?? '#7a8a9a',
     );
 
+    // Destination de chaque portail. Sans elle, une rangée de portails ne
+    // serait qu'une rangée d'anneaux lumineux indiscernables — la teinte seule
+    // ne suffit pas à nommer un launcher. Ces labels ne s'affichent qu'en vue
+    // d'ensemble, comme celui de la plateforme courante.
+    for (const e of portals?.entries ?? []) {
+      labelLayer.addWorld(
+        e.position.clone().setY(e.position.y - outerR * 0.16),
+        e.platform,
+        orbitLabelClass,
+        PLATFORM_CSS[e.platform] ?? '#7a8a9a',
+      );
+    }
+
     // ── Caméra : cadre le système entier ─────────────────────────────────
     // ~48° d'élévation : plus bas, les orbites s'écrasent sur une ligne et la
     // répartition autour du soleil devient illisible.
-    const homeCam = new THREE.Vector3(0, systemR * 1.05, systemR * 0.95);
-    camera.position.copy(homeCam);
+    // Rayon cadré au repos — le système seul, **portails exclus**.
+    //
+    // Les y inclure doublait la distance de la caméra (mesuré : 2,03×) et
+    // divisait donc par deux la taille apparente des planètes, qui sont le
+    // sujet de la vue. Les portails restent atteignables en dézoomant, et le
+    // plan d'ouverture les montre à chaque entrée dans le système : la caméra
+    // part de `ARRIVAL_ZOOM` fois cette distance, ce qui les englobe
+    // largement, puis se resserre sur le système.
+    const frameR = outerR * 1.9 + sunR * 2;
+    const homeCam = new THREE.Vector3(0, frameR * 1.05, frameR * 0.95);
+    // Entrée en scène. Deux cas :
+    //
+    //  - on débarque d'un autre système : la caméra **émerge du portail qui y
+    //    ramène**, en le traversant vers l'intérieur. C'est ce qui referme la
+    //    traversée — on est entré par un anneau, on ressort par un autre ;
+    //  - premier affichage : elle entre par le dehors, et le plan large montre
+    //    au passage les portails disponibles.
+    //
+    // Positionnée ici, avant `animateCam`, qui prend le relais plus bas.
+    const retour = arriveFrom
+      ? (portals?.entries.find((e) => e.platform === arriveFrom) ?? null)
+      : null;
+
+    if (retour) {
+      // Reculée dans l'axe du trajet à venir, et non dans l'axe radial : la
+      // caméra rejoint ensuite le cadrage d'ensemble en ligne droite, donc
+      // c'est cet axe-là qui doit passer par le centre de l'anneau. Le placer
+      // radialement la faisait passer jusqu'à deux rayons à côté — elle
+      // longeait le portail au lieu de le franchir.
+      const versSysteme = new THREE.Vector3().subVectors(homeCam, retour.position).normalize();
+      camera.position.copy(retour.position).addScaledVector(versSysteme, -portalR * 2.6);
+    } else {
+      camera.position.copy(homeCam).multiplyScalar(ARRIVAL_ZOOM);
+    }
     camera.lookAt(INIT_LOOK);
     controls.maxDistance = Math.max(900, systemR * 3.5);
 
@@ -251,13 +417,20 @@ export function useSolarScene({
     // Avancement du déplacement, en secondes, et durée visée
     let camT = 0;
     let camDur = 0;
+    let camEase: (t: number) => number = easeInOut;
     const camOffset = new THREE.Vector3();
+    const camDir = new THREE.Vector3();
+    const camLook = new THREE.Vector3();
     // Distance du cadrage d'ensemble, relevée sur la position initiale.
     const homeDist = homeCam.distanceTo(INIT_LOOK);
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
     // frame, y compris quand la caméra continue de tourner après le clic.
     let selectedEntry: PlanetEntry | null = null;
+    // Planète sous le curseur : seule son étiquette est affichée.
+    let hoveredEntry: PlanetEntry | null = null;
+    // Traversée engagée : verrouille le portail contre les doubles clics.
+    let departing = false;
     const popupProj = new THREE.Vector3();
     const popupEdge = new THREE.Vector3();
 
@@ -291,7 +464,13 @@ export function useSolarScene({
      * était proportionnelle à la distance, d'où un retour au cadrage général
      * qui partait en trombe.
      */
-    function animateCam(pos: THREE.Vector3, look: THREE.Vector3) {
+    function animateCam(
+      pos: THREE.Vector3,
+      look: THREE.Vector3,
+      duree?: number,
+      courbe: (t: number) => number = easeInOut,
+    ) {
+      camEase = courbe;
       camFromPos.copy(camera.position);
       camFromLook.copy(controls.target);
       camTargetPos.copy(pos);
@@ -300,8 +479,10 @@ export function useSolarScene({
       // Durée croissante avec la distance mais bornée : un saut entre deux
       // planètes voisines ne doit pas traîner, une traversée du système ne
       // doit pas se faire à toute allure.
+      // Une durée imposée l'emporte : la traversée du portail doit tomber
+      // juste avec le voile monté par React, quelle que soit la distance.
       const d = camFromPos.distanceTo(camTargetPos);
-      camDur = THREE.MathUtils.clamp(d / (systemR * CAM_REF), CAM_MIN_S, CAM_MAX_S);
+      camDur = duree ?? THREE.MathUtils.clamp(d / (systemR * CAM_REF), CAM_MIN_S, CAM_MAX_S);
       camT = 0;
 
       animating = true;
@@ -378,6 +559,11 @@ export function useSolarScene({
       if (target) selectPlanet(target);
     };
 
+    // Lancée ici et non au bloc caméra : `animateCam` s'appuie sur des
+    // vecteurs déclarés entre-temps.
+    // Décélérante : on jaillit du portail lancé, puis on se pose.
+    animateCam(homeCam, INIT_LOOK, ARRIVAL_S, retour ? easeOut : easeInOut);
+
     // ── Sélection et survol ──────────────────────────────────────────────
     const picker = createPicker({
       canvas,
@@ -385,8 +571,24 @@ export function useSolarScene({
       planets,
       pickMeshes,
       meshToEntry,
-      tooltipRef,
+      portals: portals ? portals.entries.map((e) => e.hit) : [],
+      onHover: (hit) => { hoveredEntry = hit; },
       onClick: (hit) => (hit ? selectPlanet(hit) : clearPlanet()),
+      onPortal: (target) => {
+        const entry = portals?.byHit.get(target);
+        if (!entry || departing) return;
+        departing = true;
+        hoveredEntry = null;
+        // On **traverse** l'anneau : la position visée est au-delà du portail
+        // et le regard porte loin devant, dans le même axe. S'arrêter dessus
+        // reviendrait à s'y garer, et viser son centre ferait converger caméra
+        // et cible — le regard partirait alors n'importe où.
+        camDir.subVectors(entry.position, camera.position).normalize();
+        camOffset.copy(entry.position).addScaledVector(camDir, portalR * 0.9);
+        camLook.copy(entry.position).addScaledVector(camDir, portalR * 14);
+        animateCam(camOffset, camLook, WARP_DIVE_S, easeIn);
+        onPortal(entry.platform);
+      },
     });
 
     function hidePopup(el: HTMLDivElement) {
@@ -484,6 +686,7 @@ export function useSolarScene({
       const h = container.clientHeight;
       if (w === 0 || h === 0) return;
       renderer.setSize(w, h);
+      post.setSize(w, h);
       applyView(viewSide, w, h, true);
 
       // Redessin immédiat, dans le même rendu de frame.
@@ -497,11 +700,84 @@ export function useSolarScene({
       // Ne concerne plus que les vrais redimensionnements de fenêtre : le
       // repli de la liste ne change plus la taille de la canvas.
       const host = labelsRef.current;
-      labelLayer.update(camera, systemR, host?.clientWidth ?? w, host?.clientHeight ?? h);
+      labelLayer.update(camera, systemR, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
       updatePopupAnchor(host?.clientWidth ?? w, host?.clientHeight ?? h);
-      renderer.render(scene, camera);
+      post.render();
     });
     ro.observe(container);
+
+    // ── Déplacement au clavier ───────────────────────────────────────────
+    // Les touches enfoncées sont mémorisées et relues à chaque frame, plutôt
+    // que d'agir sur l'événement : la répétition automatique du clavier est
+    // irrégulière et dépend des réglages du système, elle donnerait une
+    // trajectoire saccadée.
+    const enfoncees = new Set<string>();
+    const flyDir = new THREE.Vector3();
+    const flyRight = new THREE.Vector3();
+    const flyMove = new THREE.Vector3();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (saisieEnCours(e)) return;
+      enfoncees.add(e.code);
+      // La barre d'espace actionnerait sinon l'élément ayant le focus.
+      if (e.code === 'Space') e.preventDefault();
+    }
+    function onKeyUp(e: KeyboardEvent) {
+      enfoncees.delete(e.code);
+    }
+    // Le relâchement passe inaperçu si la fenêtre perd le focus entre-temps :
+    // sans cette remise à zéro, la caméra continuerait indéfiniment.
+    function onBlur() {
+      enfoncees.clear();
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+
+    /** Applique le déplacement de la frame. Renvoie vrai s'il y a eu mouvement. */
+    function updateFly(dt: number): boolean {
+      if (enfoncees.size === 0) return false;
+      const k = flySettingsRef.current.keys;
+
+      const avant = (enfoncees.has(k.avancer) ? 1 : 0) - (enfoncees.has(k.reculer) ? 1 : 0);
+      const cote = (enfoncees.has(k.droite) ? 1 : 0) - (enfoncees.has(k.gauche) ? 1 : 0);
+      const haut = (enfoncees.has(k.monter) ? 1 : 0) - (enfoncees.has(k.descendre) ? 1 : 0);
+      if (avant === 0 && cote === 0 && haut === 0) return false;
+
+      // L'utilisateur reprend la main sur un déplacement automatique en cours.
+      stopCam();
+
+      camera.getWorldDirection(flyDir);
+      flyRight.crossVectors(flyDir, WORLD_UP).normalize();
+
+      flyMove
+        .set(0, 0, 0)
+        .addScaledVector(flyDir, avant)
+        .addScaledVector(flyRight, cote)
+        .addScaledVector(WORLD_UP, haut)
+        // Normalisé : sans cela, deux touches conjuguées iraient √2 fois plus
+        // vite qu'une seule.
+        .normalize()
+        .multiplyScalar(
+          frameR * FLY_SPEED * dt * (enfoncees.has(k.accelerer) ? FLY_BOOST : 1),
+        );
+
+      // Distance du pivot **avant** de bouger : on ne le repousse jamais, on
+      // ne fait que le rapprocher. Sans cette borne, revenir vers le système
+      // rallongerait à nouveau le bras de levier.
+      const pivot = Math.max(
+        Math.min(camera.position.distanceTo(controls.target), frameR * FLY_PIVOT),
+        frameR * 0.02,
+      );
+
+      camera.position.add(flyMove);
+      // La cible est replacée sur l'axe du regard, à la distance retenue : le
+      // déplacement est donc une translation — l'orientation ne change pas —
+      // et le pivot se rapproche au passage.
+      controls.target.copy(camera.position).addScaledVector(flyDir, pivot);
+      return true;
+    }
 
     // ── Boucle d'animation ───────────────────────────────────────────────
     let prevT = performance.now();
@@ -567,6 +843,7 @@ export function useSolarScene({
 
       sun.core.scale.setScalar(1 + Math.sin(t * 0.0008) * 0.03);
       sun.core.rotation.y += 0.01 * dt;
+      portals?.update(t, dt, camera);
       if (belt && !paused) belt.rotation.y += 0.0015 * dt;
 
       if (animating) {
@@ -578,7 +855,7 @@ export function useSolarScene({
         // en tournant autour au passage.
         camT += dt;
         const k = camDur > 0 ? Math.min(camT / camDur, 1) : 1;
-        const e = easeInOut(k);
+        const e = camEase(k);
 
         camera.position.lerpVectors(camFromPos, camTargetPos, e);
         controls.target.lerpVectors(camFromLook, camTargetLook, e);
@@ -598,13 +875,21 @@ export function useSolarScene({
       // scène n'a donc rien à interpoler.
       applyView(probeW, viewW, viewH);
 
+      // Sensibilité : réécrite seulement si elle a bougé. `rotateSpeed` est lu
+      // par les contrôles à chaque geste, l'assigner à chaque frame ne coûterait
+      // rien de visible mais brouillerait l'intention.
+      const sens = flySettingsRef.current.sensibilite;
+      if (sens !== controls.rotateSpeed) controls.rotateSpeed = sens;
+
+      updateFly(dt);
+
       camera.updateMatrixWorld();
 
       picker.updateHover();
-      labelLayer.update(camera, systemR, hostW, hostH);
+      labelLayer.update(camera, systemR, hostW, hostH, hoveredEntry);
       updatePopupAnchor(hostW, hostH);
 
-      renderer.render(scene, camera);
+      post.render();
     };
     rafId = requestAnimationFrame(tick);
 
@@ -614,7 +899,11 @@ export function useSolarScene({
       cancelAnimationFrame(rafId);
       ro.disconnect();
       popupRo.disconnect();
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
       picker.dispose();
+      portals?.dispose();
       controls.dispose();
       labelLayer.dispose();
 
@@ -632,13 +921,14 @@ export function useSolarScene({
         }
       });
       nebulaTex.dispose();
+      post.dispose();
       renderer.dispose();
 
       if (canvas.parentNode === container) container.removeChild(canvas);
     };
   }, [
     games, platform, labelClass, orbitLabelClass,
-    mountRef, labelsRef, tooltipRef, onSelect, clearRef, focusRef, popupRef,
-    sideProbeRef, fpsRef,
+    mountRef, labelsRef, onSelect, clearRef, focusRef, popupRef,
+    sideProbeRef, fpsRef, destinations, onPortal, flySettingsRef, arriveFrom,
   ]);
 }
