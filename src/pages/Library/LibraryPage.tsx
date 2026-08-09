@@ -22,7 +22,7 @@ function fmtBytes(b: number): string {
 }
 
 type ViewMode = 'games' | 'favorites';
-type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Other';
+type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'Other';
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
@@ -79,6 +79,7 @@ export function LibraryPage() {
     scanPcRiot,
     scanPcRockstar,
     scanPcUbisoft,
+    scanPcHytale,
     isScanning,
     scanError,
   } = useLibraryGames();
@@ -100,6 +101,7 @@ export function LibraryPage() {
       scanPcRiot(),
       scanPcRockstar(),
       scanPcUbisoft(),
+      scanPcHytale(),
     ]);
   }
 
@@ -246,6 +248,7 @@ export function LibraryPage() {
             { value: 'Riot', label: 'Riot' },
             { value: 'Rockstar', label: 'Rockstar' },
             { value: 'Ubisoft', label: 'Ubisoft Connect' },
+            { value: 'Hytale', label: 'Hytale' },
             { value: 'Other', label: t('filters.other') },
           ]}
           value={platformFilter}

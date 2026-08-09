@@ -2,6 +2,7 @@
 mod battlenet_scan;
 mod detached;
 mod epic_scan;
+mod hytale_scan;
 mod icon_extract;
 mod launcher_scan;
 mod riot_scan;
@@ -257,6 +258,12 @@ fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
 }
 
 // Commande Tauri : scanne les jeux Riot Games via le registre Windows
+/// Commande Tauri : détecte Hytale via son dossier de données
+#[tauri::command]
+fn scan_hytale_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hytale_scan::scan_hytale_games()
+}
+
 #[tauri::command]
 fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
     riot_scan::scan_riot_games()
@@ -1256,6 +1263,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             scan_steam_games, scan_epic_games, scan_battlenet_games,
+            scan_hytale_games,
             scan_riot_games, scan_rockstar_games, scan_ubisoft_games,
             scan_launchers, get_file_icon_data_url, open_folder,
             launch_battlenet_game, launch_riot_game, launch_ubisoft_game,

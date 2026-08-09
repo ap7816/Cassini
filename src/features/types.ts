@@ -1,5 +1,5 @@
 // Plateformes de jeu supportées par ArcHive
-export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'GOG' | 'Other';
+export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'GOG' | 'Other';
 
 // Représentation d'un jeu dans la bibliothèque — lastPlayedAt est une date ISO 8601
 export type Game = {

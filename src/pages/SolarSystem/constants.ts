@@ -28,6 +28,7 @@ export const PLATFORM_COLOR: Record<string, number> = {
   Riot: 0xd13639,
   Rockstar: 0xc8a84b,
   Ubisoft: 0x4098d4,
+  Hytale: 0x37b9a0,
   GOG: 0x9b59b6,
   Other: 0x7a8a9a,
 };
@@ -39,6 +40,7 @@ export const PLATFORM_CSS: Record<string, string> = {
   Riot: '#d13639',
   Rockstar: '#c8a84b',
   Ubisoft: '#4098d4',
+  Hytale: '#37b9a0',
   GOG: '#9b59b6',
   Other: '#7a8a9a',
 };
