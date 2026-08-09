@@ -238,8 +238,10 @@
         <div class="welcome" id="preloader-welcome">Bienvenue sur ArcHive</div>
       </div>
     </div>
-    <!-- Audio d'ambiance démarré pendant le splash (adopté par ambientPlayer au montage React) -->
-    <audio id="preloader-ambient" src="./ambiant.mp3" loop preload="auto" style="display:none"></audio>
+    <!-- Audio d'ambiance démarré pendant le splash (adopté par ambientPlayer au montage React).
+         Sans `src` ni `loop` : la piste est tirée au sort par preloader.ts, et le rebouclage
+         empêcherait l'enchaînement vers la piste suivante. -->
+    <audio id="preloader-ambient" preload="auto" style="display:none"></audio>
 
     <div id="root"></div>
     <!-- Script externe et non inline : la CSP (script-src 'self') bloque
