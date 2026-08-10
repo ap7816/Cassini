@@ -138,7 +138,6 @@ portal gate a améliorer
 les jeux epic games sont buger
 interface a vérifier (3 fois le nombre de jeu total wtf)
 
-
 ---
 
 ## Détail des idées à venir
