@@ -127,8 +127,18 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans)                              | ❌ À faire |
 | Rendre les taille des planètes plus flagrante si un jeu est très lourd   | ❌ À faire |
-| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire | 
-| vaisseau promo steam, actualité etc                                      | ❌ À faire | 
+| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
+| vaisseau promo steam, actualité etc                                      | ❌ À faire |
+
+changer les planètes qui ont les anneaux (pas toujours les plus grosse)
+corriger la maj de l'appli qui marcche plus
+quand bcp de planètes certaine sont qausiment dans le soleil
+les images epic ne marche pas, connard
+portal gate a améliorer
+les jeux epic games sont buger
+interface a vérifier (3 fois le nombre de jeu total wtf)
+
+
 ---
 
 ## Détail des idées à venir
