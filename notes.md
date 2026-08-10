@@ -137,6 +137,10 @@ les images epic ne marche pas, connard
 portal gate a améliorer
 les jeux epic games sont buger
 interface a vérifier (3 fois le nombre de jeu total wtf)
+les icones sont buger après le changement du logo
+tu peux lancer 10 fois l'appli si tu veux
+enlève dans le tri les launchers qu'on à pas (logique)
+debug si un launcher est pas trouvé met le en non trouvé et n'affiche rien sur l'appli juste il n'existe pas sur le pc
 
 ---
 
