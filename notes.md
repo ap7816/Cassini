@@ -126,7 +126,9 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans)                              | ❌ À faire |
-
+| Rendre les taille des planètes plus flagrante si un jeu est très lourd   | ❌ À faire |
+| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire | 
+| vaisseau promo steam, actualité etc                                      | ❌ À faire | 
 ---
 
 ## Détail des idées à venir
