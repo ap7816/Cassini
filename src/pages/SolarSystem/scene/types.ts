@@ -15,4 +15,6 @@ export type PlanetEntry = {
   inc: number;
   /** Longitude du nœud ascendant. */
   node: number;
+  /** Teinte de l'atmosphère, reprise par la lueur de repérage. */
+  tint: THREE.Color;
 };

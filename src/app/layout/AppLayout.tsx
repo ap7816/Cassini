@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import logo from '../../assets/logo.svg';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
@@ -13,6 +13,7 @@ import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
 import { SolarButton } from './SolarButton';
+import { readNavCollapsed, writeNavCollapsed } from '../../services/storage';
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -37,10 +38,26 @@ export function AppLayout() {
     setSearchParams(next, { replace: true });
   }
 
+  // Repli du panneau de navigation, sur écran large uniquement : en dessous de
+  // 900 px il est déjà escamotable par le bouton hamburger, et deux mécanismes
+  // concurrents pour le même panneau se contrediraient.
+  //
+  // Le choix est retenu d'une session à l'autre : c'est une préférence de
+  // place à l'écran, pas un état de navigation.
+  const [navReplie, setNavReplie] = useState(readNavCollapsed);
+
+  function basculerNav() {
+    setNavReplie((v) => {
+      writeNavCollapsed(!v);
+      return !v;
+    });
+  }
+
   const sidebarClassName = [
     css.sidebar,
     isMobile ? css.sidebarMobile : css.sidebarDesktop,
     isMobile ? (sidebarOpen ? css.sidebarMobileOpen : css.sidebarMobileClosed) : '',
+    !isMobile && navReplie ? css.sidebarCollapsed : '',
   ].filter(Boolean).join(' ');
 
   const { settings } = useAppSettings();
@@ -108,7 +125,30 @@ export function AppLayout() {
         <div className={css.backdrop} onClick={closeSidebar} aria-hidden="true" />
       )}
 
-      <aside className={sidebarClassName}>
+      {!isMobile && (
+        <button
+          type="button"
+          className={css.navToggle}
+          onClick={basculerNav}
+          aria-expanded={!navReplie}
+          title={navReplie ? t('nav.expandMenu') : t('nav.collapseMenu')}
+          aria-label={navReplie ? t('nav.expandMenu') : t('nav.collapseMenu')}
+        >
+          <svg
+            className={[css.navToggleIcon, navReplie ? css.navToggleIconFlipped : '']
+              .filter(Boolean).join(' ')}
+            width="11" height="18" viewBox="0 0 11 18" fill="none" aria-hidden="true"
+          >
+            <path
+              d="M8.5 2L2 9l6.5 7"
+              stroke="currentColor" strokeWidth="2.2"
+              strokeLinecap="round" strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
+
+      <aside className={sidebarClassName} aria-hidden={!isMobile && navReplie}>
         <div className={css.brand}>
           <img src={logo} alt="ArcHive logo" className={css.logo} />
           <div className={css.brandSubtitle}>{t('nav.gameHub')}</div>

@@ -29,6 +29,7 @@ export const STORAGE_KEYS = {
   language:            'archive.language',
   patchNotesSeen:      'archive.patchNotes.seen',
   solarFlyKeys:        'archive.solar.flyKeys.v1',
+  navCollapsed:        'archive.layout.navCollapsed',
 } as const;
 
 /**
@@ -296,6 +297,20 @@ export function readSolarFlyKeys(): string | null {
 }
 export function writeSolarFlyKeys(json: string): void {
   rawWrite(STORAGE_KEYS.solarFlyKeys, json);
+}
+
+/**
+ * Panneau de navigation replié.
+ *
+ * Pas de clé historique : le réglage n'existait pas auparavant. Absent, il vaut
+ * « déplié » — un panneau qu'on ne retrouve pas au premier lancement serait
+ * bien pire qu'un panneau de trop.
+ */
+export function readNavCollapsed(): boolean {
+  return rawRead(STORAGE_KEYS.navCollapsed) === 'true';
+}
+export function writeNavCollapsed(v: boolean): void {
+  rawWrite(STORAGE_KEYS.navCollapsed, String(v));
 }
 
 export function readAmbientEnabled(): boolean {

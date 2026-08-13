@@ -1,5 +1,6 @@
 /* ── Shell ────────────────────────────────────────────────── */
 .shell {
+  --nav-w: 220px;
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -24,6 +25,13 @@
   z-index: 1;
 }
 
+/* Au-dessus de `main`, dont il est un frère plus ancien dans le document.
+   La canvas du système solaire est fixée à la fenêtre et passe donc sous le
+   panneau : sans ce rang, c'est elle qui recouvrirait la navigation. */
+.sidebarDesktop {
+  z-index: 3;
+}
+
 /* ── Sidebar ──────────────────────────────────────────────── */
 .sidebar {
   display: flex;
@@ -39,9 +47,115 @@
 }
 
 .sidebarDesktop {
-  width: 220px;
+  /* Largeur publiée : la languette s'y adosse, et la suit pendant le repli. */
+  --nav-w: 220px;
+  width: var(--nav-w);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition:
+    width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-right-width 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Replié.
+
+   La largeur tombe à zéro mais le contenu garde la sienne : le rétrécir ferait
+   déferler les libellés pendant l'animation, sur trois lignes puis deux puis
+   une. `min-width` sur les enfants les fige le temps du glissement.
+
+   `visibility` bascule seulement à la fin, sinon les liens quitteraient l'ordre
+   de tabulation avant même d'avoir disparu de l'écran. */
+.sidebarCollapsed {
+  --nav-w: 0px;
+  /* `box-sizing: border-box` empêche la largeur de descendre sous le padding :
+     une largeur nulle laissait malgré tout 24 px de panneau, invisibles mais
+     occupant la place que la scène devait récupérer. Padding et bordure
+     tombent donc eux aussi, et suivent la même courbe pour que le glissement
+     reste d'une seule pièce. */
+  padding-left: 0;
+  padding-right: 0;
+  border-right-width: 0;
+  visibility: hidden;
+  transition:
+    width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-right-width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 220ms;
+}
+
+.sidebarCollapsed > * {
+  min-width: 196px;
+}
+
+/* Languette de repli, adossée au bord du panneau. Son `left` suit `--nav-w`,
+   elle se retrouve donc contre le bord de la fenêtre une fois replié. */
+.navToggle {
+  position: fixed;
+  top: 50%;
+  left: var(--nav-w, 220px);
+  z-index: 40;
+  width: 22px;
+  height: 76px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-left: none;
+  border-radius: 0 9px 9px 0;
+  background: rgba(16, 23, 36, 0.95);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  /* Le système solaire défile derrière elle : aucun contraste stable à
+     attendre du fond. */
+  box-shadow: 5px 0 18px rgba(0, 0, 0, 0.5);
+  transform: translateY(-50%);
+  transition:
+    left 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 140ms,
+    border-color 140ms,
+    color 140ms;
+}
+
+.navToggle:hover {
+  background: rgba(32, 44, 66, 0.98);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #fff;
+}
+
+.navToggle:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: -3px;
+}
+
+.navToggleIcon {
+  display: block;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Replié : le chevron s'inverse et invite à faire revenir le panneau. */
+.navToggleIconFlipped {
+  transform: scaleX(-1);
+}
+
+/* La languette est en position fixe : elle ne peut pas hériter de `--nav-w` du
+   panneau, qui n'est pas son ancêtre dans l'arbre de mise en page. C'est donc
+   la coque qui la porte, et `:has` la tient au courant du repli. */
+.shell:has(.sidebarCollapsed) {
+  --nav-w: 0px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebarDesktop,
+  .navToggle,
+  .navToggleIcon {
+    transition: none;
+  }
+  .sidebarCollapsed {
+    transition: visibility 0s;
+  }
 }
 
 .sidebarMobile {

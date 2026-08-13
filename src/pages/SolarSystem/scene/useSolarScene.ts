@@ -16,7 +16,7 @@ import { orbitPos, orbitRadius } from '../lib/orbits';
 import { placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { createBelt, createStarfield, createSun } from './decor';
-import { createPlanets } from './planets';
+import { createPlanets, createPlanetGlow } from './planets';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import { createPostprocess } from './postprocess';
@@ -190,6 +190,15 @@ type Options = {
    * la transition CSS du repli.
    */
   sideProbeRef: RefObject<HTMLDivElement | null>;
+  /**
+   * Même chose pour le panneau de navigation, à gauche.
+   *
+   * Il vit hors de la page — c'est la coque de l'application qui le porte —
+   * mais la canvas couvre désormais la fenêtre entière, y compris dessous : la
+   * scène doit donc décaler sa projection de sa largeur, exactement comme elle
+   * le fait pour la liste.
+   */
+  navProbeRef: RefObject<HTMLDivElement | null>;
   /** Réceptacle du compteur d'images, écrit directement dans le DOM. */
   fpsRef: RefObject<HTMLDivElement | null>;
   /** Systèmes voisins, un portail chacun, teinté de leur couleur. */
@@ -230,6 +239,7 @@ export function useSolarScene({
   focusRef,
   popupRef,
   sideProbeRef,
+  navProbeRef,
   fpsRef,
   destinations,
   onPortal,
@@ -365,6 +375,10 @@ export function useSolarScene({
       onPlanet: (entry) => labelLayer.addPlanet(entry, entry.game.title, labelClass),
     });
 
+    // Repère chaque planète quand elle devient trop petite pour être vue.
+    const glow = createPlanetGlow(planets);
+    scene.add(glow.points);
+
     labelLayer.addWorld(
       new THREE.Vector3(0, outerR * 0.04, -outerR * 1.5),
       platform,
@@ -404,7 +418,10 @@ export function useSolarScene({
     // plan d'ouverture les montre à chaque entrée dans le système : la caméra
     // part de `ARRIVAL_ZOOM` fois cette distance, ce qui les englobe
     // largement, puis se resserre sur le système.
-    const frameR = outerR * 1.9 + sunR * 2;
+    // Resserré depuis 1,9 : le système occupait un peu plus du tiers de la
+    // hauteur utile, le reste étant du vide étoilé. Ce qui reste de marge
+    // laisse encore respirer l'orbite externe et ses libellés.
+    const frameR = outerR * 1.42 + sunR * 1.6;
     const homeCam = new THREE.Vector3(0, frameR * 1.05, frameR * 0.95);
     // Entrée en scène. Deux cas :
     //
@@ -433,29 +450,41 @@ export function useSolarScene({
     camera.lookAt(INIT_LOOK);
     controls.maxDistance = Math.max(900, systemR * 3.5);
 
-    // Largeur actuellement masquée par la colonne de droite, en pixels.
-    let viewSide = 0;
+    // Largeurs masquées de part et d'autre, en pixels : le panneau de
+    // navigation à gauche, la liste des jeux à droite.
+    let viewLeft = 0;
+    let viewRight = 0;
 
     /**
-     * Recentre le système dans la portion de canvas laissée visible par la
-     * colonne de droite, sans toucher à la surface de rendu.
+     * Recentre le système dans la portion de canvas laissée visible par les
+     * deux colonnes, sans toucher à la surface de rendu.
      *
-     * La caméra est cadrée comme si l'image faisait `w + side` pixels de large,
-     * et l'on n'en affiche que les `w` de droite. Le centre optique tombe alors
-     * à `(w + side) / 2 − side`, soit le milieu de la zone découverte.
+     * La caméra est cadrée comme si l'image faisait `w + left + right` pixels
+     * de large, et l'on n'en affiche qu'une fenêtre de `w` commençant à
+     * `right`. Le centre optique tombe alors à `(w + left + right) / 2 − right`,
+     * soit `(left + w − right) / 2` : exactement le milieu de la bande
+     * découverte, qui va de `left` à `w − right`.
      *
-     * L'aspect vaut `(w + side) / h` et non `w / h` : c'est ce qui garde les
-     * pixels carrés. La fenêtre affichée ne retient que `w / (w + side)` de
+     * L'aspect vaut `(w + left + right) / h` et non `w / h` : c'est ce qui garde
+     * les pixels carrés. La fenêtre affichée ne retient qu'une fraction de
      * l'étendue horizontale, ce facteur doit être compensé en amont sous peine
      * d'étirer la scène pendant tout le repli.
      */
-    const applyView = (side: number, w: number, h: number, force = false) => {
+    const applyView = (
+      left: number,
+      right: number,
+      w: number,
+      h: number,
+      force = false,
+    ) => {
       if (w === 0 || h === 0) return;
-      if (!force && side === viewSide) return;
+      if (!force && left === viewLeft && right === viewRight) return;
 
-      viewSide = side;
-      camera.aspect = (w + side) / h;
-      if (side > 0) camera.setViewOffset(w + side, h, side, 0, w, h);
+      viewLeft = left;
+      viewRight = right;
+      const pleine = w + left + right;
+      camera.aspect = pleine / h;
+      if (left > 0 || right > 0) camera.setViewOffset(pleine, h, right, 0, w, h);
       else camera.clearViewOffset();
       camera.updateProjectionMatrix();
     };
@@ -706,11 +735,15 @@ export function useSolarScene({
         .project(camera);
       const edge = Math.abs(popupEdge.x * (w / 2) + w / 2 - cx);
 
-      // Le calque couvre toute la page, y compris sous la colonne de droite :
-      // la carte doit être recadrée sur la seule zone découverte.
-      const { x, y, arrowY, side } = placePopup(
-        cx, cy, edge, popupW, popupH, w - viewSide, h,
+      // Le calque couvre toute la fenêtre, y compris sous les deux colonnes :
+      // la carte doit être recadrée sur la seule bande découverte. Celle-ci ne
+      // commence plus à zéro, on raisonne donc dans son repère puis on ramène
+      // le résultat dans celui du calque.
+      const placement = placePopup(
+        cx - viewLeft, cy, edge, popupW, popupH, w - viewLeft - viewRight, h,
       );
+      const { y, arrowY, side } = placement;
+      const x = placement.x + viewLeft;
 
       // Écritures conditionnelles, comme pour les labels : réécrire un style
       // inchangé 60 fois par seconde n'invalide rien de visible mais fait
@@ -738,7 +771,7 @@ export function useSolarScene({
       if (w === 0 || h === 0) return;
       renderer.setSize(w, h);
       post.setSize(w, h);
-      applyView(viewSide, w, h, true);
+      applyView(viewLeft, viewRight, w, h, true);
 
       // Redessin immédiat, dans le même rendu de frame.
       //
@@ -859,6 +892,7 @@ export function useSolarScene({
       const hostW = host ? host.clientWidth : 0;
       const hostH = host ? host.clientHeight : 0;
       const probeW = sideProbeRef.current?.offsetWidth ?? 0;
+      const navW = navProbeRef.current?.offsetWidth ?? 0;
       const viewW = container.clientWidth;
       const viewH = container.clientHeight;
 
@@ -891,6 +925,12 @@ export function useSolarScene({
         }
         p.mesh.rotation.y += 0.05 * dt;
       }
+      // Après le déplacement des planètes, sinon la lueur traîne d'une frame.
+      //
+      // Sans condition : `paused` ne reflète que l'état de la première planète,
+      // et recopier quelques centaines de flottants coûte moins cher que le
+      // risque de laisser les lueurs derrière les planètes encore en mouvement.
+      glow.update();
 
       sun.core.scale.setScalar(1 + Math.sin(t * 0.0008) * 0.03);
       sun.core.rotation.y += 0.01 * dt;
@@ -922,9 +962,9 @@ export function useSolarScene({
         controls.update();
       }
 
-      // Suit le repli de la liste : le témoin porte la transition CSS, la
-      // scène n'a donc rien à interpoler.
-      applyView(probeW, viewW, viewH);
+      // Suit le repli des deux colonnes : chaque témoin porte sa transition
+      // CSS, la scène n'a donc rien à interpoler.
+      applyView(navW, probeW, viewW, viewH);
 
       // Sensibilité : réécrite seulement si elle a bougé. `rotateSpeed` est lu
       // par les contrôles à chaque geste, l'assigner à chaque frame ne coûterait
@@ -954,6 +994,7 @@ export function useSolarScene({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
       picker.dispose();
+      glow.dispose();
       portals?.dispose();
       controls.dispose();
       labelLayer.dispose();
@@ -980,6 +1021,7 @@ export function useSolarScene({
   }, [
     games, platform, labelClass, orbitLabelClass,
     mountRef, labelsRef, onSelect, clearRef, focusRef, popupRef,
-    sideProbeRef, fpsRef, destinations, onPortal, flySettingsRef, arriveFrom,
+    sideProbeRef, navProbeRef, fpsRef, destinations, onPortal, flySettingsRef,
+    arriveFrom,
   ]);
 }

@@ -19,7 +19,7 @@
      fenêtre étroite la liste finissait par occuper plus de place que la scène.
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
-  --list-w: min(240px, 38%);
+  --list-w: min(196px, 26%);
   --side-w: var(--list-w);
 }
 
@@ -43,9 +43,21 @@
    tampon de dessin, soit une douzaine de réallocations de plusieurs mégaoctets
    en 220 ms, et un rendu supplémentaire par frame pour ne pas afficher le
    tampon vide. Décaler la projection ne coûte qu'une matrice. */
+/* Fixée à la fenêtre, et non au cadre de `main`.
+
+   Replier le panneau de navigation redimensionne `main`. Tant que la canvas y
+   était accrochée, chaque frame du repli réallouait le tampon de dessin et
+   toute la chaîne de floraison — une douzaine de fois en 220 ms — chacune
+   suivie d'un rendu complet supplémentaire. C'est ce qui rendait le glissement
+   saccadé : exactement le travers que le repli de la liste évitait déjà.
+
+   Fixée à la fenêtre, elle ne change de taille que si la fenêtre change. Le
+   panneau la recouvre (z-index), et la scène décale sa projection de sa
+   largeur — une matrice par frame au lieu d'une réallocation. */
 .canvas {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  z-index: 0;
   cursor: grab;
 }
 
@@ -59,8 +71,11 @@
    recouvre : un label de planète masquée par la liste disparaît derrière elle,
    comme la planète elle-même. */
 .labels {
-  position: absolute;
+  /* Exactement la géométrie de la canvas — donc fixée comme elle, sans quoi la
+     projection décalerait le texte. */
+  position: fixed;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -71,6 +86,19 @@
    de projection. Elle suit ainsi la courbe CSS au pixel près, sans qu'il
    faille dupliquer durée et courbe d'accélération en JavaScript — deux
    timelines indépendantes finissent toujours par se désynchroniser. */
+/* Témoin du panneau de navigation. Même rôle que `.sideProbe`, de l'autre
+   côté : `--nav-w` bascule d'un coup, c'est ce témoin qui en porte la courbe. */
+.navProbe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0;
+  width: var(--nav-w, 0px);
+  pointer-events: none;
+  visibility: hidden;
+  transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .sideProbe {
   position: absolute;
   top: 0;
@@ -250,7 +278,8 @@
 /* Sans mouvement demandé, le décalage de projection prend sa valeur finale
    immédiatement : la scène lit la largeur du témoin, qui ne transite plus. */
 @media (prefers-reduced-motion: reduce) {
-  .sideProbe {
+  .sideProbe,
+  .navProbe {
     transition: none;
   }
 }

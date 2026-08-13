@@ -6,6 +6,8 @@
     "settings": "Settings",
     "gameHub": "Game Hub",
     "openMenu": "Open menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu",
     "searchPlaceholder": "Search...",
     "searchLabel": "Search"
   },

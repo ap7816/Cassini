@@ -2,11 +2,44 @@ import * as THREE from 'three';
 import { seededRng } from '../lib/random';
 
 /**
+ * Réglages de dessin d'un anneau, imposés par sa famille.
+ *
+ * Ce sont ces valeurs, et non la seule graine, qui font qu'un anneau se
+ * reconnaît de loin : la graine ne changeait que des détails — fréquences de
+ * rubanage, position de la division — sous une silhouette toujours identique.
+ */
+export type ProfilAnneau = {
+  /** Nombre de vides nets creusés dans la largeur. */
+  divisions: number;
+  /** Force du rubanage. 0 rend une nappe unie, 1 le contraste d'origine. */
+  contraste: number;
+  /** Exposant d'atténuation aux bords. Bas = bords francs, haut = fondus. */
+  douceur: number;
+  /** Opacité d'ensemble de la nappe. */
+  eclat: number;
+  /** Facteur appliqué à la saturation de la teinte de base. */
+  saturation: number;
+};
+
+/** Profil historique, conservé comme référence et valeur par défaut. */
+export const PROFIL_DEFAUT: ProfilAnneau = {
+  divisions: 1,
+  contraste: 1,
+  douceur: 0.55,
+  eclat: 0.85,
+  saturation: 1,
+};
+
+/**
  * Texture d'anneau planétaire : une bande 1-D échantillonnée radialement.
- * Encode le rubanage, une division type Cassini et des bords fondus dans le
+ * Encode le rubanage, les divisions type Cassini et des bords fondus dans le
  * canal alpha.
  */
-export function makeRingTexture(seed: number, base: THREE.Color): THREE.CanvasTexture {
+export function makeRingTexture(
+  seed: number,
+  base: THREE.Color,
+  profil: ProfilAnneau = PROFIL_DEFAUT,
+): THREE.CanvasTexture {
   const w = 1024, h = 1;
   const cv = document.createElement('canvas');
   cv.width = w;
@@ -18,13 +51,24 @@ export function makeRingTexture(seed: number, base: THREE.Color): THREE.CanvasTe
   const p1 = rng() * 6.28, p2 = rng() * 6.28, p3 = rng() * 6.28;
   const f1 = 42 + rng() * 46;         // fréquence de rubanage fin
   const f2 = 11 + rng() * 12;         // fréquence de rubanage large
-  const gapPos = 0.42 + rng() * 0.28; // position de la division de Cassini
-  const gapW = 0.035 + rng() * 0.045;
+
+  // Divisions réparties sur la largeur utile, à distance des deux bords où
+  // l'atténuation les rendrait invisibles. Une seule division retombe au
+  // milieu, là où se trouvait la division de Cassini d'origine.
+  const n = Math.max(0, Math.round(profil.divisions));
+  const vides = Array.from({ length: n }, (_, i) => ({
+    pos: 0.28 + ((i + 0.5) / n) * 0.46 + (rng() - 0.5) * 0.08,
+    largeur: 0.03 + rng() * 0.04,
+  }));
 
   // Variation de luminosité par bande, quantifiée pour que les anneaux se
   // lisent comme des cercles distincts
   const bands = 160;
-  const jitter = Array.from({ length: bands }, () => 0.75 + rng() * 0.5);
+  const ampJitter = 0.5 * profil.contraste;
+  const jitter = Array.from(
+    { length: bands },
+    () => 1 - ampJitter / 2 + rng() * ampJitter,
+  );
 
   const hsl = { h: 0, s: 0, l: 0 };
   base.getHSL(hsl);
@@ -37,23 +81,28 @@ export function makeRingTexture(seed: number, base: THREE.Color): THREE.CanvasTe
     const t = x / (w - 1);
 
     // Atténuation douce aux bords intérieur et extérieur
-    let a = Math.pow(Math.sin(Math.PI * t), 0.55);
-    // Deux fréquences de rubanage superposées
-    a *= 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * f1 + p1));
-    a *= 0.62 + 0.38 * (0.5 + 0.5 * Math.sin(t * f2 + p2));
+    let a = Math.pow(Math.sin(Math.PI * t), profil.douceur);
+    // Deux fréquences de rubanage superposées, d'autant plus marquées que le
+    // profil est contrasté — à contraste nul les deux facteurs valent 1.
+    a *= 1 - 0.55 * profil.contraste
+       + 0.55 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f1 + p1));
+    a *= 1 - 0.38 * profil.contraste
+       + 0.38 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f2 + p2));
     // Variation discrète par bande
     a *= jitter[Math.min(bands - 1, Math.floor(t * bands))];
 
-    // Division type Cassini : un vide net creusé dans l'anneau
-    const d = Math.abs(t - gapPos);
-    if (d < gapW) a *= Math.pow(d / gapW, 1.6);
+    // Divisions type Cassini : des vides nets creusés dans l'anneau
+    for (const v of vides) {
+      const d = Math.abs(t - v.pos);
+      if (d < v.largeur) a *= Math.pow(d / v.largeur, 1.6);
+    }
 
-    a = Math.max(0, Math.min(1, a)) * 0.85;
+    a = Math.max(0, Math.min(1, a)) * profil.eclat;
 
     // Plus glacé vers l'extérieur, plus poussiéreux vers la planète
     col.setHSL(
       hsl.h,
-      hsl.s * (0.35 + 0.3 * (1 - t)),
+      hsl.s * profil.saturation * (0.35 + 0.3 * (1 - t)),
       0.55 + 0.28 * t + 0.08 * Math.sin(t * f1 * 0.5 + p3),
     );
 
@@ -78,13 +127,20 @@ export function makeRingTexture(seed: number, base: THREE.Color): THREE.CanvasTe
  * Les UV par défaut de `RingGeometry` sont mappées en carré, ce qui est
  * inutilisable pour un rubanage radial. On les réécrit pour que `u` aille de 0
  * (bord intérieur) à 1 (bord extérieur).
+ *
+ * `thetaStart` et `thetaLength` permettent de ne dessiner qu'un secteur : c'est
+ * ainsi que se font les arcs, sans rien changer à la texture. Un anneau
+ * incomplet coûte alors moins cher qu'un anneau entier, là où le même effet
+ * obtenu par le canal alpha aurait demandé une texture à deux dimensions.
  */
 export function radialRingGeometry(
   inner: number,
   outer: number,
   segments: number,
+  thetaStart = 0,
+  thetaLength = Math.PI * 2,
 ): THREE.RingGeometry {
-  const geo = new THREE.RingGeometry(inner, outer, segments, 1);
+  const geo = new THREE.RingGeometry(inner, outer, segments, 1, thetaStart, thetaLength);
   const pos = geo.attributes.position;
   const uv = geo.attributes.uv;
   const v = new THREE.Vector3();

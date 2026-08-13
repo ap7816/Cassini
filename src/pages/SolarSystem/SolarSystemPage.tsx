@@ -67,6 +67,7 @@ export function SolarSystemPage() {
   const focusPlanetRef = useRef<(gameId: string) => void>(() => {});
   const popupRef = useRef<HTMLDivElement>(null);
   const sideProbeRef = useRef<HTMLDivElement>(null);
+  const navProbeRef = useRef<HTMLDivElement>(null);
   const fpsRef = useRef<HTMLDivElement>(null);
   // Les affectations vivent dans une ref lue par la scène à chaque frame, et
   // en état pour l'affichage du panneau. Les passer en dépendance de la scène
@@ -188,6 +189,7 @@ export function SolarSystemPage() {
     focusRef: focusPlanetRef,
     popupRef,
     sideProbeRef,
+    navProbeRef,
     fpsRef,
     destinations,
     onPortal: handlePortal,
@@ -221,6 +223,7 @@ export function SolarSystemPage() {
       {/* Témoin de la largeur animée de la colonne : la scène le mesure pour
           décaler sa projection en suivant la transition CSS (voir applyView). */}
       <div ref={sideProbeRef} className={css.sideProbe} />
+      <div ref={navProbeRef} className={css.navProbe} />
 
       {/* Compteur d'images, écrit par la scène sans passer par React. */}
       <div ref={fpsRef} className={css.fps} />
