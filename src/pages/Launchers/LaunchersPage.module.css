@@ -88,6 +88,28 @@
   gap: 12px;
 }
 
+/* Launcher absent du PC.
+
+   La carte reste présente — c'est tout l'intérêt : elle dit qu'ArcHive a bien
+   cherché ce launcher et ne l'a pas trouvé, là où son absence pure et simple
+   ne distinguait pas ce cas d'une détection ratée. Mais elle s'efface derrière
+   les launchers utilisables, et n'expose aucune action.
+
+   Le pointillé plutôt qu'un trait plein : la bordure dit « emplacement vide »
+   avant même qu'on ait lu le sous-titre. */
+.cardMissing {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(15, 20, 26, 0.28);
+  opacity: 0.55;
+}
+
+/* Sans cela, la carte se tasse par rapport à ses voisines qui, elles, portent
+   une rangée de boutons — la grille prend un aspect de dents cassées. */
+.cardMissing .cardTop {
+  min-height: 62px;
+}
+
 .cardTop {
   display: grid;
   gap: 6px;

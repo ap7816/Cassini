@@ -1208,6 +1208,28 @@ fn get_disk_free_space() -> Result<DiskInfo, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Instance unique — enregistré en premier, avant tout autre plugin.
+        //
+        // C'est une exigence du plugin et non une préférence de style : il doit
+        // pouvoir constater qu'une instance tourne déjà et arrêter le second
+        // processus avant que quoi que ce soit d'autre ne s'initialise. Placé
+        // plus bas, on paierait le démarrage complet — scan des launchers,
+        // ouverture du store, icône de notification — juste avant de quitter.
+        //
+        // Le rappel s'exécute dans l'instance *déjà en place*, quand une
+        // seconde est lancée. Plutôt que d'ignorer la demande, on ramène la
+        // fenêtre : c'est ce que l'utilisateur voulait en relançant. `show`
+        // puis `unminimize` couvrent les deux façons dont elle peut être
+        // absente de l'écran — repliée dans la zone de notification, ou
+        // réduite dans la barre des tâches — et `set_focus` la met devant.
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            use tauri::Manager;
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.show();
+                let _ = w.unminimize();
+                let _ = w.set_focus();
+            }
+        }))
         // Racine musique autorisée — partagée par les commandes fichier
         .manage(MusicRoot::default())
         .setup(|app| {

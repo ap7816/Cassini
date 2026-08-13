@@ -184,7 +184,10 @@ export function LaunchersPage() {
       return 0;
     });
 
-  const isEmpty = !loading && launchers.length === 0;
+  // Le scan renvoie désormais tout le catalogue, y compris les launchers
+  // absents du PC : `launchers` n'est donc jamais vide et ne dit plus rien sur
+  // ce qu'il y a à montrer. C'est la liste après filtrage qui décide.
+  const isEmpty = !loading && filteredLaunchers.length === 0;
 
   return (
     <div className={css.page}>
@@ -252,7 +255,13 @@ export function LaunchersPage() {
             const icon = iconsById[l.id] ?? null;
 
             return (
-              <section key={l.id} className={css.card} aria-label={`${l.name} launcher`}>
+              <section
+                key={l.id}
+                className={[css.card, l.installed ? '' : css.cardMissing]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-label={`${l.name} launcher`}
+              >
                 <div className={css.cardTop}>
                   <div className={css.cardTitleRow}>
                     <div className={css.iconWrap} aria-hidden="true">
@@ -266,10 +275,14 @@ export function LaunchersPage() {
                   </div>
 
                   <div className={css.cardSubtitle}>
-                    {l.installed ? t('launchers.installed') : t('launchers.notInstalled')}
+                    {l.installed ? t('launchers.installed') : t('launchers.notFound')}
                   </div>
                 </div>
 
+                {/* Launcher absent du PC : aucune action proposée. Deux boutons
+                    grisés laisseraient croire qu'il y a quelque chose à
+                    débloquer, alors qu'il n'y a simplement rien à ouvrir. */}
+                {l.installed && (
                 <div className={css.cardActions}>
                   <button
                     type="button"
@@ -292,6 +305,7 @@ export function LaunchersPage() {
                       : t('launchers.folder')}
                   </button>
                 </div>
+                )}
 
                 {isThisOpening && (
                   <div className={css.opening}>

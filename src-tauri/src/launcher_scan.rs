@@ -14,20 +14,53 @@ pub struct LauncherDto {
     pub icon_path: Option<String>,
 }
 
-// Détecte tous les launchers installés et retourne la liste triée par nom
+/// Les launchers gérés par ArcHive, avec la fonction qui les cherche.
+type Catalogue = [(&'static str, &'static str, fn() -> Option<LauncherDto>); 7];
+
+const CATALOGUE: Catalogue = [
+    ("steam", "Steam", detect_steam),
+    ("epic", "Epic Games", detect_epic),
+    ("battlenet", "Battle.net", detect_battlenet),
+    ("riot", "Riot Client", detect_riot),
+    ("rockstar", "Rockstar Games", detect_rockstar_launcher),
+    ("ubisoft", "Ubisoft Connect", detect_ubisoft_connect),
+    ("hytale", "Hytale", detect_hytale),
+];
+
+// Détecte tous les launchers et retourne la liste complète du catalogue
 // Note : pas de #[tauri::command] ici — la commande est dans lib.rs
+//
+// Un launcher introuvable n'est plus tu : il figure dans la réponse avec
+// `installed: false`. Auparavant la fonction ne renvoyait que ce qu'elle avait
+// trouvé, si bien qu'un launcher absent du PC et un launcher présent mais mal
+// détecté produisaient exactement la même chose — rien — sans qu'on puisse
+// distinguer les deux depuis l'interface. La réponse décrit désormais ce qui a
+// été cherché, pas seulement ce qui a été trouvé.
 pub fn scan_launchers() -> Result<Vec<LauncherDto>, String> {
-    let mut out: Vec<LauncherDto> = Vec::new();
+    let mut out: Vec<LauncherDto> = CATALOGUE
+        .iter()
+        .map(|(id, nom, detecte)| {
+            detecte().unwrap_or_else(|| LauncherDto {
+                id: (*id).to_string(),
+                name: (*nom).to_string(),
+                installed: false,
+                // Rien à lancer ni à illustrer : l'interface n'affiche aucune
+                // action pour ces entrées, et une cible vide garantit qu'un
+                // appel accidentel n'ouvrirait rien plutôt qu'au hasard.
+                launch_target: String::new(),
+                icon_path: None,
+            })
+        })
+        .collect();
 
-    if let Some(x) = detect_steam() { out.push(x); }
-    if let Some(x) = detect_epic() { out.push(x); }
-    if let Some(x) = detect_battlenet() { out.push(x); }
-    if let Some(x) = detect_riot() { out.push(x); }
-    if let Some(x) = detect_rockstar_launcher() { out.push(x); }
-    if let Some(x) = detect_ubisoft_connect() { out.push(x); }
-    if let Some(x) = detect_hytale() { out.push(x); }
-
-    out.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    // Les launchers présents d'abord, chaque groupe par ordre alphabétique :
+    // sans cela une entrée « non trouvé » viendrait s'intercaler entre deux
+    // launchers utilisables, au milieu de la grille.
+    out.sort_by(|a, b| {
+        b.installed
+            .cmp(&a.installed)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
     Ok(out)
 }
 
@@ -325,4 +358,44 @@ fn detect_hytale() -> Option<LauncherDto> {
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn le_catalogue_est_toujours_rendu_en_entier() {
+        let out = scan_launchers().expect("le scan ne doit pas échouer");
+        assert_eq!(
+            out.len(),
+            CATALOGUE.len(),
+            "un launcher absent du PC doit rester dans la réponse"
+        );
+
+        let mut ids: Vec<&str> = out.iter().map(|l| l.id.as_str()).collect();
+        ids.sort_unstable();
+        let avant = ids.len();
+        ids.dedup();
+        assert_eq!(avant, ids.len(), "deux launchers partagent le même id");
+    }
+
+    #[test]
+    fn un_launcher_introuvable_n_offre_rien_a_lancer() {
+        for l in scan_launchers().unwrap().iter().filter(|l| !l.installed) {
+            assert!(l.launch_target.is_empty(), "{} : cible non vide", l.id);
+            assert!(l.icon_path.is_none(), "{} : icône renseignée", l.id);
+            assert!(!l.name.is_empty(), "{} : nom manquant", l.id);
+        }
+    }
+
+    #[test]
+    fn les_launchers_presents_passent_devant() {
+        let out = scan_launchers().unwrap();
+        let premier_absent = out.iter().position(|l| !l.installed);
+        let dernier_present = out.iter().rposition(|l| l.installed);
+        if let (Some(a), Some(p)) = (premier_absent, dernier_present) {
+            assert!(p < a, "un « non trouvé » s'intercale entre deux launchers présents");
+        }
+    }
 }

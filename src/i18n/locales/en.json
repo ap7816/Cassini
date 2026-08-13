@@ -63,7 +63,7 @@
     "refresh": "Refresh",
     "desktopOnly": "Desktop only: launcher detection works in the Tauri app (not in the web preview).",
     "installed": "Installed",
-    "notInstalled": "Not installed",
+    "notFound": "Not found on this PC",
     "open": "Open",
     "opening": "Opening…",
     "folder": "Folder",

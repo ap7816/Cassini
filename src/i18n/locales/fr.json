@@ -63,7 +63,7 @@
     "refresh": "Actualiser",
     "desktopOnly": "Bureau uniquement : la détection des lanceurs fonctionne dans l'application Tauri (pas dans l'aperçu web).",
     "installed": "Installé",
-    "notInstalled": "Non installé",
+    "notFound": "Non trouvé sur ce PC",
     "open": "Ouvrir",
     "opening": "Ouverture…",
     "folder": "Dossier",
