@@ -106,10 +106,6 @@
   text-transform: uppercase;
 }
 
-.headCount {
-  font: 500 11px/1 Inter, sans-serif;
-  color: rgba(255, 255, 255, 0.34);
-}
 
 .search {
   flex-shrink: 0;

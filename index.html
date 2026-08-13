@@ -46,23 +46,7 @@
       #app-preloader.preloader--done {
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.45s ease !important;
-      }
-
-      /* Animation d'entrée de l'application (montée depuis le bas) */
-      @keyframes appRiseUp {
-        from {
-          transform: translateY(100vh);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      #root.app-entering {
-        animation: appRiseUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transition: opacity 0.22s ease !important;
       }
 
       .preloader-wrap {
@@ -81,9 +65,11 @@
         display: block;
 
         opacity: 0;
-        transform: scale(0.92) translateY(6px);
-        filter: blur(10px);
-        animation: logoIn 700ms ease forwards;
+        transform: scale(0.96);
+        filter: blur(6px);
+        /* Court, et sans délai : l'écran disparaît dès que React a peint —
+           une révélation étalée sur 700 ms n'aurait pas le temps d'aboutir. */
+        animation: logoIn 260ms ease forwards;
       }
 
       /* Texte: révèle “Arc” puis “Hive” (stagger) */
@@ -115,74 +101,13 @@
       }
 
       .word--arc {
-        animation: wordIn 520ms ease forwards;
-        animation-delay: 520ms;
+        animation: wordIn 260ms ease forwards;
+        animation-delay: 60ms;
       }
 
       .word--hive {
-        animation: wordIn 520ms ease forwards;
-        animation-delay: 650ms;
-      }
-
-      .sub {
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        font-size: 12px;
-        opacity: 0;
-        transform: translateY(6px);
-        animation: subIn 420ms ease forwards;
-        animation-delay: 820ms;
-        transition: opacity 0.38s ease, transform 0.38s ease;
-      }
-
-      /* Petite barre de chargement */
-      .bar {
-        width: min(260px, 70vw);
-        height: 7px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        opacity: 0;
-        animation: subIn 420ms ease forwards;
-        animation-delay: 900ms;
-        transition: opacity 0.38s ease, transform 0.38s ease;
-      }
-
-      .bar-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.65);
-        animation: fillProgress 2.2s cubic-bezier(0.4, 0, 0.15, 1) both;
-        animation-delay: 900ms;
-      }
-
-      /* Classe ajoutée par JS pour faire disparaître la barre et le texte */
-      .leaving {
-        opacity: 0 !important;
-        transform: translateY(10px) !important;
-        animation: none !important;
-      }
-
-      /* Texte de bienvenue — initialement invisible */
-      .welcome {
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        font-size: 20px;
-        font-weight: 300;
-        letter-spacing: 0.1em;
-        opacity: 0;
-        transform: translateY(-10px);
-        filter: blur(6px);
-        transition:
-          opacity   0.65s ease,
-          transform 0.65s cubic-bezier(0.16, 1, 0.3, 1),
-          filter    0.65s ease;
-      }
-
-      .welcome.entering {
-        opacity: 0.92;
-        transform: translateY(0);
-        filter: blur(0);
+        animation: wordIn 260ms ease forwards;
+        animation-delay: 120ms;
       }
 
       @keyframes logoIn {
@@ -193,22 +118,12 @@
         to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
 
-      @keyframes subIn {
-        to { opacity: 0.75; transform: translateY(0); }
-      }
-
-      @keyframes fillProgress {
-        0%   { width: 0%; }
-        100% { width: 85%; }
-      }
-
       @media (prefers-reduced-motion: reduce) {
-        .preloader-logo, .word, .sub, .bar, .bar-fill {
+        .preloader-logo, .word {
           animation: none !important;
           opacity: 1 !important;
           transform: none !important;
           filter: none !important;
-          width: 100% !important;
         }
       }
     </style>
@@ -228,14 +143,6 @@
         <div class="brandLine" aria-label="ArcHive">
           <span class="word word--arc">Arc</span><span class="word word--hive">Hive</span>
         </div>
-
-        <div class="sub" id="preloader-sub">Starting…</div>
-
-        <div class="bar" id="preloader-bar" aria-hidden="true">
-          <div class="bar-fill"></div>
-        </div>
-
-        <div class="welcome" id="preloader-welcome">Bienvenue sur ArcHive</div>
       </div>
     </div>
     <!-- Audio d'ambiance démarré pendant le splash (adopté par ambientPlayer au montage React).

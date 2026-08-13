@@ -152,9 +152,6 @@ export function GameList({
           <span className={css.headTitle} style={{ color }}>
             {platform}
           </span>
-          <span className={css.headCount}>
-            {games.length} {games.length > 1 ? 'jeux' : 'jeu'}
-          </span>
         </div>
 
         <input

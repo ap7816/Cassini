@@ -88,18 +88,38 @@ export async function initStorage(): Promise<void> {
   try {
     store = await load('archive.json', { autoSave: true, defaults: {} });
 
+    // Tout le contenu du store en un seul appel.
+    //
+    // La version précédente lisait clé par clé, en attendant chaque réponse
+    // avant de demander la suivante : une vingtaine d'allers-retours IPC en
+    // série, doublés pour les clés absentes qu'il fallait rechercher sous leur
+    // nom historique. Le premier rendu de React attend cette boucle. Or le
+    // store est déjà entièrement en mémoire côté Rust — le fichier a été lu par
+    // `load` juste au-dessus — donc tout demander d'un coup transfère les mêmes
+    // données pour un seul message.
+    const tout = new Map<string, unknown>(await store.entries());
+
+    // Les valeurs ont toujours été écrites sous forme de chaînes (`rawWrite`
+    // sérialise). Une valeur d'un autre type ne peut venir que d'un fichier
+    // modifié à la main : on l'ignore plutôt que de la propager telle quelle
+    // dans un cache que tout le reste du code traite comme du texte.
+    const chaine = (k: string): string | undefined => {
+      const v = tout.get(k);
+      return typeof v === 'string' ? v : undefined;
+    };
+
     // Charge toutes les clés connues, en retombant sur leur nom historique
     let hasData = false;
     const renames: Promise<void>[] = [];
 
     for (const key of Object.values(STORAGE_KEYS)) {
-      let val = await store.get<string>(key);
+      let val = chaine(key);
 
-      if (val === null || val === undefined) {
+      if (val === undefined) {
         const legacy = LEGACY_KEYS[key];
         if (legacy) {
-          const old = await store.get<string>(legacy);
-          if (old !== null && old !== undefined) {
+          const old = chaine(legacy);
+          if (old !== undefined) {
             val = old;
             // Réécrit sous le nouveau nom, puis retire l'ancienne entrée
             renames.push(store.set(key, old), store.delete(legacy).then(() => undefined));
@@ -107,7 +127,7 @@ export async function initStorage(): Promise<void> {
         }
       }
 
-      if (val !== null && val !== undefined) {
+      if (val !== undefined) {
         mem[key] = val;
         hasData = true;
       }

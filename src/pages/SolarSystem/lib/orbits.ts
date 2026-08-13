@@ -11,9 +11,14 @@ export const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 /**
  * Rayon de la k-ième orbite. L'écartement s'élargit légèrement vers l'extérieur
  * (façon Titius–Bode) pour que le système intérieur reste compact.
+ *
+ * `base` est le rayon de la première orbite. Il est paramétrable parce qu'il
+ * doit dégager le soleil et sa couronne, dont la taille dépend de celle du
+ * système : à valeur fixe, les premières orbites d'une grande bibliothèque se
+ * retrouvaient à l'intérieur de la couronne.
  */
-export function orbitRadius(k: number, step: number): number {
-  return ORB_BASE + step * k * (1 + k * 0.018);
+export function orbitRadius(k: number, step: number, base: number = ORB_BASE): number {
+  return base + step * k * (1 + k * 0.018);
 }
 
 /**

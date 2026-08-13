@@ -216,6 +216,20 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v2_1_0": {
+      "new_0": "[Solar system] Phase portals to jump between launchers without leaving the view",
+      "new_1": "[Solar system] Keyboard movement (WASD / ZQSD), remappable keys and adjustable sensitivity",
+      "new_2": "[Solar system] Game card next to its planet, collapsible game list, frame counter",
+      "new_3": "[Ambiance] Three tracks chained with a crossfade, one picked at random on startup",
+      "new_4": "[Launchers] Hytale games are now detected",
+      "fix_0": "[Solar system] Rings are no longer reserved for the largest planets",
+      "fix_1": "[Solar system] Guaranteed wide gap between the sun and the innermost orbit",
+      "fix_2": "[Library] Game count displayed three times over",
+      "fix_3": "[Library] Launchers absent from the PC are no longer offered in the filter",
+      "fix_4": "[Library] Game folder access restored for Steam games",
+      "perf_0": "[Startup] Opens straight onto the solar system, intro animation removed",
+      "perf_1": "[Startup] Settings loaded in a single call instead of a couple of dozen"
+    },
     "v1_2_0": {
       "new_0": "[Music] Metadata saved directly into audio files, no more network search on startup",
       "new_1": "[Music] Change artwork via right-click, image embedded directly into the audio file",

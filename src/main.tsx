@@ -25,39 +25,34 @@ initStorage().then(() => {
     </React.StrictMode>,
   );
 
-  const pre     = document.getElementById('app-preloader');
-  const fill    = pre?.querySelector('.bar-fill') as HTMLElement | null;
-  const bar     = document.getElementById('preloader-bar');
-  const subEl   = document.getElementById('preloader-sub');
-  const welcome = document.getElementById('preloader-welcome');
+  // Écran d'accueil retiré dès que React a peint.
+  //
+  // Il enchaînait auparavant une barre de progression, un « Bienvenue » tenu
+  // trois secondes puis un fondu — 4,35 s imposées après l'initialisation,
+  // alors que l'application était prête bien avant. Il ne sert plus qu'à
+  // couvrir le premier rendu, et s'efface aussitôt.
+  //
+  let retire = false;
 
-  // 1 — Complète la barre à 100 %
-  if (fill) {
-    const currentW = window.getComputedStyle(fill).width;
-    fill.style.width = currentW;
-    fill.style.animation = 'none';
-    void fill.offsetWidth;
-    fill.style.transition = 'width 0.35s ease';
-    fill.style.width = '100%';
-  }
+  const retirer = () => {
+    if (retire) return;
+    retire = true;
+    const pre = document.getElementById('app-preloader');
+    pre?.classList.add('preloader--done');
+    // Le fondu ne bloque rien : la règle correspondante coupe les
+    // événements de pointeur.
+    window.setTimeout(() => pre?.remove(), 400);
+  };
 
-  // 2 — Barre à 100 % atteinte : "Starting…" et barre disparaissent
-  window.setTimeout(() => {
-    bar?.classList.add('leaving');
-    subEl?.classList.add('leaving');
+  // `requestAnimationFrame` imbriqué : le premier tour est planifié avant la
+  // peinture, le second s'exécute juste après. Retirer l'écran au premier
+  // laisserait entrevoir une page encore vide.
+  requestAnimationFrame(() => requestAnimationFrame(retirer));
 
-    // 3 — Après la transition de sortie : "Bienvenue sur ArcHive" apparaît
-    window.setTimeout(() => {
-      welcome?.classList.add('entering');
-
-      // 4 — 3 secondes de bienvenue, puis l'app monte
-      window.setTimeout(() => {
-        requestAnimationFrame(() => {
-          document.getElementById('root')?.classList.add('app-entering');
-        });
-        pre?.classList.add('preloader--done');
-        window.setTimeout(() => pre?.remove(), 500);
-      }, 3000);
-    }, 450);
-  }, 400);
+  // Filet, car `requestAnimationFrame` ne se déclenche pas tant que la fenêtre
+  // n'est pas peinte — minimisée, ou masquée au lancement. Sans ce délai,
+  // l'écran d'accueil resterait posé sur l'application jusqu'à ce qu'on la
+  // rende visible. Assez long pour que la voie normale gagne toujours la
+  // course quand la fenêtre est bien à l'écran.
+  window.setTimeout(retirer, 1500);
 });

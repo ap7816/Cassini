@@ -216,6 +216,20 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v2_1_0": {
+      "new_0": "[Système solaire] Portails de phase pour passer d'un launcher à l'autre sans quitter la vue",
+      "new_1": "[Système solaire] Déplacement au clavier (WASD / ZQSD), touches et sensibilité configurables",
+      "new_2": "[Système solaire] Fiche du jeu à côté de sa planète, liste des jeux repliable, compteur d'images",
+      "new_3": "[Ambiance] Trois musiques enchaînées en fondu, tirées au hasard au démarrage",
+      "new_4": "[Launchers] Détection des jeux Hytale",
+      "fix_0": "[Système solaire] Les anneaux ne sont plus réservés aux plus grosses planètes",
+      "fix_1": "[Système solaire] Grand écart garanti entre le soleil et la première orbite",
+      "fix_2": "[Bibliothèque] Nombre de jeux affiché en triple",
+      "fix_3": "[Bibliothèque] Les launchers absents du PC ne sont plus proposés au tri",
+      "fix_4": "[Bibliothèque] Accès au dossier du jeu rétabli pour les jeux Steam",
+      "perf_0": "[Démarrage] Ouverture directe sur le système solaire, animation d'introduction retirée",
+      "perf_1": "[Démarrage] Réglages chargés en un seul appel au lieu d'une vingtaine"
+    },
     "v1_2_0": {
       "new_0": "[Musique] Métadonnées sauvegardées directement dans les fichiers audio",
       "new_1": "[Musique] Changement d'illustration via clic droit, intégrée dans le fichier audio",

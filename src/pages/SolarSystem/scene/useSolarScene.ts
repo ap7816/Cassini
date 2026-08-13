@@ -82,6 +82,22 @@ const FLY_BOOST = 3;
  */
 const FLY_PIVOT = 0.22;
 
+/**
+ * Étendue de la couronne solaire, en rayons du soleil, et plafond de cette
+ * étendue rapporté au système — les deux doivent refléter `createSun`.
+ */
+const CORONA_SPAN = 3.4;
+const CORONA_CAP = 0.42;
+
+/**
+ * Écart minimal entre la couronne et la première planète, en multiples de
+ * l'étendue de la couronne.
+ *
+ * Généreux à dessein : à 1,18 la planète frôlait encore le halo, et la
+ * floraison lumineuse ajoutée depuis élargit le soleil au-delà de sa géométrie.
+ */
+const SUN_GAP = 1.9;
+
 /** Axe vertical du monde — le déplacement vertical l'utilise tel quel. */
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 
@@ -278,9 +294,35 @@ export function useSolarScene({
     // Les orbites s'écartent assez pour que la plus grosse planète possible ne
     // touche jamais sa voisine.
     const orbStep = Math.max(ORB_STEP, PLN_R_MAX * 2.3);
-    const outerR = planetCount > 0 ? orbitRadius(planetCount - 1, orbStep) : ORB_BASE;
+
+    // Dimensionnement par point fixe.
+    //
+    // Trois grandeurs se déterminent mutuellement : le rayon du soleil se
+    // déduit de l'étendue du système, l'étendue de sa couronne est plafonnée
+    // par cette même étendue, et la première orbite doit dégager la couronne —
+    // ce qui repousse l'étendue. On itère donc jusqu'à stabilisation.
+    //
+    // Trois passes suffisent : chacune ne fait que croître, et la borne
+    // supérieure du soleil (26) arrête la progression.
+    const rayonSoleil = (portee: number) =>
+      THREE.MathUtils.clamp(portee * 0.055, PLN_R_MAX * 1.3, 26);
+    const porteeDe = (base: number) =>
+      planetCount > 0 ? orbitRadius(planetCount - 1, orbStep, base) : base;
+    /** Étendue réelle de la couronne, cap de `createSun` compris. */
+    const couronneDe = (portee: number) =>
+      Math.min(rayonSoleil(portee) * CORONA_SPAN, portee * CORONA_CAP);
+
+    let orbBase = ORB_BASE;
+    for (let i = 0; i < 3; i += 1) {
+      // Le dégagement se compte jusqu'au **bord** de la planète la plus
+      // proche, pas jusqu'à son centre : c'est sa surface qu'on voit entrer
+      // dans le soleil.
+      orbBase = Math.max(ORB_BASE, couronneDe(porteeDe(orbBase)) * SUN_GAP + PLN_R_MAX);
+    }
+
+    const outerR = porteeDe(orbBase);
     // Le plancher garantit que le soleil reste plus gros que toute planète.
-    const sunR = THREE.MathUtils.clamp(outerR * 0.055, PLN_R_MAX * 1.3, 26);
+    const sunR = rayonSoleil(outerR);
     // Assez large pour englober la ceinture d'astéroïdes — et l'anneau de
     // portails quand il existe, sans quoi le cadrage d'ensemble les laisserait
     // hors champ, donc introuvables.
@@ -317,6 +359,7 @@ export function useSolarScene({
       scene,
       games,
       orbStep,
+      orbBase,
       tint,
       isDisposed,
       onPlanet: (entry) => labelLayer.addPlanet(entry, entry.game.title, labelClass),

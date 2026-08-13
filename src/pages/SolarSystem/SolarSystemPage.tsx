@@ -259,9 +259,6 @@ export function SolarSystemPage() {
             ))}
           </select>
         </div>
-        <div className={css.selectorHint}>
-          {visibleGames.length} planète{visibleGames.length > 1 ? 's' : ''} en orbite
-        </div>
       </div>
 
       {/* Liste des jeux du launcher, repliable par sa languette. */}

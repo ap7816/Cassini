@@ -246,10 +246,6 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
-.selectorHint {
-  font: 500 11px/1 Inter, sans-serif;
-  color: rgba(255, 255, 255, 0.34);
-}
 
 /* Sans mouvement demandé, le décalage de projection prend sa valeur finale
    immédiatement : la scène lit la largeur du témoin, qui ne transite plus. */

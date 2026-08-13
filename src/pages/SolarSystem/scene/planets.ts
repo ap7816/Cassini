@@ -5,7 +5,7 @@ import {
   steamCdnUrl,
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
-import { PALETTES, PLN_R_MAX, PLN_R_MIN } from '../constants';
+import { PALETTES } from '../constants';
 import { hashStr, seededRng } from '../lib/random';
 import { GOLDEN_ANGLE, makeRadiusScale, orbitPos, orbitRadius } from '../lib/orbits';
 import { atmosphereType, makePlaceholderTexture, makeProcTexture } from '../textures/procedural';
@@ -17,6 +17,8 @@ type Options = {
   scene: THREE.Scene;
   games: Game[];
   orbStep: number;
+  /** Rayon de la première orbite, calculé pour dégager la couronne solaire. */
+  orbBase: number;
   tint: number;
   /** Interroge le montage : coupe les chargements arrivés après démontage. */
   isDisposed: () => boolean;
@@ -29,7 +31,7 @@ type Options = {
  * Renvoie les entrées ordonnées ainsi que les structures de sélection.
  */
 export function createPlanets({
-  scene, games, orbStep, tint, isDisposed, onPlanet,
+  scene, games, orbStep, orbBase, tint, isDisposed, onPlanet,
 }: Options): {
   planets: PlanetEntry[];
   pickMeshes: THREE.Object3D[];
@@ -47,7 +49,7 @@ export function createPlanets({
     const seed = hashStr(g.id);
     const rng = seededRng(seed + 1);
 
-    const orbit = orbitRadius(k, orbStep);
+    const orbit = orbitRadius(k, orbStep, orbBase);
     // Inclinaison légèrement exagérée (±8,6° contre ~0–7° réels) : assez pour
     // que les orbites ne paraissent pas décalquées, pas assez pour brouiller.
     const inc = (seededRng(seed + 3)() - 0.5) * 0.3;
@@ -66,8 +68,11 @@ export function createPlanets({
     const atmType = atmosphereType(rng);
     mesh.add(createAtmosphere(pr, PALETTES[atmType][0]));
 
-    // Seuls les « gros » jeux ont droit à un système d'anneaux
-    if (pr > (PLN_R_MIN + PLN_R_MAX) * 0.55 && rng() < 0.35) {
+    // Un anneau sur trois planètes environ, tirage seul. La taille n'entre
+    // plus en compte : elle traduit le poids du jeu sur le disque, qui n'a
+    // aucun rapport avec l'idée d'un système d'anneaux — et cela réservait le
+    // détail le plus reconnaissable de la scène aux seuls gros jeux.
+    if (rng() < 0.32) {
       mesh.add(createPlanetRing(pr, seed, PALETTES[atmType][1], rng));
     }
 

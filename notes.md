@@ -130,18 +130,6 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
 
-changer les planètes qui ont les anneaux (pas toujours les plus grosse)
-corriger la maj de l'appli qui marcche plus
-quand bcp de planètes certaine sont qausiment dans le soleil
-les images epic ne marche pas, connard
-portal gate a améliorer
-les jeux epic games sont buger
-interface a vérifier (3 fois le nombre de jeu total wtf)
-les icones sont buger après le changement du logo
-tu peux lancer 10 fois l'appli si tu veux
-enlève dans le tri les launchers qu'on à pas (logique)
-debug si un launcher est pas trouvé met le en non trouvé et n'affiche rien sur l'appli juste il n'existe pas sur le pc
-
 ---
 
 ## Détail des idées à venir

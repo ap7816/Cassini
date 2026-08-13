@@ -6,7 +6,7 @@ import { useLibraryGames } from '../../features/library/hooks/useLibraryGames';
 import { EmptyState } from '../../features/library/components/EmptyState';
 import { GameCard } from '../../features/library/components/GameCard';
 import { launchGame } from '../../features/library/services/launchGame';
-import type { Game } from '../../features/types';
+import type { Game, GamePlatform } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import { useToast } from '../../features/toast/ToastContext';
@@ -104,6 +104,32 @@ export function LibraryPage() {
       scanPcHytale(),
     ]);
   }
+
+  // Plateformes réellement présentes dans la bibliothèque, dans l'ordre
+  // canonique. Proposer un launcher qu'on n'a pas donne un filtre qui ne
+  // renvoie jamais rien — et laisse croire que la détection a échoué.
+  const platformOptions = useMemo(() => {
+    const presentes = new Set(games.map((g) => g.platform || 'Other'));
+    // Intersection des deux types : une plateforme détectable mais absente du
+    // filtre — GOG aujourd'hui — ne peut pas être proposée, et le compilateur
+    // le rappellera si l'un des deux ensembles évolue sans l'autre.
+    const libelles: [Extract<GamePlatform, PlatformFilter>, string][] = [
+      ['Steam', 'Steam'],
+      ['Epic', 'Epic'],
+      ['BattleNet', t('filters.battlenet')],
+      ['Riot', 'Riot'],
+      ['Rockstar', 'Rockstar'],
+      ['Ubisoft', 'Ubisoft Connect'],
+      ['Hytale', 'Hytale'],
+      ['Other', t('filters.other')],
+    ];
+    return [
+      { value: 'all' as PlatformFilter, label: t('filters.all') },
+      ...libelles
+        .filter(([v]) => presentes.has(v))
+        .map(([value, label]) => ({ value, label })),
+    ];
+  }, [games, t]);
 
   // Bascule entre l'onglet "Tous les jeux" et "Favoris"
   function setView(next: ViewMode) {
@@ -240,17 +266,7 @@ export function LibraryPage() {
       <FilterBar>
         <FilterSelect<PlatformFilter>
           label={t('filters.platform')}
-          options={[
-            { value: 'all', label: t('filters.all') },
-            { value: 'Steam', label: 'Steam' },
-            { value: 'Epic', label: 'Epic' },
-            { value: 'BattleNet', label: t('filters.battlenet') },
-            { value: 'Riot', label: 'Riot' },
-            { value: 'Rockstar', label: 'Rockstar' },
-            { value: 'Ubisoft', label: 'Ubisoft Connect' },
-            { value: 'Hytale', label: 'Hytale' },
-            { value: 'Other', label: t('filters.other') },
-          ]}
+          options={platformOptions}
           value={platformFilter}
           onChange={(v) => setParam('platform', v, 'all')}
         />
