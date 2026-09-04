@@ -8,8 +8,15 @@
 
 /** Écart en pixels entre la carte et le bord apparent de la planète. */
 const GAP = 14;
-/** Marge minimale conservée entre la carte et les bords de la zone 3D. */
-const MARGIN = 10;
+/**
+ * Marge minimale conservée entre la carte et les bords de la zone 3D.
+ *
+ * Assez large pour dégager les deux languettes de repli, qui empiètent sur la
+ * bande : 22 px pour celle de la navigation à gauche, 26 px pour celle de la
+ * liste à droite. À 10 px, une carte recadrée contre un bord passait dessous —
+ * elle paraissait déborder, et la languette devenait incliquable.
+ */
+export const MARGIN = 30;
 /** Distance minimale entre l'ergot et un coin de la carte. */
 const ARROW_INSET = 18;
 

@@ -20,7 +20,10 @@
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
   --list-w: min(196px, 26%);
-  --side-w: var(--list-w);
+  /* Barre des launchers, toujours visible : c'est par elle qu'on rappelle la
+     liste sur un autre launcher, elle ne peut donc pas se replier avec elle. */
+  --rail-w: 40px;
+  --side-w: calc(var(--list-w) + var(--rail-w));
 }
 
 /* Liste repliée : la zone 3D récupère toute la largeur.
@@ -28,7 +31,7 @@
    sort par translation. La rétrécir ferait déferler son contenu pendant
    l'animation, titres tronqués et vignettes écrasées. */
 .pageListHidden {
-  --side-w: 0px;
+  --side-w: var(--rail-w);
 }
 
 /* Conteneur de la canvas Three.js.
@@ -311,26 +314,85 @@
 /* Masque la destruction puis la reconstruction de la scène, que rien en 3D ne
    peut couvrir puisque l'objet qui l'animerait disparaît en route.
 
-   Toujours monté, transparent au repos : le monter au moment du départ ferait
-   partir la transition depuis un élément qui vient d'apparaître, et le
-   navigateur sauterait le premier palier. */
+   Toujours monté, inerte au repos : le monter au moment du départ ferait
+   partir l'animation depuis un élément qui vient d'apparaître, et le
+   navigateur sauterait le premier palier.
+
+   Les durées ci-dessous reflètent WARP_OUT_MS et WARP_IN_MS dans
+   SolarSystemPage.tsx : le voile doit être opaque au moment exact où la scène
+   est détruite, et transparent quand la suivante a joué son arrivée. */
 .warp {
   position: absolute;
   inset: 0;
   z-index: 30;
   pointer-events: none;
-  opacity: 0;
-  /* Éclat partant du portail, à droite : la lumière vient de là où l'on va. */
-  background:
-    radial-gradient(circle at 78% 45%, #fff 0%, var(--warp-tint, #7a8a9a) 22%, #050810 72%);
-  transition: opacity 520ms ease-in;
+  overflow: hidden;
 }
 
 .warpOn {
-  opacity: 1;
   pointer-events: auto; /* gèle les clics le temps du voyage */
 }
 
+/* Fond opaque.
+
+   Volontairement réduit à un aplat qui se fond : c'est la seule chose que le
+   voile *doit* faire, et une animation portée par le compositeur y survit là
+   où `requestAnimationFrame` peut sauter une image pendant que la scène
+   suivante se construit. Tout le spectacle est au-dessus, sur la canvas. */
+.warpCore {
+  position: absolute;
+  inset: 0;
+  background: #050810;
+  opacity: 0;
+}
+
+/* Tunnel de particules — voir WarpTunnel.tsx. Au-dessus du fond, sinon les
+   traits seraient recouverts par lui au moment où il devient opaque.
+
+   Débordant à gauche de la largeur de la colonne de droite : le point de fuite
+   est au milieu de la canvas, or il doit tomber au milieu de la *bande* laissée
+   libre par la liste et la barre des launchers — là où était le portail. Sans
+   ce décalage il partait plus de cent pixels trop à droite. Le débordement est
+   rogné par le voile, et la page reste couverte de bord à bord. */
+.warpCanvas {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--side-w, 0px));
+  /* Largeur explicite, et non `right: 0` : une canvas est un élément remplacé,
+     `left` et `right` ne l'étirent pas — elle garderait sa largeur intrinsèque
+     et le décalage la ferait sortir du cadre par la gauche. */
+  width: calc(100% + var(--side-w, 0px));
+  height: 100%;
+}
+
+@keyframes warpVoileEntre {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes warpVoileSort {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Le fond monte vite et reste opaque le reste de la phase : la couture peut
+   survenir n'importe quand après la plongée de la caméra. */
+.warpOut .warpCore {
+  animation: warpVoileEntre 300ms cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+/* Il ne se lève qu'en fin de phase d'entrée, une fois que la nouvelle scène a
+   eu le temps de rendre sa première image. */
+.warpIn .warpCore {
+  animation: warpVoileSort 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Sans mouvement demandé, il ne reste que ce que le voile doit à la scène :
+   couvrir la couture. Le tunnel ne se dessine pas — WarpTunnel s'en abstient
+   de lui-même — et le fond se contente d'apparaître et de disparaître. */
 @media (prefers-reduced-motion: reduce) {
-  .warp { transition-duration: 120ms; }
+  .warpCanvas { display: none; }
+  .warpOut .warpCore { animation-duration: 120ms; }
+  .warpIn .warpCore { animation-duration: 120ms; }
 }

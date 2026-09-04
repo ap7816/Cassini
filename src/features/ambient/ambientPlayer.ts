@@ -145,10 +145,11 @@ export function setAmbientEnabled(v: boolean): void {
   // réactiver l'ambiance pendant un fondu de fin la relancerait à volume nul,
   // puis le fondu résiduel finirait de la faire taire.
   clearFade();
-  if (v) {
+  if (v && _suspensions.size === 0) {
     audio.volume = _volume;
     audio.play().catch(() => {});
   } else {
+    // Activée mais retenue : elle reprendra d'elle-même à la levée du motif.
     audio.pause();
   }
   notify();
@@ -202,21 +203,69 @@ function fadeTo(target: number, ms: number, onDone?: () => void): void {
   }, FADE_TICK_MS);
 }
 
-// Fondu sortant → pause (garde la position courante)
-export function pauseAmbientForMusic(): void {
+/**
+ * Raisons de suspendre l'ambiance.
+ *
+ * Un ensemble, et non un booléen : les motifs se cumulent, et lever l'un ne
+ * doit pas passer outre les autres. Un morceau du lecteur qui démarre pendant
+ * que la fenêtre est réduite, puis la fenêtre qu'on rouvre — avec un simple
+ * drapeau, l'ambiance repartirait par-dessus le morceau.
+ */
+export type AmbientSuspension = 'music' | 'window';
+
+const _suspensions = new Set<AmbientSuspension>();
+
+/** L'ambiance est-elle retenue par au moins un motif ? */
+export function isAmbientSuspended(): boolean {
+  return _suspensions.size > 0;
+}
+
+/** Suspend l'ambiance pour le motif donné. Idempotent. */
+export function suspendAmbient(reason: AmbientSuspension): void {
+  const nouveau = !_suspensions.has(reason);
+  _suspensions.add(reason);
   const audio = getAudio();
+
+  if (reason === 'window') {
+    // Coupure franche, sans fondu.
+    //
+    // Un fondu s'appuie sur `setInterval`, or le moteur bride les minuteurs
+    // d'une fenêtre qui n'est plus à l'écran — de l'ordre d'un tick par
+    // seconde. Les trente paliers du fondu s'étaleraient alors sur une
+    // demi-minute de musique qu'on croyait avoir arrêtée. Et réduire une
+    // fenêtre est un geste qui demande le silence tout de suite.
+    //
+    // Exécutée même si un autre motif retient déjà l'ambiance : celui-ci a pu
+    // demander un fondu qui n'est pas terminé, et ce fondu ne s'achèvera plus
+    // une fois la fenêtre masquée. Sans cela, réduire pendant la première
+    // seconde d'un morceau laissait l'ambiance audible en sourdine.
+    clearFade();
+    audio.pause();
+    audio.volume = _volume;
+    return;
+  }
+
+  // Motif déjà posé, ou ambiance déjà retenue par un autre : rien à couper une
+  // seconde fois.
+  if (!nouveau || _suspensions.size > 1) return;
   if (audio.paused) return;
+
   fadeTo(0, FADE_MS, () => {
     audio.pause();
     audio.volume = _volume; // restaure pour le prochain fondu entrant
   });
 }
 
-// Fondu entrant → reprend là où elle s'était arrêtée
-export function resumeAmbientAfterMusic(): void {
+/** Lève le motif donné, et relance si plus rien ne retient l'ambiance. */
+export function resumeAmbient(reason: AmbientSuspension): void {
+  // Motif absent : rien à lever. Sans ce test, un appel en double relancerait
+  // l'ambiance alors qu'un autre motif la retient encore.
+  if (!_suspensions.delete(reason)) return;
+  if (_suspensions.size > 0) return;
   if (!_enabled) return;
+
   const audio = getAudio();
-  // Si déjà en lecture (ex: montage initial, music.isPlaying=false), ne pas interrompre
+  // Si déjà en lecture (ex: montage initial), ne pas interrompre
   if (!audio.paused) return;
   audio.volume = 0;
   audio.play().catch(() => {});

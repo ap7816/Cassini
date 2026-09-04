@@ -9,8 +9,10 @@ import { PLATFORM_COLOR, PLATFORM_CSS } from './constants';
 import { useSolarScene } from './scene/useSolarScene';
 import { GamePanel } from './components/GamePanel';
 import { GameList } from './components/GameList';
+import { WarpTunnel } from './components/WarpTunnel';
 import { FlyKeysPanel } from './components/FlyKeysPanel';
 import { loadFlySettings, saveFlySettings, type FlySettings } from './lib/flyKeys';
+import { useLauncherIcons } from './lib/launcherIcons';
 import css from './SolarSystemPage.module.css';
 
 /**
@@ -56,9 +58,17 @@ function useSceneGames(games: Game[]): Game[] {
  * `WARP_OUT_MS` couvre la plongée de la caméra (WARP_DIVE_S) et doit lui
  * laisser le temps de finir, `WARP_IN_MS` la levée du voile pendant que la
  * nouvelle scène joue son arrivée (ARRIVAL_S).
+ *
+ * Elles doivent aussi correspondre aux animations `warp*` de la feuille de
+ * style : le voile doit être opaque à l'instant précis où la scène est
+ * détruite, et transparent quand la suivante a fini d'arriver.
+ *
+ * Deux secondes auparavant, pour un simple fondu vers un dégradé fixe — assez
+ * long pour qu'on attende, trop pauvre pour qu'on regarde. Huit dixièmes
+ * suffisent dès lors qu'il s'y passe quelque chose.
  */
-const WARP_OUT_MS = 1150;
-const WARP_IN_MS = 900;
+const WARP_OUT_MS = 420;
+const WARP_IN_MS = 380;
 
 export function SolarSystemPage() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -84,6 +94,13 @@ export function SolarSystemPage() {
   // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
   const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(true);
+  // Launcher consulté dans la liste, quand il diffère de celui affiché en 3D.
+  // `null` = on regarde le système sous les yeux.
+  const [browsed, setBrowsed] = useState<string | null>(null);
+  // Jeu à viser une fois le voyage terminé. Une ref et non un état : la scène
+  // de destination n'existe pas encore au moment où on le choisit, et rien à
+  // l'écran ne dépend de cette valeur entre-temps.
+  const pendingFocusRef = useRef<string | null>(null);
   const [warp, setWarp] = useState<{ phase: 'out' | 'in'; target: string } | null>(null);
   // Système quitté lors de la dernière traversée : la scène s'en sert pour
   // faire émerger la caméra du portail qui y ramène.
@@ -121,6 +138,22 @@ export function SolarSystemPage() {
   );
 
   const sceneGames = useSceneGames(visibleGames);
+
+  // Launcher dont la liste est affichée. Retombe sur le système sous les yeux
+  // dès que le launcher consulté n'a plus de jeu — bibliothèque rescannée,
+  // dernier jeu retiré.
+  const browsedPlatform =
+    browsed && platforms.some((p) => p.name === browsed) ? browsed : platform;
+
+  const listGames = useMemo(
+    () =>
+      browsedPlatform === platform
+        ? visibleGames
+        : games.filter((g) => (g.platform || 'Other') === browsedPlatform),
+    [games, visibleGames, browsedPlatform, platform],
+  );
+
+  const launcherIcons = useLauncherIcons();
 
   // Toutes les autres plateformes : une destination, donc un portail, par
   // système voisin. Identité stable tant que la liste ne change pas — elle
@@ -168,12 +201,23 @@ export function SolarSystemPage() {
         // Mémorisé avant la bascule : après, `platform` désigne la destination.
         setArriveFrom(platform);
         setChosenPlatform(warp.target);
+        setBrowsed(null);
         clearPlanetRef.current();
         setWarp({ phase: 'in', target: warp.target });
       }, WARP_OUT_MS);
       return () => clearTimeout(id);
     }
-    const id = setTimeout(() => setWarp(null), WARP_IN_MS);
+    const id = setTimeout(() => {
+      setWarp(null);
+      // La scène de destination est montée depuis le début de cette phase :
+      // viser maintenant, voile levé, plutôt qu'à la bascule où le mouvement
+      // de caméra se jouerait derrière un écran opaque.
+      const vise = pendingFocusRef.current;
+      if (vise) {
+        pendingFocusRef.current = null;
+        focusPlanetRef.current(vise);
+      }
+    }, WARP_IN_MS);
     return () => clearTimeout(id);
   }, [warp, platform]);
 
@@ -196,6 +240,25 @@ export function SolarSystemPage() {
     flySettingsRef,
     arriveFrom,
   });
+
+  /**
+   * Sélectionne un jeu, où qu'il soit rangé.
+   *
+   * Depuis un autre launcher, il n'y a pas de planète à viser : on emprunte le
+   * même voyage que les portails, et on vise à l'arrivée. Sans cela, cliquer un
+   * résultat de recherche venu d'ailleurs ne produirait rien de visible.
+   */
+  function handlePickGame(game: Game) {
+    const cible = game.platform || 'Other';
+    if (cible === platform) {
+      focusPlanetRef.current(game.id);
+      return;
+    }
+    if (warp) return; // voyage déjà en cours
+    pendingFocusRef.current = game.id;
+    setBrowsed(null);
+    setWarp({ phase: 'out', target: cible });
+  }
 
   function handleGameUpdate(updated: Game) {
     setGames((prev) => {
@@ -235,10 +298,23 @@ export function SolarSystemPage() {
           démarrer la transition sur un élément qui vient d'apparaître, et le
           premier palier serait sauté. */}
       <div
-        className={[css.warp, warp ? css.warpOn : ''].filter(Boolean).join(' ')}
+        className={[
+          css.warp,
+          warp ? css.warpOn : '',
+          warp?.phase === 'out' ? css.warpOut : '',
+          warp?.phase === 'in' ? css.warpIn : '',
+        ].filter(Boolean).join(' ')}
         style={{ '--warp-tint': PLATFORM_CSS[platform] ?? '#7a8a9a' } as CSSProperties}
         aria-hidden="true"
-      />
+      >
+        <div className={css.warpCore} />
+        <WarpTunnel
+          phase={warp?.phase ?? null}
+          dureeMs={WARP_OUT_MS + WARP_IN_MS}
+          tint={PLATFORM_CSS[platform] ?? '#7a8a9a'}
+          className={css.warpCanvas}
+        />
+      </div>
 
       <div className={css.selector}>
         <label className={css.selectorLabel}>Launcher</label>
@@ -252,6 +328,7 @@ export function SolarSystemPage() {
             value={platform}
             onChange={(e) => {
               clearPlanetRef.current();
+              setBrowsed(null);
               setChosenPlatform(e.target.value);
             }}
           >
@@ -266,11 +343,16 @@ export function SolarSystemPage() {
 
       {/* Liste des jeux du launcher, repliable par sa languette. */}
       <GameList
-        games={visibleGames}
+        games={listGames}
+        allGames={games}
         selectedId={selectedId}
-        platform={platform}
+        platform={browsedPlatform}
+        currentPlatform={platform}
+        platforms={platforms}
+        icons={launcherIcons}
         sgdbKeySet={settings.sgdbKeySet}
-        onPick={(id) => focusPlanetRef.current(id)}
+        onPickGame={handlePickGame}
+        onPickPlatform={setBrowsed}
         open={listOpen}
         onToggle={() => setListOpen((v) => !v)}
       />

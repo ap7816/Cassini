@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import {
@@ -80,17 +80,35 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
 }
 
 type Props = {
+  /** Jeux du launcher consulté — pas forcément celui affiché en 3D. */
   games: Game[];
+  /** Toute la bibliothèque : la recherche ne s'arrête pas au launcher courant. */
+  allGames: Game[];
   selectedId: string | null;
+  /** Launcher consulté dans la liste. */
   platform: string;
+  /** Launcher réellement affiché en 3D, quand on en consulte un autre. */
+  currentPlatform: string;
+  /** Launchers présents dans la bibliothèque, pour la barre de sélection. */
+  platforms: Array<{ name: string; count: number }>;
+  /** Icône de chaque launcher, quand elle a pu être extraite. */
+  icons: Record<string, string>;
   /** Une clé SteamGridDB est configurée (la clé reste côté Rust). */
   sgdbKeySet: boolean;
-  /** Cible la planète correspondante dans la scène. */
-  onPick: (gameId: string) => void;
+  /**
+   * Sélectionne un jeu. Le jeu porte sa plateforme : c'est à l'appelant de
+   * décider s'il suffit de viser la planète ou s'il faut d'abord voyager.
+   */
+  onPickGame: (game: Game) => void;
+  /** Change le launcher consulté, sans toucher au système affiché. */
+  onPickPlatform: (platform: string) => void;
   /** Liste dépliée. Repliée, elle sort par la droite et rend la place à la scène. */
   open: boolean;
   onToggle: () => void;
 };
+
+/** Au-delà, la liste des résultats venus d'ailleurs cesse d'être consultable. */
+const MAX_AILLEURS = 40;
 
 /**
  * Liste des jeux du launcher courant, à droite de la scène.
@@ -99,7 +117,8 @@ type Props = {
  * planète : la caméra s'en approche et le panneau de détail s'ouvre.
  */
 export function GameList({
-  games, selectedId, platform, sgdbKeySet, onPick, open, onToggle,
+  games, allGames, selectedId, platform, currentPlatform, platforms, icons,
+  sgdbKeySet, onPickGame, onPickPlatform, open, onToggle,
 }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -112,6 +131,26 @@ export function GameList({
     if (!q) return games;
     return games.filter((g) => g.title.toLowerCase().includes(q));
   }, [games, query]);
+
+  /**
+   * Résultats venus des autres launchers.
+   *
+   * Chercher un jeu et ne rien trouver parce qu'il est rangé sous un autre
+   * launcher est le genre d'absence qu'on impute à l'application plutôt qu'au
+   * filtre. La recherche parcourt donc toute la bibliothèque, en distinguant
+   * ce qui est ici de ce qui est ailleurs — sans quoi on ne saurait plus quelle
+   * entrée correspond à quelle planète.
+   */
+  const ailleurs = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return allGames
+      .filter((g) => (g.platform || 'Other') !== platform && g.title.toLowerCase().includes(q))
+      .slice(0, MAX_AILLEURS);
+  }, [allGames, platform, query]);
+
+  /** Le launcher consulté n'est pas celui qu'on survole en 3D. */
+  const enApercu = platform !== currentPlatform;
 
   return (
     <>
@@ -152,6 +191,9 @@ export function GameList({
           <span className={css.headTitle} style={{ color }}>
             {platform}
           </span>
+          {/* Sans cette mention, une liste qui ne correspond à aucune des
+              planètes visibles passerait pour un défaut d'affichage. */}
+          {enApercu && <span className={css.headHint}>aperçu</span>}
         </div>
 
         <input
@@ -162,37 +204,122 @@ export function GameList({
         />
 
         <ul className={css.items}>
-          {shown.map((g) => {
-            // Le rang dans la liste complète correspond au rang orbital
-            const orbit = games.indexOf(g) + 1;
-            return (
-              <li key={g.id}>
-                <button
-                  type="button"
-                  className={[css.item, g.id === selectedId ? css.itemActive : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => onPick(g.id)}
-                  title={g.title}
-                  style={g.id === selectedId ? { borderColor: color + '88' } : undefined}
-                >
-                  <span className={css.orbitNum}>{orbit}</span>
-                  <Thumb game={g} color={color} sgdbKeySet={sgdbKeySet} />
-                  <span className={css.labels}>
-                    <span className={css.name}>{g.title}</span>
-                    <span className={css.meta}>
-                      {g.sizeOnDisk != null && g.sizeOnDisk > 0 ? fmtSize(g.sizeOnDisk) : '—'}
-                      {g.favorite && <span className={css.fav}> ★</span>}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
+          {shown.map((g) => (
+            <Ligne
+              key={g.id}
+              game={g}
+              // Le rang dans la liste complète correspond au rang orbital —
+              // mais seulement si l'on regarde bien ce système. En aperçu, ces
+              // planètes n'existent pas à l'écran, le numéro ne désignerait
+              // rien : la pastille du launcher le remplace.
+              orbit={enApercu ? null : games.indexOf(g) + 1}
+              selected={g.id === selectedId}
+              sgdbKeySet={sgdbKeySet}
+              onPick={onPickGame}
+            />
+          ))}
 
-          {shown.length === 0 && <li className={css.empty}>Aucun résultat</li>}
+          {ailleurs.length > 0 && (
+            <>
+              <li className={css.groupe}>Autres launchers</li>
+              {ailleurs.map((g) => (
+                <Ligne
+                  key={g.id}
+                  game={g}
+                  orbit={null}
+                  selected={false}
+                  sgdbKeySet={sgdbKeySet}
+                  onPick={onPickGame}
+                />
+              ))}
+            </>
+          )}
+
+          {shown.length === 0 && ailleurs.length === 0 && (
+            <li className={css.empty}>Aucun résultat</li>
+          )}
         </ul>
       </aside>
+
+      {/* Barre des launchers, adossée au bord droit.
+
+          Hors de l'`aside` : elle reste accessible une fois la liste repliée,
+          alors que portée par elle, elle sortirait de l'écran avec elle. */}
+      <nav className={css.rail} aria-label="Launchers">
+        {platforms.map((p) => {
+          const teinte = PLATFORM_CSS[p.name] ?? '#7a8a9a';
+          const icone = icons[p.name];
+          return (
+            <button
+              key={p.name}
+              type="button"
+              className={[
+                css.railBtn,
+                p.name === platform ? css.railBtnActive : '',
+                p.name === currentPlatform ? css.railBtnCurrent : '',
+              ].filter(Boolean).join(' ')}
+              style={{ '--teinte': teinte } as CSSProperties}
+              onClick={() => onPickPlatform(p.name)}
+              aria-current={p.name === platform}
+              title={`${p.name} — ${p.count} ${p.count > 1 ? 'jeux' : 'jeu'}`}
+            >
+              {icone
+                ? <img src={icone} alt="" className={css.railIcon} draggable={false} />
+                : <span className={css.railInitiale}>{p.name.slice(0, 1).toUpperCase()}</span>}
+            </button>
+          );
+        })}
+      </nav>
     </>
+  );
+}
+
+/**
+ * Une entrée de la liste.
+ *
+ * `orbit` vaut `null` quand la planète n'est pas à l'écran : on montre alors la
+ * couleur de son launcher, seule information utile pour situer le jeu.
+ */
+function Ligne({
+  game, orbit, selected, sgdbKeySet, onPick,
+}: {
+  game: Game;
+  orbit: number | null;
+  selected: boolean;
+  sgdbKeySet: boolean;
+  onPick: (game: Game) => void;
+}) {
+  const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
+  return (
+    <li>
+      <button
+        type="button"
+        className={[css.item, selected ? css.itemActive : ''].filter(Boolean).join(' ')}
+        onClick={() => onPick(game)}
+        title={game.title}
+        style={selected ? { borderColor: teinte + '88' } : undefined}
+      >
+        {/* La pastille porte `color` autant que `background` : sa lueur est
+            tirée de `currentColor`, sans quoi elle serait blanche autour d'un
+            point coloré. */}
+        {orbit !== null ? (
+          <span className={css.orbitNum}>{orbit}</span>
+        ) : (
+          <span
+            className={css.puce}
+            style={{ background: teinte, color: teinte }}
+            aria-hidden="true"
+          />
+        )}
+        <Thumb game={game} color={teinte} sgdbKeySet={sgdbKeySet} />
+        <span className={css.labels}>
+          <span className={css.name}>{game.title}</span>
+          <span className={css.meta}>
+            {game.sizeOnDisk != null && game.sizeOnDisk > 0 ? fmtSize(game.sizeOnDisk) : '—'}
+            {game.favorite && <span className={css.fav}> ★</span>}
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }

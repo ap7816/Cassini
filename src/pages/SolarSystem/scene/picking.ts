@@ -13,7 +13,7 @@ type Options = {
   /** Tableau figé pour le raycast — le reconstruire par événement allouait. */
   pickMeshes: THREE.Object3D[];
   meshToEntry: Map<THREE.Object3D, PlanetEntry>;
-  /** Cibles des portails de phase, testées avant les planètes. */
+  /** Cibles des portails de phase. */
   portals: THREE.Object3D[];
   /** Planète sous le curseur, ou `null`. Émis uniquement quand elle change. */
   onHover: (hit: PlanetEntry | null) => void;
@@ -59,24 +59,32 @@ export function createPicker({
   }
 
   /**
-   * Le portail passe avant les planètes : il se trouve au-delà de l'orbite
-   * externe, mais la tolérance en pixels des planètes pourrait le recouvrir si
-   * l'une d'elles se projette juste devant.
+   * Ce que désigne le curseur : une planète, un portail, ou rien.
+   *
+   * C'est la **profondeur** qui tranche, jamais la catégorie. Le portail passait
+   * auparavant systématiquement avant les planètes, au motif qu'il se trouve
+   * au-delà de l'orbite externe. Mais un portail lointain se projette volontiers
+   * sur le centre du système : une planète posée devant lui devenait
+   * incliquable, et le clic partait vers un autre launcher au lieu de zoomer.
    */
-  function hitsPortal(clientX: number, clientY: number): THREE.Object3D | null {
-    if (portals.length === 0) return null;
-    aim(clientX, clientY);
-    return raycaster.intersectObjects(portals, false)[0]?.object ?? null;
-  }
-
-  function pick(clientX: number, clientY: number): PlanetEntry | null {
+  function designer(
+    clientX: number,
+    clientY: number,
+  ): { planete: PlanetEntry | null; portail: THREE.Object3D | null } {
     const rect = aim(clientX, clientY);
 
-    // 1. Un impact géométrique exact l'emporte toujours
-    const hits = raycaster.intersectObjects(pickMeshes, false);
-    if (hits.length > 0) {
-      const hit = meshToEntry.get(hits[0].object);
-      if (hit) return hit;
+    const surPortail = portals.length > 0
+      ? raycaster.intersectObjects(portals, false)[0] ?? null
+      : null;
+
+    // 1. Un impact géométrique exact sur une planète, s'il est plus proche que
+    //    le portail.
+    for (const h of raycaster.intersectObjects(pickMeshes, false)) {
+      const e = meshToEntry.get(h.object);
+      if (!e) continue;
+      return surPortail && surPortail.distance < h.distance
+        ? { planete: null, portail: surPortail.object }
+        : { planete: e, portail: null };
     }
 
     // 2. Sinon, la planète dont le centre est le plus proche du curseur.
@@ -98,8 +106,18 @@ export function createPicker({
         best = p;
       }
     }
-    return best;
+
+    // Retenue au pixel près et non par le rayon, cette planète n'a pas de point
+    // d'impact : on compare la distance de son centre, ce qui suffit à départager
+    // un premier plan d'un arrière-plan.
+    if (best) {
+      const d = camera.position.distanceTo(best.mesh.position);
+      if (!surPortail || d < surPortail.distance) return { planete: best, portail: null };
+    }
+
+    return { planete: null, portail: surPortail?.object ?? null };
   }
+
 
   function onMouseDown(e: MouseEvent) {
     downX = e.clientX;
@@ -109,12 +127,12 @@ export function createPicker({
   function onMouseUp(e: MouseEvent) {
     // Un léger glissement reste un clic ; faire tourner la caméra n'en est pas un
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_TOLERANCE_PX) return;
-    const portail = hitsPortal(e.clientX, e.clientY);
+    const { planete, portail } = designer(e.clientX, e.clientY);
     if (portail) {
       onPortal(portail);
       return;
     }
-    onClick(pick(e.clientX, e.clientY));
+    onClick(planete);
   }
 
   function onMouseMove(e: MouseEvent) {
@@ -147,15 +165,12 @@ export function createPicker({
       if (!hoverPending) return;
       hoverPending = false;
 
-      if (hitsPortal(hoverX, hoverY)) {
-        canvas.style.cursor = 'pointer';
-        setHover(null);
-        return;
-      }
-
-      const hit = pick(hoverX, hoverY);
-      canvas.style.cursor = hit ? 'pointer' : '';
-      setHover(hit);
+      // Même arbitrage qu'au clic, sans quoi le survol désignerait une chose
+      // et le clic une autre : le nom de la planète s'afficherait sous le
+      // curseur alors que cliquer partirait vers un autre launcher.
+      const { planete, portail } = designer(hoverX, hoverY);
+      canvas.style.cursor = planete || portail ? 'pointer' : '';
+      setHover(planete);
     },
 
     dispose() {

@@ -6,10 +6,18 @@
 .panel {
   position: relative;
   width: 300px;
-  max-width: 80vw;
+  /* Bornes annoncées par la scène (voir updatePopupAnchor) : elle seule connaît
+     la bande réellement libre, une fois retranchées la navigation, la liste et
+     la barre des launchers. Le repli sur `80vw` ne sert qu'avant la première
+     frame — `vw` mesure la fenêtre entière et déborderait de plus de 450 px. */
+  max-width: var(--popup-max-w, 80vw);
+  max-height: var(--popup-max-h, 90vh);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Horizontalement rogné — la bannière déborde des coins arrondis, c'est ce
+     qui les dessine. Verticalement défilant : sur une fenêtre courte la carte
+     atteint son plafond, mieux vaut la faire défiler que la tronquer. */
+  overflow: hidden auto;
   /* Fond opaque, sans `backdrop-filter`.
      Ce qui se trouve derrière la carte est la canvas WebGL, redessinée à
      chaque frame : soleil qui pulse, planètes qui tournent, champ d'étoiles.

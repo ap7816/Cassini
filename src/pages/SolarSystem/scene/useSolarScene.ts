@@ -13,7 +13,7 @@ import {
 } from '../constants';
 import type { FlySettings } from '../lib/flyKeys';
 import { orbitPos, orbitRadius } from '../lib/orbits';
-import { placePopup } from '../lib/popup';
+import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { createBelt, createStarfield, createSun } from './decor';
 import { createPlanets, createPlanetGlow } from './planets';
@@ -50,9 +50,13 @@ const CAM_REF = 0.7;
  *
  * `ARRIVAL_S` est la seconde moitié du voyage. Elle joue aussi au premier
  * affichage de la page, où elle sert de plan d'ouverture.
+ *
+ * Toutes deux resserrées avec le voile : la caméra dérivait encore une seconde
+ * et demie après que le voile s'était levé, ce qui donnait au voyage entier
+ * l'allure d'un ralenti alors que la traversée est censée être brutale.
  */
-const WARP_DIVE_S = 1;
-const ARRIVAL_S = 1.6;
+const WARP_DIVE_S = 0.34;
+const ARRIVAL_S = 0.8;
 /** Éloignement du point d'entrée, en multiples du cadrage d'ensemble. */
 const ARRIVAL_ZOOM = 1.75;
 
@@ -521,6 +525,8 @@ export function useSolarScene({
     let popupH = 0;
     let popupShown = false;
     let lastArrowY = -1;
+    let lastMaxW = -1;
+    let lastMaxH = -1;
     let lastSide = '';
     let lastX = NaN;
     let lastY = NaN;
@@ -739,9 +745,22 @@ export function useSolarScene({
       // la carte doit être recadrée sur la seule bande découverte. Celle-ci ne
       // commence plus à zéro, on raisonne donc dans son repère puis on ramène
       // le résultat dans celui du calque.
-      const placement = placePopup(
-        cx - viewLeft, cy, edge, popupW, popupH, w - viewLeft - viewRight, h,
-      );
+      const bande = w - viewLeft - viewRight;
+
+      // Encombrement maximal de la carte, publié pour qu'elle s'y conforme.
+      //
+      // Sa feuille de style ne peut pas le déduire seule : elle se bornait à
+      // `80vw`, or `vw` mesure la fenêtre entière alors que la carte vit dans
+      // la bande laissée libre par la navigation, la liste et la barre des
+      // launchers — plus de 450 px de moins. En fenêtre étroite, le recadrage
+      // n'avait alors plus de place où recadrer et la carte débordait.
+      //
+      // Le plancher évite l'absurde : sous cette largeur la carte ne dirait
+      // plus rien, mieux vaut qu'elle dépasse et reste lisible.
+      const maxW = Math.max(220, bande - POPUP_MARGIN * 2);
+      const maxH = Math.max(200, h - POPUP_MARGIN * 2);
+
+      const placement = placePopup(cx - viewLeft, cy, edge, popupW, popupH, bande, h);
       const { y, arrowY, side } = placement;
       const x = placement.x + viewLeft;
 
@@ -757,6 +776,12 @@ export function useSolarScene({
       if (arrowY !== lastArrowY) {
         el.style.setProperty('--arrow-y', `${arrowY}px`);
         lastArrowY = arrowY;
+      }
+      if (maxW !== lastMaxW || maxH !== lastMaxH) {
+        el.style.setProperty('--popup-max-w', `${maxW}px`);
+        el.style.setProperty('--popup-max-h', `${maxH}px`);
+        lastMaxW = maxW;
+        lastMaxH = maxH;
       }
       if (side !== lastSide) {
         el.dataset.side = side;

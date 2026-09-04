@@ -7,7 +7,7 @@ import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useUpdater } from '../../features/updater/useUpdater';
 import { useMusicPlayer } from '../../features/music/MusicContext';
-import { initAmbient, pauseAmbientForMusic, resumeAmbientAfterMusic } from '../../features/ambient/ambientPlayer';
+import { initAmbient, suspendAmbient, resumeAmbient } from '../../features/ambient/ambientPlayer';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
@@ -98,11 +98,68 @@ export function AppLayout() {
   // Coupe l'ambiance quand une musique joue, la reprend quand elle s'arrête
   useEffect(() => {
     if (music.isPlaying) {
-      pauseAmbientForMusic();
+      suspendAmbient('music');
     } else {
-      resumeAmbientAfterMusic();
+      resumeAmbient('music');
     }
   }, [music.isPlaying]);
+
+  // Coupe l'ambiance quand la fenêtre quitte l'écran.
+  //
+  // `visibilitychange` couvre les deux façons de la faire disparaître : réduite
+  // dans la barre des tâches, ou repliée dans la zone de notification quand
+  // « continuer en arrière-plan » est actif.
+  useEffect(() => {
+    const appliquer = () => {
+      if (document.visibilityState === 'hidden') suspendAmbient('window');
+      else resumeAmbient('window');
+    };
+    document.addEventListener('visibilitychange', appliquer);
+    // Au montage : la fenêtre peut déjà être masquée, si l'application a été
+    // lancée réduite ou démarrée avec la session.
+    appliquer();
+    return () => document.removeEventListener('visibilitychange', appliquer);
+  }, []);
+
+  // Filet côté fenêtre native.
+  //
+  // WebView2 ne signale pas toujours la réduction par `visibilitychange` : cela
+  // dépend de sa version et de la façon dont Windows occulte la fenêtre. On
+  // interroge donc aussi l'état réel de la fenêtre, à la fin de chaque salve de
+  // redimensionnement — pas à chaque événement, qui en émet des dizaines
+  // pendant un glissement de bordure et coûterait autant d'allers-retours.
+  useEffect(() => {
+    if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
+    let unlisten: (() => void) | undefined;
+    let mounted = true;
+    let differe: ReturnType<typeof setTimeout> | undefined;
+
+    import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+      if (!mounted) return;
+      const fenetre = getCurrentWindow();
+      fenetre
+        .onResized(() => {
+          if (differe) clearTimeout(differe);
+          differe = setTimeout(() => {
+            void fenetre.isMinimized().then((reduite) => {
+              if (!mounted) return;
+              if (reduite) suspendAmbient('window');
+              else resumeAmbient('window');
+            });
+          }, 150);
+        })
+        .then((fn) => {
+          if (!mounted) { fn(); return; }
+          unlisten = fn;
+        });
+    });
+
+    return () => {
+      mounted = false;
+      if (differe) clearTimeout(differe);
+      unlisten?.();
+    };
+  }, []);
   type CSSVarStyle = React.CSSProperties & {
     ['--app-bg-image']?: string;
     ['--accent']?: string;

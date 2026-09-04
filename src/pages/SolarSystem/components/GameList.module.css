@@ -3,7 +3,8 @@
 .list {
   position: absolute;
   top: 0;
-  right: 0;
+  /* Adossée à la barre des launchers, pas au bord de la fenêtre. */
+  right: var(--rail-w, 0px);
   bottom: 0;
   /* Largeur propre de la liste, distincte de la place qu'elle réserve dans la
      mise en page (`--side-w`, qui tombe à zéro une fois repliée). */
@@ -31,7 +32,9 @@
    la liste reste donc visible pendant qu'elle sort, mais ses boutons quittent
    ensuite l'ordre de tabulation au lieu de rester atteignables hors écran. */
 .listHidden {
-  transform: translateX(100%);
+  /* Au-delà de sa propre largeur : la barre l'a décalée du bord, une
+     translation de 100 % la laisserait dépasser d'autant. */
+  transform: translateX(calc(100% + var(--rail-w, 0px)));
   visibility: hidden;
   transition:
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -245,6 +248,120 @@
   .item, .search, .toggle, .toggleIcon { transition: none; }
   /* Le repli devient instantané, mais `visibility` doit rester différée
      d'autant : sans cela elle basculerait avant la fin du repli. */
-  .list { transition: none; }
+  .list, .railBtn { transition: none; }
   .listHidden { transition: visibility 0s; }
+}
+
+
+/* ── Barre des launchers ──────────────────────────────────────────────── */
+
+/* Colonne d'icônes au bord droit. Elle ne se replie jamais : c'est le seul
+   moyen de rappeler la liste sur un autre launcher, la masquer avec elle
+   rendrait la fonction inaccessible. */
+.rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--rail-w, 40px);
+  box-sizing: border-box;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(6, 10, 17, 0.42);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.rail::-webkit-scrollbar {
+  width: 0;
+}
+
+.railBtn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 130ms, background 130ms, border-color 130ms;
+}
+
+.railBtn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.railBtn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 1px;
+}
+
+/* Launcher consulté dans la liste. */
+.railBtnActive {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--teinte, rgba(255, 255, 255, 0.4));
+}
+
+/* Launcher réellement affiché en 3D — un liseré à gauche, pour qu'on retrouve
+   d'un coup d'œil d'où l'on parle même en consultant ailleurs. */
+.railBtnCurrent {
+  opacity: 1;
+  box-shadow: -3px 0 0 -1px var(--teinte, #7a8a9a);
+}
+
+.railIcon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+.railInitiale {
+  font: 800 11px/1 Inter, sans-serif;
+  color: var(--teinte, #fff);
+}
+
+/* ── Aperçu d'un autre launcher ───────────────────────────────────────── */
+
+.headHint {
+  font: 600 9px/1 Inter, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+/* Séparateur des résultats venus d'un autre launcher. */
+.groupe {
+  margin: 8px 4px 2px;
+  font: 700 9px/1 Inter, sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.34);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Remplace le rang orbital quand la planète n'est pas à l'écran : elle occupe
+   la même place, la colonne des titres reste donc alignée. */
+.puce {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin: 0 4px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
 }

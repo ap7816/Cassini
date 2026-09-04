@@ -108,6 +108,13 @@ export function portalRadius(outerR: number): number {
  * trois rayons entre voisins.
  */
 export function portalRingRadius(outerR: number, count: number): number {
+  // Proportionnel au système, et non adossé au fond étoilé.
+  //
+  // Les y coller a été essayé puis écarté : le champ d'étoiles a un plancher de
+  // 900 unités, si bien qu'un système d'un ou deux jeux aurait vu ses portails
+  // passer de 100 à 900 — sept fois au-delà du plan d'ouverture, donc invisibles
+  // à l'arrivée. À 2,5 rayons ils tombent juste à l'intérieur de ce plan quelle
+  // que soit la taille de la bibliothèque, et au-delà des étoiles dès onze jeux.
   const base = outerR * PORTAL_RING;
   if (count < 2) return base;
 
