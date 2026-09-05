@@ -12,6 +12,8 @@ type Label = {
   div: HTMLDivElement;
   /** Position monde fixe (label de plateforme). */
   world?: THREE.Vector3;
+  /** Distance au-delà de laquelle ce label apparaît. */
+  seuil?: number;
   /** Planète suivie (label de jeu). */
   entry?: PlanetEntry;
   lastX: number;
@@ -40,13 +42,43 @@ export class LabelLayer {
     this.push(div, { entry });
   }
 
-  /** Label ancré à une position fixe du monde. */
-  addWorld(world: THREE.Vector3, text: string, className: string, color?: string): void {
+  /**
+   * Label ancré à une position fixe du monde.
+   *
+   * `seuil` est la distance au-delà de laquelle il apparaît : le nom d'un
+   * launcher n'a d'intérêt qu'en vue d'ensemble, il encombrerait la vue une
+   * fois entré dans son système. Mesurée depuis le label lui-même et non
+   * depuis l'origine — dans une galaxie, l'origine n'est le centre de rien.
+   */
+  addWorld(
+    world: THREE.Vector3,
+    text: string,
+    className: string,
+    color?: string,
+    seuil = 0,
+  ): void {
     const div = document.createElement('div');
     div.className = className;
     div.textContent = text;
     if (color) div.style.color = color;
-    this.push(div, { world });
+    this.push(div, { world, seuil });
+  }
+
+  /**
+   * Retire les labels des planètes données.
+   *
+   * Nécessaire depuis que la galaxie libère les systèmes dont on s'éloigne :
+   * sans cela, leurs noms resteraient dans le calque et se projetteraient sur
+   * des planètes qui n'existent plus.
+   */
+  removePlanets(entries: Iterable<PlanetEntry>): void {
+    const aRetirer = new Set(entries);
+    if (aRetirer.size === 0) return;
+    this.labels = this.labels.filter((l) => {
+      if (!l.entry || !aRetirer.has(l.entry)) return true;
+      l.div.remove();
+      return false;
+    });
   }
 
   private push(div: HTMLDivElement, opts: Partial<Label>): void {
@@ -82,8 +114,6 @@ export class LabelLayer {
 
     const w2 = width / 2;
     const h2 = height / 2;
-    const camDist = camera.position.length();
-    const overview = camDist > systemR * 0.55;
     const maxDist = systemR * 2.6;
 
     for (const lbl of this.labels) {
@@ -101,14 +131,18 @@ export class LabelLayer {
         // derrière la caméra ou trop lointains — sauf celui qu'on survole,
         // qui doit rester lisible quelle que soit la distance.
         const survole = lbl.entry === hovered;
-        this.proj.copy(lbl.entry.mesh.position);
+        // Position **monde** : la planète vit dans le groupe de son système,
+        // sa position propre est relative au soleil de celui-ci. La projeter
+        // telle quelle rassemblerait tous les noms autour du centre de la
+        // galaxie.
+        lbl.entry.mesh.getWorldPosition(this.proj);
         const dist = camera.position.distanceTo(this.proj);
         this.proj.y -= lbl.entry.radius * 1.9;
         this.proj.project(camera);
         show = this.proj.z <= 1 && (survole || dist <= maxDist);
         opacity = survole ? 1 : 0;
       } else if (lbl.world) {
-        show = overview;
+        show = camera.position.distanceTo(lbl.world) > (lbl.seuil ?? 0);
         if (show) {
           this.proj.copy(lbl.world).project(camera);
           show = this.proj.z <= 1;

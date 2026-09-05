@@ -248,16 +248,16 @@
   .item, .search, .toggle, .toggleIcon { transition: none; }
   /* Le repli devient instantané, mais `visibility` doit rester différée
      d'autant : sans cela elle basculerait avant la fin du repli. */
-  .list, .railBtn { transition: none; }
-  .listHidden { transition: visibility 0s; }
+  .list, .rail, .railBtn { transition: none; }
+  .listHidden, .railHidden { transition: visibility 0s; }
 }
 
 
 /* ── Barre des launchers ──────────────────────────────────────────────── */
 
-/* Colonne d'icônes au bord droit. Elle ne se replie jamais : c'est le seul
-   moyen de rappeler la liste sur un autre launcher, la masquer avec elle
-   rendrait la fonction inaccessible. */
+/* Colonne d'icônes au bord droit, repliée en même temps que la liste : les
+   deux forment une seule colonne, et la languette de repli les rappelle
+   ensemble. */
 .rail {
   position: absolute;
   top: 0;
@@ -276,6 +276,18 @@
   background: rgba(6, 10, 17, 0.42);
   border-left: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Repliée. Même traitement que la liste : `visibility` ne bascule qu'une fois
+   la translation finie, sinon les boutons quitteraient l'ordre de tabulation
+   avant même d'avoir disparu de l'écran. */
+.railHidden {
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 220ms;
 }
 
 .rail::-webkit-scrollbar {
@@ -314,13 +326,6 @@
   border-color: var(--teinte, rgba(255, 255, 255, 0.4));
 }
 
-/* Launcher réellement affiché en 3D — un liseré à gauche, pour qu'on retrouve
-   d'un coup d'œil d'où l'on parle même en consultant ailleurs. */
-.railBtnCurrent {
-  opacity: 1;
-  box-shadow: -3px 0 0 -1px var(--teinte, #7a8a9a);
-}
-
 .railIcon {
   width: 20px;
   height: 20px;
@@ -331,18 +336,6 @@
 .railInitiale {
   font: 800 11px/1 Inter, sans-serif;
   color: var(--teinte, #fff);
-}
-
-/* ── Aperçu d'un autre launcher ───────────────────────────────────────── */
-
-.headHint {
-  font: 600 9px/1 Inter, sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 4px;
-  padding: 2px 5px;
 }
 
 /* Séparateur des résultats venus d'un autre launcher. */

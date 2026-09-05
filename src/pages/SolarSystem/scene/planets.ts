@@ -14,7 +14,14 @@ import { makeRingTexture, radialRingGeometry, type ProfilAnneau } from '../textu
 import type { PlanetEntry } from './types';
 
 type Options = {
-  scene: THREE.Scene;
+  /**
+   * Conteneur des planètes et de leurs orbites.
+   *
+   * Un `Object3D` et non une `Scene` : la galaxie donne à chaque système son
+   * propre groupe, ce qui permet de le déplacer, de le masquer ou de le
+   * libérer d'un bloc.
+   */
+  scene: THREE.Object3D;
   games: Game[];
   orbStep: number;
   /** Rayon de la première orbite, calculé pour dégager la couronne solaire. */

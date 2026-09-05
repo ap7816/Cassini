@@ -85,10 +85,8 @@ type Props = {
   /** Toute la bibliothèque : la recherche ne s'arrête pas au launcher courant. */
   allGames: Game[];
   selectedId: string | null;
-  /** Launcher consulté dans la liste. */
+  /** Launcher affiché, en liste comme en 3D — les deux ne divergent plus. */
   platform: string;
-  /** Launcher réellement affiché en 3D, quand on en consulte un autre. */
-  currentPlatform: string;
   /** Launchers présents dans la bibliothèque, pour la barre de sélection. */
   platforms: Array<{ name: string; count: number }>;
   /** Icône de chaque launcher, quand elle a pu être extraite. */
@@ -100,7 +98,7 @@ type Props = {
    * décider s'il suffit de viser la planète ou s'il faut d'abord voyager.
    */
   onPickGame: (game: Game) => void;
-  /** Change le launcher consulté, sans toucher au système affiché. */
+  /** Mène la caméra jusqu'à ce launcher, et la liste suit. */
   onPickPlatform: (platform: string) => void;
   /** Liste dépliée. Repliée, elle sort par la droite et rend la place à la scène. */
   open: boolean;
@@ -117,7 +115,7 @@ const MAX_AILLEURS = 40;
  * planète : la caméra s'en approche et le panneau de détail s'ouvre.
  */
 export function GameList({
-  games, allGames, selectedId, platform, currentPlatform, platforms, icons,
+  games, allGames, selectedId, platform, platforms, icons,
   sgdbKeySet, onPickGame, onPickPlatform, open, onToggle,
 }: Props) {
   const { t } = useTranslation();
@@ -148,9 +146,6 @@ export function GameList({
       .filter((g) => (g.platform || 'Other') !== platform && g.title.toLowerCase().includes(q))
       .slice(0, MAX_AILLEURS);
   }, [allGames, platform, query]);
-
-  /** Le launcher consulté n'est pas celui qu'on survole en 3D. */
-  const enApercu = platform !== currentPlatform;
 
   return (
     <>
@@ -191,9 +186,6 @@ export function GameList({
           <span className={css.headTitle} style={{ color }}>
             {platform}
           </span>
-          {/* Sans cette mention, une liste qui ne correspond à aucune des
-              planètes visibles passerait pour un défaut d'affichage. */}
-          {enApercu && <span className={css.headHint}>aperçu</span>}
         </div>
 
         <input
@@ -208,11 +200,8 @@ export function GameList({
             <Ligne
               key={g.id}
               game={g}
-              // Le rang dans la liste complète correspond au rang orbital —
-              // mais seulement si l'on regarde bien ce système. En aperçu, ces
-              // planètes n'existent pas à l'écran, le numéro ne désignerait
-              // rien : la pastille du launcher le remplace.
-              orbit={enApercu ? null : games.indexOf(g) + 1}
+              // Le rang dans la liste correspond au rang orbital.
+              orbit={games.indexOf(g) + 1}
               selected={g.id === selectedId}
               sgdbKeySet={sgdbKeySet}
               onPick={onPickGame}
@@ -245,7 +234,10 @@ export function GameList({
 
           Hors de l'`aside` : elle reste accessible une fois la liste repliée,
           alors que portée par elle, elle sortirait de l'écran avec elle. */}
-      <nav className={css.rail} aria-label="Launchers">
+      <nav
+        className={[css.rail, open ? '' : css.railHidden].filter(Boolean).join(' ')}
+        aria-label="Launchers"
+      >
         {platforms.map((p) => {
           const teinte = PLATFORM_CSS[p.name] ?? '#7a8a9a';
           const icone = icons[p.name];
@@ -256,7 +248,6 @@ export function GameList({
               className={[
                 css.railBtn,
                 p.name === platform ? css.railBtnActive : '',
-                p.name === currentPlatform ? css.railBtnCurrent : '',
               ].filter(Boolean).join(' ')}
               style={{ '--teinte': teinte } as CSSProperties}
               onClick={() => onPickPlatform(p.name)}

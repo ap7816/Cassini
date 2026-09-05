@@ -20,8 +20,9 @@
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
   --list-w: min(196px, 26%);
-  /* Barre des launchers, toujours visible : c'est par elle qu'on rappelle la
-     liste sur un autre launcher, elle ne peut donc pas se replier avec elle. */
+  /* Barre des launchers. Elle se replie avec la liste — la languette de repli
+     suffit à tout rappeler, et laisser une colonne d'icônes en bord d'écran
+     revenait à ne jamais rendre toute la largeur à la scène. */
   --rail-w: 40px;
   --side-w: calc(var(--list-w) + var(--rail-w));
 }
@@ -31,7 +32,7 @@
    sort par translation. La rétrécir ferait déferler son contenu pendant
    l'animation, titres tronqués et vignettes écrasées. */
 .pageListHidden {
-  --side-w: var(--rail-w);
+  --side-w: 0px;
 }
 
 /* Conteneur de la canvas Three.js.
@@ -210,74 +211,6 @@
   transform: translateY(-50%) rotate(315deg);
 }
 
-/* ── Sélecteur de launcher ──────────────────────────────────────────────── */
-
-.selector {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 12;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(8, 12, 20, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.selectorLabel {
-  font: 600 10px/1 Inter, sans-serif;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.selectorRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.selectorDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.select {
-  appearance: none;
-  min-width: 180px;
-  padding: 7px 30px 7px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.92);
-  font: 600 13px/1 Inter, sans-serif;
-  cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.5) 50%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.5) 50%, transparent 50%);
-  background-position: calc(100% - 15px) center, calc(100% - 10px) center;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  transition: background-color 140ms, border-color 140ms;
-}
-
-.select:hover {
-  background-color: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.24);
-}
-
-.select option {
-  background: #0b1018;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-
 /* Sans mouvement demandé, le décalage de projection prend sa valeur finale
    immédiatement : la scène lit la largeur du témoin, qui ne transite plus. */
 @media (prefers-reduced-motion: reduce) {
@@ -307,92 +240,4 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   pointer-events: none;
   user-select: none;
-}
-
-/* ── Voile de traversée du portail ──────────────────────────────────────── */
-
-/* Masque la destruction puis la reconstruction de la scène, que rien en 3D ne
-   peut couvrir puisque l'objet qui l'animerait disparaît en route.
-
-   Toujours monté, inerte au repos : le monter au moment du départ ferait
-   partir l'animation depuis un élément qui vient d'apparaître, et le
-   navigateur sauterait le premier palier.
-
-   Les durées ci-dessous reflètent WARP_OUT_MS et WARP_IN_MS dans
-   SolarSystemPage.tsx : le voile doit être opaque au moment exact où la scène
-   est détruite, et transparent quand la suivante a joué son arrivée. */
-.warp {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.warpOn {
-  pointer-events: auto; /* gèle les clics le temps du voyage */
-}
-
-/* Fond opaque.
-
-   Volontairement réduit à un aplat qui se fond : c'est la seule chose que le
-   voile *doit* faire, et une animation portée par le compositeur y survit là
-   où `requestAnimationFrame` peut sauter une image pendant que la scène
-   suivante se construit. Tout le spectacle est au-dessus, sur la canvas. */
-.warpCore {
-  position: absolute;
-  inset: 0;
-  background: #050810;
-  opacity: 0;
-}
-
-/* Tunnel de particules — voir WarpTunnel.tsx. Au-dessus du fond, sinon les
-   traits seraient recouverts par lui au moment où il devient opaque.
-
-   Débordant à gauche de la largeur de la colonne de droite : le point de fuite
-   est au milieu de la canvas, or il doit tomber au milieu de la *bande* laissée
-   libre par la liste et la barre des launchers — là où était le portail. Sans
-   ce décalage il partait plus de cent pixels trop à droite. Le débordement est
-   rogné par le voile, et la page reste couverte de bord à bord. */
-.warpCanvas {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(-1 * var(--side-w, 0px));
-  /* Largeur explicite, et non `right: 0` : une canvas est un élément remplacé,
-     `left` et `right` ne l'étirent pas — elle garderait sa largeur intrinsèque
-     et le décalage la ferait sortir du cadre par la gauche. */
-  width: calc(100% + var(--side-w, 0px));
-  height: 100%;
-}
-
-@keyframes warpVoileEntre {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes warpVoileSort {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
-/* Le fond monte vite et reste opaque le reste de la phase : la couture peut
-   survenir n'importe quand après la plongée de la caméra. */
-.warpOut .warpCore {
-  animation: warpVoileEntre 300ms cubic-bezier(0.55, 0, 1, 0.45) forwards;
-}
-
-/* Il ne se lève qu'en fin de phase d'entrée, une fois que la nouvelle scène a
-   eu le temps de rendre sa première image. */
-.warpIn .warpCore {
-  animation: warpVoileSort 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Sans mouvement demandé, il ne reste que ce que le voile doit à la scène :
-   couvrir la couture. Le tunnel ne se dessine pas — WarpTunnel s'en abstient
-   de lui-même — et le fond se contente d'apparaître et de disparaître. */
-@media (prefers-reduced-motion: reduce) {
-  .warpCanvas { display: none; }
-  .warpOut .warpCore { animation-duration: 120ms; }
-  .warpIn .warpCore { animation-duration: 120ms; }
 }

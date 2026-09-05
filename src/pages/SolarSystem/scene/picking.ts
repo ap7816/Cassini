@@ -13,12 +13,18 @@ type Options = {
   /** Tableau figé pour le raycast — le reconstruire par événement allouait. */
   pickMeshes: THREE.Object3D[];
   meshToEntry: Map<THREE.Object3D, PlanetEntry>;
-  /** Cibles des portails de phase. */
-  portals: THREE.Object3D[];
+  /**
+   * Cibles menant vers un autre système — une sphère invisible par soleil.
+   *
+   * Désigner un soleil, c'est demander à s'y rendre ; désigner une planète,
+   * c'est demander à la voir. Les deux catégories se départagent par la
+   * profondeur, jamais par l'ordre.
+   */
+  soleils: THREE.Object3D[];
   /** Planète sous le curseur, ou `null`. Émis uniquement quand elle change. */
   onHover: (hit: PlanetEntry | null) => void;
   onClick: (hit: PlanetEntry | null) => void;
-  onPortal: (target: THREE.Object3D) => void;
+  onSoleil: (target: THREE.Object3D) => void;
 };
 
 /**
@@ -34,7 +40,7 @@ type Options = {
  *    chaque pixel parcouru, ce qui coûtait plus cher que le rendu 3D lui-même.
  */
 export function createPicker({
-  canvas, camera, planets, pickMeshes, meshToEntry, portals, onHover, onClick, onPortal,
+  canvas, camera, planets, pickMeshes, meshToEntry, soleils, onHover, onClick, onSoleil,
 }: Options) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -59,22 +65,23 @@ export function createPicker({
   }
 
   /**
-   * Ce que désigne le curseur : une planète, un portail, ou rien.
+   * Ce que désigne le curseur : une planète, un soleil, ou rien.
    *
-   * C'est la **profondeur** qui tranche, jamais la catégorie. Le portail passait
-   * auparavant systématiquement avant les planètes, au motif qu'il se trouve
-   * au-delà de l'orbite externe. Mais un portail lointain se projette volontiers
-   * sur le centre du système : une planète posée devant lui devenait
-   * incliquable, et le clic partait vers un autre launcher au lieu de zoomer.
+   * C'est la **profondeur** qui tranche, jamais la catégorie. La cible menant
+   * ailleurs passait auparavant systématiquement avant les planètes, au motif
+   * qu'elle se trouve au-delà de l'orbite externe. Mais un système lointain se
+   * projette volontiers sur celui qu'on regarde : une planète posée devant lui
+   * devenait incliquable, et le clic partait vers un autre launcher au lieu de
+   * zoomer.
    */
   function designer(
     clientX: number,
     clientY: number,
-  ): { planete: PlanetEntry | null; portail: THREE.Object3D | null } {
+  ): { planete: PlanetEntry | null; soleil: THREE.Object3D | null } {
     const rect = aim(clientX, clientY);
 
-    const surPortail = portals.length > 0
-      ? raycaster.intersectObjects(portals, false)[0] ?? null
+    const surSoleil = soleils.length > 0
+      ? raycaster.intersectObjects(soleils, false)[0] ?? null
       : null;
 
     // 1. Un impact géométrique exact sur une planète, s'il est plus proche que
@@ -82,9 +89,9 @@ export function createPicker({
     for (const h of raycaster.intersectObjects(pickMeshes, false)) {
       const e = meshToEntry.get(h.object);
       if (!e) continue;
-      return surPortail && surPortail.distance < h.distance
-        ? { planete: null, portail: surPortail.object }
-        : { planete: e, portail: null };
+      return surSoleil && surSoleil.distance < h.distance
+        ? { planete: null, soleil: surSoleil.object }
+        : { planete: e, soleil: null };
     }
 
     // 2. Sinon, la planète dont le centre est le plus proche du curseur.
@@ -96,7 +103,9 @@ export function createPicker({
     let bestPx = PICK_RADIUS_PX;
 
     for (const p of planets) {
-      proj.copy(p.mesh.position).project(camera);
+      // Position monde : une planète appartient au groupe de son système, sa
+      // position propre est relative au soleil de celui-ci.
+      p.mesh.getWorldPosition(proj).project(camera);
       if (proj.z > 1) continue; // derrière la caméra
       const px = (proj.x * 0.5 + 0.5) * rect.width;
       const py = (-proj.y * 0.5 + 0.5) * rect.height;
@@ -111,11 +120,11 @@ export function createPicker({
     // d'impact : on compare la distance de son centre, ce qui suffit à départager
     // un premier plan d'un arrière-plan.
     if (best) {
-      const d = camera.position.distanceTo(best.mesh.position);
-      if (!surPortail || d < surPortail.distance) return { planete: best, portail: null };
+      const d = camera.position.distanceTo(best.mesh.getWorldPosition(proj));
+      if (!surSoleil || d < surSoleil.distance) return { planete: best, soleil: null };
     }
 
-    return { planete: null, portail: surPortail?.object ?? null };
+    return { planete: null, soleil: surSoleil?.object ?? null };
   }
 
 
@@ -127,9 +136,9 @@ export function createPicker({
   function onMouseUp(e: MouseEvent) {
     // Un léger glissement reste un clic ; faire tourner la caméra n'en est pas un
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_TOLERANCE_PX) return;
-    const { planete, portail } = designer(e.clientX, e.clientY);
-    if (portail) {
-      onPortal(portail);
+    const { planete, soleil } = designer(e.clientX, e.clientY);
+    if (soleil) {
+      onSoleil(soleil);
       return;
     }
     onClick(planete);
@@ -168,8 +177,8 @@ export function createPicker({
       // Même arbitrage qu'au clic, sans quoi le survol désignerait une chose
       // et le clic une autre : le nom de la planète s'afficherait sous le
       // curseur alors que cliquer partirait vers un autre launcher.
-      const { planete, portail } = designer(hoverX, hoverY);
-      canvas.style.cursor = planete || portail ? 'pointer' : '';
+      const { planete, soleil } = designer(hoverX, hoverY);
+      canvas.style.cursor = planete || soleil ? 'pointer' : '';
       setHover(planete);
     },
 

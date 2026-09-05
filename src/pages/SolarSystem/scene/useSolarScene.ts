@@ -2,39 +2,25 @@ import { useEffect, type RefObject } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Game } from '../../../features/types';
-import {
-  INIT_LOOK,
-  ORB_BASE,
-  ORB_STEP,
-  PLATFORM_COLOR,
-  PLATFORM_CSS,
-  PLN_R,
-  PLN_R_MAX,
-} from '../constants';
+import { INIT_LOOK, PLATFORM_COLOR, PLATFORM_CSS, PLN_R } from '../constants';
 import type { FlySettings } from '../lib/flyKeys';
-import { orbitPos, orbitRadius } from '../lib/orbits';
+import { composerTrajet } from '../lib/flightPath';
+import { orbitPos } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
-import { createBelt, createStarfield, createSun } from './decor';
-import { createPlanets, createPlanetGlow } from './planets';
+import { createStarfield } from './decor';
+import { createGalaxy, type SystemeGalaxie } from './galaxy';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import { createPostprocess } from './postprocess';
-import {
-  createPortals,
-  portalRadius,
-  portalRingRadius,
-  PORTAL_SPREAD,
-  type PortalTarget,
-} from './portal';
 import type { PlanetEntry } from './types';
 
 /**
  * Durées extrêmes d'un déplacement de caméra, en secondes, et distance de
  * référence servant à répartir les trajets entre les deux.
  *
- * `CAM_REF` est exprimée en fractions du rayon du système : un trajet de
- * `systemR * CAM_REF` dure une seconde, les autres au prorata, dans les
+ * `CAM_REF` est exprimée en fractions du cadrage du système courant : un trajet
+ * de `frameR * CAM_REF` dure une seconde, les autres au prorata, dans les
  * bornes ci-dessus.
  */
 const CAM_MIN_S = 1;
@@ -42,20 +28,9 @@ const CAM_MAX_S = 2.2;
 const CAM_REF = 0.7;
 
 /**
- * Traversée du portail, en secondes.
- *
- * `WARP_DIVE_S` doit rester inférieur au temps que met le voile à devenir
- * opaque côté React : la caméra doit avoir fini sa plongée avant que la scène
- * ne soit détruite, sinon on voit le mouvement s'interrompre.
- *
- * `ARRIVAL_S` est la seconde moitié du voyage. Elle joue aussi au premier
- * affichage de la page, où elle sert de plan d'ouverture.
- *
- * Toutes deux resserrées avec le voile : la caméra dérivait encore une seconde
- * et demie après que le voile s'était levé, ce qui donnait au voyage entier
- * l'allure d'un ralenti alors que la traversée est censée être brutale.
+ * Plan d'ouverture, en secondes : la caméra part de loin et se resserre sur le
+ * système courant, ce qui montre au passage ses voisins dans la galaxie.
  */
-const WARP_DIVE_S = 0.34;
 const ARRIVAL_S = 0.8;
 /** Éloignement du point d'entrée, en multiples du cadrage d'ensemble. */
 const ARRIVAL_ZOOM = 1.75;
@@ -85,22 +60,6 @@ const FLY_BOOST = 3;
  * on le rapproche, puisqu'il reste sur l'axe du regard.
  */
 const FLY_PIVOT = 0.22;
-
-/**
- * Étendue de la couronne solaire, en rayons du soleil, et plafond de cette
- * étendue rapporté au système — les deux doivent refléter `createSun`.
- */
-const CORONA_SPAN = 3.4;
-const CORONA_CAP = 0.42;
-
-/**
- * Écart minimal entre la couronne et la première planète, en multiples de
- * l'étendue de la couronne.
- *
- * Généreux à dessein : à 1,18 la planète frôlait encore le halo, et la
- * floraison lumineuse ajoutée depuis élargit le soleil au-delà de sa géométrie.
- */
-const SUN_GAP = 1.9;
 
 /** Axe vertical du monde — le déplacement vertical l'utilise tel quel. */
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
@@ -132,22 +91,6 @@ function easeInOut(t: number): number {
 }
 
 /**
- * Accélérante : vitesse nulle au départ, **maximale à l'arrivée**.
- *
- * Pour la plongée dans le portail. Une courbe qui s'arrête en douceur donnerait
- * l'impression de se garer devant, alors qu'on le traverse : c'est lancé à
- * pleine vitesse que le voile doit prendre le relais.
- */
-function easeIn(t: number): number {
-  return t * t * t;
-}
-
-/** Décélérante, symétrique de la précédente — pour la sortie du portail. */
-function easeOut(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-/**
  * Journalise la carte graphique effectivement utilisée par le contexte WebGL.
  *
  * `WEBGL_debug_renderer_info` n'est pas exposée par tous les moteurs ; son
@@ -169,8 +112,25 @@ function logRenderer(renderer: THREE.WebGLRenderer): void {
 type Options = {
   mountRef: RefObject<HTMLDivElement | null>;
   labelsRef: RefObject<HTMLDivElement | null>;
-  games: Game[];
-  platform: string;
+  /**
+   * Les jeux de chaque launcher. Tous les systèmes coexistent désormais dans
+   * un seul espace : la scène les construit tous, mais ne peuple que ceux dont
+   * la caméra s'approche.
+   */
+  parPlateforme: Array<{ platform: string; games: Game[] }>;
+  /**
+   * Launcher devant lequel la caméra se pose au montage.
+   *
+   * Une référence et non une valeur, et c'est essentiel : voler vers un autre
+   * système remonte le changement à React, qui le range dans son état. Passé en
+   * valeur, ce changement entrait dans les dépendances de l'effet et
+   * **reconstruisait la scène entière** — le vol partait, puis tout était
+   * rebâti autour de la destination. On ne voyait qu'une coupure.
+   *
+   * Lu au seul montage : ensuite, c'est la scène qui décide où l'on est et le
+   * fait savoir par `onSysteme`.
+   */
+  platformRef: RefObject<string>;
   labelClass: string;
   orbitLabelClass: string;
   onSelect: (game: Game | null) => void;
@@ -205,10 +165,15 @@ type Options = {
   navProbeRef: RefObject<HTMLDivElement | null>;
   /** Réceptacle du compteur d'images, écrit directement dans le DOM. */
   fpsRef: RefObject<HTMLDivElement | null>;
-  /** Systèmes voisins, un portail chacun, teinté de leur couleur. */
-  destinations: PortalTarget[];
-  /** Un portail vient d'être franchi : la traversée est pilotée par React. */
-  onPortal: (platform: string) => void;
+  /**
+   * Reçoit une fonction menant la caméra jusqu'à un launcher.
+   *
+   * C'est ce qui remplace la traversée de portail : plus de scène détruite ni
+   * de voile, seulement un déplacement dans un espace qui contient déjà tout.
+   */
+  flyToRef: RefObject<(platform: string) => void>;
+  /** Le système sous les yeux a changé, la liste doit suivre. */
+  onSysteme: (platform: string) => void;
   /**
    * Touches de déplacement et sensibilité de la souris, lues à chaque frame.
    *
@@ -216,13 +181,6 @@ type Options = {
    * reconstruire la scène, alors que toute dépendance de l'effet le ferait.
    */
   flySettingsRef: RefObject<FlySettings>;
-  /**
-   * Système d'où l'on débarque, ou `null` au premier affichage.
-   *
-   * La caméra émerge alors du portail qui y ramène, au lieu d'entrer par le
-   * dehors — c'est la seconde moitié de la traversée.
-   */
-  arriveFrom: string | null;
 };
 
 /**
@@ -234,8 +192,8 @@ type Options = {
 export function useSolarScene({
   mountRef,
   labelsRef,
-  games,
-  platform,
+  parPlateforme,
+  platformRef,
   labelClass,
   orbitLabelClass,
   onSelect,
@@ -245,10 +203,9 @@ export function useSolarScene({
   sideProbeRef,
   navProbeRef,
   fpsRef,
-  destinations,
-  onPortal,
+  flyToRef,
+  onSysteme,
   flySettingsRef,
-  arriveFrom,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -301,158 +258,101 @@ export function useSolarScene({
     controls.zoomSpeed = 0.35;
     controls.target.copy(INIT_LOOK);
 
-    // ── Dimensions du système ────────────────────────────────────────────
-    const tint = PLATFORM_COLOR[platform] ?? 0x7a8a9a;
-    const planetCount = games.length;
+    // ── Galaxie ──────────────────────────────────────────────────────────
+    const labelLayer = new LabelLayer(labelsRef.current);
 
-    // Les orbites s'écartent assez pour que la plus grosse planète possible ne
-    // touche jamais sa voisine.
-    const orbStep = Math.max(ORB_STEP, PLN_R_MAX * 2.3);
+    // Tableaux de sélection vivants : la galaxie les remplit et les vide au fil
+    // des systèmes qu'elle construit et libère, le pointeur les relit à chaque
+    // frame. Les remplacer lui laisserait des références périmées.
+    const planets: PlanetEntry[] = [];
+    const pickMeshes: THREE.Object3D[] = [];
+    const meshToEntry = new Map<THREE.Object3D, PlanetEntry>();
 
-    // Dimensionnement par point fixe.
-    //
-    // Trois grandeurs se déterminent mutuellement : le rayon du soleil se
-    // déduit de l'étendue du système, l'étendue de sa couronne est plafonnée
-    // par cette même étendue, et la première orbite doit dégager la couronne —
-    // ce qui repousse l'étendue. On itère donc jusqu'à stabilisation.
-    //
-    // Trois passes suffisent : chacune ne fait que croître, et la borne
-    // supérieure du soleil (26) arrête la progression.
-    const rayonSoleil = (portee: number) =>
-      THREE.MathUtils.clamp(portee * 0.055, PLN_R_MAX * 1.3, 26);
-    const porteeDe = (base: number) =>
-      planetCount > 0 ? orbitRadius(planetCount - 1, orbStep, base) : base;
-    /** Étendue réelle de la couronne, cap de `createSun` compris. */
-    const couronneDe = (portee: number) =>
-      Math.min(rayonSoleil(portee) * CORONA_SPAN, portee * CORONA_CAP);
+    const galaxie = createGalaxy({
+      scene,
+      parPlateforme,
+      isDisposed,
+      planets,
+      pickMeshes,
+      meshToEntry,
+      onPlanet: (entry) => labelLayer.addPlanet(entry, entry.game.title, labelClass),
+      onSystemeLibere: (s) => labelLayer.removePlanets(s.planets),
+    });
 
-    let orbBase = ORB_BASE;
-    for (let i = 0; i < 3; i += 1) {
-      // Le dégagement se compte jusqu'au **bord** de la planète la plus
-      // proche, pas jusqu'à son centre : c'est sa surface qu'on voit entrer
-      // dans le soleil.
-      orbBase = Math.max(ORB_BASE, couronneDe(porteeDe(orbBase)) * SUN_GAP + PLN_R_MAX);
-    }
+    // Le système sous les yeux au montage. La liste latérale affiche le sien,
+    // la caméra doit donc s'y trouver.
+    const courant = galaxie.get(platformRef.current) ?? galaxie.systemes[0] ?? null;
 
-    const outerR = porteeDe(orbBase);
-    // Le plancher garantit que le soleil reste plus gros que toute planète.
-    const sunR = rayonSoleil(outerR);
-    // Assez large pour englober la ceinture d'astéroïdes — et l'anneau de
-    // portails quand il existe, sans quoi le cadrage d'ensemble les laisserait
-    // hors champ, donc introuvables.
-    const anneauPortails =
-      destinations.length > 0 ? portalRingRadius(outerR, destinations.length) * PORTAL_SPREAD * 1.05 : 0;
-    const systemR = Math.max(outerR * 1.55, anneauPortails) + sunR * 2;
+    /** Distance de repos devant un système, et point de vue correspondant. */
+    const cadrageDe = (s: SystemeGalaxie) => {
+      // Resserré depuis 1,9 : le système occupait un peu plus du tiers de la
+      // hauteur utile, le reste étant du vide étoilé.
+      const frameR = s.taille.outerR * 1.42 + s.taille.sunR * 1.6;
+      return {
+        frameR,
+        // ~48° d'élévation : plus bas, les orbites s'écrasent sur une ligne et
+        // la répartition autour du soleil devient illisible.
+        position: new THREE.Vector3(0, frameR * 1.05, frameR * 0.95).add(s.centre),
+      };
+    };
 
-    // ── Décor ────────────────────────────────────────────────────────────
+    const cadrage = courant ? cadrageDe(courant) : { frameR: 400, position: new THREE.Vector3(0, 420, 380) };
+    const frameR = cadrage.frameR;
+    const homeCam = cadrage.position;
+    const homeLook = courant ? courant.centre.clone() : new THREE.Vector3();
+
+    // ── Décor, commun à toute la galaxie ─────────────────────────────────
+    const tint = PLATFORM_COLOR[courant?.platform ?? ''] ?? 0x7a8a9a;
     const nebulaTex = makeNebulaTexture(tint);
     scene.background = nebulaTex;
 
-    // decay 0 : la luminosité ne dépend pas de la taille du système
     scene.add(new THREE.AmbientLight(0x2a3a60, 1.1));
-    scene.add(new THREE.PointLight(0xfff2d8, 2.6, 0, 0));
-    scene.add(createStarfield(outerR));
 
-    // La couronne ne doit jamais mordre sur la première orbite.
-    const sun = createSun(sunR, outerR * 0.42);
-    scene.add(sun.group);
+    // Une seule lumière ponctuelle, déplacée sur le soleil le plus proche.
+    //
+    // Une par système serait plus juste, mais chaque lumière entre dans le
+    // shader de *tous* les matériaux : sept d'entre elles renchérissent le
+    // rendu même quand six systèmes sont libérés. Or on ne voit les planètes
+    // que d'un système à la fois — celui qu'on éclaire.
+    const lumiere = new THREE.PointLight(0xfff2d8, 2.6, 0, 0);
+    if (courant) lumiere.position.copy(courant.centre);
+    scene.add(lumiere);
 
-    const belt = createBelt(outerR, planetCount);
-    if (belt) scene.add(belt);
+    // Le champ d'étoiles enveloppe la galaxie entière, pas un système.
+    scene.add(createStarfield(galaxie.rayon));
 
-    // Portails de phase — un par système voisin, absents s'il n'y a nulle
-    // part où aller.
-    const portalR = portalRadius(outerR);
-    const portals = destinations.length > 0 ? createPortals(outerR, destinations) : null;
-    if (portals) scene.add(portals.group);
-
-    // ── Planètes et labels ───────────────────────────────────────────────
-    const labelLayer = new LabelLayer(labelsRef.current);
-
-    const { planets, pickMeshes, meshToEntry } = createPlanets({
-      scene,
-      games,
-      orbStep,
-      orbBase,
-      tint,
-      isDisposed,
-      onPlanet: (entry) => labelLayer.addPlanet(entry, entry.game.title, labelClass),
-    });
-
-    // Repère chaque planète quand elle devient trop petite pour être vue.
-    const glow = createPlanetGlow(planets);
-    scene.add(glow.points);
-
-    labelLayer.addWorld(
-      new THREE.Vector3(0, outerR * 0.04, -outerR * 1.5),
-      platform,
-      orbitLabelClass,
-      PLATFORM_CSS[platform] ?? '#7a8a9a',
-    );
-
-    // Destination de chaque portail. Sans elle, une rangée de portails ne
-    // serait qu'une rangée d'anneaux lumineux indiscernables — la teinte seule
-    // ne suffit pas à nommer un launcher. Ces labels ne s'affichent qu'en vue
-    // d'ensemble, comme celui de la plateforme courante.
-    for (const e of portals?.entries ?? []) {
+    // Nom de chaque launcher, au-dessus de son soleil : c'est ce qui permet de
+    // savoir ce qu'on regarde de loin, une fois les planètes libérées.
+    for (const s of galaxie.systemes) {
       labelLayer.addWorld(
-        // Décalage exprimé en rayons de portail, pas en fractions du système :
-        // c'est le halo qu'il faut dégager, et celui-ci s'étend à deux rayons.
-        // La caméra regardant de trois quarts, un décalage vertical dans le
-        // monde ne se traduit qu'à ~67 % à l'écran.
-        //
-        // Juste ce qu'il faut pour sortir du halo : plus bas, le libellé se
-        // détache de son portail et va se poser sur ses voisins, les portails
-        // étant volontairement dispersés.
-        e.position.clone().setY(e.position.y - portalR * 2.5),
-        e.platform,
+        s.centre.clone().add(new THREE.Vector3(0, s.taille.outerR * 0.04, -s.taille.outerR * 1.5)),
+        s.platform,
         orbitLabelClass,
-        PLATFORM_CSS[e.platform] ?? '#7a8a9a',
+        PLATFORM_CSS[s.platform] ?? '#7a8a9a',
+        s.taille.systemR * 0.55,
       );
     }
 
-    // ── Caméra : cadre le système entier ─────────────────────────────────
-    // ~48° d'élévation : plus bas, les orbites s'écrasent sur une ligne et la
-    // répartition autour du soleil devient illisible.
-    // Rayon cadré au repos — le système seul, **portails exclus**.
-    //
-    // Les y inclure doublait la distance de la caméra (mesuré : 2,03×) et
-    // divisait donc par deux la taille apparente des planètes, qui sont le
-    // sujet de la vue. Les portails restent atteignables en dézoomant, et le
-    // plan d'ouverture les montre à chaque entrée dans le système : la caméra
-    // part de `ARRIVAL_ZOOM` fois cette distance, ce qui les englobe
-    // largement, puis se resserre sur le système.
-    // Resserré depuis 1,9 : le système occupait un peu plus du tiers de la
-    // hauteur utile, le reste étant du vide étoilé. Ce qui reste de marge
-    // laisse encore respirer l'orbite externe et ses libellés.
-    const frameR = outerR * 1.42 + sunR * 1.6;
-    const homeCam = new THREE.Vector3(0, frameR * 1.05, frameR * 0.95);
-    // Entrée en scène. Deux cas :
-    //
-    //  - on débarque d'un autre système : la caméra **émerge du portail qui y
-    //    ramène**, en le traversant vers l'intérieur. C'est ce qui referme la
-    //    traversée — on est entré par un anneau, on ressort par un autre ;
-    //  - premier affichage : elle entre par le dehors, et le plan large montre
-    //    au passage les portails disponibles.
-    //
-    // Positionnée ici, avant `animateCam`, qui prend le relais plus bas.
-    const retour = arriveFrom
-      ? (portals?.entries.find((e) => e.platform === arriveFrom) ?? null)
-      : null;
+    // ── Caméra ───────────────────────────────────────────────────────────
+    // Entrée en scène : on arrive de loin et l'on se resserre sur le système
+    // courant, ce qui montre au passage ses voisins dans la galaxie.
+    camera.position.copy(homeLook).addScaledVector(
+      new THREE.Vector3().subVectors(homeCam, homeLook),
+      ARRIVAL_ZOOM,
+    );
+    camera.lookAt(homeLook);
+    controls.target.copy(homeLook);
+    // Assez loin pour embrasser toute la galaxie : c'est la vue d'ensemble qui
+    // remplace les portails.
+    controls.maxDistance = Math.max(900, galaxie.rayon * 2.5);
 
-    if (retour) {
-      // Reculée dans l'axe du trajet à venir, et non dans l'axe radial : la
-      // caméra rejoint ensuite le cadrage d'ensemble en ligne droite, donc
-      // c'est cet axe-là qui doit passer par le centre de l'anneau. Le placer
-      // radialement la faisait passer jusqu'à deux rayons à côté — elle
-      // longeait le portail au lieu de le franchir.
-      const versSysteme = new THREE.Vector3().subVectors(homeCam, retour.position).normalize();
-      camera.position.copy(retour.position).addScaledVector(versSysteme, -portalR * 2.6);
-    } else {
-      camera.position.copy(homeCam).multiplyScalar(ARRIVAL_ZOOM);
-    }
-    camera.lookAt(INIT_LOOK);
-    controls.maxDistance = Math.max(900, systemR * 3.5);
+    // Système que la caméra regarde. Il change quand on vole vers un autre
+    // soleil, et sert de repère à tout ce qui se mesurait auparavant depuis
+    // l'origine : durée des trajets, retour au cadrage, portée des labels.
+    let vise: SystemeGalaxie | null = courant;
+    let viseCentre = homeLook.clone();
+    let viseCadre = frameR;
+    let viseHome = homeCam.clone();
 
     // Largeurs masquées de part et d'autre, en pixels : le panneau de
     // navigation à gauche, la liste des jeux à droite.
@@ -503,19 +403,18 @@ export function useSolarScene({
     let camDur = 0;
     let camEase: (t: number) => number = easeInOut;
     const camOffset = new THREE.Vector3();
-    const camDir = new THREE.Vector3();
-    const camLook = new THREE.Vector3();
-    // Distance du cadrage d'ensemble, relevée sur la position initiale.
-    const homeDist = homeCam.distanceTo(INIT_LOOK);
+    const camArc = new THREE.Vector3();
+    /** Position monde d'une planète, réutilisée à chaque calcul. */
+    const camMonde = new THREE.Vector3();
+    let camArcActif = false;
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
     // frame, y compris quand la caméra continue de tourner après le clic.
     let selectedEntry: PlanetEntry | null = null;
     // Planète sous le curseur : seule son étiquette est affichée.
     let hoveredEntry: PlanetEntry | null = null;
-    // Traversée engagée : verrouille le portail contre les doubles clics.
-    let departing = false;
     const popupProj = new THREE.Vector3();
+    const popupMonde = new THREE.Vector3();
     const popupEdge = new THREE.Vector3();
 
     // Géométrie de la carte, mise en cache. La relire à chaque frame
@@ -555,8 +454,20 @@ export function useSolarScene({
       look: THREE.Vector3,
       duree?: number,
       courbe: (t: number) => number = easeInOut,
+      /**
+       * Point de contrôle d'une courbe de Bézier quadratique.
+       *
+       * Absent, la caméra suit la ligne droite — c'est ce qu'on veut pour
+       * rejoindre une planète voisine. Présent, elle décrit un arc : c'est ce
+       * qui donne à un voyage entre systèmes son mouvement de recul, sans quoi
+       * la traversée d'un vide étoilé en ligne droite ne se distingue pas
+       * d'une téléportation.
+       */
+      arc?: THREE.Vector3,
     ) {
       camEase = courbe;
+      if (arc) camArc.copy(arc);
+      camArcActif = Boolean(arc);
       camFromPos.copy(camera.position);
       camFromLook.copy(controls.target);
       camTargetPos.copy(pos);
@@ -568,7 +479,7 @@ export function useSolarScene({
       // Une durée imposée l'emporte : la traversée du portail doit tomber
       // juste avec le voile monté par React, quelle que soit la distance.
       const d = camFromPos.distanceTo(camTargetPos);
-      camDur = duree ?? THREE.MathUtils.clamp(d / (systemR * CAM_REF), CAM_MIN_S, CAM_MAX_S);
+      camDur = duree ?? THREE.MathUtils.clamp(d / (viseCadre * CAM_REF), CAM_MIN_S, CAM_MAX_S);
       camT = 0;
 
       animating = true;
@@ -580,6 +491,9 @@ export function useSolarScene({
       if (!animating) return;
       animating = false;
       controls.enabled = true;
+      // Le trajet est fini : la destination redevient soumise à la règle de
+      // distance, à laquelle elle satisfait puisqu'on vient d'y arriver.
+      galaxie.epingler(null);
       // Resynchronise l'état sphérique interne des contrôles sur la position
       // atteinte, sans quoi le prochain glissement repartirait de l'ancienne.
       controls.update();
@@ -598,9 +512,14 @@ export function useSolarScene({
       camOffset.normalize();
       // Léger relèvement pour ne pas regarder la planète pile dans son plan
       camOffset.y = Math.max(camOffset.y, 0.35);
-      camOffset.normalize().multiplyScalar(p.radius * 7).add(p.mesh.position);
+      // Position **monde** : la planète vit dans le groupe de son système, sa
+      // position propre est relative au soleil de celui-ci. La viser telle
+      // quelle envoyait la caméra près de l'origine de la galaxie, c'est-à-dire
+      // dans le vide, à quelques dizaines d'unités du centre du monde.
+      p.mesh.getWorldPosition(camMonde);
+      camOffset.normalize().multiplyScalar(p.radius * 7).add(camMonde);
 
-      animateCam(camOffset, p.mesh.position);
+      animateCam(camOffset, camMonde.clone());
     }
 
     /**
@@ -631,24 +550,71 @@ export function useSolarScene({
       }
 
       camOffset.subVectors(camera.position, controls.target);
-      if (camOffset.lengthSq() < 1e-6) camOffset.subVectors(homeCam, INIT_LOOK);
-      camOffset.normalize().multiplyScalar(homeDist).add(INIT_LOOK);
+      if (camOffset.lengthSq() < 1e-6) camOffset.subVectors(viseHome, viseCentre);
+      camOffset.normalize().multiplyScalar(viseHome.distanceTo(viseCentre)).add(viseCentre);
 
-      animateCam(camOffset, INIT_LOOK);
+      animateCam(camOffset, viseCentre);
     }
     clearRef.current = clearPlanet;
 
+    /**
+     * Mène la caméra devant un système et le désigne comme celui qu'on regarde.
+     *
+     * Le système est construit **au départ** du voyage et non à l'arrivée : sa
+     * construction est synchrone, la faire à mi-parcours produirait un à-coup
+     * en plein mouvement. Au départ, la caméra n'a pas encore pris de vitesse.
+     */
+    function allerVers(s: SystemeGalaxie): void {
+      galaxie.forcer(s.platform);
+      // Protégée pour toute la durée du trajet : au sommet de l'arc, la caméra
+      // s'éloigne assez pour que la règle de distance la libère.
+      galaxie.epingler(s.platform);
+
+      const c = cadrageDe(s);
+      const depart = camera.position.clone();
+
+      vise = s;
+      viseCentre = s.centre.clone();
+      viseCadre = c.frameR;
+      viseHome = c.position;
+
+      // Trajet en arc plutôt qu'en ligne droite — voir lib/flightPath, où sa
+      // composition est vérifiée, notamment qu'il ne traverse aucun soleil.
+      const trajet = composerTrajet(depart, c.position, galaxie.rayon);
+      const controle = new THREE.Vector3(
+        trajet.controle.x, trajet.controle.y, trajet.controle.z,
+      );
+
+      animateCam(c.position, s.centre.clone(), trajet.duree, easeInOut, controle);
+      onSysteme(s.platform);
+    }
+    flyToRef.current = (nom: string) => {
+      const s = galaxie.get(nom);
+      if (s && s !== vise) allerVers(s);
+    };
+
     // Sélection depuis la liste latérale : même trajet de caméra qu'un clic
     // direct sur la planète, pour que les deux gestes soient indiscernables.
+    //
+    // Le jeu peut appartenir à un système encore libéré — la liste, elle, sait
+    // tout de la bibliothèque. On le construit donc avant de le chercher.
     focusRef.current = (gameId: string) => {
+      const proprietaire = galaxie.systemes.find(
+        (s) => s.games.some((g) => g.id === gameId),
+      );
+      if (!proprietaire) return;
+
+      if (proprietaire !== vise) allerVers(proprietaire);
+      else galaxie.forcer(proprietaire.platform);
+
       const target = planets.find((p) => p.game.id === gameId);
       if (target) selectPlanet(target);
     };
 
-    // Lancée ici et non au bloc caméra : `animateCam` s'appuie sur des
-    // vecteurs déclarés entre-temps.
-    // Décélérante : on jaillit du portail lancé, puis on se pose.
-    animateCam(homeCam, INIT_LOOK, ARRIVAL_S, retour ? easeOut : easeInOut);
+    // Lancé ici et non au bloc caméra : `animateCam` s'appuie sur des vecteurs
+    // déclarés entre-temps.
+    if (courant) galaxie.forcer(courant.platform);
+    animateCam(homeCam, homeLook, ARRIVAL_S, easeInOut);
 
     // ── Sélection et survol ──────────────────────────────────────────────
     const picker = createPicker({
@@ -657,23 +623,17 @@ export function useSolarScene({
       planets,
       pickMeshes,
       meshToEntry,
-      portals: portals ? portals.entries.map((e) => e.hit) : [],
+      soleils: galaxie.systemes.map((s) => s.hitSoleil),
       onHover: (hit) => { hoveredEntry = hit; },
       onClick: (hit) => (hit ? selectPlanet(hit) : clearPlanet()),
-      onPortal: (target) => {
-        const entry = portals?.byHit.get(target);
-        if (!entry || departing) return;
-        departing = true;
+      // Cliquer un soleil, c'est demander à s'y rendre — y compris celui du
+      // système où l'on se trouve déjà, qui ramène alors au cadrage d'ensemble.
+      onSoleil: (target) => {
+        const s = galaxie.systemes.find((x) => x.hitSoleil === target);
+        if (!s) return;
         hoveredEntry = null;
-        // On **traverse** l'anneau : la position visée est au-delà du portail
-        // et le regard porte loin devant, dans le même axe. S'arrêter dessus
-        // reviendrait à s'y garer, et viser son centre ferait converger caméra
-        // et cible — le regard partirait alors n'importe où.
-        camDir.subVectors(entry.position, camera.position).normalize();
-        camOffset.copy(entry.position).addScaledVector(camDir, portalR * 0.9);
-        camLook.copy(entry.position).addScaledVector(camDir, portalR * 14);
-        animateCam(camOffset, camLook, WARP_DIVE_S, easeIn);
-        onPortal(entry.platform);
+        if (s === vise) clearPlanet();
+        else allerVers(s);
       },
     });
 
@@ -706,7 +666,9 @@ export function useSolarScene({
         return;
       }
 
-      const c = selectedEntry.mesh.position;
+      // Position monde, pour la même raison que l'approche caméra : la carte
+      // se serait ancrée sur un point du centre de la galaxie.
+      const c = selectedEntry.mesh.getWorldPosition(popupMonde);
 
       popupProj.copy(c).project(camera);
       // Derrière la caméra, ou planète repoussée hors cadre à la souris :
@@ -809,7 +771,7 @@ export function useSolarScene({
       // Ne concerne plus que les vrais redimensionnements de fenêtre : le
       // repli de la liste ne change plus la taille de la canvas.
       const host = labelsRef.current;
-      labelLayer.update(camera, systemR, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
+      labelLayer.update(camera, viseCadre, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
       updatePopupAnchor(host?.clientWidth ?? w, host?.clientHeight ?? h);
       post.render();
     });
@@ -950,17 +912,25 @@ export function useSolarScene({
         }
         p.mesh.rotation.y += 0.05 * dt;
       }
-      // Après le déplacement des planètes, sinon la lueur traîne d'une frame.
+      // Après le déplacement des planètes, sinon les lueurs traînent d'une
+      // frame.
       //
       // Sans condition : `paused` ne reflète que l'état de la première planète,
       // et recopier quelques centaines de flottants coûte moins cher que le
       // risque de laisser les lueurs derrière les planètes encore en mouvement.
-      glow.update();
+      galaxie.updateLueurs();
 
-      sun.core.scale.setScalar(1 + Math.sin(t * 0.0008) * 0.03);
-      sun.core.rotation.y += 0.01 * dt;
-      portals?.update(t, dt, camera);
-      if (belt && !paused) belt.rotation.y += 0.0015 * dt;
+      // Construit ce dont on s'approche, libère ce qu'on laisse derrière.
+      galaxie.update(camera);
+
+      // La lumière suit le système regardé : une seule pour toute la galaxie,
+      // et elle n'a de sens qu'auprès des planètes qu'elle éclaire.
+      if (vise) {
+        lumiere.position.copy(vise.centre);
+        // Seule la ceinture du système regardé tourne : celles des autres sont
+        // trop loin pour qu'on distingue le mouvement.
+        if (vise.ceinture && !paused) vise.ceinture.rotation.y += 0.0015 * dt;
+      }
 
       if (animating) {
         // `controls.update()` est volontairement écarté pendant l'animation.
@@ -973,7 +943,16 @@ export function useSolarScene({
         const k = camDur > 0 ? Math.min(camT / camDur, 1) : 1;
         const e = camEase(k);
 
-        camera.position.lerpVectors(camFromPos, camTargetPos, e);
+        if (camArcActif) {
+          // Bézier quadratique : (1−e)²·départ + 2(1−e)e·contrôle + e²·arrivée.
+          const u = 1 - e;
+          camera.position
+            .copy(camFromPos).multiplyScalar(u * u)
+            .addScaledVector(camArc, 2 * u * e)
+            .addScaledVector(camTargetPos, e * e);
+        } else {
+          camera.position.lerpVectors(camFromPos, camTargetPos, e);
+        }
         controls.target.lerpVectors(camFromLook, camTargetLook, e);
         camera.lookAt(controls.target);
 
@@ -1000,9 +979,15 @@ export function useSolarScene({
       updateFly(dt);
 
       camera.updateMatrixWorld();
+      // Et les matrices de la scène : les planètes viennent de bouger sur leur
+      // orbite, et tout ce qui suit lit leur position **monde**. Sans ce
+      // recalcul, elle daterait de la frame précédente — le rendu la met bien à
+      // jour, mais après. Les noms et la carte de détail traîneraient d'une
+      // image derrière leur planète, ce qui se voit dès que la caméra bouge.
+      scene.updateMatrixWorld();
 
       picker.updateHover();
-      labelLayer.update(camera, systemR, hostW, hostH, hoveredEntry);
+      labelLayer.update(camera, viseCadre, hostW, hostH, hoveredEntry);
       updatePopupAnchor(hostW, hostH);
 
       post.render();
@@ -1019,8 +1004,7 @@ export function useSolarScene({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
       picker.dispose();
-      glow.dispose();
-      portals?.dispose();
+      galaxie.dispose();
       controls.dispose();
       labelLayer.dispose();
 
@@ -1044,9 +1028,11 @@ export function useSolarScene({
       if (canvas.parentNode === container) container.removeChild(canvas);
     };
   }, [
-    games, platform, labelClass, orbitLabelClass,
-    mountRef, labelsRef, onSelect, clearRef, focusRef, popupRef,
-    sideProbeRef, navProbeRef, fpsRef, destinations, onPortal, flySettingsRef,
-    arriveFrom,
+    // `platformRef` est volontairement absent : c'est une référence, sa valeur
+    // change sans que la scène doive être reconstruite — et la reconstruire à
+    // chaque voyage était précisément le défaut.
+    parPlateforme, labelClass, orbitLabelClass,
+    mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef,
+    sideProbeRef, navProbeRef, fpsRef, onSysteme, flySettingsRef, platformRef,
   ]);
 }
