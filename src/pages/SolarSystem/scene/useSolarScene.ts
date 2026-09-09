@@ -6,6 +6,7 @@ import { INIT_LOOK, PLATFORM_COLOR, PLATFORM_CSS, PLN_R } from '../constants';
 import type { FlySettings } from '../lib/flyKeys';
 import { composerTrajet } from '../lib/flightPath';
 import {
+  FICHE_PLANCHER,
   composerFiche,
   demiLargeurApparente,
   distanceApproche,
@@ -469,13 +470,6 @@ export function useSolarScene({
     // de mise en page.
     let dernierViewH = 0;
     let derniereBande = 0;
-    /**
-     * Largeur accordée à la fiche pour la planète sélectionnée.
-     *
-     * Décidée à la sélection, en même temps que le décalage de la planète : les
-     * deux se répondent. Zéro tant que rien n'est sélectionné.
-     */
-    let largeurFiche = 0;
     let camArcActif = false;
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
@@ -506,6 +500,8 @@ export function useSolarScene({
      */
     let popupW = 0;
     let popupH = 0;
+    /** La carte a changé de gabarit : ses dimensions sont à relire. */
+    let remesurerFiche = false;
     let popupShown = false;
     let lastArrowY = -1;
     let lastMaxW = -1;
@@ -614,9 +610,8 @@ export function useSolarScene({
           p.rayonVisuel, distance, dernierViewH, camera.fov,
         ),
       });
-      // La fiche se rétrécit quand la place manque, plutôt que de se poser sur
-      // la planète. Publiée ici, elle est appliquée par `updatePopupAnchor`.
-      largeurFiche = place.largeur;
+      // Seul le décalage sert ici : la largeur est recalculée à chaque frame
+      // par `updatePopupAnchor`, qui seul connaît la bande du moment.
       const decalage = place.decalage;
 
       camLateral.set(0, 0, 0);
@@ -828,8 +823,10 @@ export function useSolarScene({
       // Demi-largeur apparente de la planète, en pixels. La première colonne
       // de `matrixWorld` est l'axe « droite » de la caméra : le décalage reste
       // donc perpendiculaire au regard quel que soit l'angle de vue.
+      // Le rayon visuel, et non la seule sphère : un système d'anneaux porte
+      // jusqu'à près de quatre rayons, et la carte se posait dessus.
       popupEdge.setFromMatrixColumn(camera.matrixWorld, 0)
-        .multiplyScalar(selectedEntry.radius * 1.9)
+        .multiplyScalar(selectedEntry.rayonVisuel)
         .add(c)
         .project(camera);
       const edge = Math.abs(popupEdge.x * (w / 2) + w / 2 - cx);
@@ -850,11 +847,14 @@ export function useSolarScene({
       //
       // Le plancher évite l'absurde : sous cette largeur la carte ne dirait
       // plus rien, mieux vaut qu'elle dépasse et reste lisible.
-      // Plafond de largeur : le plus contraignant entre la bande disponible et
-      // ce que la place autour de la planète permet.
+      //
+      // Recalculée ici plutôt que reprise de la sélection : la bande change
+      // quand on replie une colonne ou redimensionne la fenêtre, et la carte
+      // gardait alors la largeur décidée pour une autre taille de fenêtre.
+      // `composerFiche` la proportionne à la bande et à la planète du moment.
       const maxW = Math.min(
-        Math.max(220, bande - POPUP_MARGIN * 2),
-        largeurFiche > 0 ? largeurFiche : Number.POSITIVE_INFINITY,
+        Math.max(FICHE_PLANCHER, bande - POPUP_MARGIN * 2),
+        composerFiche({ bande, demiPlanete: edge }).largeur,
       );
       const maxH = Math.max(200, h - POPUP_MARGIN * 2);
 
@@ -880,6 +880,15 @@ export function useSolarScene({
         el.style.setProperty('--popup-max-h', `${maxH}px`);
         lastMaxW = maxW;
         lastMaxH = maxH;
+        // La carte va changer de taille : ses dimensions mémorisées, qui
+        // servent au recadrage, ne valent plus rien. On les relit à la frame
+        // suivante, une fois la mise en page refaite — les lire ici forcerait
+        // un recalcul synchrone à chaque frame de redimensionnement.
+        remesurerFiche = true;
+      } else if (remesurerFiche) {
+        popupW = el.offsetWidth;
+        popupH = el.offsetHeight;
+        remesurerFiche = false;
       }
       if (side !== lastSide) {
         el.dataset.side = side;

@@ -11,6 +11,29 @@ const ECART = 14;
 /** Marge conservée entre la fiche et le bord de la bande libre. */
 const MARGE = 30;
 
+/**
+ * Bornes de la largeur de fiche, et sa part de la bande disponible.
+ *
+ * Une largeur fixe ne pouvait pas convenir : 300 px occupent le tiers d'une
+ * bande large et la moitié d'une bande étroite. La fiche paraissait alors
+ * démesurée, et c'est ce que l'utilisateur a signalé — elle doit être à
+ * l'échelle de la fenêtre, pas d'une valeur choisie une fois.
+ *
+ * Affine plutôt que proportionnelle : à 30 % d'une bande étroite la fiche
+ * devient illisible avant d'atteindre son plancher, alors qu'une part fixe
+ * assortie d'une base garde un texte utilisable partout.
+ */
+export const FICHE_PLANCHER = 200;
+const FICHE_MAXI = 340;
+const FICHE_BASE = 120;
+const FICHE_PART = 0.18;
+
+/** Largeur de fiche visée pour une bande donnée, bornes comprises. */
+export function largeurFicheVoulue(bande: number): number {
+  if (!(bande > 0)) return FICHE_PLANCHER;
+  return Math.min(FICHE_MAXI, Math.max(FICHE_PLANCHER, FICHE_BASE + bande * FICHE_PART));
+}
+
 export type BesoinCadrage = {
   /** Largeur de la bande laissée libre par les colonnes, en pixels. */
   bande: number;
@@ -46,8 +69,8 @@ export type PlaceFiche = {
  * rayons, et les ignorer revenait à dimensionner sur le quart de l'objet.
  */
 export function composerFiche(b: BesoinCadrage): PlaceFiche {
-  const voulue = b.largeurVoulue ?? 300;
-  const mini = b.largeurMini ?? 210;
+  const voulue = b.largeurVoulue ?? largeurFicheVoulue(b.bande);
+  const mini = Math.min(b.largeurMini ?? FICHE_PLANCHER, voulue);
   const demiBande = b.bande / 2;
 
   // Place restante quand la planète est poussée au maximum sur le côté, son
@@ -155,14 +178,19 @@ export function distanceApproche(
   bande: number,
   hauteurEcran: number,
   fovDegres: number,
-  largeurVoulue = 300,
+  largeurVoulue?: number,
 ): number {
+  const voulue = largeurVoulue ?? largeurFicheVoulue(bande);
   const mini = rayonVisuel * 2.6;
-  const maxi = rayonVisuel * 14;
+  // Vingt rayons et non quatorze : sur une bande étroite, quatorze ne
+  // permettaient pas de reculer assez pour dégager la fiche — il manquait une
+  // douzaine de pixels, et la carte se reposait sur la planète. À cette
+  // distance elle occupe encore une cinquantaine de pixels : on la voit.
+  const maxi = rayonVisuel * 20;
   if (bande <= 0 || hauteurEcran <= 0) return rayonVisuel * 5;
 
   // Demi-largeur que la planète peut occuper sans chasser la fiche.
-  const demiVoulue = Math.max(30, (bande - 2 * MARGE - ECART - largeurVoulue) / 2);
+  const demiVoulue = Math.max(30, (bande - 2 * MARGE - ECART - voulue) / 2);
   const t = Math.tan((fovDegres / 2) * (Math.PI / 180));
   const d = (rayonVisuel * hauteurEcran) / (2 * demiVoulue * t);
 
