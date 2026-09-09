@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Cassini",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "identifier": "com.anton.tauri-app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -55,7 +55,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU3QjgwQjRGNDJERENDRkEKUldUNnpOMUNUd3U0NTlQSWIwajVOd2FFUGI5Um1oUXIycWhNTzh2ck9hcHFQVmsvcUVaeTZSK3YK",
       "endpoints": [
-        "https://raw.githubusercontent.com/apoumier/ArcHive-updates/main/latest.json"
+        "https://raw.githubusercontent.com/ap7816/ArcHive-updates/main/latest.json"
       ]
     }
   },

@@ -461,8 +461,8 @@ fn migrate_autostart() {
 fn get_autostart() -> bool {
     #[cfg(target_os = "windows")]
     {
-        use winreg::RegKey;
         use winreg::enums::*;
+        use winreg::RegKey;
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         match hkcu.open_subkey(RUN_KEY) {
             // L'ancien nom compte aussi : la migration peut n'avoir pas eu
@@ -483,8 +483,8 @@ fn get_autostart() -> bool {
 fn set_autostart(enabled: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use winreg::RegKey;
         use winreg::enums::*;
+        use winreg::RegKey;
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         let (run, _) = hkcu.create_subkey(RUN_KEY).map_err(|e| e.to_string())?;
         if enabled {
@@ -492,7 +492,8 @@ fn set_autostart(enabled: bool) -> Result<(), String> {
                 .map_err(|e| e.to_string())?
                 .to_string_lossy()
                 .to_string();
-            run.set_value(AUTOSTART_VALUE, &exe_path).map_err(|e| e.to_string())?;
+            run.set_value(AUTOSTART_VALUE, &exe_path)
+                .map_err(|e| e.to_string())?;
         } else {
             let _ = run.delete_value(AUTOSTART_VALUE);
         }
@@ -790,7 +791,15 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
 
     let resp = client
         .get("https://musicbrainz.org/ws/2/recording/")
-        .header("User-Agent", "Cassini/2.1.0 (desktop; noreply@example.com)")
+        .header(
+            "User-Agent",
+            // Tiré de Cargo : écrit à la main, il retardait de deux versions.
+            concat!(
+                "Cassini/",
+                env!("CARGO_PKG_VERSION"),
+                " (desktop; noreply@example.com)"
+            ),
+        )
         .query(&[("query", query.as_str()), ("fmt", "json"), ("limit", "5")])
         .timeout(std::time::Duration::from_secs(10))
         .send()

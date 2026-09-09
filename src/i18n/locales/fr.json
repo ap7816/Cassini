@@ -218,6 +218,31 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v3_0_0": {
+      "new_0": "[Cassini] ArcHive s’appelle désormais Cassini, du nom du découvreur de la division des anneaux de Saturne",
+      "new_1": "[Système solaire] Tous les launchers réunis dans une seule galaxie : la caméra glisse d’un système à l’autre",
+      "new_2": "[Système solaire] Barre des launchers au bord de la liste, qui emmène la caméra au système choisi",
+      "new_3": "[Système solaire] Brume à l’approche des systèmes, et soleils qui brillent de loin",
+      "new_4": "[Système solaire] Quatre familles d’anneaux planétaires, calquées sur le système solaire",
+      "new_5": "[Bibliothèque] La recherche parcourt toute la bibliothèque, tous launchers confondus",
+      "new_6": "[Bibliothèque] Jeux installés et désinstallés séparés dans la liste",
+      "new_7": "[Bibliothèque] Espace disque occupé et libre affichés au-dessus de la recherche",
+      "new_8": "[Bibliothèque] Les sept launchers sont scannés à chaque lancement",
+      "new_9": "[Navigation] Panneau latéral repliable, choix retenu d’une session à l’autre",
+      "new_10": "[Global] Une seule instance à la fois : relancer ramène la fenêtre existante",
+      "new_11": "[Launchers] Les launchers absents du PC sont signalés comme introuvables",
+      "fix_0": "[Système solaire] Cliquer sur un jeu envoyait la caméra dans le vide, au centre de la galaxie",
+      "fix_1": "[Système solaire] La fiche du jeu ne se pose plus sur la planète qu’elle décrit",
+      "fix_2": "[Système solaire] La galaxie ne se réorganise plus à chaque scan de la bibliothèque",
+      "fix_3": "[Système solaire] Les planètes lointaines ne scintillent plus avant de disparaître",
+      "fix_4": "[Ambiance] La musique ne repart plus par-dessus un morceau en cours",
+      "fix_5": "[Navigation] Le panneau replié ne laisse plus d’espace vide derrière lui",
+      "perf_0": "[Système solaire] Systèmes construits à l’approche et libérés à l’éloignement : une à trois secondes de gel en moins",
+      "perf_1": "[Système solaire] Replier un panneau ne redimensionne plus le canvas à chaque image",
+      "perf_2": "[Démarrage] Le stockage n’est réécrit que si la bibliothèque a réellement changé",
+      "change_0": "[Système solaire] La liste déroulante des launchers est remplacée par la barre d’icônes",
+      "change_1": "[Ambiance] La musique s’arrête quand la fenêtre quitte l’écran"
+    },
     "v2_1_0": {
       "new_0": "[Système solaire] Portails de phase pour passer d'un launcher à l'autre sans quitter la vue",
       "new_1": "[Système solaire] Déplacement au clavier (WASD / ZQSD), touches et sensibilité configurables",

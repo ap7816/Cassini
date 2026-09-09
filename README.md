@@ -48,7 +48,7 @@ Vérifier dans "Developer PowerShell for VS 2022" :
 
 Lancer depuis "Developer PowerShell for VS 2022" :
 
-    git clone https://github.com/apoumier/Cassini.git
+    git clone https://github.com/ap7816/Cassini.git
     cd Cassini
     npm install
     npm run tauri dev

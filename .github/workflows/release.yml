@@ -61,21 +61,31 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
 
+          # Le dépôt de code est celui où tourne ce workflow. Le nommer en dur
+          # obligeait à le corriger à chaque renommage — et le renommage du
+          # compte l’avait déjà laissé faux : il disait encore apoumier.
+          $code = "${{ github.repository }}"
+
+          # Le dépôt public, lui, est nommé en dur à dessein : son nom est gravé
+          # dans l’URL de mise à jour de chaque copie installée (tauri.conf.json).
+          # Le renommer priverait toute la base installée de mises à jour.
+          $updates = "ap7816/ArcHive-updates"
+
           # Télécharger les artefacts depuis la release privée
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          gh release download $tag --repo apoumier/ArcHive --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
+          gh release download $tag --repo $code --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
 
           # Créer ou mettre à jour la release publique dans ArcHive-updates
-          $releaseExists = gh release view $tag --repo apoumier/ArcHive-updates 2>$null
+          $releaseExists = gh release view $tag --repo $updates 2>$null
           if (-not $releaseExists) {
-            gh release create $tag --repo apoumier/ArcHive-updates --title "Cassini $tag" --notes "Voir les commits pour les changements."
+            gh release create $tag --repo $updates --title "Cassini $tag" --notes "Voir les commits pour les changements."
           }
-          gh release upload $tag --repo apoumier/ArcHive-updates (Get-ChildItem artifacts/*.exe,artifacts/*.exe.sig | Select-Object -ExpandProperty FullName) --clobber
+          gh release upload $tag --repo $updates (Get-ChildItem artifacts/*.exe,artifacts/*.exe.sig | Select-Object -ExpandProperty FullName) --clobber
 
           # Mettre à jour les URLs dans latest.json pour pointer vers ArcHive-updates
           $json = Get-Content artifacts/latest.json -Raw | ConvertFrom-Json
           $json.platforms.PSObject.Properties | ForEach-Object {
-            $_.Value.url = $_.Value.url -replace "apoumier/ArcHive/releases/download", "apoumier/ArcHive-updates/releases/download"
+            $_.Value.url = $_.Value.url -replace [regex]::Escape("$code/releases/download"), "$updates/releases/download"
           }
           $updated = $json | ConvertTo-Json -Depth 10
           Set-Content -Path artifacts/latest_public.json -Value $updated
@@ -83,15 +93,15 @@ jobs:
           # Pousser latest.json dans le repo ArcHive-updates
           $bytes = [System.IO.File]::ReadAllBytes("artifacts/latest_public.json")
           $base64 = [System.Convert]::ToBase64String($bytes)
-          $sha = gh api repos/apoumier/ArcHive-updates/contents/latest.json --jq '.sha' 2>$null
+          $sha = gh api "repos/$updates/contents/latest.json" --jq '.sha' 2>$null
           $body = @{ message = "chore: update latest.json for $tag"; content = $base64 }
           if ($sha) { $body.sha = $sha.Trim() }
-          $body | ConvertTo-Json | gh api repos/apoumier/ArcHive-updates/contents/latest.json --method PUT --input -
+          $body | ConvertTo-Json | gh api "repos/$updates/contents/latest.json" --method PUT --input -
 
-          # Nettoyer la release ArcHive : garder uniquement le .exe
-          $assets = gh release view $tag --repo apoumier/ArcHive --json assets --jq '.assets[].name' 2>$null
+          # Nettoyer la release privée : garder uniquement le .exe
+          $assets = gh release view $tag --repo $code --json assets --jq '.assets[].name' 2>$null
           foreach ($asset in $assets) {
             if ($asset -match '\.sig$' -or $asset -eq 'latest.json') {
-              gh release delete-asset $tag $asset --repo apoumier/ArcHive --yes 2>$null
+              gh release delete-asset $tag $asset --repo $code --yes 2>$null
             }
           }

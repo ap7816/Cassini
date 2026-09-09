@@ -218,6 +218,31 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v3_0_0": {
+      "new_0": "[Cassini] ArcHive is now called Cassini, after the man who found the division in Saturn’s rings",
+      "new_1": "[Solar system] Every launcher in a single galaxy: the camera glides from one system to the next",
+      "new_2": "[Solar system] Launcher rail beside the list, which flies the camera to the chosen system",
+      "new_3": "[Solar system] Haze as systems come into range, and suns that shine from afar",
+      "new_4": "[Solar system] Four families of planetary rings, modelled on the solar system",
+      "new_5": "[Library] Search covers the whole library, across every launcher",
+      "new_6": "[Library] Installed and uninstalled games separated in the list",
+      "new_7": "[Library] Disk space used and free shown above the search box",
+      "new_8": "[Library] All seven launchers are scanned on every launch",
+      "new_9": "[Navigation] Collapsible side panel, remembered between sessions",
+      "new_10": "[Global] One instance at a time: launching again brings back the existing window",
+      "new_11": "[Launchers] Launchers absent from the PC are reported as not found",
+      "fix_0": "[Solar system] Clicking a game sent the camera into the void at the centre of the galaxy",
+      "fix_1": "[Solar system] The game card no longer sits on top of the planet it describes",
+      "fix_2": "[Solar system] The galaxy no longer rearranges itself on every library scan",
+      "fix_3": "[Solar system] Distant planets no longer flicker before vanishing",
+      "fix_4": "[Ambiance] Ambient music no longer restarts on top of a playing track",
+      "fix_5": "[Navigation] A collapsed panel no longer leaves empty space behind it",
+      "perf_0": "[Solar system] Systems built on approach and released on departure: one to three seconds of freeze gone",
+      "perf_1": "[Solar system] Collapsing a panel no longer resizes the canvas on every frame",
+      "perf_2": "[Startup] Storage is only rewritten when the library has actually changed",
+      "change_0": "[Solar system] The launcher dropdown is replaced by the icon rail",
+      "change_1": "[Ambiance] Music stops when the window leaves the screen"
+    },
     "v2_1_0": {
       "new_0": "[Solar system] Phase portals to jump between launchers without leaving the view",
       "new_1": "[Solar system] Keyboard movement (WASD / ZQSD), remappable keys and adjustable sensitivity",
