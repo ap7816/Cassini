@@ -145,4 +145,20 @@ export function loadGamesFromStorage(): Game[] {
 // Sérialise et écrit la liste des jeux dans le stockage persistant
 export function saveGamesToStorage(games: Game[]): void {
   writeGamesRaw(JSON.stringify(games));
+  for (const fn of abonnes) fn();
+}
+
+/**
+ * Abonnés prévenus à chaque écriture de la bibliothèque.
+ *
+ * Le système solaire lit la bibliothèque une fois, à son montage. Sans ce
+ * signal, un scan qui découvre un jeu pendant qu'il est affiché n'y changerait
+ * rien : il faudrait quitter la page et y revenir pour voir la planète
+ * apparaître.
+ */
+const abonnes = new Set<() => void>();
+
+export function subscribeGames(fn: () => void): () => void {
+  abonnes.add(fn);
+  return () => { abonnes.delete(fn); };
 }

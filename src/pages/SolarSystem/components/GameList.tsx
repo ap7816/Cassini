@@ -7,6 +7,7 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
+import { formaterVolume, useDiskSpace } from '../../../features/system/useDiskSpace';
 import css from './GameList.module.css';
 
 const GB = 1024 ** 3;
@@ -122,6 +123,7 @@ export function GameList({
   const [query, setQuery] = useState('');
   const color = PLATFORM_CSS[platform] ?? '#7a8a9a';
   const listId = useId();
+  const disque = useDiskSpace();
 
   // Même ordre que les orbites : la n-ième entrée est la n-ième planète.
   const shown = useMemo(() => {
@@ -129,6 +131,19 @@ export function GameList({
     if (!q) return games;
     return games.filter((g) => g.title.toLowerCase().includes(q));
   }, [games, query]);
+
+  /**
+   * Les deux groupes de la liste : ce qui est installé, et ce qui ne l'est plus.
+   *
+   * Un jeu désinstallé n'est pas retiré de la bibliothèque — on garde son
+   * favori, sa date de dernière partie et son image. Mais mêlé aux autres, il
+   * laisse croire qu'on peut y jouer. Les séparer évite le clic déçu.
+   *
+   * L'ordre au sein de chaque groupe est celui de `games`, donc celui des
+   * orbites : le rang affiché reste celui de la planète.
+   */
+  const installes = useMemo(() => shown.filter((g) => g.installed !== false), [shown]);
+  const desinstalles = useMemo(() => shown.filter((g) => g.installed === false), [shown]);
 
   /**
    * Résultats venus des autres launchers.
@@ -188,6 +203,22 @@ export function GameList({
           </span>
         </div>
 
+        {/* Occupation du disque système — pas de tous les disques : un jeu
+            installé ailleurs ne se verrait pas ici, et l'étiquette le dit. */}
+        {disque && disque.total > 0 && (
+          <div className={css.disque} title={`Lecteur ${disque.lecteur}`}>
+            <div className={css.disqueLigne}>
+              <span>{formaterVolume(disque.total - disque.libre)} utilisés</span>
+              <span className={css.disqueLibre}>{formaterVolume(disque.libre)} libres</span>
+            </div>
+            <div
+              className={css.disqueJauge}
+              style={{ '--part': `${((disque.total - disque.libre) / disque.total) * 100}%` } as CSSProperties}
+              aria-hidden="true"
+            />
+          </div>
+        )}
+
         <input
           className={css.search}
           placeholder={t('nav.searchPlaceholder')}
@@ -196,7 +227,7 @@ export function GameList({
         />
 
         <ul className={css.items}>
-          {shown.map((g) => (
+          {installes.map((g) => (
             <Ligne
               key={g.id}
               game={g}
@@ -207,6 +238,25 @@ export function GameList({
               onPick={onPickGame}
             />
           ))}
+
+          {desinstalles.length > 0 && (
+            <>
+              <li className={css.groupe}>
+                Désinstallés
+                <span className={css.groupeCompte}>{desinstalles.length}</span>
+              </li>
+              {desinstalles.map((g) => (
+                <Ligne
+                  key={g.id}
+                  game={g}
+                  orbit={games.indexOf(g) + 1}
+                  selected={g.id === selectedId}
+                  sgdbKeySet={sgdbKeySet}
+                  onPick={onPickGame}
+                />
+              ))}
+            </>
+          )}
 
           {ailleurs.length > 0 && (
             <>
@@ -281,11 +331,16 @@ function Ligne({
   onPick: (game: Game) => void;
 }) {
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
+  const absent = game.installed === false;
   return (
     <li>
       <button
         type="button"
-        className={[css.item, selected ? css.itemActive : ''].filter(Boolean).join(' ')}
+        className={[
+          css.item,
+          selected ? css.itemActive : '',
+          absent ? css.itemAbsent : '',
+        ].filter(Boolean).join(' ')}
         onClick={() => onPick(game)}
         title={game.title}
         style={selected ? { borderColor: teinte + '88' } : undefined}
@@ -306,7 +361,13 @@ function Ligne({
         <span className={css.labels}>
           <span className={css.name}>{game.title}</span>
           <span className={css.meta}>
-            {game.sizeOnDisk != null && game.sizeOnDisk > 0 ? fmtSize(game.sizeOnDisk) : '—'}
+            {/* La taille sur disque d'un jeu désinstallé ne veut plus rien
+                dire : l'espace a été rendu. On dit son état à la place. */}
+            {absent
+              ? 'Non installé'
+              : game.sizeOnDisk != null && game.sizeOnDisk > 0
+                ? fmtSize(game.sizeOnDisk)
+                : '—'}
             {game.favorite && <span className={css.fav}> ★</span>}
           </span>
         </span>

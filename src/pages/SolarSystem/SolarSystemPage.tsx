@@ -3,6 +3,7 @@ import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
   saveGamesToStorage,
+  subscribeGames,
 } from '../../features/library/services/libraryStorage';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useSolarScene } from './scene/useSolarScene';
@@ -139,6 +140,18 @@ export function SolarSystemPage() {
   // puisque arriver quelque part met cet état à jour.
   const platformRef = useRef(platform);
   useEffect(() => { platformRef.current = platform; }, [platform]);
+
+  // Suit les changements de bibliothèque venus d'ailleurs — le scan de
+  // démarrage, ou la page Bibliothèque. Sans cela, un jeu détecté pendant que
+  // la galaxie est affichée n'y apparaîtrait qu'après avoir quitté la page et
+  // y être revenu.
+  //
+  // Relu sans condition : c'est `useSceneGames` qui décide si la 3D doit être
+  // rebâtie, en comparant ce dont elle dépend vraiment. Filtrer ici serait
+  // filtrer au mauvais endroit — un favori basculé depuis la bibliothèque ne
+  // change pas la géométrie, mais la liste latérale doit tout de même
+  // l'afficher.
+  useEffect(() => subscribeGames(() => setGames(loadGamesFromStorage())), []);
 
   // Identités stables : la scène se reconstruit entièrement quand une de ses
   // dépendances change, il ne faut donc pas en recréer à chaque rendu.

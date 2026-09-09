@@ -5,10 +5,18 @@ import type { Game } from '../../../features/types';
 import { INIT_LOOK, PLATFORM_COLOR, PLATFORM_CSS, PLN_R } from '../constants';
 import type { FlySettings } from '../lib/flyKeys';
 import { composerTrajet } from '../lib/flightPath';
+import {
+  composerFiche,
+  demiLargeurApparente,
+  distanceApproche,
+  pixelsEnMonde,
+  poserCamera,
+} from '../lib/framing';
+import { densiteBrume } from '../lib/haze';
 import { orbitPos } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
-import { createStarfield } from './decor';
+import { createStarfield, createSunBeacons } from './decor';
 import { createGalaxy, type SystemeGalaxie } from './galaxy';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
@@ -276,7 +284,21 @@ export function useSolarScene({
       pickMeshes,
       meshToEntry,
       onPlanet: (entry) => labelLayer.addPlanet(entry, entry.game.title, labelClass),
-      onSystemeLibere: (s) => labelLayer.removePlanets(s.planets),
+      onSystemeLibere: (s) => {
+        // Au démontage, tout est libéré d'un bloc : inutile de démêler des
+        // structures qui disparaissent, et surtout pas de prévenir React d'un
+        // changement dans un composant qu'il est en train de retirer.
+        if (isDisposed()) return;
+
+        labelLayer.removePlanets(s.planets);
+        // Filet : la planète sélectionnée ou survolée peut appartenir au
+        // système qu'on libère — on s'en éloigne à la main, sans passer par un
+        // voyage. Ses maillages sont détruits juste après ; les garder en
+        // référence laisserait la fiche ancrée à un fantôme, figé à la dernière
+        // position connue.
+        if (selectedEntry && s.planets.includes(selectedEntry)) oublierSelection();
+        else if (hoveredEntry && s.planets.includes(hoveredEntry)) hoveredEntry = null;
+      },
     });
 
     // Le système sous les yeux au montage. La liste latérale affiche le sien,
@@ -321,11 +343,41 @@ export function useSolarScene({
     // Le champ d'étoiles enveloppe la galaxie entière, pas un système.
     scene.add(createStarfield(galaxie.rayon));
 
+    // Brume, qui noie les planètes à mesure qu'on quitte un système.
+    //
+    // C'est elle qui masque leur construction et leur libération : sans elle,
+    // vingt planètes surgissent d'un coup à quatre rayons et s'évanouissent à
+    // six. Sa densité est réglée chaque frame sur le système regardé — un
+    // réglage fixe noierait un système d'un jeu et n'atteindrait jamais une
+    // bibliothèque de cent cinquante, leurs rayons variant d'un facteur cent.
+    //
+    // Teinte sombre et non grise : les planètes doivent fondre dans le noir du
+    // ciel, pas s'échouer sur un voile laiteux.
+    const brume = new THREE.FogExp2(0x070b12, 0);
+    scene.fog = brume;
+
+    // Balises solaires — hors de la brume, elles brillent à toute distance.
+    const balises = createSunBeacons(
+      galaxie.systemes.map((s) => ({
+        centre: s.centre,
+        couleur: new THREE.Color(PLATFORM_COLOR[s.platform] ?? 0x7a8a9a),
+      })),
+    );
+    scene.add(balises.points);
+
     // Nom de chaque launcher, au-dessus de son soleil : c'est ce qui permet de
     // savoir ce qu'on regarde de loin, une fois les planètes libérées.
     for (const s of galaxie.systemes) {
+      // Au-dessus du soleil, et non derrière le système.
+      //
+      // Le décalage doit dégager la couronne, qui s'étend à 3,4 rayons
+      // solaires : plus bas, le nom se lisait *sur* l'astre et s'y noyait. Le
+      // second terme prend le relais sur une grande bibliothèque, où le
+      // système est vu de bien plus loin — un décalage fixe s'y réduirait à
+      // quelques pixels.
+      const hauteurNom = Math.max(s.taille.sunR * 4, s.taille.systemR * 0.05);
       labelLayer.addWorld(
-        s.centre.clone().add(new THREE.Vector3(0, s.taille.outerR * 0.04, -s.taille.outerR * 1.5)),
+        s.centre.clone().add(new THREE.Vector3(0, hauteurNom, 0)),
         s.platform,
         orbitLabelClass,
         PLATFORM_CSS[s.platform] ?? '#7a8a9a',
@@ -406,6 +458,24 @@ export function useSolarScene({
     const camArc = new THREE.Vector3();
     /** Position monde d'une planète, réutilisée à chaque calcul. */
     const camMonde = new THREE.Vector3();
+    /** Axe « droite » de la caméra, pour décaler le point visé latéralement. */
+    const camDroite = new THREE.Vector3();
+    /** Décalage latéral appliqué au point visé, repris par la caméra. */
+    const camLateral = new THREE.Vector3();
+
+    // Dernières dimensions connues de la zone de rendu et de la bande libre.
+    // Relevées par la boucle : la sélection en a besoin pour savoir de combien
+    // décentrer la planète, et un clic ne doit pas déclencher sa propre lecture
+    // de mise en page.
+    let dernierViewH = 0;
+    let derniereBande = 0;
+    /**
+     * Largeur accordée à la fiche pour la planète sélectionnée.
+     *
+     * Décidée à la sélection, en même temps que le décalage de la planète : les
+     * deux se répondent. Zéro tant que rien n'est sélectionné.
+     */
+    let largeurFiche = 0;
     let camArcActif = false;
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
@@ -420,6 +490,20 @@ export function useSolarScene({
     // Géométrie de la carte, mise en cache. La relire à chaque frame
     // (`offsetWidth`) forcerait un recalcul de mise en page synchrone à 60 Hz,
     // soit exactement ce que le reste du calque de labels évite déjà.
+    /**
+     * Encombrement de la carte, relu à chaque frame dans le bloc de lectures.
+     *
+     * Un `ResizeObserver` s'en chargeait auparavant. Il est livré de façon
+     * asynchrone, après la frame qui a changé le contenu de la carte : le
+     * recadrage travaillait donc au moins une frame sur les dimensions de la
+     * carte *précédente*. Sur un changement de jeu, la carte pouvait ainsi être
+     * placée d'après une largeur qui n'était plus la sienne, et déborder sous
+     * la liste.
+     *
+     * La relire dans le bloc de lectures ne coûte rien de plus : ces lectures
+     * sont groupées avant toute écriture de style, le navigateur ne recalcule
+     * donc la mise en page qu'une fois par frame de toute façon.
+     */
     let popupW = 0;
     let popupH = 0;
     let popupShown = false;
@@ -429,14 +513,6 @@ export function useSolarScene({
     let lastSide = '';
     let lastX = NaN;
     let lastY = NaN;
-
-    const popupRo = new ResizeObserver(() => {
-      const el = popupRef.current;
-      if (!el || !popupShown) return;
-      popupW = el.offsetWidth;
-      popupH = el.offsetHeight;
-    });
-    if (popupRef.current) popupRo.observe(popupRef.current);
 
     /**
      * Lance un déplacement de caméra vers `pos`, regard sur `look`.
@@ -517,9 +593,47 @@ export function useSolarScene({
       // quelle envoyait la caméra près de l'origine de la galaxie, c'est-à-dire
       // dans le vide, à quelques dizaines d'unités du centre du monde.
       p.mesh.getWorldPosition(camMonde);
-      camOffset.normalize().multiplyScalar(p.radius * 7).add(camMonde);
+      // Distance déduite de la place à laisser, et non d'un multiple fixe du
+      // rayon : c'est la largeur de la bande qui manque, pas la profondeur.
+      const distance = distanceApproche(
+        p.rayonVisuel, derniereBande, dernierViewH, camera.fov,
+      );
 
-      animateCam(camOffset, camMonde.clone());
+      // Le point visé n'est pas la planète, mais un point décalé sur le côté.
+      //
+      // La caméra centre ce qu'elle vise. Une planète centrée ne laisse de
+      // chaque côté que la moitié de la bande, moins son propre rayon apparent
+      // — souvent moins qu'il n'en faut pour la fiche. Aucune position ne
+      // convenait alors, et le recadrage posait la fiche sur la planète.
+      //
+      // La pousser sur le côté libère la place en face. Zéro décalage quand
+      // elle tenait déjà : inutile de décentrer sans raison.
+      const place = composerFiche({
+        bande: derniereBande,
+        demiPlanete: demiLargeurApparente(
+          p.rayonVisuel, distance, dernierViewH, camera.fov,
+        ),
+      });
+      // La fiche se rétrécit quand la place manque, plutôt que de se poser sur
+      // la planète. Publiée ici, elle est appliquée par `updatePopupAnchor`.
+      largeurFiche = place.largeur;
+      const decalage = place.decalage;
+
+      camLateral.set(0, 0, 0);
+      if (decalage > 0) {
+        // Viser à droite de la planète la fait apparaître à gauche, et la fiche
+        // trouve sa place à droite.
+        camDroite.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+        camLateral.copy(camDroite).multiplyScalar(
+          pixelsEnMonde(decalage, distance, dernierViewH, camera.fov),
+        );
+      }
+
+      const pose = poserCamera(camMonde, camOffset, distance, camLateral);
+      camOffset.set(pose.position.x, pose.position.y, pose.position.z);
+      const cible = new THREE.Vector3(pose.cible.x, pose.cible.y, pose.cible.z);
+
+      animateCam(camOffset, cible);
     }
 
     /**
@@ -535,12 +649,24 @@ export function useSolarScene({
      *    mémorisée avant la sélection : on dézoome sans rien défaire de
      *    l'orientation choisie entre-temps.
      */
-    function clearPlanet() {
-      const avaitSelection = selectedEntry !== null;
-
+    /**
+     * Referme la fiche et relance les orbites, sans toucher à la caméra.
+     *
+     * Séparé de `clearPlanet` parce que tous les abandons de sélection ne sont
+     * pas un retour au cadrage : partir vers un autre système en est un aussi,
+     * et le mouvement de retour viendrait alors contrarier le voyage.
+     */
+    function oublierSelection(): boolean {
+      const avait = selectedEntry !== null;
       for (const pl of planets) pl.paused = false;
       selectedEntry = null;
-      onSelect(null);
+      hoveredEntry = null;
+      if (avait) onSelect(null);
+      return avait;
+    }
+
+    function clearPlanet() {
+      const avaitSelection = oublierSelection();
 
       if (!avaitSelection) {
         // Rien à quitter : on interrompt seulement une approche en vol, qui
@@ -565,6 +691,11 @@ export function useSolarScene({
      * en plein mouvement. Au départ, la caméra n'a pas encore pris de vitesse.
      */
     function allerVers(s: SystemeGalaxie): void {
+      // La fiche appartient au système qu'on quitte : elle désigne une planète
+      // qu'on ne verra plus, et qui sera libérée en chemin. Sans cela elle
+      // restait ouverte au milieu de la galaxie, ancrée à un objet détruit.
+      oublierSelection();
+
       galaxie.forcer(s.platform);
       // Protégée pour toute la durée du trajet : au sommet de l'arc, la caméra
       // s'éloigne assez pour que la règle de distance la libère.
@@ -719,7 +850,12 @@ export function useSolarScene({
       //
       // Le plancher évite l'absurde : sous cette largeur la carte ne dirait
       // plus rien, mieux vaut qu'elle dépasse et reste lisible.
-      const maxW = Math.max(220, bande - POPUP_MARGIN * 2);
+      // Plafond de largeur : le plus contraignant entre la bande disponible et
+      // ce que la place autour de la planète permet.
+      const maxW = Math.min(
+        Math.max(220, bande - POPUP_MARGIN * 2),
+        largeurFiche > 0 ? largeurFiche : Number.POSITIVE_INFINITY,
+      );
       const maxH = Math.max(200, h - POPUP_MARGIN * 2);
 
       const placement = placePopup(cx - viewLeft, cy, edge, popupW, popupH, bande, h);
@@ -880,8 +1016,16 @@ export function useSolarScene({
       const hostH = host ? host.clientHeight : 0;
       const probeW = sideProbeRef.current?.offsetWidth ?? 0;
       const navW = navProbeRef.current?.offsetWidth ?? 0;
+      // Dimensions courantes de la carte, tant qu'elle est affichée : masquée,
+      // elle mesure zéro et la valeur ne servirait à rien.
+      if (popupShown && popupRef.current) {
+        popupW = popupRef.current.offsetWidth;
+        popupH = popupRef.current.offsetHeight;
+      }
       const viewW = container.clientWidth;
       const viewH = container.clientHeight;
+      dernierViewH = viewH;
+      derniereBande = Math.max(0, viewW - navW - probeW);
 
       // ── Compteur d'images ──────────────────────────────────────────────
       // Moyenné sur une demi-seconde : l'écart entre deux frames varie trop
@@ -927,6 +1071,10 @@ export function useSolarScene({
       // et elle n'a de sens qu'auprès des planètes qu'elle éclaire.
       if (vise) {
         lumiere.position.copy(vise.centre);
+        // La brume suit l'échelle du système regardé, sinon elle ne veut rien
+        // dire : ce qui est « loin » pour un système d'un jeu se trouve à
+        // l'intérieur d'une bibliothèque de cent.
+        brume.density = densiteBrume(vise.taille.systemR);
         // Seule la ceinture du système regardé tourne : celles des autres sont
         // trop loin pour qu'on distingue le mouvement.
         if (vise.ceinture && !paused) vise.ceinture.rotation.y += 0.0015 * dt;
@@ -999,11 +1147,11 @@ export function useSolarScene({
       disposed = true;
       cancelAnimationFrame(rafId);
       ro.disconnect();
-      popupRo.disconnect();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
       picker.dispose();
+      balises.dispose();
       galaxie.dispose();
       controls.dispose();
       labelLayer.dispose();

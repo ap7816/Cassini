@@ -75,12 +75,21 @@ export function createPlanets({
     const atmType = atmosphereType(rng);
     mesh.add(createAtmosphere(pr, PALETTES[atmType][0]));
 
+    // Étendue visible de la planète, anneaux compris.
+    //
+    // Ce n'est pas le rayon de la sphère : un système d'anneaux porte jusqu'à
+    // près de quatre rayons. Cadrer et écarter la fiche sur la seule sphère
+    // revenait à ignorer les trois quarts de ce qu'on voit à l'écran.
+    let rayonVisuel = pr * 1.13; // l'atmosphère déborde un peu de la sphère
+
     // Un anneau sur trois planètes environ, tirage seul. La taille n'entre
     // plus en compte : elle traduit le poids du jeu sur le disque, qui n'a
     // aucun rapport avec l'idée d'un système d'anneaux — et cela réservait le
     // détail le plus reconnaissable de la scène aux seuls gros jeux.
     if (rng() < 0.32) {
-      mesh.add(createPlanetRing(pr, seed, PALETTES[atmType][1], rng));
+      const anneau = createPlanetRing(pr, seed, PALETTES[atmType][1], rng);
+      mesh.add(anneau.groupe);
+      rayonVisuel = Math.max(rayonVisuel, anneau.rayon);
     }
 
     // Répartition en angle d'or, bruit faible (±3,4°) : au-delà il referme les
@@ -94,7 +103,7 @@ export function createPlanets({
 
     const entry: PlanetEntry = {
       game: g, mesh, orbitRadius: orbit, angle, speed,
-      paused: false, radius: pr, inc, node,
+      paused: false, radius: pr, rayonVisuel, inc, node,
       tint: new THREE.Color(PALETTES[atmType][0]),
     };
 
@@ -362,7 +371,7 @@ function createPlanetRing(
   seed: number,
   color: string,
   rng: () => number,
-): THREE.Group {
+): { groupe: THREE.Group; rayon: number } {
   const famille = familleAnneau(rng);
   const inner = pr * entre(rng, famille.interne);
   const outer = inner * entre(rng, famille.largeur);
@@ -405,7 +414,7 @@ function createPlanetRing(
 
   groupe.rotation.x = Math.PI / 2 + (rng() - 0.5) * famille.inclinaison;
   groupe.rotation.y = (rng() - 0.5) * famille.inclinaison * 0.7;
-  return groupe;
+  return { groupe, rayon: outer };
 }
 
 /**

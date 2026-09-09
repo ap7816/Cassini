@@ -338,14 +338,38 @@
   color: var(--teinte, #fff);
 }
 
-/* Séparateur des résultats venus d'un autre launcher. */
+/* Séparateur de section : jeux désinstallés, résultats venus d'ailleurs. */
 .groupe {
-  margin: 8px 4px 2px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 10px 4px 3px;
+  padding-top: 8px;
+  /* Un trait plutôt qu'un simple écart : sur une liste qui défile, l'espace
+     seul se confond avec la fin de la liste. */
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   font: 700 9px/1 Inter, sans-serif;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.34);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.groupeCompte {
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.24);
+}
+
+/* Jeu désinstallé : la ligne reste cliquable — on peut vouloir sa fiche, son
+   dossier ou le retirer — mais elle s'efface derrière celles auxquelles on
+   peut jouer. */
+.itemAbsent {
+  opacity: 0.5;
+}
+
+.itemAbsent:hover {
+  opacity: 0.85;
 }
 
 /* Remplace le rang orbital quand la planète n'est pas à l'écran : elle occupe
@@ -357,4 +381,57 @@
   margin: 0 4px;
   border-radius: 50%;
   box-shadow: 0 0 6px currentColor;
+}
+
+
+/* ── Occupation du disque ─────────────────────────────────────────────── */
+
+/* Au-dessus de la recherche : c'est un chiffre qu'on consulte avant d'installer
+   quelque chose, pas un résultat qu'on cherche. */
+.disque {
+  flex-shrink: 0;
+  display: grid;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.disqueLigne {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font: 600 9px/1 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.disqueLibre {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Jauge. La part occupée est portée par `--part`, écrite en ligne.
+
+   Le dégradé est porté par la piste entière et non par la portion remplie :
+   c'est ce qui lui donne son sens. Peint sur le remplissage, une jauge à 10 %
+   aurait affiché tout le dégradé — rouge compris — sur ses quelques pixels.
+   Ici, le rouge n'apparaît que si le disque est réellement plein.
+
+   C'est donc le *vide* qu'on recouvre, à partir de `--part`. */
+.disqueJauge {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #5ea7d4 0%, #6fbf7f 45%, #e0a83c 78%, #d4574e 100%);
+}
+
+.disqueJauge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--part, 0%);
+  right: 0;
+  /* Assez opaque pour masquer le dégradé : le panneau lui-même est translucide,
+     un voile clair laisserait le rouge transparaître sur un disque vide. */
+  background: rgba(4, 7, 12, 0.88);
 }

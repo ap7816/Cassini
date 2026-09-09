@@ -14,6 +14,7 @@ import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
 import { SolarButton } from './SolarButton';
 import { readNavCollapsed, writeNavCollapsed } from '../../services/storage';
+import { scannerTousLesLaunchers } from '../../features/library/services/libraryScan';
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -91,6 +92,28 @@ export function AppLayout() {
 
   // Démarre la musique d'ambiance une seule fois après le premier rendu
   useEffect(() => { initAmbient(); }, []);
+
+  // Détecte les jeux installés, une fois par lancement.
+  //
+  // Le scan ne vivait que derrière le bouton « Actualiser » de la page
+  // Bibliothèque : un jeu fraîchement installé n'apparaissait nulle part tant
+  // qu'on n'y était pas passé — et depuis que l'application s'ouvre sur le
+  // système solaire, on peut ne jamais y passer.
+  //
+  // Ici plutôt que dans une page : la coque est le seul endroit monté quelle
+  // que soit la route. Rien n'attend le résultat, l'affichage se met à jour de
+  // lui-même quand la bibliothèque change (voir subscribeGames).
+  useEffect(() => {
+    if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
+    void scannerTousLesLaunchers().then((r) => {
+      if (r.modifiee) {
+        console.info(
+          `[bibliothèque] scan de démarrage : ${r.ajoutes} jeu(x) découvert(s)`
+          + (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
+        );
+      }
+    });
+  }, []);
 
   // Music player
   const music = useMusicPlayer();
