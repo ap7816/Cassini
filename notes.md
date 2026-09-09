@@ -2,7 +2,7 @@
 
 ## C'est quoi Cassini ?
 
-Cassini est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic et Battle.net séparément pour trouver tes jeux, Cassini les scanne automatiquement et les affiche dans une interface unifiée.
+Cassini est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic, Battle.net, Ubisoft Connect, Riot, Rockstar et Hytale séparément pour trouver tes jeux, Cassini les scanne automatiquement et les affiche dans une interface unifiée — sous forme de liste, ou d'une galaxie où chaque launcher est un système solaire et chaque jeu une planète.
 
 ---
 
@@ -10,7 +10,7 @@ Cassini est une application de bureau Windows (Tauri + React) qui centralise tou
 
 ### Démarrage
 
-Au premier lancement (bibliothèque vide), l'app scanne automatiquement Steam, Epic Games, Battle.net, Ubisoft Connect, Riot Games et Rockstar en parallèle. Les jeux trouvés sont ajoutés et sauvegardés en `localStorage`. Au redémarrage, la bibliothèque est rechargée depuis le cache local.
+À **chaque** lancement, l'app scanne les sept launchers en parallèle (`scannerTousLesLaunchers`). Les scans partent ensemble, mais la fusion est séquentielle : chaque plateforme s'applique sur le résultat de la précédente, sinon la dernière écraserait les autres. Le stockage n'est réécrit que si le contenu a réellement changé — la comparaison passe par une empreinte insensible à l'ordre, sans quoi la galaxie se reconstruirait à chaque démarrage. Les changements se propagent en direct à la liste et à la scène 3D via `subscribeGames`. La bibliothèque elle-même vit dans le store Tauri (`archive.json`), avec `localStorage` en repli hors Tauri.
 
 ### Scan des launchers (côté Rust)
 
@@ -39,7 +39,7 @@ La résolution d'image se fait en cascade pour chaque carte :
 
 1. **Image personnalisée** (`customImageUrl`) : priorité absolue, n'est jamais remplacée
 2. **Steam avec AppID** : l'URL CDN (`cdn.cloudflare.steamstatic.com/steam/apps/{id}/header.jpg`) est calculée directement depuis l'`id` du jeu (`steam-XXXXX`) — jamais mise en cache, toujours disponible même si le jeu est désinstallé. En cas d'échec, fallback sur `library_600x900.jpg`
-3. **RAWG API fallback** : pour les jeux Epic/Battle.net. Nécessite une clé API. Les résultats sont mis en cache dans `localStorage`
+3. **SteamGridDB** : pour tous les autres jeux. La clé API vit dans le gestionnaire d'identifiants Windows et ne transite jamais par le JavaScript — le frontend appelle `fetch_sgdb_image(title)`, Rust récupère la clé au dernier moment. Les résultats sont mis en cache dans le store. (Le service s'appelait `rawgService` du temps où il interrogeait RAWG.io ; il s'appelle aujourd'hui `coverArtService`.)
 
 ### Recherche et filtres
 
@@ -66,6 +66,9 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ## Tableau des fonctionnalités
 
+> 🟡 **Partiel** : une partie existe et fonctionne, une autre manque. Le détail
+> de ce qui manque est dans « Détail des idées à venir ».
+
 | Fonctionnalité                                                           | Statut     |
 | ------------------------------------------------------------------------ | ---------- |
 | Scan automatique (Steam, Epic, BattleNet, Ubisoft, Riot, Rockstar)       | ✅ Done    |
@@ -73,9 +76,9 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Lancement de jeux avec overlay d'animation                               | ✅ Done    |
 | Historique de dernière session par jeu                                   | ✅ Done    |
 | Système de favoris                                                       | ✅ Done    |
-| Images: CDN Steam (direct, même désinstallé) + RAWG + perso              | ✅ Done    |
-| Cache RAWG en localStorage                                               | ✅ Done    |
-| Vider le cache RAWG                                                      | ✅ Done    |
+| Images: CDN Steam (direct, même désinstallé) + SteamGridDB + perso       | ✅ Done    |
+| Cache des jaquettes dans le store                                        | ✅ Done    |
+| Vider le cache des jaquettes                                             | ✅ Done    |
 | Vider le cache WebView                                                   | ✅ Done    |
 | Recherche temps réel par titre                                           | ✅ Done    |
 | Onglet Favoris                                                           | ✅ Done    |
@@ -97,8 +100,8 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Animations de transition entre pages                                     | ✅ Done    |
 | Mini-lecteur animé (slide-up/down)                                       | ✅ Done    |
 | Refonte visuelle globale (sidebar, typo, scrollbars, animations)         | ✅ Done    |
-| Taille des jeux sur disque                                               | ❌ À faire |
-| Vue Système Solaire                                                      | ❌ À faire |
+| Taille des jeux sur disque                                               | ✅ Done    |
+| Vue Système Solaire                                                      | ✅ Done    |
 | Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
 | Catégories / tags par genre ou état                                      | ❌ À faire |
 | Tri des jeux (A-Z, Z-A, joué récemment)                                  | ✅ Done    |
@@ -111,12 +114,12 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Support Riot Games                                                       | ✅ Done    |
 | Support Rockstar Games Launcher                                          | ✅ Done    |
 | Support Xbox / Microsoft Store (Game Pass)                               | ❌ À faire |
-| Raccourcis clavier                                                       | ❌ À faire |
+| Raccourcis clavier                                                       | 🟡 Partiel |
 | Vue liste (alternative à la grille)                                      | ❌ À faire |
 | Notes par jeu                                                            | ❌ À faire |
-| Scan en arrière-plan automatique                                         | ❌ À faire |
-| Mise à jour du statut installé en temps réel                             | ❌ À faire |
-| Cache RAWG avec TTL (expiration automatique)                             | ❌ À faire |
+| Scan en arrière-plan automatique                                         | ✅ Done    |
+| Mise à jour du statut installé en temps réel                             | 🟡 Partiel |
+| Cache des jaquettes avec TTL (SteamGridDB)                               | ❌ À faire |
 | Lecteur: couleur personnalisée par dossier (clic droit)                  | ✅ Done    |
 | Lecteur: déplacer une piste via clic droit → modale de sélection         | ✅ Done    |
 | Lecteur: clic sur le titre du mini-lecteur → navigue dans le bon dossier | ✅ Done    |
@@ -125,10 +128,20 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Lecteur: pochette enrichie visible dans le mini-lecteur                  | ✅ Done    |
 | Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
-| Tests unitaires (déduplication, tri, scans)                              | ❌ À faire |
-| Rendre les taille des planètes plus flagrante si un jeu est très lourd   | ❌ À faire |
+| Tests unitaires (déduplication, tri, scans)                              | 🟡 Partiel |
+| Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
+| Personnalisation d'une planète (taille, couleur des anneaux)              | ❌ À faire |
+| Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
+| Systèmes solaires personnalisés (favoris, jeux choisis)                  | ❌ À faire |
+| Déplacer les planètes en glissant (mode édition)                         | ❌ À faire |
+| Barre des launchers : icônes agrandies, bouton de création               | ❌ À faire |
+| Système solaire d'ouverture au choix                                     | ❌ À faire |
+| Taille de police augmentée                                               | ❌ À faire |
+| Menu de débogage, absent des versions publiées                           | ❌ À faire |
+| Support HoYoverse (Genshin, Honkai, Zenless)                             | ❌ À faire |
+| Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | 🟡 Partiel |
 
 ---
 
@@ -136,11 +149,41 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ### Fonctionnalités
 
+- **Personnalisation d'une planète**
+  Choisir la taille de la planète et la couleur de ses anneaux, jeu par jeu. Par défaut, les dériver d'une donnée réelle plutôt que d'un tirage : le **temps de jeu Steam** est la piste évoquée (`playtime_forever` de l'API Steam, ou le `localconfig.vdf` local), avec la taille sur disque — déjà utilisée aujourd'hui — comme repli pour les launchers qui ne l'exposent pas. Stockage : nouveaux champs sur `Game` (teinte, famille d'anneaux, échelle), écrits comme les autres données utilisateur et donc préservés par `appliquerScan`. Rendu : `scene/planets.ts` tire aujourd'hui la teinte et la famille d'anneaux d'une graine dérivée de l'identifiant du jeu ; le choix de l'utilisateur devra l'emporter sur cette graine.
+
+- **Anneaux d'orbite plus discrets vus de près**
+  Les cercles bleus autour du soleil sont à 30 % d'opacité (`scene/planets.ts`), montés de 16 % pour rester lisibles de loin. De près, ils saturent la vue. Piste : faire décroître l'opacité quand la caméra approche, comme le fait déjà la brume avec `lib/haze.ts` — une même grandeur, la distance au système, gouvernerait les deux.
+
+- **Systèmes solaires personnalisés**
+  Créer ses propres systèmes en plus de ceux des launchers ; les **favoris** sont le premier cas d'usage. Réglables : couleur du soleil, anneaux, nombre d'étoiles, vitesse de rotation des planètes, et l'ordre dans lequel les planètes sont rangées. Le placement dans la galaxie n'a rien à apprendre : `lib/galaxyLayout.ts` place les systèmes par rayon décroissant, un système personnalisé y entre comme les autres.
+
+- **Déplacer les planètes en glissant (mode édition)**
+  Ranger les planètes soi-même plutôt que de subir l'ordre calculé. Demande de figer l'orbite pendant la manipulation — `PlanetEntry.paused` existe déjà — et de retenir l'angle choisi dans le stockage, sans quoi la prochaine ouverture le perdrait.
+
+- **Barre des launchers : icônes agrandies et création**
+  Glisser la barre vers la gauche pour agrandir les icônes. Un bouton **+** sous la liste des launchers créerait un système personnalisé. Pour son icône : un jeu d'icônes fournies par l'application, avec choix de la couleur, en plus des icônes extraites des exécutables.
+
+- **Système solaire d'ouverture au choix**
+  La vue s'ouvre aujourd'hui sur un système décidé par le code. Le rendre configurable — y compris sur un système personnalisé, une fois ceux-ci possibles.
+
+- **Ajouter ses propres jeux et programmes**
+  **Le plus gros est déjà là, mais débranché.** `createGameFromPath` fabrique un `Game` depuis un chemin d'exécutable ou de raccourci — titre déduit du nom de fichier, identifiant stable dérivé du chemin, plateforme `'Other'` — et `addGameFromPicker` dans `useLibraryGames` ouvre le sélecteur de fichier et l'ajoute à la bibliothèque. **Aucun composant ne l'appelle** : il ne manque que le bouton, et de quoi choisir titre et icône. Le risque que je redoutais n'existe pas : `appliquerScan` ne touche qu'aux jeux de la plateforme scannée, et `'Other'` n'est le domaine d'aucun scanner — une entrée manuelle ne sera donc jamais marquée désinstallée.
+
+- **Support HoYoverse (Genshin, Honkai, Zenless)**
+  Un scanner de plus dans `src-tauri/src/`, sur le modèle des six autres, ajouté au `CATALOGUE` de `launcher_scan.rs` et aux `SCANNERS` de `libraryScan.ts`. HoYoPlay écrit ses jeux dans la base de registre et tient un fichier de configuration par jeu.
+
+- **Taille de police**
+  Augmenter la taille générale du texte de l'application.
+
+- **Pourquoi ouvrir Cassini plutôt qu'un raccourci Windows**
+  Ce n'est pas une fonctionnalité mais la question qui les commande toutes : un raccourci sur le bureau lance un jeu en un clic, sans rien ouvrir. Tant que Cassini ne fait que lancer, il ajoute une étape. Ce qu'il apporte en propre — la vue d'ensemble, la bibliothèque unifiée, ce qui se voit d'un coup d'œil et nulle part ailleurs — mérite d'être identifié avant d'être développé.
+
 - **Taille des jeux sur disque**
-  Afficher la taille sur chaque carte jeu (ex : `42.3 GB`, `890 MB`). Côté Rust : nouvelle commande `get_game_size` qui parcourt récursivement le dossier d'installation (chemin disponible dans le manifest ACF/Epic). Côté React : affichage sous le titre, tri "par taille" dans le sélecteur de tri existant (`SortMode`). Attention : calculer la taille d'un gros dossier peut prendre quelques secondes → lancer en tâche de fond et mettre en cache.
+  **Fait.** `sizeOnDisk` est porté par le type `Game`, renseigné par les scanners, affiché dans la liste du système solaire et sur la fiche du jeu, et il sert à dimensionner les planètes. **Reste à faire** : le tri par taille — `SortMode` de `LibraryPage` n'offre que `recent`, `az` et `za`.
 
 - **Vue Système Solaire**
-  Vue alternative à la grille (bouton toggle dans `LibraryPage`). Chaque jeu = une planète en orbite autour d'un soleil central. Taille de la planète proportionnelle au temps joué. Animation CSS `@keyframes` pour les orbites. Clic sur une planète = ouvrir la fiche du jeu. Implémentation 100 % CSS/SVG, pas de lib externe.
+  **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les sept launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, non du temps joué — ce dernier reste une piste, voir « Personnalisation d'une planète ».
 
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.
@@ -164,7 +207,7 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
   Côté Rust : les jeux Xbox sont dans `C:\XboxGames\` ou dans les packages UWP (`Get-AppxPackage` PowerShell). La détection est complexe car Microsoft ne fournit pas de manifest standard. Piste : lire `C:\Program Files\WindowsApps\` (nécessite des droits admin) ou utiliser la base de registre `HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\`. `launchUrl` : `ms-xbl-{titleId}://` ou `shell:AppsFolder\{packageFamilyName}!App`.
 
 - **Raccourcis clavier**
-  Gérer les événements `keydown` globaux dans `AppLayout`. Exemples : `Space` → play/pause musique, `F` → toggle favori sur le jeu survolé, `Ctrl+F` → focus barre de recherche, `Escape` → vider la recherche, `1-5` → navigation entre les onglets. Utiliser un hook `useHotkeys` custom ou la lib `react-hotkeys-hook`. Afficher les raccourcis dans une modale d'aide (`?`).
+  **À moitié fait.** Le système solaire a son déplacement au clavier (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`), et `Échap` ferme la barre latérale. Il manque les raccourcis d'application décrits ici : `Espace` pour la musique, `F` pour le favori survolé, `Ctrl+F` pour la recherche, `1-5` pour la navigation, et une modale d'aide sur `?`.
 
 - **Vue liste (jeux)**
   Ajouter `viewMode: 'grid' | 'list'` dans les params URL de `LibraryPage`. En mode liste : chaque jeu = une ligne compacte avec miniature, titre, plateforme, dernière session et bouton Jouer. Le composant `GameCard` actuel reste pour la grille ; créer un `GameRow` pour la liste. Toggle via icône dans la toolbar à côté du tri.
@@ -179,14 +222,21 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ### Technique
 
+- **Menu de débogage, absent des versions publiées**
+  Un panneau de réglages en direct : police, couleurs, opacités, nombre d'astéroïdes, et tout ce qui se règle aujourd'hui en modifiant une constante puis en relançant.
+
+  Contrainte posée : il ne doit être accessible qu'à toi. Un mot de passe ne suffirait pas — le code serait quand même livré, donc trouvable. La façon sûre est que le menu **n'existe pas** dans la version publiée : entourer son import et son montage d'un `if (import.meta.env.DEV)`, que Vite évalue à la compilation et dont il élimine la branche morte. Le panneau n'est alors pas dans le bundle, il n'y a rien à découvrir.
+
+  S'il devait exister dans une vraie build, pour toi seul : un drapeau de compilation (`VITE_DEBUG_MENU`) et une build séparée que tu ne publies pas. Même mécanisme, même garantie — c'est l'absence du code qui protège, jamais un contrôle à l'exécution.
+
 - **Scan en arrière-plan automatique**
-  Actuellement le scan ne se déclenche que si `games.length === 0` (premier lancement) ou manuellement. À faire : déclencher un rescan silencieux à chaque mise au point de la fenêtre (`window.addEventListener('focus', ...)`) ou à intervalle (ex : toutes les 30 min via `setInterval`). Le rescan doit être non-bloquant : `setIsScanning(false)` même pendant le scan, juste mettre à jour les jeux en arrière-plan. Attention aux doublons si plusieurs focus rapprochés → utiliser un debounce.
+  **Fait**, autrement que prévu ici : plutôt qu'un rescan à la mise au point de la fenêtre ou toutes les trente minutes, `scannerTousLesLaunchers()` tourne une fois par lancement, dans `AppLayout`. Les sept scans partent en parallèle, la fusion est séquentielle, et le stockage n'est réécrit que si une empreinte insensible à l'ordre a changé. La liste et la scène se mettent à jour d'elles-mêmes via `subscribeGames`. Le rescan périodique reste possible si le besoin s'en fait sentir.
 
 - **Mise à jour du statut installé en temps réel**
-  Côté Rust : utiliser la crate `notify` pour surveiller le dossier `steamapps/` (et équivalents Epic/Ubisoft). Quand un fichier `.acf` est supprimé → émettre un événement Tauri `game-uninstalled` avec l'appId. Côté React : écouter l'événement via `listen('game-uninstalled', ...)` et mettre à jour le statut `installed: false` sans rescan complet. Même logique pour la réinstallation quand le `.acf` réapparaît.
+  **À moitié fait.** Un jeu désinstallé est bien repéré et marqué, mais au lancement suivant seulement : `appliquerScan` marque non installé tout jeu d'une plateforme que son scanner ne rapporte plus, sans jamais le supprimer. Ce qui manque est le temps réel — surveiller `steamapps/` et ses équivalents avec la crate `notify` côté Rust, émettre un événement Tauri, l'écouter côté React. La propagation vers l'interface, elle, existe déjà (`subscribeGames`).
 
-- **Cache RAWG avec TTL**
-  Dans `rawgService.ts`, stocker non pas juste `{ key: url }` mais `{ key: { url, fetchedAt: number } }`. À la lecture (`loadCache`), ignorer les entrées dont `Date.now() - fetchedAt > TTL_MS` (ex : 30 jours). Ajouter un bouton "Vider le cache expiré" dans les paramètres (en plus du bouton "Vider tout" existant). Le TTL évite d'afficher indéfiniment une image supprimée du serveur RAWG.
+- **Cache des jaquettes avec TTL**
+  **RAWG n'est plus la source** : les jaquettes viennent du CDN Steam et de SteamGridDB (`coverArtService.ts`, qui garde son ancien nom de fichier par endroits). Le TTL, lui, n'existe toujours pas : le cache stocke `{ clé: url }` sans date. Le rendre `{ clé: { url, fetchedAt } }` et ignorer les entrées de plus de trente jours à la lecture ; ajouter un bouton « vider le cache expiré » à côté du bouton « tout vider ».
 
 - **Tests unitaires**
-  Mettre en place Vitest (déjà compatible Vite). Priorités : `deduplicateGames()` dans `useLibraryGames.ts` (cas limites : même jeu sur 3 plateformes, fusion des favoris), `pickBestMatch()` dans `rawgService.ts` (éviter les régressions de matching), `match_score()` et `word_recall()` côté Rust avec `#[cfg(test)]`. Ajouter un script `npm run test` dans `package.json`.
+  **À moitié fait.** Côté Rust, neuf tests tournent sous `cargo test` (scans Hytale, catalogue des launchers, chemins). Côté JavaScript, **rien dans le dépôt** : les vérifications écrites jusqu'ici sont des scripts jetables, hors du projet, qui importent les vrais modules avec un DOM simulé — elles ne protègent donc personne d'une régression future. Mettre en place Vitest et y porter les plus utiles : `deduplicateGames`, `appliquerScan`, `composerFiche` et `placePopup`.
