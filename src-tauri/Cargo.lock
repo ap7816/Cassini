@@ -3,34 +3,6 @@
 version = 4
 
 [[package]]
-name = "ArcHive"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "image",
- "keyring",
- "lofty",
- "rayon",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-log",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-single-instance",
- "tauri-plugin-store",
- "tauri-plugin-updater",
- "tokio",
- "urlencoding",
- "windows 0.58.0",
- "winreg 0.52.0",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -648,6 +620,34 @@ checksum = "374b7c592d9c00c1f4972ea58390ac6b18cbb6ab79011f3bdc90a0b82ca06b77"
 dependencies = [
  "serde",
  "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
+name = "cassini"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "image",
+ "keyring",
+ "lofty",
+ "rayon",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-log",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-store",
+ "tauri-plugin-updater",
+ "tokio",
+ "urlencoding",
+ "windows 0.58.0",
+ "winreg 0.52.0",
 ]
 
 [[package]]

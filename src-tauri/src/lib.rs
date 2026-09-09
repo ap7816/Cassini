@@ -410,16 +410,67 @@ fn move_music_file(
     std::fs::rename(&src_path, &dst_path).map_err(|e| e.to_string())
 }
 
-// Commande Tauri : vérifie si ArcHive est configuré pour démarrer avec Windows
+// Chemin de la clé Run du registre, et nom de la valeur qu'on y écrit.
+//
+// La valeur portait « ArcHive » avant le renommage de l'application. Deux
+// raisons de ne pas se contenter d'écrire le nouveau nom : l'ancienne valeur
+// désigne un exécutable qui n'existe plus après la mise à jour — Windows
+// échouerait silencieusement à le lancer — et les deux coexisteraient, donc
+// l'application démarrerait deux fois. On la déplace au lieu de l'ignorer.
+#[cfg(target_os = "windows")]
+const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
+#[cfg(target_os = "windows")]
+const AUTOSTART_VALUE: &str = "Cassini";
+#[cfg(target_os = "windows")]
+const AUTOSTART_LEGACY: &str = "ArcHive";
+
+/// Déplace l'entrée de démarrage automatique vers le nouveau nom.
+///
+/// Appelée au lancement : sans elle, une installation qui démarrait avec
+/// Windows cesserait de le faire sans rien dire, et l'utilisateur devrait
+/// rouvrir les paramètres pour s'en apercevoir.
+#[cfg(target_os = "windows")]
+fn migrate_autostart() {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let Ok((run, _)) = hkcu.create_subkey(RUN_KEY) else {
+        return;
+    };
+
+    // Rien à déplacer si l'ancienne valeur est absente.
+    if run.get_value::<String, _>(AUTOSTART_LEGACY).is_err() {
+        return;
+    }
+
+    // Le chemin vient de l'exécutable courant, non de l'ancienne valeur :
+    // celle-ci désigne encore ArcHive.exe, que la mise à jour a remplacé.
+    // Sans chemin fiable, on préfère laisser l'ancienne entrée que retirer le
+    // démarrage automatique de l'utilisateur.
+    if let Ok(exe) = std::env::current_exe() {
+        let path = exe.to_string_lossy().to_string();
+        if run.set_value(AUTOSTART_VALUE, &path).is_ok() {
+            let _ = run.delete_value(AUTOSTART_LEGACY);
+        }
+    }
+}
+
+// Commande Tauri : vérifie si Cassini est configuré pour démarrer avec Windows
 #[tauri::command]
 fn get_autostart() -> bool {
     #[cfg(target_os = "windows")]
     {
-        use winreg::enums::*;
         use winreg::RegKey;
+        use winreg::enums::*;
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        match hkcu.open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run") {
-            Ok(key) => key.get_value::<String, _>("ArcHive").is_ok(),
+        match hkcu.open_subkey(RUN_KEY) {
+            // L'ancien nom compte aussi : la migration peut n'avoir pas eu
+            // lieu, et l'utilisateur a bel et bien activé l'option.
+            Ok(key) => {
+                key.get_value::<String, _>(AUTOSTART_VALUE).is_ok()
+                    || key.get_value::<String, _>(AUTOSTART_LEGACY).is_ok()
+            }
             Err(_) => false,
         }
     }
@@ -427,26 +478,27 @@ fn get_autostart() -> bool {
     { false }
 }
 
-// Commande Tauri : active ou désactive le démarrage automatique d'ArcHive via la clé Run du registre
+// Commande Tauri : active ou désactive le démarrage automatique de Cassini via la clé Run du registre
 #[tauri::command]
 fn set_autostart(enabled: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use winreg::enums::*;
         use winreg::RegKey;
+        use winreg::enums::*;
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        let (run, _) = hkcu
-            .create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
-            .map_err(|e| e.to_string())?;
+        let (run, _) = hkcu.create_subkey(RUN_KEY).map_err(|e| e.to_string())?;
         if enabled {
             let exe_path = std::env::current_exe()
                 .map_err(|e| e.to_string())?
                 .to_string_lossy()
                 .to_string();
-            run.set_value("ArcHive", &exe_path).map_err(|e| e.to_string())?;
+            run.set_value(AUTOSTART_VALUE, &exe_path).map_err(|e| e.to_string())?;
         } else {
-            let _ = run.delete_value("ArcHive");
+            let _ = run.delete_value(AUTOSTART_VALUE);
         }
+        // Dans les deux cas l'ancienne valeur disparaît : activer ne doit pas
+        // laisser deux démarrages, désactiver doit tout retirer.
+        let _ = run.delete_value(AUTOSTART_LEGACY);
     }
     #[cfg(not(target_os = "windows"))]
     { let _ = enabled; }
@@ -470,7 +522,7 @@ fn launch_battlenet_game(uid: String) -> Result<(), String> {
         .find(|p| std::path::Path::new(p).exists())
         .ok_or_else(|| "Battle.net.exe introuvable".to_string())?;
 
-    // Détaché : sinon Battle.net se ferme en même temps qu'ArcHive
+    // Détaché : sinon Battle.net se ferme en même temps que Cassini
     detached::spawn_detached(exe, &[&format!("--exec=launch {uid}")])
 }
 
@@ -520,7 +572,7 @@ const LAUNCH_SCHEMES: [&str; 5] = [
 //
 // Remplace `openUrl`/`openPath` du plugin opener, qui lançaient le programme
 // depuis notre propre processus : celui-ci héritait alors du job Windows
-// d'ArcHive et se fermait avec lui — c'est ce qui éteignait Steam.
+// de Cassini et se fermait avec lui — c'est ce qui éteignait Steam.
 #[tauri::command]
 fn launch_target(target: String) -> Result<(), String> {
     let t = target.trim();
@@ -738,7 +790,7 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
 
     let resp = client
         .get("https://musicbrainz.org/ws/2/recording/")
-        .header("User-Agent", "ArcHive/1.1.3 (desktop; noreply@example.com)")
+        .header("User-Agent", "Cassini/2.1.0 (desktop; noreply@example.com)")
         .query(&[("query", query.as_str()), ("fmt", "json"), ("limit", "5")])
         .timeout(std::time::Duration::from_secs(10))
         .send()
@@ -1233,13 +1285,17 @@ pub fn run() {
         // Racine musique autorisée — partagée par les commandes fichier
         .manage(MusicRoot::default())
         .setup(|app| {
+            // Déplace l'entrée de démarrage automatique héritée du nom précédent.
+            #[cfg(target_os = "windows")]
+            migrate_autostart();
+
             #[cfg(desktop)]
             {
                 // Configure l'icône de la zone de notification avec un menu contextuel Ouvrir/Quitter
                 use tauri::menu::{Menu, MenuItem};
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
                 use tauri::Manager;
-                let show_i = MenuItem::with_id(app, "show", "Ouvrir ArcHive", true, None::<&str>)?;
+                let show_i = MenuItem::with_id(app, "show", "Ouvrir Cassini", true, None::<&str>)?;
                 let quit_i = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?;
                 let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
                 TrayIconBuilder::new()

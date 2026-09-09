@@ -20,5 +20,8 @@
       "args": ["-l"]
     }
   },
-  "terminal.integrated.defaultProfile.windows": "Git Bash"
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  }
 }

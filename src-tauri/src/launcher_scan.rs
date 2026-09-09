@@ -14,7 +14,7 @@ pub struct LauncherDto {
     pub icon_path: Option<String>,
 }
 
-/// Les launchers gérés par ArcHive, avec la fonction qui les cherche.
+/// Les launchers gérés par Cassini, avec la fonction qui les cherche.
 type Catalogue = [(&'static str, &'static str, fn() -> Option<LauncherDto>); 7];
 
 const CATALOGUE: Catalogue = [

@@ -1,4 +1,4 @@
-# ArcHive
+# Cassini
 
 Application de bureau Windows (Tauri v2 + React) qui centralise tous tes jeux en une seule bibliothèque unifiée.
 
@@ -24,8 +24,8 @@ Application de bureau Windows (Tauri v2 + React) qui centralise tous tes jeux en
 
 ---
 
-- **Dépôt privé** `apoumier/ArcHive` : code source + installeur `.exe`
-- **Dépôt public** `apoumier/ArcHive-updates` : `latest.json` consommé par l'auto-updater
+- **Dépôt privé** `apoumier/Cassini` : code source + installeur `.exe`
+- **Dépôt public** `apoumier/Cassini-updates` : `latest.json` consommé par l'auto-updater
 - À chaque tag `vX.Y.Z`, GitHub Actions build l'app, publie le `.exe` sur le dépôt privé et pousse le manifest sur le dépôt public
 
 ---
@@ -48,8 +48,8 @@ Vérifier dans "Developer PowerShell for VS 2022" :
 
 Lancer depuis "Developer PowerShell for VS 2022" :
 
-    git clone https://github.com/apoumier/ArcHive.git
-    cd ArcHive
+    git clone https://github.com/apoumier/Cassini.git
+    cd Cassini
     npm install
     npm run tauri dev
 

@@ -26,11 +26,11 @@ type OpenStatus = 'idle' | 'opening' | 'done' | 'error';
 type InstalledFilter = 'all' | 'yes';
 type SortMode = 'default' | 'az';
 
-// Ouvre un launcher via la commande Rust, qui le lance détaché d'ArcHive.
+// Ouvre un launcher via la commande Rust, qui le lance détaché de Cassini.
 //
 // Le plugin opener démarrait le launcher depuis notre propre processus : il
 // héritait alors du job Windows de l'application et se fermait avec elle —
-// fermer ArcHive éteignait Steam.
+// fermer Cassini éteignait Steam.
 async function openTarget(target: string): Promise<void> {
   await invoke('launch_target', { target });
 }

@@ -11,6 +11,13 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 // Clés de stockage utilisées dans toute l'application — centralisées ici pour
 // éviter les fautes de frappe, et toutes préfixées par `archive.` afin qu'une
 // inspection du store dise immédiatement d'où vient chaque entrée.
+//
+// Le préfixe dit `archive.`, et le fichier du store `archive.json`, alors que
+// l'application s'appelle désormais Cassini. Ce n'est pas un oubli : ces noms
+// sont l'adresse des données, pas une étiquette. Les renommer obligerait chaque
+// installation existante à une migration — et une migration qui échoue perd la
+// bibliothèque, les réglages et le dossier musical de l'utilisateur. Le gain
+// serait nul : personne ne les voit. On les laisse donc tels quels.
 export const STORAGE_KEYS = {
   settings:            'archive.settings.v1',
   games:               'archive.library.games.v1',

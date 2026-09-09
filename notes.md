@@ -1,8 +1,8 @@
-# Notes du projet: ArcHive
+# Notes du projet: Cassini
 
-## C'est quoi ArcHive ?
+## C'est quoi Cassini ?
 
-ArcHive est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic et Battle.net séparément pour trouver tes jeux, ArcHive les scanne automatiquement et les affiche dans une interface unifiée.
+Cassini est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic et Battle.net séparément pour trouver tes jeux, Cassini les scanne automatiquement et les affiche dans une interface unifiée.
 
 ---
 
@@ -59,7 +59,7 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ### Système
 
-- **Lancement au démarrage**: écrit une clé dans `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` via Rust/winreg pour démarrer ArcHive avec Windows
+- **Lancement au démarrage**: écrit une clé dans `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` via Rust/winreg pour démarrer Cassini avec Windows
 - **Arrière-plan / tray**: quand activé, fermer la fenêtre cache l'app dans la barre des tâches système (tray). Un clic sur l'icône rouvre la fenêtre, le menu tray permet de quitter proprement
 
 ---

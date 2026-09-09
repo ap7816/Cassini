@@ -1,4 +1,4 @@
-// Plateformes de jeu supportées par ArcHive
+// Plateformes de jeu supportées par Cassini
 export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'GOG' | 'Other';
 
 // Représentation d'un jeu dans la bibliothèque — lastPlayedAt est une date ISO 8601

@@ -54,7 +54,7 @@ export function useAppLayout(navItems: NavItem[], breakpointPx = 900) {
   // Déduit le titre de la page courante à partir de la liste des items de navigation
   const pageTitle = useMemo(() => {
     const match = navItems.find((x) => pathname === x.to || pathname.startsWith(x.to + '/'));
-    return match?.label ?? 'ArcHive';
+    return match?.label ?? 'Cassini';
   }, [pathname, navItems]);
 
   return {

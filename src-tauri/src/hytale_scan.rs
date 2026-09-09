@@ -137,7 +137,7 @@ mod tests {
     /// valeur contenant un séparateur permettrait de sortir du dossier.
     #[test]
     fn le_canal_refuse_les_chemins() {
-        let dir = std::env::temp_dir().join("archive-test-hytale");
+        let dir = std::env::temp_dir().join("cassini-test-hytale");
         std::fs::create_dir_all(&dir).unwrap();
 
         // JSON construit par `serde_json` : un littéral d'antislash dans la

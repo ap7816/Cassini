@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "ArcHive: Dev (web)",
+      "label": "Cassini: Dev (web)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run dev"],
@@ -13,7 +13,7 @@
       "problemMatcher": []
     },
     {
-      "label": "ArcHive: Dev (tauri)",
+      "label": "Cassini: Dev (tauri)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run tauri dev"],
@@ -28,7 +28,7 @@
       }
     },
     {
-      "label": "ArcHive: Build (tauri)",
+      "label": "Cassini: Build (tauri)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run tauri build"],
@@ -39,7 +39,7 @@
       "group": "build"
     },
     {
-      "label": "ArcHive: Lint",
+      "label": "Cassini: Lint",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run lint"],
@@ -49,7 +49,7 @@
       "problemMatcher": []
     },
     {
-      "label": "ArcHive: Format (write)",
+      "label": "Cassini: Format (write)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run format"],
@@ -59,7 +59,7 @@
       "problemMatcher": []
     },
     {
-      "label": "ArcHive: Check (typecheck+lint+format:check)",
+      "label": "Cassini: Check (typecheck+lint+format:check)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run typecheck && npm run lint && npm run format:check"],
@@ -69,7 +69,7 @@
       "problemMatcher": []
     },
     {
-      "label": "ArcHive: Release (tag + push)",
+      "label": "Cassini: Release (tag + push)",
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": [

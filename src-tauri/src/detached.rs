@@ -1,9 +1,9 @@
-// Lancement de programmes externes totalement détachés d'ArcHive.
+// Lancement de programmes externes totalement détachés de Cassini.
 //
 // Problème résolu : sous Windows, un processus créé par `Command::spawn()`
 // hérite du *job object* de son parent. La pile WebView2 sur laquelle repose
 // Tauri place l'application dans un job configuré pour tuer ses membres à la
-// fermeture — conséquence, fermer ArcHive éteignait Steam (ou tout autre
+// fermeture — conséquence, fermer Cassini éteignait Steam (ou tout autre
 // launcher qu'il avait démarré), puisque celui-ci se retrouvait dans le même
 // job.
 //
@@ -24,7 +24,7 @@ mod flags {
     pub const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x0100_0000;
 }
 
-/// Lance `program` avec `args`, sans aucun lien de cycle de vie avec ArcHive.
+/// Lance `program` avec `args`, sans aucun lien de cycle de vie avec Cassini.
 pub fn spawn_detached(program: &str, args: &[&str]) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
@@ -69,7 +69,7 @@ pub fn spawn_detached(program: &str, args: &[&str]) -> Result<(), String> {
 ///
 /// Passer par explorer.exe plutôt que par ShellExecuteW est délibéré : le
 /// processus finalement lancé devient un enfant de la session Explorer, donc
-/// hors de portée du job d'ArcHive quelles que soient ses limitations.
+/// hors de portée du job de Cassini quelles que soient ses limitations.
 pub fn open_via_shell(target: &str) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {

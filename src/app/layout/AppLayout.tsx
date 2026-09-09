@@ -230,8 +230,8 @@ export function AppLayout() {
 
       <aside className={sidebarClassName} aria-hidden={!isMobile && navReplie}>
         <div className={css.brand}>
-          <img src={logo} alt="ArcHive logo" className={css.logo} />
-          <div className={css.brandSubtitle}>{t('nav.gameHub')}</div>
+          <img src={logo} alt="Cassini logo" className={css.logo} />
+          <div className={css.brandSubtitle}>{t('nav.brandName')}</div>
         </div>
 
         <nav className={css.nav}>

@@ -57,7 +57,7 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
             <span className={css.headerIcon} aria-hidden="true">🎉</span>
             <div className={css.headerText}>
               <h2 className={css.headerTitle}>{t('patchNotes.title')}</h2>
-              <p className={css.headerSub}>ArcHive v{latest.version}</p>
+              <p className={css.headerSub}>Cassini v{latest.version}</p>
             </div>
           </div>
           <button className={css.closeBtn} onClick={onClose} aria-label={t('patchNotes.close')}>✕</button>

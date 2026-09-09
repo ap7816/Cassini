@@ -30,7 +30,7 @@ jobs:
         with:
           workspaces: src-tauri
           cache-on-failure: true
-          shared-key: archive-release
+          shared-key: cassini-release
 
       - name: Install dependencies
         run: npm ci
@@ -44,12 +44,16 @@ jobs:
           VITE_UPDATER_TOKEN: ${{ secrets.VITE_UPDATER_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'ArcHive ${{ github.ref_name }}'
+          releaseName: 'Cassini ${{ github.ref_name }}'
           releaseBody: 'Voir les commits pour les changements.'
           releaseDraft: false
           prerelease: false
           updaterJsonKeepUniversal: true
 
+      # Les dépôts gardent leur nom d’origine, malgré le renommage de
+      # l’application en Cassini : l’adresse de mise à jour est gravée dans
+      # chaque copie déjà installée (voir tauri.conf.json). La renommer
+      # laisserait la base installée sans aucune mise à jour, et sans message.
       - name: Publish to ArcHive-updates
         shell: pwsh
         env:
@@ -64,7 +68,7 @@ jobs:
           # Créer ou mettre à jour la release publique dans ArcHive-updates
           $releaseExists = gh release view $tag --repo apoumier/ArcHive-updates 2>$null
           if (-not $releaseExists) {
-            gh release create $tag --repo apoumier/ArcHive-updates --title "ArcHive $tag" --notes "Voir les commits pour les changements."
+            gh release create $tag --repo apoumier/ArcHive-updates --title "Cassini $tag" --notes "Voir les commits pour les changements."
           }
           gh release upload $tag --repo apoumier/ArcHive-updates (Get-ChildItem artifacts/*.exe,artifacts/*.exe.sig | Select-Object -ExpandProperty FullName) --clobber
 

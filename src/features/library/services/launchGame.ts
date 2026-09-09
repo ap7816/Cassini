@@ -41,11 +41,11 @@ async function openExternal(target: string): Promise<void> {
     }
 
     // Tout le reste (steam://, epic://, chemins locaux) passe par la commande
-    // Rust, qui lance la cible détachée du processus ArcHive.
+    // Rust, qui lance la cible détachée du processus Cassini.
     //
     // Le plugin opener lançait le programme depuis notre propre processus :
     // celui-ci héritait du job Windows de l'application et se fermait avec
-    // elle — c'est ce qui éteignait Steam à la fermeture d'ArcHive.
+    // elle — c'est ce qui éteignait Steam à la fermeture de Cassini.
     await invoke('launch_target', { target });
     return;
   }

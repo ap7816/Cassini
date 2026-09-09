@@ -13,7 +13,16 @@
 
 use keyring::Entry;
 
-const SERVICE: &str = "ArcHive";
+const SERVICE: &str = "Cassini";
+
+/// Nom du service avant le renommage de l'application.
+///
+/// Le coffre de Windows indexe par (service, compte) : changer le service rend
+/// la clé déjà enregistrée introuvable. L'utilisateur ne verrait pas d'erreur,
+/// seulement des jaquettes qui cessent d'arriver — le pire des symptômes, car
+/// rien ne le relierait au renommage. `get_key` la déplace au premier accès.
+const SERVICE_LEGACY: &str = "ArcHive";
+
 const ACCOUNT: &str = "sgdb_api_key";
 
 fn entry() -> Result<Entry, String> {
@@ -47,10 +56,26 @@ pub fn set_key(key: &str) -> Result<(), String> {
 /// qui en ont besoin l'appellent.
 pub fn get_key() -> Option<String> {
     let e = entry().ok()?;
-    match e.get_password() {
-        Ok(k) if !k.trim().is_empty() => Some(k),
-        _ => None,
+    if let Ok(k) = e.get_password() {
+        if !k.trim().is_empty() {
+            return Some(k);
+        }
     }
+
+    // Rien sous le nom actuel : la clé a pu être écrite avant le renommage.
+    // On la recopie sous le nouveau service, puis on retire l'ancienne entrée.
+    // Un échec de recopie n'est pas bloquant — la clé est rendue quand même,
+    // et la migration sera retentée au prochain appel.
+    let ancienne = Entry::new(SERVICE_LEGACY, ACCOUNT).ok()?;
+    let k = ancienne.get_password().ok()?;
+    if k.trim().is_empty() {
+        return None;
+    }
+
+    if e.set_password(&k).is_ok() {
+        let _ = ancienne.delete_credential();
+    }
+    Some(k)
 }
 
 /// Indique au frontend si une clé est configurée, sans jamais la révéler.
