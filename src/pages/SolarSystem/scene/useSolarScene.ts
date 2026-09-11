@@ -20,13 +20,15 @@ import { createStarfield, createSunBeacons } from './decor';
 import { createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
 import { angleEnDegres, appliquerPlacements } from './placements';
 import type { EditionScene, EtatEdition } from './edition';
-import { BORNES, type ReglageSysteme } from '../lib/customSystems';
+import { BORNES, estSystemePerso, type ReglageSysteme } from '../lib/customSystems';
 import { distanceMini, ETENDUE_MAX } from '../lib/etendue';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import { createPostprocess } from './postprocess';
 import { abonnerReglages, lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
+import i18n from '../../../i18n';
+import { nomPlateforme } from '../../../i18n/plateformes';
 
 /**
  * Durées extrêmes d'un déplacement de caméra, en secondes, et distance de
@@ -460,6 +462,12 @@ export function useSolarScene({
 
     // Nom de chaque launcher, au-dessus de son soleil : c'est ce qui permet de
     // savoir ce qu'on regarde de loin, une fois les planètes libérées.
+    //
+    // Celui d'un launcher se traduit — `Other` et `BattleNet` sont des
+    // identifiants, pas des noms. Celui d'un système personnalisé est le nom
+    // que l'utilisateur lui a donné, qu'on ne touche pas.
+    const nomAffiche = (s: SystemeGalaxie) =>
+      estSystemePerso(s.platform) ? s.nom : nomPlateforme(s.platform, i18n.t.bind(i18n));
     for (const s of galaxie.systemes) {
       // Au-dessus du soleil, et non derrière le système.
       //
@@ -471,12 +479,19 @@ export function useSolarScene({
       const hauteurNom = Math.max(s.taille.sunR * 4, s.taille.systemR * 0.05);
       labelLayer.addWorld(
         s.centre.clone().add(new THREE.Vector3(0, hauteurNom, 0)),
-        s.nom,
+        nomAffiche(s),
         orbitLabelClass,
         `#${s.couleur.toString(16).padStart(6, '0')}`,
         s.taille.systemR * 0.55,
+        s.platform,
       );
     }
+    // La langue peut changer pendant que la scène est montée : on renomme sur
+    // place plutôt que de rebâtir la galaxie.
+    const renommerSystemes = () => {
+      for (const s of galaxie.systemes) labelLayer.renommer(s.platform, nomAffiche(s));
+    };
+    i18n.on('languageChanged', renommerSystemes);
 
     // ── Caméra ───────────────────────────────────────────────────────────
     // Entrée en scène : on arrive de loin et l'on se resserre sur le système
@@ -1364,6 +1379,7 @@ export function useSolarScene({
         }
       });
       desabonnerReglages();
+      i18n.off('languageChanged', renommerSystemes);
       prefMouvement.removeEventListener('change', surPreference);
       nebulaTex.dispose();
       post.dispose();

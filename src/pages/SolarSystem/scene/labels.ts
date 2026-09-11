@@ -14,6 +14,8 @@ type Label = {
   world?: THREE.Vector3;
   /** Distance au-delà de laquelle ce label apparaît. */
   seuil?: number;
+  /** Système nommé par ce label, pour pouvoir le renommer (label de plateforme). */
+  cle?: string;
   /** Planète suivie (label de jeu). */
   entry?: PlanetEntry;
   lastX: number;
@@ -56,12 +58,27 @@ export class LabelLayer {
     className: string,
     color?: string,
     seuil = 0,
+    /** Clé du système nommé, pour `renommer`. */
+    cle?: string,
   ): void {
     const div = document.createElement('div');
     div.className = className;
     div.textContent = text;
     if (color) div.style.color = color;
-    this.push(div, { world, seuil });
+    this.push(div, { world, seuil, cle });
+  }
+
+  /**
+   * Change le texte du label d'un système.
+   *
+   * Sert au changement de langue : le nom d'un launcher se traduit, et rebâtir
+   * la galaxie pour si peu la ferait disparaître le temps de la reconstruire.
+   * Le texte n'est réécrit que s'il diffère.
+   */
+  renommer(cle: string, texte: string): void {
+    for (const l of this.labels) {
+      if (l.cle === cle && l.div.textContent !== texte) l.div.textContent = texte;
+    }
   }
 
   /**

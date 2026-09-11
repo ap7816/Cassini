@@ -1,4 +1,5 @@
 import type { Game } from '../../types';
+import i18n from '../../../i18n';
 
 // Extrait le dernier segment d'un chemin (compatible Windows et Unix)
 function basename(path: string): string {
@@ -23,7 +24,7 @@ function simpleHash(input: string): string {
 // Crée un objet Game minimal à partir d'un chemin vers un exécutable ou raccourci
 export function createGameFromPath(path: string): Game {
   const fileName = basename(path);
-  const title = stripExtension(fileName).trim() || 'New Game';
+  const title = stripExtension(fileName).trim() || i18n.t('library.newGame');
 
   return {
     id: `local-${simpleHash(path)}`,

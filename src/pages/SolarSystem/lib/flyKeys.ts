@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { readSolarFlyKeys, writeSolarFlyKeys } from '../../../services/storage';
 
 /**
@@ -33,15 +34,18 @@ export const SENSIBILITE_MIN = 0.25;
 export const SENSIBILITE_MAX = 2.5;
 export const SENSIBILITE_DEFAUT = 1;
 
-/** Ordre d'affichage dans le panneau de configuration. */
-export const FLY_ACTIONS: { action: FlyAction; label: string }[] = [
-  { action: 'avancer', label: 'Avancer' },
-  { action: 'reculer', label: 'Reculer' },
-  { action: 'gauche', label: 'Gauche' },
-  { action: 'droite', label: 'Droite' },
-  { action: 'monter', label: 'Monter' },
-  { action: 'descendre', label: 'Descendre' },
-  { action: 'accelerer', label: 'Accélérer' },
+/**
+ * Ordre d'affichage dans le panneau de configuration. Le libellé de chaque
+ * action vient des traductions (`flyKeys.actions.<action>`).
+ */
+export const FLY_ACTIONS: readonly FlyAction[] = [
+  'avancer',
+  'reculer',
+  'gauche',
+  'droite',
+  'monter',
+  'descendre',
+  'accelerer',
 ];
 
 export const DEFAULT_FLY_KEYS: FlyKeys = {
@@ -57,33 +61,68 @@ export const DEFAULT_FLY_KEYS: FlyKeys = {
 };
 
 /**
+ * Touches désignées par un nom plutôt que par un caractère. Leur libellé vient
+ * des traductions (`flyKeys.keys.<code>`) : « Maj gauche » ici, « Left Shift »
+ * ailleurs.
+ */
+export const TOUCHES_NOMMEES = [
+  'Space',
+  'ShiftLeft',
+  'ShiftRight',
+  'ControlLeft',
+  'ControlRight',
+  'AltLeft',
+  'AltRight',
+  'Tab',
+  'Enter',
+  'Escape',
+] as const;
+
+const FLECHES: Record<string, string> = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' };
+
+/**
+ * Caractère produit par chaque emplacement de touche sur le clavier de
+ * l'utilisateur, ou `null` quand le navigateur ne sait pas le dire.
+ */
+export type DispositionClavier = ReadonlyMap<string, string> | null;
+
+type NavigateurAvecClavier = Navigator & {
+  keyboard?: { getLayoutMap?: () => Promise<ReadonlyMap<string, string>> };
+};
+
+/**
+ * Lit la disposition du clavier.
+ *
+ * L'API n'existe que dans les navigateurs Chromium — la WebView de Windows en
+ * est un — et peut rendre une table vide, par exemple quand la fenêtre n'a pas
+ * le focus. Vide ou absente, `flyKeyLabel` retombe sur le libellé double.
+ */
+export async function lireDispositionClavier(): Promise<DispositionClavier> {
+  try {
+    const table = await (navigator as NavigateurAvecClavier).keyboard?.getLayoutMap?.();
+    return table && table.size > 0 ? table : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Nom lisible d'un code de touche.
  *
- * Entre parenthèses, le caractère réellement produit sur un clavier français
- * quand il diffère : l'utilisateur cherche la touche qu'il voit, pas son nom
- * dans la norme.
+ * L'utilisateur cherche la touche qu'il voit, pas son nom dans la norme. Quand
+ * la disposition est connue, on affiche donc la lettre que porte réellement la
+ * touche — « Z » sur un clavier AZERTY là où `code` dit `KeyW`. À défaut, la
+ * lettre QWERTY suivie de son équivalent AZERTY quand il diffère : un
+ * utilisateur AZERTY lirait sinon des lettres qui ne correspondent à rien sur
+ * son clavier.
  */
-export function flyKeyLabel(code: string): string {
-  const nommees: Record<string, string> = {
-    Space: 'Espace',
-    ShiftLeft: 'Maj gauche',
-    ShiftRight: 'Maj droite',
-    ControlLeft: 'Ctrl gauche',
-    ControlRight: 'Ctrl droite',
-    AltLeft: 'Alt',
-    AltRight: 'Alt Gr',
-    Tab: 'Tab',
-    Enter: 'Entrée',
-    Escape: 'Échap',
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-  };
-  if (nommees[code]) return nommees[code];
+export function flyKeyLabel(code: string, t: TFunction, disposition: DispositionClavier): string {
+  if ((TOUCHES_NOMMEES as readonly string[]).includes(code)) return t(`flyKeys.keys.${code}`);
+  if (FLECHES[code]) return FLECHES[code];
 
-  // Les touches de lettres portent leur libellé QWERTY dans `code`. On indique
-  // le caractère AZERTY quand il diffère, sinon la correspondance est opaque.
+  const produit = disposition?.get(code);
+  if (produit && produit.trim()) return produit.toUpperCase();
+
   const azerty: Record<string, string> = { KeyA: 'Q', KeyQ: 'A', KeyW: 'Z', KeyZ: 'W', KeyM: ',' };
   const lettre = code.startsWith('Key') ? code.slice(3) : null;
   if (lettre) return azerty[code] ? `${lettre} / ${azerty[code]}` : lettre;
@@ -113,7 +152,7 @@ export function loadFlySettings(): FlySettings {
 
   try {
     const lu = JSON.parse(raw) as Record<string, unknown>;
-    for (const { action } of FLY_ACTIONS) {
+    for (const action of FLY_ACTIONS) {
       if (estValide(lu[action])) defaut.keys[action] = lu[action];
     }
     const s = lu.sensibilite;

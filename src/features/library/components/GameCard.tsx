@@ -6,6 +6,8 @@ import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/coverArtService';
 import { tauriInvoke } from '../../../services/tauri';
+import { formaterDate, formaterTaille } from '../../../i18n/formats';
+import { nomPlateforme } from '../../../i18n/plateformes';
 
 type Props = {
   game: Game;
@@ -19,19 +21,8 @@ type Props = {
   isLaunching?: boolean;
 };
 
-const lastPlayedFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
-
-const GB = 1024 ** 3;
-const TB = 1024 ** 4;
-
-function fmtBytes(b: number): string {
-  if (b >= TB) return `${(b / TB).toFixed(1)} TB`;
-  if (b >= GB) return `${(b / GB).toFixed(1)} GB`;
-  return `${(b / (1024 ** 2)).toFixed(0)} MB`;
-}
-
 export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, sgdbKeySet, isLaunching = false }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
 
   const canPlay = Boolean(game.installed && game.launchUrl);
@@ -41,8 +32,8 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
     if (!game.lastPlayedAt) return t('gameCard.neverPlayed');
     const d = new Date(game.lastPlayedAt);
     if (Number.isNaN(d.getTime())) return t('gameCard.unknownDate');
-    return t('gameCard.lastPlayed', { date: lastPlayedFormatter.format(d) });
-  }, [game.lastPlayedAt, t]);
+    return t('gameCard.lastPlayed', { date: formaterDate(d, i18n.language) });
+  }, [game.lastPlayedAt, t, i18n.language]);
 
   const isSteam = game.platform === 'Steam';
 
@@ -175,7 +166,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
             </div>
 
             <div className={css.meta}>
-              <span className={css.badge}>{game.platform}</span>
+              <span className={css.badge}>{nomPlateforme(game.platform, t)}</span>
               {isFav && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
               <span className={css.dot} aria-hidden="true">•</span>
               <span className={css.muted}>
@@ -184,7 +175,7 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
               {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
                 <>
                   <span className={css.dot} aria-hidden="true">•</span>
-                  <span className={css.muted}>{fmtBytes(game.sizeOnDisk)}</span>
+                  <span className={css.muted}>{formaterTaille(game.sizeOnDisk, i18n.language)}</span>
                 </>
               )}
             </div>

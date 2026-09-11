@@ -7,6 +7,7 @@ import { pickGameFile } from '../services/pickGameFile';
 import { createGameFromPath } from '../services/createGameFromPath';
 import { tauriInvoke } from '../../../services/tauri';
 import { deduplicateGames, mergeById } from '../services/mergeGames';
+import i18n from '../../../i18n';
 
 // Gère l'état complet de la bibliothèque : chargement, sauvegarde, scans et actions utilisateur
 export function useLibraryGames() {
@@ -154,7 +155,7 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Battle.net scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Battle.net' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -196,7 +197,7 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Epic scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Epic' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -238,7 +239,7 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Steam scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Steam' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -272,7 +273,7 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Riot scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Riot' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -306,7 +307,7 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Rockstar scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Rockstar' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -340,7 +341,7 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Hytale scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Hytale' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -374,7 +375,7 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Ubisoft scan failed.';
+      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Ubisoft' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {

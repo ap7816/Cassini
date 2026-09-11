@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import css from './SolarButton.module.css';
 
 /** Durée de l'animation de lancement, alignée sur le keyframe `solarLaunch`. */
@@ -11,6 +12,7 @@ const LAUNCH_MS = 520;
  */
 export function SolarButton({ active }: { active: boolean }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [launching, setLaunching] = useState(false);
 
   return (
@@ -27,11 +29,11 @@ export function SolarButton({ active }: { active: boolean }) {
           navigate('/solar');
         }, LAUNCH_MS);
       }}
-      title="Système Solaire"
+      title={t('nav.solarSystem')}
     >
       <span className={css.btnOrbit} aria-hidden="true" />
       <span className={css.btnIcon}>🪐</span>
-      <span className={css.btnLabel}>Système Solaire</span>
+      <span className={css.btnLabel}>{t('nav.solarSystem')}</span>
     </button>
   );
 }

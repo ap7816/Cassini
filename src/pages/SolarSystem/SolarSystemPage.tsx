@@ -7,6 +7,8 @@ import {
   useSyncExternalStore,
   type CSSProperties,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { nomPlateforme } from '../../i18n/plateformes';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -115,6 +117,7 @@ export function SolarSystemPage() {
   // `null` tant que rien n'a été choisi : la feuille de style garde alors sa
   // largeur par défaut, et son plafond en pourcentage.
   const [largeurs, setLargeurs] = useState<Largeurs>(chargerLargeurs);
+  const { t } = useTranslation();
   const [systemesPerso, setSystemesPerso] = useState<SystemePerso[]>(chargerSystemesPerso);
   // Éditeur ouvert : identifiant du système personnalisé qu'on règle.
   const [editeur, setEditeur] = useState<string | null>(null);
@@ -382,7 +385,7 @@ export function SolarSystemPage() {
       : null),
   } as CSSProperties;
 
-  const titreListe = systemeCourant?.nom ?? platform;
+  const titreListe = systemeCourant?.nom ?? nomPlateforme(platform, t);
   const teinteListe = systemeCourant?.couleur ?? PLATFORM_CSS[platform] ?? '#7a8a9a';
 
   // Change quand un réglage de débogage fixe un nombre d'objets — étoiles,
@@ -448,7 +451,7 @@ export function SolarSystemPage() {
     >
       {/* La page n'avait aucun titre : un lecteur d'écran ne pouvait pas la
           nommer. Visible pour lui seul, la barre d'en-tête l'affiche déjà. */}
-      <h1 className="sr-only">Système solaire</h1>
+      <h1 className="sr-only">{t('nav.solarSystem')}</h1>
 
       {/* La scène et ses étiquettes sont écartées de l'arbre d'accessibilité :
           un canvas ne s'explore pas, et la liste de droite en donne l'équivalent

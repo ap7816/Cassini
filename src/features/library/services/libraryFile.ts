@@ -1,5 +1,6 @@
 import type { Game } from '../../types';
 import { normalizeGames } from './libraryStorage';
+import i18n from '../../../i18n';
 
 type ExportPayload = {
   version: 1;
@@ -34,7 +35,7 @@ export async function exportLibraryToFile(games: Game[]): Promise<void> {
     const { dialog, fs } = getTauriApis();
 
     if (!dialog?.save || !fs?.writeTextFile) {
-      throw new Error('Tauri dialog/fs APIs not available.');
+      throw new Error(i18n.t('errors.fileAccessUnavailable'));
     }
 
     const path = await dialog.save({
@@ -69,7 +70,7 @@ export async function importLibraryFromFile(): Promise<Game[]> {
     const { dialog, fs } = getTauriApis();
 
     if (!dialog?.open || !fs?.readTextFile) {
-      throw new Error('Tauri dialog/fs APIs not available.');
+      throw new Error(i18n.t('errors.fileAccessUnavailable'));
     }
 
     const path = await dialog.open({
@@ -106,7 +107,7 @@ function parseImport(txt: string): Game[] {
 
     return normalizeGames(gamesRaw);
   } catch {
-    throw new Error('Invalid JSON file.');
+    throw new Error(i18n.t('errors.invalidJson'));
   }
 }
 

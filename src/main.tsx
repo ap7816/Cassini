@@ -6,10 +6,14 @@ import { AppSettingsProvider } from './features/settings/context/AppSettingsProv
 import { MusicProvider } from './features/music/MusicContext';
 import { ToastProvider } from './features/toast/ToastContext';
 import { initStorage } from './services/storage';
-import './i18n';
+import { appliquerLangueEnregistree } from './i18n';
 import './App.css';
 
-initStorage().then(() => {
+initStorage().then(async () => {
+  // Avant le premier rendu : la langue choisie n'est lisible qu'une fois le
+  // stockage chargé.
+  await appliquerLangueEnregistree();
+
   // Rend React immédiatement (caché derrière le preloader)
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>

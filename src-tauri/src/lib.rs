@@ -1265,6 +1265,29 @@ fn get_disk_free_space() -> Result<DiskInfo, String> {
     }
 }
 
+/// Entrées du menu de la zone de notification.
+///
+/// Gardées pour être renommées : le menu est construit au démarrage, avant que
+/// l'interface ait chargé la langue choisie. Les libellés viennent ensuite de
+/// l'interface elle-même, qui tient toutes les traductions — ce code n'en garde
+/// aucune copie, seulement les libellés français du tout premier affichage.
+struct TrayLabels {
+    open: tauri::menu::MenuItem<tauri::Wry>,
+    quit: tauri::menu::MenuItem<tauri::Wry>,
+}
+
+/// Renomme les entrées du menu de la zone de notification dans la langue de
+/// l'interface.
+#[tauri::command]
+fn set_tray_labels(
+    tray: tauri::State<'_, TrayLabels>,
+    open: String,
+    quit: String,
+) -> Result<(), String> {
+    tray.open.set_text(open).map_err(|e| e.to_string())?;
+    tray.quit.set_text(quit).map_err(|e| e.to_string())
+}
+
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -1307,6 +1330,8 @@ pub fn run() {
                 let show_i = MenuItem::with_id(app, "show", "Ouvrir Cassini", true, None::<&str>)?;
                 let quit_i = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?;
                 let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+                // Gardées pour être traduites dès que l'interface connaît sa langue.
+                app.manage(TrayLabels { open: show_i.clone(), quit: quit_i.clone() });
                 TrayIconBuilder::new()
                     .menu(&menu)
                     .icon(app.default_window_icon().unwrap().clone())
@@ -1361,7 +1386,8 @@ pub fn run() {
             move_music_file, get_track_metadata, get_tracks_basic_batch,
             search_itunes, write_audio_tags, write_audio_cover_from_file,
             get_disk_free_space,
-            fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64
+            fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64,
+            set_tray_labels
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

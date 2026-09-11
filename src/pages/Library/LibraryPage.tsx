@@ -11,15 +11,7 @@ import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import { useToast } from '../../features/toast/ToastContext';
 import { tauriInvoke } from '../../services/tauri';
-
-const GB = 1024 ** 3;
-const TB = 1024 ** 4;
-
-function fmtBytes(b: number): string {
-  if (b >= TB) return `${(b / TB).toFixed(1)} TB`;
-  if (b >= GB) return `${(b / GB).toFixed(1)} GB`;
-  return `${(b / (1024 ** 2)).toFixed(0)} MB`;
-}
+import { formaterTaille } from '../../i18n/formats';
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'Other';
@@ -38,7 +30,7 @@ function getTimestamp(iso?: string | null): number {
 
 // Page principale de la bibliothèque avec filtres, tri, onglets et lancement de jeux
 export function LibraryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings } = useAppSettings();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -213,7 +205,8 @@ export function LibraryPage() {
       ? t('library.subtitleFavorites', { count: favoritesCount, total: games.length })
       : q
         ? t('library.subtitleSearch', { count: filteredGames.length, total: games.length })
-        : t('library.subtitleDefault', { count: games.length, installed: installedCount });
+        // Deux nombres, donc deux accords : chacun porte son propre pluriel.
+        : `${t('library.gameCount', { count: games.length })} • ${t('library.installedCount', { count: installedCount })}`;
 
   return (
     <div className={css.page}>
@@ -223,9 +216,9 @@ export function LibraryPage() {
           <p className={css.subtitle}>{subtitleText}</p>
           {(totalSizeBytes > 0 || diskInfo) && (
             <p className={css.diskLine}>
-              {totalSizeBytes > 0 && t('library.diskUsed', { size: fmtBytes(totalSizeBytes) })}
+              {totalSizeBytes > 0 && t('library.diskUsed', { size: formaterTaille(totalSizeBytes, i18n.language) })}
               {totalSizeBytes > 0 && diskInfo && ' · '}
-              {diskInfo && t('library.diskFree', { free: fmtBytes(diskInfo.freeBytes) })}
+              {diskInfo && t('library.diskFree', { free: formaterTaille(diskInfo.freeBytes, i18n.language) })}
             </p>
           )}
         </div>

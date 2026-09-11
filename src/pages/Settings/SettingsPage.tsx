@@ -14,7 +14,7 @@ import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
 import { clearCoverCache } from '../../features/library/services/coverArtService';
-import { setLanguage, getCurrentLanguage } from '../../i18n';
+import { LANGUES, estLangue, getCurrentLanguage, setLanguage, type Langue } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 
 // Dimensions maximales et qualité JPEG pour la compression des images de fond
@@ -97,7 +97,7 @@ export function SettingsPage() {
   const [sgdbKeyInput, setSgdbKeyInput] = useState('');
   const [sgdbKeySaved, setSgdbKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
-  const [currentLang, setCurrentLang] = useState<'fr' | 'en'>(getCurrentLanguage);
+  const [currentLang, setCurrentLang] = useState<Langue>(getCurrentLanguage);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -200,7 +200,7 @@ export function SettingsPage() {
   }
 
   // Change la langue de l'interface et met à jour l'état local
-  function handleLanguageChange(lang: 'fr' | 'en') {
+  function handleLanguageChange(lang: Langue) {
     setLanguage(lang);
     setCurrentLang(lang);
   }
@@ -340,10 +340,17 @@ export function SettingsPage() {
         <SettingRow labelKey="settings.languageLabel" hintKey="settings.languageHint" query={q}><select
             className={css.langSelect}
             value={currentLang}
-            onChange={(e) => handleLanguageChange(e.target.value as 'fr' | 'en')}
+            onChange={(e) => {
+              if (estLangue(e.target.value)) handleLanguageChange(e.target.value);
+            }}
           >
-            <option value="fr">🇫🇷 Français</option>
-            <option value="en">🇬🇧 English</option>
+            {/* Chaque langue sous son propre nom : on doit pouvoir retrouver la
+                sienne dans une interface qu'on ne lit pas. */}
+            {LANGUES.map((l) => (
+              <option key={l.code} value={l.code} lang={l.code}>
+                {l.drapeau} {l.nom}
+              </option>
+            ))}
           </select>
         </SettingRow>
       </div>
@@ -513,7 +520,7 @@ export function SettingsPage() {
               className={css.apiKeyInput}
               placeholder={
                 settings.sgdbKeySet
-                  ? '•••••••• (clé enregistrée)'
+                  ? t('settings.sgdbKeySaved')
                   : t('settings.sgdbPlaceholder')
               }
               value={sgdbKeyInput}

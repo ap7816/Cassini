@@ -1,5 +1,6 @@
 import type { Game } from '../../types';
 import { isTauri, invoke } from '@tauri-apps/api/core';
+import i18n from '../../../i18n';
 
 export type LaunchResult =
   | { ok: true }
@@ -57,20 +58,20 @@ async function openExternal(target: string): Promise<void> {
   }
 
   // Les chemins locaux ne peuvent pas être ouverts depuis un navigateur web
-  throw new Error('Local paths can only be opened in the desktop app.');
+  throw new Error(i18n.t('errors.desktopOnlyLaunch'));
 }
 
 // Lance un jeu en vérifiant d'abord qu'il est installé et qu'une URL de lancement est définie
 export async function launchGame(game: Game): Promise<LaunchResult> {
   if (!game.installed) {
-    return { ok: false, reason: 'NOT_INSTALLED', message: 'Game is not installed.' };
+    return { ok: false, reason: 'NOT_INSTALLED', message: i18n.t('errors.gameNotInstalled') };
   }
 
   if (!game.launchUrl) {
     return {
       ok: false,
       reason: 'NO_LAUNCH_URL',
-      message: 'No launch target configured for this game.',
+      message: i18n.t('errors.noLaunchTarget'),
     };
   }
 
@@ -82,14 +83,14 @@ export async function launchGame(game: Game): Promise<LaunchResult> {
       return {
         ok: false,
         reason: 'OPEN_FAILED',
-        message: 'Launching local executables is only available in the desktop app (Tauri).',
+        message: i18n.t('errors.desktopOnlyLaunch'),
       };
     }
 
     await openExternal(target);
     return { ok: true };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Failed to open launch target.';
+    const msg = e instanceof Error ? e.message : i18n.t('errors.launchFailed');
     return { ok: false, reason: 'OPEN_FAILED', message: msg };
   }
 }

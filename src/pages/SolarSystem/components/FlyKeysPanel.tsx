@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formaterNombre } from '../../../i18n/formats';
 import {
   DEFAULT_FLY_KEYS,
   FLY_ACTIONS,
   flyKeyLabel,
+  lireDispositionClavier,
   SENSIBILITE_DEFAUT,
   SENSIBILITE_MAX,
   SENSIBILITE_MIN,
+  type DispositionClavier,
   type FlyAction,
   type FlySettings,
 } from '../lib/flyKeys';
@@ -21,14 +25,29 @@ type Props = {
  *
  * La capture se fait sur `KeyboardEvent.code`, comme la lecture dans la scène :
  * ce qui est enregistré est l'emplacement de la touche, pas le caractère
- * qu'elle produit. Le libellé affiché montre les deux quand ils diffèrent
- * (« W / Z »), sans quoi un utilisateur AZERTY lirait des lettres qui ne
- * correspondent à rien sur son clavier.
+ * qu'elle produit. Le libellé affiché est la lettre que porte la touche sur le
+ * clavier de l'utilisateur quand le navigateur sait la donner, et sinon les
+ * lettres QWERTY et AZERTY côte à côte (« W / Z »).
  */
 export function FlyKeysPanel({ settings, onChange }: Props) {
+  const { t, i18n } = useTranslation();
   const { keys } = settings;
   const [ouvert, setOuvert] = useState(false);
   const [enAttente, setEnAttente] = useState<FlyAction | null>(null);
+  const [disposition, setDisposition] = useState<DispositionClavier>(null);
+
+  // Lue à l'ouverture : la disposition ne change pas pendant qu'on règle, et
+  // l'API n'est pas offerte partout.
+  useEffect(() => {
+    if (!ouvert) return;
+    let annule = false;
+    void lireDispositionClavier().then((d) => {
+      if (!annule) setDisposition(d);
+    });
+    return () => {
+      annule = true;
+    };
+  }, [ouvert]);
 
   // Capture de la prochaine touche. En phase de capture, on intercepte tout :
   // l'écouteur de la scène tournant aussi sur `window`, la touche pressée
@@ -46,7 +65,7 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
       // Une même touche ne peut pas servir deux actions : on libère l'ancienne
       // plutôt que de laisser deux commandes se déclencher ensemble.
       const next = { ...keys };
-      for (const { action } of FLY_ACTIONS) {
+      for (const action of FLY_ACTIONS) {
         if (next[action] === e.code) next[action] = '';
       }
       next[enAttente!] = e.code;
@@ -61,7 +80,7 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
   if (!ouvert) {
     return (
       <button type="button" className={css.open} onClick={() => setOuvert(true)}>
-        Commandes
+        {t('flyKeys.open')}
       </button>
     );
   }
@@ -69,7 +88,7 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
   return (
     <section className={css.panel}>
       <header className={css.head}>
-        <span className={css.title}>Déplacement</span>
+        <span className={css.title}>{t('flyKeys.title')}</span>
         <button
           type="button"
           className={css.close}
@@ -77,16 +96,16 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
             setEnAttente(null);
             setOuvert(false);
           }}
-          aria-label="Fermer"
+          aria-label={t('common.close')}
         >
           ✕
         </button>
       </header>
 
       <ul className={css.list}>
-        {FLY_ACTIONS.map(({ action, label }) => (
+        {FLY_ACTIONS.map((action) => (
           <li key={action} className={css.row}>
-            <span className={css.label}>{label}</span>
+            <span className={css.label}>{t(`flyKeys.actions.${action}`)}</span>
             <button
               type="button"
               className={[css.key, enAttente === action ? css.keyWaiting : '']
@@ -95,9 +114,9 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
               onClick={() => setEnAttente(action)}
             >
               {enAttente === action
-                ? 'Appuie…'
+                ? t('flyKeys.waiting')
                 : keys[action]
-                  ? flyKeyLabel(keys[action])
+                  ? flyKeyLabel(keys[action], t, disposition)
                   : '—'}
             </button>
           </li>
@@ -106,8 +125,8 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
 
       <div className={css.sensRow}>
         <span className={css.label}>
-          Sensibilité
-          <span className={css.sensValue}>{settings.sensibilite.toFixed(2)}×</span>
+          {t('flyKeys.sensitivity')}
+          <span className={css.sensValue}>{formaterNombre(settings.sensibilite, i18n.language, 2)}×</span>
         </span>
         <input
           type="range"
@@ -130,13 +149,10 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
           onChange({ keys: { ...DEFAULT_FLY_KEYS }, sensibilite: SENSIBILITE_DEFAUT });
         }}
       >
-        Réinitialiser
+        {t('flyKeys.reset')}
       </button>
 
-      <p className={css.note}>
-        Les touches sont repérées par leur emplacement : WASD et ZQSD désignent
-        les mêmes.
-      </p>
+      <p className={css.note}>{t('flyKeys.note')}</p>
     </section>
   );
 }

@@ -12,6 +12,7 @@ import {
 
 import { info } from '@tauri-apps/plugin-log';
 import { useToast } from '../../features/toast/ToastContext';
+import i18n from '../../i18n';
 
 // Structure d'un launcher détecté par Rust (scan_launchers)
 type LauncherDto = {
@@ -73,7 +74,9 @@ export function LaunchersPage() {
       const res = await invoke<LauncherDto[]>('scan_launchers');
       setLaunchers(res);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to scan launchers.';
+      // `i18n.t` et non `t` : le scan ne tourne qu'au montage, il n'a pas à
+      // dépendre de la langue.
+      const msg = e instanceof Error ? e.message : i18n.t('errors.launchersScanFailed');
       setError(msg);
       setLaunchers([]);
     } finally {
@@ -148,7 +151,7 @@ export function LaunchersPage() {
       window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 900);
     } catch (e) {
       setOpenStatus('error');
-      const msg = e instanceof Error ? e.message : 'Failed to open launcher.';
+      const msg = e instanceof Error ? e.message : t('errors.openLauncherFailed');
       window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 1200);
       toast.error(msg);
     }
@@ -168,7 +171,7 @@ export function LaunchersPage() {
       window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 900);
     } catch (e) {
       setFolderStatus('error');
-      const msg = e instanceof Error ? e.message : 'Failed to open folder.';
+      const msg = e instanceof Error ? e.message : t('errors.openFolderFailed');
       window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 1200);
       toast.error(msg);
     }
@@ -260,7 +263,7 @@ export function LaunchersPage() {
                 className={[css.card, l.installed ? '' : css.cardMissing]
                   .filter(Boolean)
                   .join(' ')}
-                aria-label={`${l.name} launcher`}
+                aria-label={l.name}
               >
                 <div className={css.cardTop}>
                   <div className={css.cardTitleRow}>

@@ -12,18 +12,9 @@ import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { PLATFORM_CSS } from '../constants';
 import { tauriInvoke } from '../../../services/tauri';
+import { formaterDate, formaterTaille } from '../../../i18n/formats';
+import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './GamePanel.module.css';
-
-const GB = 1024 ** 3;
-const TB = 1024 ** 4;
-
-function fmtBytes(b: number): string {
-  if (b >= TB) return `${(b / TB).toFixed(1)} TB`;
-  if (b >= GB) return `${(b / GB).toFixed(1)} GB`;
-  return `${(b / 1024 ** 2).toFixed(0)} MB`;
-}
-
-const lastPlayedFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
 type Props = {
   game: Game;
@@ -41,7 +32,7 @@ type Props = {
  * ne connaît que son contenu.
  */
 export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
 
   const isSteam = game.platform === 'Steam';
@@ -125,8 +116,8 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
     if (!game.lastPlayedAt) return t('gameCard.neverPlayed');
     const d = new Date(game.lastPlayedAt);
     if (Number.isNaN(d.getTime())) return t('gameCard.unknownDate');
-    return t('gameCard.lastPlayed', { date: lastPlayedFmt.format(d) });
-  }, [game.lastPlayedAt, t]);
+    return t('gameCard.lastPlayed', { date: formaterDate(d, i18n.language) });
+  }, [game.lastPlayedAt, t, i18n.language]);
 
   return (
     <div className={css.panel}>
@@ -163,7 +154,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
           </div>
         )}
         <div className={css.bannerGrad} />
-        <button className={css.close} onClick={onClose} aria-label="Fermer">
+        <button className={css.close} onClick={onClose} aria-label={t('common.close')}>
           ✕
         </button>
       </div>
@@ -187,7 +178,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
             className={css.badge}
             style={{ background: col + '28', borderColor: col + '55', color: col }}
           >
-            {game.platform}
+            {nomPlateforme(game.platform, t)}
           </span>
           {game.favorite && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
           <span className={css.dot}>•</span>
@@ -197,7 +188,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
           {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
             <>
               <span className={css.dot}>•</span>
-              <span className={css.muted}>{fmtBytes(game.sizeOnDisk)}</span>
+              <span className={css.muted}>{formaterTaille(game.sizeOnDisk, i18n.language)}</span>
             </>
           )}
         </div>

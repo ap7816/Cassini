@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import type { Game } from '../../../features/types';
 import { AppDialog, type DialogState } from '../../../components/AppDialog/AppDialog';
@@ -7,6 +8,7 @@ import { PLATFORM_CSS } from '../constants';
 import { COULEURS_SYSTEME, NOM_MAX, nouveauSysteme, nouvelId, type SystemePerso } from '../lib/customSystems';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from '../lib/iconesSysteme';
 import { IconeSysteme } from './IconeSysteme';
+import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './SystemeDialog.module.css';
 
 type Props = {
@@ -33,6 +35,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   const champNom = useRef<HTMLInputElement>(null);
   const fenetreRef = useRef<HTMLFormElement>(null);
   usePiegeFocus(fenetreRef);
+  const { t } = useTranslation();
   const parId = useMemo(() => new Map(games.map((g) => [g.id, g])), [games]);
 
   const [nom, setNom] = useState(systeme?.nom ?? '');
@@ -81,7 +84,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   }
 
   const nomPropre = nom.trim();
-  const manque = !nomPropre ? 'Il manque un nom.' : jeux.length === 0 ? 'Choisir au moins un jeu.' : null;
+  const manque = !nomPropre ? t('systems.missingName') : jeux.length === 0 ? t('systems.missingGames') : null;
 
   function valider(e: FormEvent) {
     e.preventDefault();
@@ -96,7 +99,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
     if (!systeme) return;
     setConfirmation({
       type: 'confirm',
-      message: `Supprimer le système « ${systeme.nom} » ? Ses jeux restent dans la bibliothèque et dans leur launcher.`,
+      message: t('systems.deleteConfirm', { name: systeme.nom }),
       danger: true,
       resolve: (ok) => {
         if (ok) onSupprimer(systeme.id);
@@ -126,33 +129,33 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
           </div>
           <div className={css.enteteTexte}>
             <h2 id={titreId} className={css.titre}>
-              {systeme ? 'Modifier le système' : 'Nouveau système solaire'}
+              {systeme ? t('systems.editTitle') : t('systems.newTitle')}
             </h2>
             <p className={css.sousTitre}>
-              {nomPropre || 'Sans nom'} · {jeux.length} {jeux.length > 1 ? 'jeux' : 'jeu'}
+              {nomPropre || t('systems.untitled')} · {t('library.gameCount', { count: jeux.length })}
             </p>
           </div>
-          <button type="button" className={css.fermer} onClick={onFermer} aria-label="Fermer">
+          <button type="button" className={css.fermer} onClick={onFermer} aria-label={t('common.close')}>
             ✕
           </button>
         </header>
 
         <div className={css.corps}>
           <label className={css.champ}>
-            <span className={css.etiquette}>Nom</span>
+            <span className={css.etiquette}>{t('systems.name')}</span>
             <input
               ref={champNom}
               className={css.saisie}
               value={nom}
               maxLength={NOM_MAX}
               onChange={(e) => setNom(e.target.value)}
-              placeholder="Favoris, En cours, Coop…"
+              placeholder={t('systems.namePlaceholder')}
             />
           </label>
 
           <div className={css.champ}>
-            <span className={css.etiquette}>Icône</span>
-            <div className={css.icones} role="radiogroup" aria-label="Icône">
+            <span className={css.etiquette}>{t('systems.icon')}</span>
+            <div className={css.icones} role="radiogroup" aria-label={t('systems.icon')}>
               {ICONES_SYSTEME.map((i) => {
                 const choisie = i.nom === icone;
                 return (
@@ -161,7 +164,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                     type="button"
                     role="radio"
                     aria-checked={choisie}
-                    title={i.libelle}
+                    title={t(`systems.icons.${i.nom}`)}
                     className={choisie ? `${css.icone} ${css.iconeChoisie}` : css.icone}
                     onClick={() => setIcone(i.nom)}
                   >
@@ -173,7 +176,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
           </div>
 
           <div className={css.champ}>
-            <span className={css.etiquette}>Couleur</span>
+            <span className={css.etiquette}>{t('systems.color')}</span>
             <div className={css.couleurs}>
               {COULEURS_SYSTEME.map((c) => (
                 <button
@@ -182,7 +185,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                   className={c === couleur ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
                   style={{ background: c }}
                   onClick={() => setCouleur(c)}
-                  aria-label={`Couleur ${c}`}
+                  aria-label={t('systems.colorNamed', { color: c })}
                   aria-pressed={c === couleur}
                 />
               ))}
@@ -191,23 +194,23 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                 className={css.couleurLibre}
                 value={couleur}
                 onChange={(e) => setCouleur(e.target.value)}
-                aria-label="Autre couleur"
-                title="Autre couleur"
+                aria-label={t('systems.otherColor')}
+                title={t('systems.otherColor')}
               />
             </div>
           </div>
 
           <div className={`${css.champ} ${css.champJeux}`}>
             <span className={css.etiquette}>
-              Jeux <span className={css.compte}>{jeux.length}</span>
+              {t('systems.games')} <span className={css.compte}>{jeux.length}</span>
             </span>
             <input
               className={css.saisie}
               type="search"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher dans la bibliothèque…"
-              aria-label="Rechercher un jeu"
+              placeholder={t('systems.searchLibrary')}
+              aria-label={t('systems.searchGame')}
             />
             <ul className={css.jeux}>
               {selection.map((g, i) => (
@@ -218,7 +221,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                 <LigneJeu key={g.id} game={g} rang={null} choisi={false} onBasculer={basculer} />
               ))}
               {selection.length === 0 && reste.length === 0 && (
-                <li className={css.vide}>Aucun jeu ne correspond.</li>
+                <li className={css.vide}>{t('systems.noGameMatches')}</li>
               )}
             </ul>
           </div>
@@ -227,15 +230,15 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
         <footer className={css.pied}>
           {systeme && (
             <button type="button" className={css.supprimer} onClick={demanderSuppression}>
-              Supprimer
+              {t('common.delete')}
             </button>
           )}
           <span className={css.manque}>{manque}</span>
           <button type="button" className={css.secondaire} onClick={onFermer}>
-            Annuler
+            {t('dialog.cancel')}
           </button>
           <button type="submit" className={css.principal} disabled={manque !== null}>
-            {systeme ? 'Enregistrer' : 'Créer'}
+            {systeme ? t('common.save') : t('common.create')}
           </button>
         </footer>
       </form>
@@ -265,6 +268,7 @@ function LigneJeu({
   choisi: boolean;
   onBasculer: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
   return (
     <li>
@@ -274,7 +278,7 @@ function LigneJeu({
         <span className={css.jeuRang}>{rang ?? ''}</span>
         <span className={css.jeuTitre}>{game.title}</span>
         <span className={css.jeuLauncher} style={{ color: teinte }}>
-          {game.platform}
+          {nomPlateforme(game.platform, t)}
         </span>
       </label>
     </li>

@@ -7,20 +7,14 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
-import { formaterVolume, useDiskSpace } from '../../../features/system/useDiskSpace';
+import { useDiskSpace } from '../../../features/system/useDiskSpace';
+import { formaterTaille } from '../../../i18n/formats';
+import { nomPlateforme } from '../../../i18n/plateformes';
 import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
 import { PoigneeLargeur } from './PoigneeLargeur';
 import { LARGEUR_LISTE, LARGEUR_RAIL, type Colonne } from '../lib/largeurs';
 import css from './GameList.module.css';
-
-const GB = 1024 ** 3;
-
-function fmtSize(bytes: number): string {
-  return bytes >= GB
-    ? `${(bytes / GB).toFixed(1)} Go`
-    : `${(bytes / 1024 ** 2).toFixed(0)} Mo`;
-}
 
 /** Identifiant Steam, qu'il soit stocké explicitement ou déductible de l'id. */
 function steamAppIdOf(g: Game): string | null {
@@ -148,15 +142,15 @@ export function GameList({
   onAjouterAuSysteme, onRetirerDuSysteme,
   largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [query, setQuery] = useState('');
   const color = teinte;
   const perso = estSystemePerso(platform);
   const retrait: ActionLigne | undefined = perso && onRetirerDuSysteme
-    ? { symbole: '−', libelle: 'Retirer de ce système', faire: onRetirerDuSysteme }
+    ? { symbole: '−', libelle: t('solar.removeFromSystem'), faire: onRetirerDuSysteme }
     : undefined;
   const ajout: ActionLigne | undefined = perso && onAjouterAuSysteme
-    ? { symbole: '+', libelle: 'Ajouter à ce système', faire: onAjouterAuSysteme }
+    ? { symbole: '+', libelle: t('solar.addToSystem'), faire: onAjouterAuSysteme }
     : undefined;
   const listId = useId();
   const disque = useDiskSpace();
@@ -210,7 +204,7 @@ export function GameList({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={listId}
-        title={open ? 'Masquer la liste des jeux' : 'Afficher la liste des jeux'}
+        title={open ? t('solar.hideList') : t('solar.showList')}
       >
         {/* Chevron vectoriel plutôt qu'un caractère : à cette taille, « › »
             reste fin et dépend de la police disponible. Il pointe vers la
@@ -241,7 +235,7 @@ export function GameList({
             valeur={largeurListe}
             min={LARGEUR_LISTE.min}
             max={LARGEUR_LISTE.max}
-            libelle="Largeur de la liste des jeux"
+            libelle={t('solar.listWidth')}
             droite="var(--side-w, 0px)"
             onChange={(v) => onLargeurListe(v, false)}
             onFin={(v) => onLargeurListe(v, true)}
@@ -251,7 +245,7 @@ export function GameList({
             valeur={largeurRail}
             min={LARGEUR_RAIL.min}
             max={LARGEUR_RAIL.max}
-            libelle="Largeur de la barre des launchers"
+            libelle={t('solar.railWidth')}
             droite="var(--rail-w, 0px)"
             onChange={(v) => onLargeurRail(v, false)}
             onFin={(v) => onLargeurRail(v, true)}
@@ -270,7 +264,7 @@ export function GameList({
           </h2>
           {perso && (
             <button type="button" className={css.headModifier} onClick={onModifierSysteme}>
-              Modifier
+              {t('common.edit')}
             </button>
           )}
         </div>
@@ -278,10 +272,12 @@ export function GameList({
         {/* Occupation du disque système — pas de tous les disques : un jeu
             installé ailleurs ne se verrait pas ici, et l'étiquette le dit. */}
         {disque && disque.total > 0 && (
-          <div className={css.disque} title={`Lecteur ${disque.lecteur}`}>
+          <div className={css.disque} title={t('solar.drive', { drive: disque.lecteur })}>
             <div className={css.disqueLigne}>
-              <span>{formaterVolume(disque.total - disque.libre)} utilisés</span>
-              <span className={css.disqueLibre}>{formaterVolume(disque.libre)} libres</span>
+              <span>{t('library.diskUsed', { size: formaterTaille(disque.total - disque.libre, i18n.language) })}</span>
+              <span className={css.disqueLibre}>
+                {t('library.diskFree', { free: formaterTaille(disque.libre, i18n.language) })}
+              </span>
             </div>
             <div
               className={css.disqueJauge}
@@ -316,7 +312,7 @@ export function GameList({
           {desinstalles.length > 0 && (
             <>
               <li className={css.groupe}>
-                Désinstallés
+                {t('solar.uninstalled')}
                 <span className={css.groupeCompte}>{desinstalles.length}</span>
               </li>
               {desinstalles.map((g) => (
@@ -335,7 +331,7 @@ export function GameList({
 
           {ailleurs.length > 0 && (
             <>
-              <li className={css.groupe}>{perso ? 'Hors de ce système' : 'Autres launchers'}</li>
+              <li className={css.groupe}>{perso ? t('solar.outsideSystem') : t('solar.otherLaunchers')}</li>
               {ailleurs.map((g) => (
                 <Ligne
                   key={g.id}
@@ -351,7 +347,7 @@ export function GameList({
           )}
 
           {shown.length === 0 && ailleurs.length === 0 && (
-            <li className={css.empty}>Aucun résultat</li>
+            <li className={css.empty}>{t('library.noResultsTitle')}</li>
           )}
         </ul>
       </aside>
@@ -362,7 +358,7 @@ export function GameList({
           alors que portée par elle, elle sortirait de l'écran avec elle. */}
       <nav
         className={[css.rail, open ? '' : css.railHidden].filter(Boolean).join(' ')}
-        aria-label="Launchers"
+        aria-label={t('nav.launchers')}
       >
         {platforms.map((p) => {
           const teinte = PLATFORM_CSS[p.name] ?? '#7a8a9a';
@@ -378,11 +374,14 @@ export function GameList({
               style={{ '--teinte': teinte } as CSSProperties}
               onClick={() => onPickPlatform(p.name)}
               aria-current={p.name === platform}
-              title={`${p.name} — ${p.count} ${p.count > 1 ? 'jeux' : 'jeu'}`}
+              title={t('solar.railItem', {
+                name: nomPlateforme(p.name, t),
+                games: t('library.gameCount', { count: p.count }),
+              })}
             >
               {icone
                 ? <img src={icone} alt="" className={css.railIcon} draggable={false} />
-                : <span className={css.railInitiale}>{p.name.slice(0, 1).toUpperCase()}</span>}
+                : <span className={css.railInitiale}>{nomPlateforme(p.name, t).slice(0, 1).toUpperCase()}</span>}
             </button>
           );
         })}
@@ -399,7 +398,7 @@ export function GameList({
               style={{ '--teinte': s.couleur } as CSSProperties}
               onClick={() => onPickPlatform(cle)}
               aria-current={cle === platform}
-              title={`${s.nom} — ${s.jeux.length} ${s.jeux.length > 1 ? 'jeux' : 'jeu'}`}
+              title={t('solar.railItem', { name: s.nom, games: t('library.gameCount', { count: s.jeux.length }) })}
             >
               <IconeSysteme nom={s.icone} couleur={s.couleur} className={css.railIcon} />
             </button>
@@ -410,8 +409,8 @@ export function GameList({
           type="button"
           className={css.railAjout}
           onClick={onCreerSysteme}
-          title="Créer un système solaire"
-          aria-label="Créer un système solaire"
+          title={t('solar.createSystem')}
+          aria-label={t('solar.createSystem')}
         >
           <svg viewBox="0 0 24 24" className={css.railAjoutIcone} aria-hidden="true">
             <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -438,6 +437,7 @@ function Ligne({
   onPick: (game: Game) => void;
   action?: ActionLigne;
 }) {
+  const { t, i18n } = useTranslation();
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
   const absent = game.installed === false;
   return (
@@ -467,7 +467,7 @@ function Ligne({
             />
             {/* La pastille ne dit la plateforme que par sa couleur : seule
                 information portée par la couleur dans toute la liste. */}
-            <span className="sr-only">{game.platform}</span>
+            <span className="sr-only">{nomPlateforme(game.platform, t)}</span>
           </>
         )}
         <Thumb game={game} color={teinte} sgdbKeySet={sgdbKeySet} />
@@ -477,9 +477,9 @@ function Ligne({
             {/* La taille sur disque d'un jeu désinstallé ne veut plus rien
                 dire : l'espace a été rendu. On dit son état à la place. */}
             {absent
-              ? 'Non installé'
+              ? t('gameCard.notInstalled')
               : game.sizeOnDisk != null && game.sizeOnDisk > 0
-                ? fmtSize(game.sizeOnDisk)
+                ? formaterTaille(game.sizeOnDisk, i18n.language)
                 : '—'}
             {game.favorite && <span className={css.fav}> ★</span>}
           </span>
@@ -493,7 +493,7 @@ function Ligne({
           className={css.ligneAction}
           onClick={() => action.faire(game)}
           title={action.libelle}
-          aria-label={`${action.libelle} : ${game.title}`}
+          aria-label={t('solar.rowAction', { action: action.libelle, title: game.title })}
         >
           {action.symbole}
         </button>

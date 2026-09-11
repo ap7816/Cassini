@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import { AppDialog, type DialogState } from '../../../components/AppDialog/AppDialog';
 import { useFocusRendu } from '../../../hooks/useFocus';
@@ -17,6 +18,8 @@ import {
   type SystemePerso,
 } from '../lib/customSystems';
 import { ICONES_SYSTEME } from '../lib/iconesSysteme';
+import { formaterNombre } from '../../../i18n/formats';
+import { nomPlateforme } from '../../../i18n/plateformes';
 import type { EditionScene, EtatEdition } from '../scene/edition';
 import { IconeSysteme } from './IconeSysteme';
 import css from './EditeurSysteme.module.css';
@@ -48,6 +51,8 @@ const reglageDe = (s: SystemePerso): ReglageSysteme => ({
 export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnuler, onSupprimer }: Props) {
   // Pas de piège : le panneau vit à côté de la scène, qui reste utilisable.
   useFocusRendu();
+  const { t, i18n } = useTranslation();
+  const facteur = (v: number) => `×${formaterNombre(v, i18n.language, 2)}`;
   const parId = useMemo(() => new Map(games.map((g) => [g.id, g])), [games]);
   const [brouillon, setBrouillon] = useState(systeme);
   // L'aperçu démarre à l'ouverture. L'appel est idempotent : le double rendu du
@@ -67,7 +72,7 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
   const jeux = jeuxDuSysteme(brouillon, parId);
   const nomPropre = brouillon.nom.trim();
   const modifie = JSON.stringify(brouillon) !== JSON.stringify(systeme);
-  const manque = !nomPropre ? 'Il manque un nom.' : jeux.length === 0 ? 'Au moins un jeu.' : null;
+  const manque = !nomPropre ? t('systems.missingName') : jeux.length === 0 ? t('systems.missingGames') : null;
 
   const q = recherche.trim().toLowerCase();
   const candidats = q
@@ -92,13 +97,13 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
 
   function fermer() {
     if (!modifie) onAnnuler();
-    else confirmer('Abandonner les modifications en cours ?', onAnnuler);
+    else confirmer(t('systems.editor.discardChanges'), onAnnuler);
   }
 
   return (
     <aside
       className={css.panneau}
-      aria-label={`Personnaliser ${systeme.nom}`}
+      aria-label={t('systems.editor.customize', { name: systeme.nom })}
       style={{ '--teinte': brouillon.couleur } as CSSProperties}
     >
       <header className={css.entete}>
@@ -108,21 +113,21 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
           value={brouillon.nom}
           maxLength={NOM_MAX}
           onChange={(e) => modifier({ ...brouillon, nom: e.target.value })}
-          aria-label="Nom du système"
+          aria-label={t('systems.editor.systemName')}
         />
-        <button type="button" className={css.fermer} onClick={fermer} aria-label="Fermer">
+        <button type="button" className={css.fermer} onClick={fermer} aria-label={t('common.close')}>
           ✕
         </button>
       </header>
 
       <div className={css.corps}>
-        <Section titre="Apparence">
+        <Section titre={t('systems.editor.appearance')}>
           <div className={css.icones}>
             {ICONES_SYSTEME.map((i) => (
               <button
                 key={i.nom}
                 type="button"
-                title={i.libelle}
+                title={t(`systems.icons.${i.nom}`)}
                 aria-pressed={i.nom === brouillon.icone}
                 className={i.nom === brouillon.icone ? `${css.icone} ${css.iconeChoisie}` : css.icone}
                 onClick={() => modifier({ ...brouillon, icone: i.nom })}
@@ -142,7 +147,7 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                 type="button"
                 className={c === brouillon.couleur ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
                 style={{ background: c }}
-                aria-label={`Couleur ${c}`}
+                aria-label={t('systems.colorNamed', { color: c })}
                 aria-pressed={c === brouillon.couleur}
                 onClick={() => modifier({ ...brouillon, couleur: c })}
               />
@@ -152,32 +157,32 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
               className={css.couleurLibre}
               value={brouillon.couleur}
               onChange={(e) => modifier({ ...brouillon, couleur: e.target.value })}
-              aria-label="Autre couleur"
+              aria-label={t('systems.otherColor')}
             />
           </div>
-          <p className={css.note}>Le nom, l'icône et la couleur s'appliquent à l'enregistrement.</p>
+          <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
         </Section>
 
-        <Section titre="Soleil">
+        <Section titre={t('systems.editor.sun')}>
           <Curseur
-            libelle="Taille"
+            libelle={t('systems.editor.size')}
             min={BORNES.soleil.min}
             max={BORNES.soleil.max}
             pas={0.05}
             valeur={brouillon.soleil}
-            format={(v) => `×${v.toFixed(2)}`}
+            format={facteur}
             onChange={(v) => modifier({ ...brouillon, soleil: v })}
           />
         </Section>
 
-        <Section titre="Orbites">
+        <Section titre={t('systems.editor.orbits')}>
           <Curseur
-            libelle="Vitesse des planètes"
+            libelle={t('systems.editor.planetSpeed')}
             min={BORNES.vitesse.min}
             max={BORNES.vitesse.max}
             pas={0.05}
             valeur={brouillon.vitesse}
-            format={(v) => (v === 0 ? 'figées' : `×${v.toFixed(2)}`)}
+            format={(v) => (v === 0 ? t('systems.editor.frozen') : facteur(v))}
             onChange={(v) => modifier({ ...brouillon, vitesse: v })}
           />
           <label className={css.bascule}>
@@ -186,12 +191,12 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
               checked={brouillon.aPlat}
               onChange={(e) => modifier({ ...brouillon, aPlat: e.target.checked })}
             />
-            Toutes les orbites à plat
+            {t('systems.editor.allFlat')}
           </label>
-          <p className={css.note}>Pendant l'édition, les planètes restent là où on les place.</p>
+          <p className={css.note}>{t('systems.editor.editingNote')}</p>
         </Section>
 
-        <Section titre={`Planètes · ${jeux.length}`}>
+        <Section titre={t('systems.editor.planets', { n: jeux.length })}>
           {jeux.map((g, i) => {
             const e = etat?.planetes.find((p) => p.id === g.id);
             const place = brouillon.placements[g.id] !== undefined;
@@ -204,19 +209,19 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                     className={css.planeteNom}
                     onClick={() => setOuverte(deplie ? null : g.id)}
                     aria-expanded={deplie}
-                    title="Régler distance, position et taille"
+                    title={t('systems.editor.planetSettings')}
                   >
                     <span className={css.rang}>{i + 1}</span>
                     <span className={css.titreJeu}>{g.title}</span>
-                    {place && <span className={css.marquePlace} title="Placement choisi" />}
+                    {place && <span className={css.marquePlace} title={t('systems.editor.customPlacement')} />}
                   </button>
                   <button
                     type="button"
                     className={css.petit}
                     disabled={i === 0}
                     onClick={() => modifier(deplacerJeu(brouillon, g.id, -1))}
-                    aria-label={`Rapprocher ${g.title} du soleil`}
-                    title="Orbite précédente"
+                    aria-label={t('systems.editor.moveCloser', { title: g.title })}
+                    title={t('systems.editor.previousOrbit')}
                   >
                     ↑
                   </button>
@@ -225,8 +230,8 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                     className={css.petit}
                     disabled={i === jeux.length - 1}
                     onClick={() => modifier(deplacerJeu(brouillon, g.id, 1))}
-                    aria-label={`Éloigner ${g.title} du soleil`}
-                    title="Orbite suivante"
+                    aria-label={t('systems.editor.moveAway', { title: g.title })}
+                    title={t('systems.editor.nextOrbit')}
                   >
                     ↓
                   </button>
@@ -234,8 +239,8 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                     type="button"
                     className={`${css.petit} ${css.retirer}`}
                     onClick={() => modifier(retirerJeu(brouillon, g.id))}
-                    aria-label={`Retirer ${g.title}`}
-                    title="Retirer du système"
+                    aria-label={t('systems.editor.removeGame', { title: g.title })}
+                    title={t('systems.editor.removeFromSystem')}
                   >
                     ✕
                   </button>
@@ -244,16 +249,16 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                 {deplie && e && (
                   <div className={css.reglages}>
                     <Curseur
-                      libelle="Distance du soleil"
+                      libelle={t('systems.editor.sunDistance')}
                       min={Math.ceil(e.distanceMin)}
                       max={Math.max(etat?.distanceMax ?? e.distance, e.distance)}
                       pas={0.5}
                       valeur={e.distance}
-                      format={(v) => `×${(v / e.distanceBase).toFixed(2)}`}
+                      format={(v) => facteur(v / e.distanceBase)}
                       onChange={(v) => modifier(placer(brouillon, g.id, { distance: v }))}
                     />
                     <Curseur
-                      libelle="Position sur l'orbite"
+                      libelle={t('systems.editor.orbitPosition')}
                       min={0}
                       max={359}
                       pas={1}
@@ -262,12 +267,12 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                       onChange={(v) => modifier(placer(brouillon, g.id, { angle: v }))}
                     />
                     <Curseur
-                      libelle="Taille"
+                      libelle={t('systems.editor.size')}
                       min={BORNES.taille.min}
                       max={BORNES.taille.max}
                       pas={0.05}
                       valeur={e.taille}
-                      format={(v) => `×${v.toFixed(2)}`}
+                      format={facteur}
                       onChange={(v) => modifier(placer(brouillon, g.id, { taille: v }))}
                     />
                     <button
@@ -278,7 +283,7 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                         modifier(placer(brouillon, g.id, { distance: undefined, angle: undefined, taille: undefined }))
                       }
                     >
-                      Revenir au placement calculé
+                      {t('systems.editor.resetPlacement')}
                     </button>
                   </div>
                 )}
@@ -289,10 +294,10 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
           <input
             type="search"
             className={css.recherche}
-            placeholder="Ajouter un jeu…"
+            placeholder={t('systems.editor.addGamePlaceholder')}
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            aria-label="Ajouter un jeu"
+            aria-label={t('systems.editor.addGame')}
           />
           {candidats.map((g) => (
             <button
@@ -307,11 +312,11 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
               <span className={css.plus}>+</span>
               <span className={css.titreJeu}>{g.title}</span>
               <span className={css.launcher} style={{ color: PLATFORM_CSS[g.platform || 'Other'] ?? '#7a8a9a' }}>
-                {g.platform}
+                {nomPlateforme(g.platform, t)}
               </span>
             </button>
           ))}
-          {q && candidats.length === 0 && <p className={css.note}>Aucun autre jeu ne correspond.</p>}
+          {q && candidats.length === 0 && <p className={css.note}>{t('systems.editor.noOtherGame')}</p>}
         </Section>
       </div>
 
@@ -321,20 +326,20 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
           className={css.supprimer}
           onClick={() =>
             confirmer(
-              `Supprimer le système « ${systeme.nom} » ? Ses jeux restent dans la bibliothèque et dans leur launcher.`,
+              t('systems.deleteConfirm', { name: systeme.nom }),
               () => onSupprimer(systeme.id),
               true,
             )
           }
         >
-          Supprimer
+          {t('common.delete')}
         </button>
         <span className={css.manque}>{manque}</span>
         <button type="button" className={css.secondaire} onClick={fermer}>
-          Annuler
+          {t('dialog.cancel')}
         </button>
         <button type="button" className={css.principal} onClick={enregistrer} disabled={!modifie || manque !== null}>
-          Enregistrer
+          {t('common.save')}
         </button>
       </footer>
 

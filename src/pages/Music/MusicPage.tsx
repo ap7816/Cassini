@@ -213,7 +213,7 @@ export function MusicPage() {
   // et met à jour l'affichage immédiatement sans rechargement
   async function handleChangeArtwork(track: TrackWithIdx) {
     const selected = await open({
-      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }],
+      filters: [{ name: t('files.images'), extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }],
       multiple: false,
     });
     if (!selected || typeof selected !== 'string') return;

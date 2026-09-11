@@ -1,4 +1,5 @@
 import { open } from '@tauri-apps/plugin-dialog';
+import i18n from '../../../i18n';
 
 export type PickedGameFile =
   | { ok: true; path: string }
@@ -9,7 +10,7 @@ export async function pickGameFile(): Promise<PickedGameFile> {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'Executable or Shortcut', extensions: ['exe', 'lnk'] }],
+      filters: [{ name: i18n.t('files.executables'), extensions: ['exe', 'lnk'] }],
     });
 
     if (!selected || Array.isArray(selected)) {
@@ -21,7 +22,7 @@ export async function pickGameFile(): Promise<PickedGameFile> {
     return {
       ok: false,
       reason: 'NOT_AVAILABLE',
-      message: 'Dialog plugin not available. Did you add/enable the dialog plugin?',
+      message: i18n.t('errors.dialogUnavailable'),
     };
   }
 }

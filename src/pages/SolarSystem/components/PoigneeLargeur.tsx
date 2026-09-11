@@ -1,4 +1,5 @@
 import { useRef, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import css from './PoigneeLargeur.module.css';
 
 type Props = {
@@ -28,6 +29,7 @@ type Props = {
  * comme n'importe quel séparateur de volets.
  */
 export function PoigneeLargeur({ valeur, min, max, libelle, droite, onChange, onFin, onDefaut }: Props) {
+  const { t } = useTranslation();
   const depart = useRef<{ x: number; valeur: number } | null>(null);
   const dernier = useRef(valeur);
 
@@ -48,7 +50,7 @@ export function PoigneeLargeur({ valeur, min, max, libelle, droite, onChange, on
       aria-valuemin={min}
       aria-valuemax={max}
       tabIndex={0}
-      title={`${libelle} — glisser, ou flèches gauche et droite. Double-clic : largeur par défaut.`}
+      title={t('solar.resizeHint', { label: libelle })}
       onDoubleClick={onDefaut}
       onPointerDown={(e) => {
         depart.current = { x: e.clientX, valeur };
