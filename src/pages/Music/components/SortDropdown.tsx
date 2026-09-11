@@ -33,14 +33,23 @@ export function SortDropdown({ sortBy, sortDir, onChange }: Props) {
     const onDown = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   return (
     <div ref={rootRef} className={css.root}>
       <button
         className={`${css.btn} ${open ? css.btnOpen : ''}`}
+        aria-expanded={open}
+        aria-haspopup="menu"
         onClick={(e) => {
           e.stopPropagation();
           setOpen((o) => !o);

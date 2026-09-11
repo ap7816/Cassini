@@ -132,16 +132,18 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
-| Personnalisation d'une planète (taille, couleur des anneaux)              | ❌ À faire |
+| Personnalisation d'une planète (taille, couleur des anneaux)              | 🟡 Partiel |
 | Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
-| Systèmes solaires personnalisés (favoris, jeux choisis)                  | ❌ À faire |
-| Déplacer les planètes en glissant (mode édition)                         | ❌ À faire |
-| Barre des launchers : icônes agrandies, bouton de création               | ❌ À faire |
+| Systèmes solaires personnalisés (favoris, jeux choisis)                  | 🟡 Partiel |
+| Déplacer les planètes en glissant (mode édition)                         | 🟡 Partiel |
+| Barre des launchers : icônes agrandies, bouton de création               | ✅ Done    |
 | Système solaire d'ouverture au choix                                     | ❌ À faire |
 | Taille de police augmentée                                               | ❌ À faire |
-| Menu de débogage, absent des versions publiées                           | ❌ À faire |
+| Menu de débogage, absent des versions publiées                           | ✅ Done    |
 | Support HoYoverse (Genshin, Honkai, Zenless)                             | ❌ À faire |
 | Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | 🟡 Partiel |
+| Accessibilité : langue, contrastes, focus, mouvement réduit              | ✅ Done    |
+| Accessibilité : réglages de confort dans les Paramètres                  | ❌ À faire |
 
 ---
 
@@ -150,19 +152,23 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 ### Fonctionnalités
 
 - **Personnalisation d'une planète**
-  Choisir la taille de la planète et la couleur de ses anneaux, jeu par jeu. Par défaut, les dériver d'une donnée réelle plutôt que d'un tirage : le **temps de jeu Steam** est la piste évoquée (`playtime_forever` de l'API Steam, ou le `localconfig.vdf` local), avec la taille sur disque — déjà utilisée aujourd'hui — comme repli pour les launchers qui ne l'exposent pas. Stockage : nouveaux champs sur `Game` (teinte, famille d'anneaux, échelle), écrits comme les autres données utilisateur et donc préservés par `appliquerScan`. Rendu : `scene/planets.ts` tire aujourd'hui la teinte et la famille d'anneaux d'une graine dérivée de l'identifiant du jeu ; le choix de l'utilisateur devra l'emporter sur cette graine.
+  **À moitié fait.** Dans un système personnalisé, la taille de chaque planète se règle (×0,3 à ×3 du rayon calculé d'après la taille sur disque), comme sa distance et sa position. **Reste à faire** : la couleur des anneaux, la personnalisation dans les systèmes des launchers, et la taille par défaut tirée du temps de jeu Steam.
 
 - **Anneaux d'orbite plus discrets vus de près**
   Les cercles bleus autour du soleil sont à 30 % d'opacité (`scene/planets.ts`), montés de 16 % pour rester lisibles de loin. De près, ils saturent la vue. Piste : faire décroître l'opacité quand la caméra approche, comme le fait déjà la brume avec `lib/haze.ts` — une même grandeur, la distance au système, gouvernerait les deux.
 
 - **Systèmes solaires personnalisés**
-  Créer ses propres systèmes en plus de ceux des launchers ; les **favoris** sont le premier cas d'usage. Réglables : couleur du soleil, anneaux, nombre d'étoiles, vitesse de rotation des planètes, et l'ordre dans lequel les planètes sont rangées. Le placement dans la galaxie n'a rien à apprendre : `lib/galaxyLayout.ts` place les systèmes par rayon décroissant, un système personnalisé y entre comme les autres.
+  **Largement fait.** Le bouton **+** de la barre crée un système : nom, icône parmi douze, couleur, jeux choisis dans toute la bibliothèque. « Modifier », en tête de liste, ouvre un panneau de personnalisation posé sur la scène, qui agit en direct : taille du soleil, vitesse des planètes (jusqu'à les figer), orbites à plat, et pour chaque planète sa distance au soleil, sa position sur l'orbite et sa taille. On y ajoute, retire et réordonne les jeux, et on y supprime le système. Rien n'est enregistré avant « Enregistrer » ; « Annuler » rend le système tel qu'il était. Dans la liste d'un système, un **+** ou un **−** au survol ajoute ou retire un jeu sans ouvrir le panneau.
+
+  Ces changements ne reconstruisent que le système concerné : la galaxie et la caméra restent en place. Seuls le nom et la couleur, qui touchent l'étiquette et les teintes, rebâtissent la scène. Un système désigne ses jeux sans les posséder : un jeu rangé dans « Favoris » reste dans son launcher, avec une planète dans chacun. Logique dans `lib/customSystems.ts`, application aux planètes dans `scene/placements.ts`, toutes deux vérifiées hors navigateur.
+
+  **Reste à faire** : couleur du soleil propre au système, nombre d'étoiles, tri automatique des planètes. Et l'encombrement d'un système agrandi n'est recalculé qu'au prochain démarrage : d'ici là, il peut empiéter sur un voisin.
 
 - **Déplacer les planètes en glissant (mode édition)**
-  Ranger les planètes soi-même plutôt que de subir l'ordre calculé. Demande de figer l'orbite pendant la manipulation — `PlanetEntry.paused` existe déjà — et de retenir l'angle choisi dans le stockage, sans quoi la prochaine ouverture le perdrait.
+  **À moitié fait.** Chaque planète d'un système personnalisé se place déjà où l'on veut — distance au soleil et position sur l'orbite — avec des curseurs, en direct, orbites figées pendant le réglage. **Reste à faire** : la saisir et la faire glisser directement dans la scène.
 
 - **Barre des launchers : icônes agrandies et création**
-  Glisser la barre vers la gauche pour agrandir les icônes. Un bouton **+** sous la liste des launchers créerait un système personnalisé. Pour son icône : un jeu d'icônes fournies par l'application, avec choix de la couleur, en plus des icônes extraites des exécutables.
+  **Fait.** Le bouton **+** de création est en place, sous les launchers, avec les icônes fournies par l'application et le choix de la couleur (voir « Systèmes solaires personnalisés »). La barre et la liste des jeux s'élargissent en tirant leur bord gauche, entre un minimum et un maximum — liste de 150 à 520 px, barre de 32 à 96 px —, au clavier aussi ; un double-clic rend la largeur par défaut, et le choix est retenu d'une session à l'autre. Le contenu suit la colonne : icônes et vignettes grandissent avec elle, le texte un peu moins vite et sans descendre sous un plancher de lisibilité. Chaque colonne a sa propre échelle. Logique dans `lib/largeurs.ts`, poignée dans `components/PoigneeLargeur.tsx`.
 
 - **Système solaire d'ouverture au choix**
   La vue s'ouvre aujourd'hui sur un système décidé par le code. Le rendre configurable — y compris sur un système personnalisé, une fois ceux-ci possibles.
@@ -222,12 +228,23 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
 ### Technique
 
+- **Accessibilité — ce qui est fait**
+  Audit mené sur l'ensemble de l'application, puis corrigé. La langue du document suit désormais celle de l'interface (la page se déclarait anglaise). Les notifications sont annoncées — région `aria-live` sur le conteneur, `role="alert"` pour les erreurs. Les fenêtres retiennent la tabulation et rendent le focus à son point de départ (`hooks/useFocus.ts`) ; Échap ferme partout ; le contour de focus, qu'annulaient trois feuilles, est rendu.
+
+  Contrastes mesurés et corrigés : la liste passait sous 2,5 dès qu'une planète claire défilait derrière elle. Son fond est monté de 0,34 à 0,80 et les opacités faibles à 0,62–0,9 ; plus aucun texte sous 11 px. Le pire cas mesuré est passé de 1,35 à 5,40, seuil AA à 4,5.
+
+  Le mouvement réduit est respecté : une règle globale dans `App.css` couvre les seize feuilles qui l'ignoraient, et la scène 3D — que le CSS ne peut pas atteindre — fige orbites, rotations et voyages de caméra quand le système le demande.
+
+  Sémantique : la page d'accueil a un titre pour lecteur d'écran, la liste un `h2`, le champ de recherche une étiquette, et le launcher d'un jeu — jusque-là porté par la seule couleur d'une pastille — est annoncé. La scène et ses étiquettes sont écartées de l'arbre d'accessibilité : un canvas ne s'explore pas, et la liste en donne l'équivalent — mêmes jeux, vrais boutons, atteignables au clavier.
+
+  **Reste à faire** : exposer dans les Paramètres la taille du texte et l'opacité de la liste (la plomberie existe, elle n'est aujourd'hui pilotée que par le panneau de débogage), prendre en compte `prefers-contrast`, et éprouver la mise en page à 200 % de zoom. Le panneau de débogage, lui, ne sert qu'à éprouver les réactions de l'application : il n'est pas une voie d'accès.
+
 - **Menu de débogage, absent des versions publiées**
-  Un panneau de réglages en direct : police, couleurs, opacités, nombre d'astéroïdes, et tout ce qui se règle aujourd'hui en modifiant une constante puis en relançant.
+  **Fait.** Panneau flottant, ouvert par Ctrl+Alt+D ou par le bouton 🐞 en bas à gauche : 61 réglages en seize groupes repliables, avec une recherche insensible aux accents. Interface générale (police, taille du texte, arrondis, flou), navigation (largeur, logo, entrées), en-tête, liste des jeux (largeur, vignettes, espacement), barre des launchers (taille des icônes, largeur, opacités), fiche du jeu (opacité, bornes de largeur), étiquettes 3D, caméra (champ, zoom, amorti, approche, durée des voyages), lumière, atmosphère, planètes, soleils, systèmes, chargement, mouvement — et des outils de mise en page : contours des éléments, animations coupées, compteur d'images.
 
-  Contrainte posée : il ne doit être accessible qu'à toi. Un mot de passe ne suffirait pas — le code serait quand même livré, donc trouvable. La façon sûre est que le menu **n'existe pas** dans la version publiée : entourer son import et son montage d'un `if (import.meta.env.DEV)`, que Vite évalue à la compilation et dont il élimine la branche morte. Le panneau n'est alors pas dans le bundle, il n'y a rien à découvrir.
+  Les réglages directs s'appliquent à chaud. Ceux qui fixent un nombre ou une taille d'objets — étoiles, astéroïdes, contraste des tailles — reconstruisent la scène, une fois le curseur posé. Les valeurs modifiées sont surlignées, comptées par groupe et retenues d'une session à l'autre. « Copier les écarts » les classe par fichier où les reporter : les réglages de scène dans `src/features/debug/tuning.ts`, ceux d'interface comme valeur de repli de leur variable CSS.
 
-  S'il devait exister dans une vraie build, pour toi seul : un drapeau de compilation (`VITE_DEBUG_MENU`) et une build séparée que tu ne publies pas. Même mécanisme, même garantie — c'est l'absence du code qui protège, jamais un contrôle à l'exécution.
+  **Absent de la version publiée** : le panneau est monté derrière `import.meta.env.DEV`, que Vite remplace par `false` à la compilation. Vérifié sur le build de production — ni le composant ni ses libellés n'y figurent, alors qu'un build de développement les émet. Le module des valeurs par défaut, lui, est livré : la scène y lit ce qu'elle lisait auparavant dans ses constantes.
 
 - **Scan en arrière-plan automatique**
   **Fait**, autrement que prévu ici : plutôt qu'un rescan à la mise au point de la fenêtre ou toutes les trente minutes, `scannerTousLesLaunchers()` tourne une fois par lancement, dans `AppLayout`. Les sept scans partent en parallèle, la fusion est séquentielle, et le stockage n'est réécrit que si une empreinte insensible à l'ordre a changé. La liste et la scène se mettent à jour d'elles-mêmes via `subscribeGames`. Le rescan périodique reste possible si le besoin s'en fait sentir.

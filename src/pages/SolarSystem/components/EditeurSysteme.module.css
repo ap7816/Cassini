@@ -1,0 +1,382 @@
+/* Panneau de personnalisation d'un système solaire.
+
+   Posé sur la scène, à gauche, sans la masquer : on règle ce qu'on regarde.
+   La teinte du système (`--teinte`) colore curseurs, sélection et bouton
+   principal. */
+
+.panneau {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  bottom: 56px;
+  z-index: 14;
+  width: min(310px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  color: rgba(224, 230, 240, 0.92);
+  background: rgba(8, 12, 20, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+  animation: panneauIn 0.18s ease-out;
+}
+
+@keyframes panneauIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nom {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.nom:hover,
+.nom:focus {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fermer {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  font-size: 0.75rem;
+}
+
+.corps {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+}
+
+.section {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitre {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(224, 230, 240, 0.5);
+}
+
+.note {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: rgba(224, 230, 240, 0.42);
+}
+
+/* ── Apparence ────────────────────────────────────────────────────────── */
+
+.icones {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.icone {
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(224, 230, 240, 0.5);
+}
+
+.iconeChoisie {
+  border-color: var(--teinte);
+  background: color-mix(in srgb, var(--teinte) 14%, transparent);
+}
+
+.couleurs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pastille {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.pastilleChoisie {
+  border-color: #fff;
+}
+
+.couleurLibre {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: transparent;
+}
+
+/* ── Curseurs ─────────────────────────────────────────────────────────── */
+
+.curseur {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.curseurTete {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 0.78rem;
+}
+
+.valeur {
+  font-variant-numeric: tabular-nums;
+  color: rgba(224, 230, 240, 0.6);
+}
+
+.curseur input[type='range'] {
+  width: 100%;
+  accent-color: var(--teinte);
+}
+
+.bascule {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.bascule input {
+  margin: 0;
+  accent-color: var(--teinte);
+}
+
+/* ── Planètes ─────────────────────────────────────────────────────────── */
+
+.planete {
+  margin: 0 -6px 2px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.planeteOuverte {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.planeteTete {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.planeteNom {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 2px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.rang {
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(224, 230, 240, 0.4);
+}
+
+.titreJeu {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Planète placée à la main : on voit d'un coup d'œil ce qui s'écarte du calcul. */
+.marquePlace {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teinte);
+}
+
+.petit {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(224, 230, 240, 0.7);
+  font-size: 0.72rem;
+}
+
+.petit:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.retirer:hover {
+  color: #f08a93;
+  border-color: rgba(232, 99, 111, 0.4);
+}
+
+.reglages {
+  padding: 6px 2px 8px 21px;
+}
+
+.lien {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--teinte);
+  font-size: 0.75rem;
+}
+
+.lien:disabled {
+  color: rgba(224, 230, 240, 0.3);
+  cursor: default;
+}
+
+.recherche {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font-size: 0.82rem;
+}
+
+.candidat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 5px 6px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.candidat:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.plus {
+  width: 14px;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--teinte);
+}
+
+.launcher {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* ── Pied ─────────────────────────────────────────────────────────────── */
+
+.pied {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.manque {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.72rem;
+  color: rgba(224, 230, 240, 0.45);
+  text-align: right;
+}
+
+.principal,
+.secondaire,
+.supprimer {
+  flex-shrink: 0;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.principal {
+  border: 1px solid transparent;
+  background: var(--teinte);
+  color: #0b1020;
+}
+
+.principal:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.secondaire {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+
+.supprimer {
+  border: 1px solid rgba(232, 99, 111, 0.4);
+  background: transparent;
+  color: #f08a93;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panneau { animation: none; }
+}

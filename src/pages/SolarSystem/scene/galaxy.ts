@@ -1,11 +1,15 @@
 import * as THREE from 'three';
 import type { Game } from '../../../features/types';
-import { PLATFORM_COLOR } from '../constants';
+import { PLATFORM_COLOR, PLN_R_MAX } from '../constants';
+import type { ReglageSysteme } from '../lib/customSystems';
+import { etendreTaille } from '../lib/etendue';
+import { appliquerPlacements } from './placements';
 import { placerSystemes, rayonGalaxie, type Astre } from '../lib/galaxyLayout';
 import { hashStr, seededRng } from '../lib/random';
 import { dimensionnerSysteme, type TailleSysteme } from '../lib/systemSize';
 import { createBelt, createSun } from './decor';
 import { createPlanetGlow, createPlanets } from './planets';
+import { lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
 
 /**
@@ -17,12 +21,28 @@ import type { PlanetEntry } from './types';
  * la caméra flotte à cette distance précise — soit plusieurs centaines de
  * millisecondes de construction par seconde.
  */
-const SEUIL_CHARGE = 4.5;
-const SEUIL_LIBERE = 6.5;
+function seuils(): { charge: number; libere: number } {
+  const r = lireReglages();
+  // La libération reste au moins un demi-rayon au-delà de la construction,
+  // même réglée plus bas : c'est l'écart entre les deux qui empêche le
+  // clignotement décrit ci-dessus.
+  return { charge: r.seuilCharge, libere: Math.max(r.seuilLibere, r.seuilCharge + 0.5) };
+}
 
 export type SystemeGalaxie = {
   platform: string;
   games: Game[];
+  /** Nom affiché au-dessus du soleil : le launcher, ou celui choisi par l'utilisateur. */
+  nom: string;
+  /** Teinte du système — planètes, orbites, balise et nom. */
+  couleur: number;
+  /**
+   * Taille calculée d'après le seul nombre de jeux, avant tout placement.
+   * `taille` en diffère quand un soleil est agrandi ou une planète écartée.
+   */
+  tailleBase: TailleSysteme;
+  /** Soleil et couronne, mis à l'échelle par le réglage du système. */
+  soleil: THREE.Group;
   /** Position du soleil dans la galaxie. */
   centre: THREE.Vector3;
   taille: TailleSysteme;
@@ -44,10 +64,31 @@ export type SystemeGalaxie = {
   ceinture: THREE.InstancedMesh | null;
 };
 
+/** Une entrée par système. */
+export type EntreeGalaxie = {
+  platform: string;
+  games: Game[];
+  nom?: string;
+  couleur?: number;
+};
+
+/** Rayon visuel le plus grand possible pour une planète, anneaux compris. */
+const RAYON_PLANETE_MAX = PLN_R_MAX * 4;
+
 type Options = {
   scene: THREE.Scene;
-  /** Une entrée par launcher, dans n'importe quel ordre. */
-  parPlateforme: Array<{ platform: string; games: Game[] }>;
+  /**
+   * Une entrée par système, dans n'importe quel ordre : une par launcher, plus
+   * les systèmes personnalisés. Seuls ces derniers fournissent `nom` et
+   * `couleur` — un launcher garde son nom et sa couleur attitrée.
+   */
+  parPlateforme: EntreeGalaxie[];
+  /**
+   * Réglages enregistrés d'un système personnalisé, lus au moment de
+   * construire ses planètes — et non à la création de la galaxie, pour que
+   * les modifications faites depuis s'appliquent.
+   */
+  reglageDe?: (platform: string) => ReglageSysteme | null;
   /** Interroge le montage : coupe les chargements arrivés après démontage. */
   isDisposed: () => boolean;
   /**
@@ -80,11 +121,16 @@ type Options = {
  */
 export function createGalaxy({
   scene, parPlateforme, isDisposed, planets, pickMeshes, meshToEntry,
-  onPlanet, onSystemeLibere,
+  onPlanet, onSystemeLibere, reglageDe,
 }: Options) {
+  const tailleDe = (p: EntreeGalaxie) => {
+    const base = dimensionnerSysteme(p.games.length);
+    return { base, taille: etendreTaille(base, reglageDe?.(p.platform) ?? null, RAYON_PLANETE_MAX) };
+  };
+
   const astres: Astre[] = parPlateforme.map((p) => ({
     platform: p.platform,
-    rayon: dimensionnerSysteme(p.games.length).systemR,
+    rayon: tailleDe(p).taille.systemR,
   }));
 
   // Graine tirée des noms de launchers : la galaxie garde la même forme d'une
@@ -93,7 +139,8 @@ export function createGalaxy({
   const positions = placerSystemes(astres, rng);
 
   const systemes: SystemeGalaxie[] = parPlateforme.map((p) => {
-    const taille = dimensionnerSysteme(p.games.length);
+    const { base, taille } = tailleDe(p);
+    const echelleSoleil = reglageDe?.(p.platform)?.soleil ?? 1;
     const pos = positions.get(p.platform) ?? { x: 0, y: 0, z: 0 };
     const centre = new THREE.Vector3(pos.x, pos.y, pos.z);
 
@@ -103,21 +150,30 @@ export function createGalaxy({
 
     // Le soleil reste en place quoi qu'il arrive : c'est lui qui signale le
     // système de loin, une fois ses planètes libérées.
-    const soleil = createSun(taille.sunR, taille.outerR * 0.42);
+    //
+    // Construit à sa taille calculée puis mis à l'échelle : l'éditeur change
+    // cette échelle en direct, sans avoir à rebâtir l'astre.
+    const soleil = createSun(base.sunR, base.outerR * 0.42);
+    soleil.group.scale.setScalar(echelleSoleil);
     groupe.add(soleil.group);
 
     const ceinture = createBelt(taille.outerR, p.games.length);
     if (ceinture) groupe.add(ceinture);
 
     const hitSoleil = new THREE.Mesh(
-      new THREE.SphereGeometry(taille.sunR * 1.6, 12, 12),
+      new THREE.SphereGeometry(base.sunR * 1.6, 12, 12),
       new THREE.MeshBasicMaterial({ visible: false }),
     );
+    hitSoleil.scale.setScalar(echelleSoleil);
     groupe.add(hitSoleil);
 
     return {
       platform: p.platform,
       games: p.games,
+      nom: p.nom ?? p.platform,
+      tailleBase: base,
+      soleil: soleil.group,
+      couleur: p.couleur ?? PLATFORM_COLOR[p.platform] ?? 0x7a8a9a,
       centre,
       taille,
       groupe,
@@ -154,7 +210,7 @@ export function createGalaxy({
       games: s.games,
       orbStep: s.taille.orbStep,
       orbBase: s.taille.orbBase,
-      tint: PLATFORM_COLOR[s.platform] ?? 0x7a8a9a,
+      tint: s.couleur,
       isDisposed,
       onPlanet,
     });
@@ -163,6 +219,10 @@ export function createGalaxy({
     planets.push(...resultat.planets);
     pickMeshes.push(...resultat.pickMeshes);
     for (const [mesh, entry] of resultat.meshToEntry) meshToEntry.set(mesh, entry);
+
+    // Placements enregistrés, appliqués avant la première image.
+    const reglage = reglageDe?.(s.platform);
+    if (reglage) appliquerPlacements(resultat.planets, s.tailleBase.sunR, reglage);
 
     const lueur = createPlanetGlow(resultat.planets);
     s.groupe.add(lueur.points);
@@ -228,6 +288,22 @@ export function createGalaxy({
     },
 
     /**
+     * Rebâtit les planètes d'un système sur une autre liste de jeux.
+     *
+     * Seul ce système est touché : la scène, la caméra et les autres systèmes
+     * restent en place. S'il était construit, il l'est de nouveau aussitôt.
+     */
+    recharger(platform: string, games: Game[]): SystemeGalaxie | undefined {
+      const sys = parNom.get(platform);
+      if (!sys) return undefined;
+      const etaitCharge = sys.charge;
+      liberer(sys);
+      sys.games = games;
+      if (etaitCharge) charger(sys);
+      return sys;
+    },
+
+    /**
      * Protège un système de la libération, ou lève la protection avec `null`.
      *
      * Un seul à la fois : c'est la destination du voyage en cours, et il n'y en
@@ -252,11 +328,13 @@ export function createGalaxy({
      * plusieurs produirait le gel qu'on cherche justement à éviter.
      */
     update(camera: THREE.Camera): void {
+      const { charge: seuilCharge, libere: seuilLibere } = seuils();
+
       // Les libérations d'abord, et sans limite : elles ne coûtent presque rien
       // et rendent la place avant la construction qui suit.
       for (const s of systemes) {
         if (!s.charge || s.platform === epingle) continue;
-        if (camera.position.distanceTo(s.centre) > s.taille.systemR * SEUIL_LIBERE) {
+        if (camera.position.distanceTo(s.centre) > s.taille.systemR * seuilLibere) {
           liberer(s);
         }
       }
@@ -268,7 +346,7 @@ export function createGalaxy({
       for (const s of systemes) {
         if (s.charge) continue;
         const d = camera.position.distanceTo(s.centre);
-        if (d < s.taille.systemR * SEUIL_CHARGE && d < meilleure) {
+        if (d < s.taille.systemR * seuilCharge && d < meilleure) {
           meilleure = d;
           candidat = s;
         }

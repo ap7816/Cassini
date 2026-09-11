@@ -2,11 +2,10 @@ import { useEffect, type RefObject } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Game } from '../../../features/types';
-import { INIT_LOOK, PLATFORM_COLOR, PLATFORM_CSS, PLN_R } from '../constants';
+import { INIT_LOOK, PLN_R } from '../constants';
 import type { FlySettings } from '../lib/flyKeys';
 import { composerTrajet } from '../lib/flightPath';
 import {
-  FICHE_PLANCHER,
   composerFiche,
   demiLargeurApparente,
   distanceApproche,
@@ -18,10 +17,15 @@ import { orbitPos } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { createStarfield, createSunBeacons } from './decor';
-import { createGalaxy, type SystemeGalaxie } from './galaxy';
+import { createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
+import { angleEnDegres, appliquerPlacements } from './placements';
+import type { EditionScene, EtatEdition } from './edition';
+import { BORNES, type ReglageSysteme } from '../lib/customSystems';
+import { distanceMini, ETENDUE_MAX } from '../lib/etendue';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import { createPostprocess } from './postprocess';
+import { abonnerReglages, lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
 
 /**
@@ -126,7 +130,17 @@ type Options = {
    * un seul espace : la scène les construit tous, mais ne peuple que ceux dont
    * la caméra s'approche.
    */
-  parPlateforme: Array<{ platform: string; games: Game[] }>;
+  /**
+   * Les systèmes à construire, lus au montage de la scène.
+   *
+   * Par référence, avec `cleScene` pour dire quand reconstruire : ajouter un
+   * jeu à un système personnalisé ou déplacer une planète ne doit rebâtir que
+   * ce système, pas relancer toute la galaxie et sa caméra.
+   */
+  parPlateformeRef: RefObject<Array<EntreeGalaxie & { reglage?: ReglageSysteme }>>;
+  cleScene: string;
+  /** Pilotage des systèmes personnalisés par l'éditeur. */
+  editionRef: RefObject<EditionScene>;
   /**
    * Launcher devant lequel la caméra se pose au montage.
    *
@@ -190,6 +204,14 @@ type Options = {
    * reconstruire la scène, alors que toute dépendance de l'effet le ferait.
    */
   flySettingsRef: RefObject<FlySettings>;
+  /**
+   * Version des réglages qui fixent un nombre d'objets — étoiles, astéroïdes.
+   *
+   * Passée par valeur, et c'est voulu : la changer doit reconstruire la scène,
+   * puisque ces objets ne se redimensionnent pas en place. Elle ne change
+   * qu'en développement, sous le panneau de débogage.
+   */
+  structure: number;
 };
 
 /**
@@ -201,7 +223,6 @@ type Options = {
 export function useSolarScene({
   mountRef,
   labelsRef,
-  parPlateforme,
   platformRef,
   labelClass,
   orbitLabelClass,
@@ -215,6 +236,10 @@ export function useSolarScene({
   flyToRef,
   onSysteme,
   flySettingsRef,
+  structure,
+  parPlateformeRef,
+  cleScene,
+  editionRef,
 }: Options) {
   useEffect(() => {
     const container = mountRef.current;
@@ -245,7 +270,7 @@ export function useSolarScene({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      60,
+      lireReglages().camChamp,
       container.clientWidth / container.clientHeight,
       0.1,
       20000,
@@ -257,14 +282,23 @@ export function useSolarScene({
       renderer, scene, camera, container.clientWidth, container.clientHeight,
     );
 
+    // ── Mouvement réduit ─────────────────────────────────────────────────
+    // Une préférence système, pas un réglage de plus : qui la demande souffre
+    // parfois du mouvement. La règle CSS d'App.css ne peut rien ici — orbites,
+    // rotations et voyages de caméra sont calculés image par image.
+    const prefMouvement = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let mouvementReduit = prefMouvement.matches;
+    const surPreference = (e: MediaQueryListEvent) => { mouvementReduit = e.matches; };
+    prefMouvement.addEventListener('change', surPreference);
+
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+    controls.dampingFactor = lireReglages().camAmorti;
     controls.minDistance = PLN_R * 2.5;
     // Zoom volontairement lent : à la molette, le pas par défaut de
     // three.js traverse la moitié du système d'un cran, ce qui rend le
     // cadrage impossible à doser.
-    controls.zoomSpeed = 0.35;
+    controls.zoomSpeed = lireReglages().camZoom;
     controls.target.copy(INIT_LOOK);
 
     // ── Galaxie ──────────────────────────────────────────────────────────
@@ -279,7 +313,10 @@ export function useSolarScene({
 
     const galaxie = createGalaxy({
       scene,
-      parPlateforme,
+      parPlateforme: parPlateformeRef.current,
+      // Relu à chaque construction de planètes : un système modifié depuis le
+      // montage de la scène doit être rebâti avec ses nouveaux placements.
+      reglageDe: (cle) => parPlateformeRef.current.find((e) => e.platform === cle)?.reglage ?? null,
       isDisposed,
       planets,
       pickMeshes,
@@ -325,11 +362,12 @@ export function useSolarScene({
     const homeLook = courant ? courant.centre.clone() : new THREE.Vector3();
 
     // ── Décor, commun à toute la galaxie ─────────────────────────────────
-    const tint = PLATFORM_COLOR[courant?.platform ?? ''] ?? 0x7a8a9a;
+    const tint = courant?.couleur ?? 0x7a8a9a;
     const nebulaTex = makeNebulaTexture(tint);
     scene.background = nebulaTex;
 
-    scene.add(new THREE.AmbientLight(0x2a3a60, 1.1));
+    const ambiante = new THREE.AmbientLight(0x2a3a60, lireReglages().lumiereAmbiante);
+    scene.add(ambiante);
 
     // Une seule lumière ponctuelle, déplacée sur le soleil le plus proche.
     //
@@ -337,7 +375,7 @@ export function useSolarScene({
     // shader de *tous* les matériaux : sept d'entre elles renchérissent le
     // rendu même quand six systèmes sont libérés. Or on ne voit les planètes
     // que d'un système à la fois — celui qu'on éclaire.
-    const lumiere = new THREE.PointLight(0xfff2d8, 2.6, 0, 0);
+    const lumiere = new THREE.PointLight(0xfff2d8, lireReglages().lumiereIntensite, 0, 0);
     if (courant) lumiere.position.copy(courant.centre);
     scene.add(lumiere);
 
@@ -361,10 +399,64 @@ export function useSolarScene({
     const balises = createSunBeacons(
       galaxie.systemes.map((s) => ({
         centre: s.centre,
-        couleur: new THREE.Color(PLATFORM_COLOR[s.platform] ?? 0x7a8a9a),
+        couleur: new THREE.Color(s.couleur),
       })),
     );
     scene.add(balises.points);
+
+    // ── Réglages à chaud ─────────────────────────────────────────────────
+    // En production ils ne changent jamais : appliqués une fois ici, ils valent
+    // leurs défauts. En développement, le panneau de débogage les modifie, et
+    // chaque modification repasse par cette fonction.
+    //
+    // Les objets concernés sont repérés par `userData.reglage`, posé à leur
+    // création. Un parcours de la scène par modification et non par frame :
+    // quelques milliers d'objets, parcourus seulement quand un curseur bouge.
+    // Les systèmes construits plus tard lisent eux-mêmes les réglages : ils
+    // naissent déjà à jour.
+    const appliquerReglages = () => {
+      const r = lireReglages();
+      post.regler();
+      lumiere.intensity = r.lumiereIntensite;
+      ambiante.intensity = r.lumiereAmbiante;
+      controls.zoomSpeed = r.camZoom;
+      controls.dampingFactor = r.camAmorti;
+      // Le décalage de projection posé par `applyView` survit : il est gardé
+      // par la caméra et réappliqué par `updateProjectionMatrix`.
+      if (camera.fov !== r.camChamp) {
+        camera.fov = r.camChamp;
+        camera.updateProjectionMatrix();
+      }
+      scene.traverse((o) => {
+        const role = o.userData.reglage as string | undefined;
+        if (!role) return;
+        if (role === 'etoiles' && o instanceof THREE.Points) {
+          const m = o.material as THREE.PointsMaterial;
+          m.size = r.etoilesTaille;
+          m.opacity = r.etoilesOpacite;
+        } else if (role === 'lueur' && o instanceof THREE.Points) {
+          (o.material as THREE.PointsMaterial).size = r.lueurTaille;
+        } else if (role === 'orbite' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshBasicMaterial).opacity = r.orbitesOpacite;
+        } else if (role === 'soleil' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshBasicMaterial).color.set(r.soleilCouleur);
+        } else if (role === 'planete' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshStandardMaterial).emissiveIntensity = r.planeteEmissif;
+        } else if (role === 'atmosphere' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshBasicMaterial).opacity = r.atmosphereOpacite;
+        } else if (role === 'anneau' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshBasicMaterial).opacity =
+            (o.userData.opaciteBase as number) * r.anneauxOpacite;
+        } else if (role === 'couronne' && o instanceof THREE.Mesh) {
+          (o.material as THREE.MeshBasicMaterial).opacity =
+            (o.userData.opaciteBase as number) * r.couronneIntensite;
+        } else if (role === 'balise' && o instanceof THREE.Points) {
+          (o.material as THREE.PointsMaterial).size = r.baliseTaille;
+        }
+      });
+    };
+    appliquerReglages();
+    const desabonnerReglages = abonnerReglages(appliquerReglages);
 
     // Nom de chaque launcher, au-dessus de son soleil : c'est ce qui permet de
     // savoir ce qu'on regarde de loin, une fois les planètes libérées.
@@ -379,9 +471,9 @@ export function useSolarScene({
       const hauteurNom = Math.max(s.taille.sunR * 4, s.taille.systemR * 0.05);
       labelLayer.addWorld(
         s.centre.clone().add(new THREE.Vector3(0, hauteurNom, 0)),
-        s.platform,
+        s.nom,
         orbitLabelClass,
-        PLATFORM_CSS[s.platform] ?? '#7a8a9a',
+        `#${s.couleur.toString(16).padStart(6, '0')}`,
         s.taille.systemR * 0.55,
       );
     }
@@ -552,6 +644,8 @@ export function useSolarScene({
       // juste avec le voile monté par React, quelle que soit la distance.
       const d = camFromPos.distanceTo(camTargetPos);
       camDur = duree ?? THREE.MathUtils.clamp(d / (viseCadre * CAM_REF), CAM_MIN_S, CAM_MAX_S);
+      // On arrive quand même à destination, mais sans le trajet.
+      if (mouvementReduit) camDur = 0;
       camT = 0;
 
       animating = true;
@@ -725,16 +819,91 @@ export function useSolarScene({
     // Le jeu peut appartenir à un système encore libéré — la liste, elle, sait
     // tout de la bibliothèque. On le construit donc avant de le chercher.
     focusRef.current = (gameId: string) => {
-      const proprietaire = galaxie.systemes.find(
-        (s) => s.games.some((g) => g.id === gameId),
-      );
+      const contient = (s: SystemeGalaxie) => s.games.some((g) => g.id === gameId);
+      // Un jeu peut figurer dans plusieurs systèmes : celui de son launcher, et
+      // les systèmes personnalisés où on l'a rangé. Celui qu'on regarde passe
+      // d'abord — choisir un jeu dans la liste de « Favoris » ne doit pas
+      // renvoyer vers son launcher.
+      const proprietaire = (vise && contient(vise) ? vise : undefined)
+        ?? galaxie.systemes.find(contient);
       if (!proprietaire) return;
 
       if (proprietaire !== vise) allerVers(proprietaire);
       else galaxie.forcer(proprietaire.platform);
 
-      const target = planets.find((p) => p.game.id === gameId);
+      // Cherchée dans ce système seulement : dans toute la galaxie, on pourrait
+      // tomber sur la planète du même jeu dans un autre système.
+      const target = proprietaire.planets.find((p) => p.game.id === gameId);
       if (target) selectPlanet(target);
+    };
+
+    // ── Édition d'un système personnalisé ────────────────────────────────
+    // Session d'aperçu : le brouillon est appliqué à chaque image, orbites
+    // figées à l'angle où chaque planète se trouvait quand on l'a ouverte.
+    let apercu: { cle: string; reglage: ReglageSysteme; angles: Map<PlanetEntry, number> } | null = null;
+
+    const REGLAGE_NEUTRE: ReglageSysteme = {
+      soleil: BORNES.soleil.defaut, vitesse: BORNES.vitesse.defaut, aPlat: false, placements: {},
+    };
+
+    const appliquerApercu = (sys: SystemeGalaxie, a: NonNullable<typeof apercu>) => {
+      for (const p of sys.planets) if (!a.angles.has(p)) a.angles.set(p, p.angle);
+      appliquerPlacements(sys.planets, sys.tailleBase.sunR, a.reglage, a.angles);
+      sys.soleil.scale.setScalar(a.reglage.soleil);
+      sys.hitSoleil.scale.setScalar(a.reglage.soleil);
+    };
+
+    const etatDe = (sys: SystemeGalaxie, reglage: ReglageSysteme): EtatEdition => ({
+      planetes: sys.planets.map((p) => ({
+        id: p.game.id,
+        distance: p.orbitRadius,
+        distanceBase: p.orbiteBase,
+        distanceMin: distanceMini(sys.tailleBase.sunR, reglage.soleil, p.rayonVisuel),
+        angle: angleEnDegres(p),
+        taille: p.mesh.scale.x,
+      })),
+      distanceMax: sys.tailleBase.outerR * ETENDUE_MAX,
+    });
+
+    const entreeDe = (cle: string) => parPlateformeRef.current.find((e) => e.platform === cle);
+
+    editionRef.current = {
+      lire(cle) {
+        const sys = galaxie.forcer(cle);
+        if (!sys) return null;
+        return etatDe(sys, apercu?.cle === cle ? apercu.reglage : entreeDe(cle)?.reglage ?? REGLAGE_NEUTRE);
+      },
+
+      apercu(cle, jeux, reglage) {
+        let sys = galaxie.forcer(cle);
+        if (!sys) return null;
+        const avant = sys.games.map((g) => g.id).join('\n');
+        if (jeux.map((g) => g.id).join('\n') !== avant) {
+          if (selectedEntry && sys.planets.includes(selectedEntry)) oublierSelection();
+          sys = galaxie.recharger(cle, jeux) ?? sys;
+        }
+        if (!apercu || apercu.cle !== cle) apercu = { cle, reglage, angles: new Map() };
+        else apercu.reglage = reglage;
+        appliquerApercu(sys, apercu);
+        return etatDe(sys, reglage);
+      },
+
+      terminer(cle, recharger) {
+        if (apercu?.cle === cle) apercu = null;
+        galaxie.epingler(null);
+        if (recharger) editionRef.current.recharger(cle);
+      },
+
+      recharger(cle) {
+        const entree = entreeDe(cle);
+        const sys = galaxie.get(cle);
+        if (!entree || !sys) return;
+        if (selectedEntry && sys.planets.includes(selectedEntry)) oublierSelection();
+        const reglage = entree.reglage ?? REGLAGE_NEUTRE;
+        galaxie.recharger(cle, entree.games);
+        sys.soleil.scale.setScalar(reglage.soleil);
+        sys.hitSoleil.scale.setScalar(reglage.soleil);
+      },
     };
 
     // Lancé ici et non au bloc caméra : `animateCam` s'appuie sur des vecteurs
@@ -853,7 +1022,7 @@ export function useSolarScene({
       // gardait alors la largeur décidée pour une autre taille de fenêtre.
       // `composerFiche` la proportionne à la bande et à la planète du moment.
       const maxW = Math.min(
-        Math.max(FICHE_PLANCHER, bande - POPUP_MARGIN * 2),
+        Math.max(lireReglages().ficheMini, bande - POPUP_MARGIN * 2),
         composerFiche({ bande, demiPlanete: edge }).largeur,
       );
       const maxH = Math.max(200, h - POPUP_MARGIN * 2);
@@ -1057,14 +1226,26 @@ export function useSolarScene({
 
       // Tout se fige ensemble quand une planète est sélectionnée
       const paused = planets.length > 0 && planets[0].paused;
+      // Lus une fois par frame : de simples propriétés, rien à recalculer.
+      const reglages = lireReglages();
+      // Le panneau de débogage continue de régler la vitesse : il sert à
+      // éprouver l'application, pas à décider pour elle.
+      const allure = mouvementReduit ? 0 : 1;
 
       for (const p of planets) {
         if (!p.paused) {
-          p.angle += p.speed * dt;
+          p.angle += p.speed * dt * reglages.vitesseOrbites * allure;
           orbitPos(p.orbitRadius, p.angle, p.inc, p.node, p.mesh.position);
         }
-        p.mesh.rotation.y += 0.05 * dt;
+        p.mesh.rotation.y += 0.05 * dt * reglages.vitesseRotation * allure;
       }
+      // Le système qu'on édite garde ses planètes là où on les place, quel que
+      // soit le mouvement calculé juste au-dessus.
+      if (apercu) {
+        const sys = galaxie.get(apercu.cle);
+        if (sys?.charge) appliquerApercu(sys, apercu);
+      }
+
       // Après le déplacement des planètes, sinon les lueurs traînent d'une
       // frame.
       //
@@ -1074,6 +1255,10 @@ export function useSolarScene({
       galaxie.updateLueurs();
 
       // Construit ce dont on s'approche, libère ce qu'on laisse derrière.
+      // Pendant l'édition, le système ne doit pas être libéré si la caméra
+      // s'éloigne : on perdrait l'aperçu. La fin d'un voyage lève l'épingle,
+      // on la repose donc à chaque image.
+      if (apercu) galaxie.epingler(apercu.cle);
       galaxie.update(camera);
 
       // La lumière suit le système regardé : une seule pour toute la galaxie,
@@ -1083,10 +1268,10 @@ export function useSolarScene({
         // La brume suit l'échelle du système regardé, sinon elle ne veut rien
         // dire : ce qui est « loin » pour un système d'un jeu se trouve à
         // l'intérieur d'une bibliothèque de cent.
-        brume.density = densiteBrume(vise.taille.systemR);
+        brume.density = densiteBrume(vise.taille.systemR) * reglages.brumeFacteur;
         // Seule la ceinture du système regardé tourne : celles des autres sont
         // trop loin pour qu'on distingue le mouvement.
-        if (vise.ceinture && !paused) vise.ceinture.rotation.y += 0.0015 * dt;
+        if (vise.ceinture && !paused) vise.ceinture.rotation.y += 0.0015 * dt * reglages.vitesseOrbites * allure;
       }
 
       if (animating) {
@@ -1178,6 +1363,8 @@ export function useSolarScene({
           one.dispose();
         }
       });
+      desabonnerReglages();
+      prefMouvement.removeEventListener('change', surPreference);
       nebulaTex.dispose();
       post.dispose();
       renderer.dispose();
@@ -1188,8 +1375,9 @@ export function useSolarScene({
     // `platformRef` est volontairement absent : c'est une référence, sa valeur
     // change sans que la scène doive être reconstruite — et la reconstruire à
     // chaque voyage était précisément le défaut.
-    parPlateforme, labelClass, orbitLabelClass,
+    cleScene, parPlateformeRef, editionRef, labelClass, orbitLabelClass,
     mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef,
     sideProbeRef, navProbeRef, fpsRef, onSysteme, flySettingsRef, platformRef,
+    structure,
   ]);
 }

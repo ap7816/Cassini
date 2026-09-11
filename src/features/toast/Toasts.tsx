@@ -12,9 +12,16 @@ export function Toasts() {
   if (!toasts.length) return null;
 
   return (
-    <div className={css.stack}>
+    // `aria-live` sur le conteneur, qui existe avant les messages : une région
+    // créée en même temps que son contenu n'est pas annoncée. Les erreurs
+    // interrompent la lecture, le reste attend une pause.
+    <div className={css.stack} role="status" aria-live="polite">
       {toasts.map(item => (
-        <div key={item.id} className={`${css.toast} ${css[item.kind]}`}>
+        <div
+          key={item.id}
+          className={`${css.toast} ${css[item.kind]}`}
+          role={item.kind === 'error' ? 'alert' : undefined}
+        >
           <span className={css.icon}>{ICONS[item.kind]}</span>
           <span className={css.msg}>{item.message}</span>
           <button className={css.close} onClick={() => dismiss(item.id)} aria-label={t('patchNotes.close')}>✕</button>

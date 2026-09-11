@@ -12,6 +12,7 @@ import { atmosphereType, makePlaceholderTexture, makeProcTexture } from '../text
 import { loadArtImage, makeGameTexture } from '../textures/gameArt';
 import { makeRingTexture, radialRingGeometry, type ProfilAnneau } from '../textures/rings';
 import type { PlanetEntry } from './types';
+import { lireReglages } from '../../../features/debug/tuning';
 
 type Options = {
   /**
@@ -63,12 +64,14 @@ export function createPlanets({
     const node = seededRng(seed + 5)() * Math.PI * 2;
     const pr = radiusOf(g);
 
-    scene.add(createOrbitRing(orbit, inc, node, tint, yAxis));
+    const orbite = createOrbitRing(orbit, inc, node, tint, yAxis);
+    scene.add(orbite);
 
     const mat = createPlanetMaterial(seed);
     loadCoverArt(g, seed, mat, isDisposed);
 
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(pr, 36, 36), mat);
+    mesh.userData.reglage = 'planete';
     mesh.rotation.z = (seededRng(seed + 7)() - 0.5) * 0.7;
     scene.add(mesh);
 
@@ -105,6 +108,7 @@ export function createPlanets({
       game: g, mesh, orbitRadius: orbit, angle, speed,
       paused: false, radius: pr, rayonVisuel, inc, node,
       tint: new THREE.Color(PALETTES[atmType][0]),
+      orbiteBase: orbit, rayonBase: pr, rayonVisuelBase: rayonVisuel, incBase: inc, orbite,
     };
 
     planets.push(entry);
@@ -115,9 +119,6 @@ export function createPlanets({
 
   return { planets, pickMeshes, meshToEntry };
 }
-
-/** Diamètre de la lueur, en pixels — indépendant de la distance. */
-const LUEUR_PX = 13;
 
 /** Pastille dégradée servant de lueur. Une seule pour toute la scène. */
 function makeGlowTexture(): THREE.CanvasTexture {
@@ -176,7 +177,8 @@ export function createPlanetGlow(planets: PlanetEntry[]): {
 
   const map = makeGlowTexture();
   const mat = new THREE.PointsMaterial({
-    size: LUEUR_PX,
+    // Diamètre en pixels, indépendant de la distance.
+    size: lireReglages().lueurTaille,
     sizeAttenuation: false,
     map,
     vertexColors: true,
@@ -189,6 +191,7 @@ export function createPlanetGlow(planets: PlanetEntry[]): {
   });
 
   const points = new THREE.Points(geo, mat);
+  points.userData.reglage = 'lueur';
   // Les planètes bougent, trois d'entre elles peuvent sortir du cadre calculé
   // au montage : sans cela three.js écarterait tout l'objet dès que sa sphère
   // englobante d'origine quitte le champ.
@@ -229,10 +232,11 @@ function createOrbitRing(
     new THREE.MeshBasicMaterial({
       color: tint,
       transparent: true,
-      opacity: 0.3,
+      opacity: lireReglages().orbitesOpacite,
       depthWrite: false,
     }),
   );
+  mesh.userData.reglage = 'orbite';
   mesh.rotation.set(Math.PI / 2 + inc, 0, 0);
   mesh.rotateOnWorldAxis(yAxis, node);
   return mesh;
@@ -251,23 +255,25 @@ function createPlanetMaterial(seed: number): THREE.MeshStandardMaterial {
     map: placeholder,
     emissive: new THREE.Color(0xffffff),
     emissiveMap: placeholder,
-    emissiveIntensity: 0.42,
+    emissiveIntensity: lireReglages().planeteEmissif,
     roughness: 0.72,
     metalness: 0.03,
   });
 }
 
 function createAtmosphere(pr: number, color: string): THREE.Mesh {
-  return new THREE.Mesh(
+  const atmosphere = new THREE.Mesh(
     new THREE.SphereGeometry(pr * 1.13, 16, 16),
     new THREE.MeshBasicMaterial({
       color: new THREE.Color(color),
       transparent: true,
-      opacity: 0.1,
+      opacity: lireReglages().atmosphereOpacite,
       side: THREE.BackSide,
       depthWrite: false,
     }),
   );
+  atmosphere.userData.reglage = 'atmosphere';
+  return atmosphere;
 }
 
 /**
@@ -390,7 +396,7 @@ function createPlanetRing(
     groupe.add(new THREE.Mesh(
       radialRingGeometry(inner, outer, 128),
       new THREE.MeshBasicMaterial({
-        map, transparent: true, opacity: opacite,
+        map, transparent: true, opacity: opacite * lireReglages().anneauxOpacite,
         side: THREE.DoubleSide, depthWrite: false,
       }),
     ));
@@ -405,7 +411,7 @@ function createPlanetRing(
       groupe.add(new THREE.Mesh(
         radialRingGeometry(inner, outer, 64, debut, etendue),
         new THREE.MeshBasicMaterial({
-          map, transparent: true, opacity: opacite,
+          map, transparent: true, opacity: opacite * lireReglages().anneauxOpacite,
           side: THREE.DoubleSide, depthWrite: false,
         }),
       ));
@@ -414,6 +420,13 @@ function createPlanetRing(
 
   groupe.rotation.x = Math.PI / 2 + (rng() - 0.5) * famille.inclinaison;
   groupe.rotation.y = (rng() - 0.5) * famille.inclinaison * 0.7;
+
+  // Opacité tirée gardée à part : le réglage la multiplie sans l'écraser, les
+  // familles d'anneaux restent donc distinctes les unes des autres.
+  for (const arc of groupe.children) {
+    arc.userData.reglage = 'anneau';
+    arc.userData.opaciteBase = opacite;
+  }
   return { groupe, rayon: outer };
 }
 

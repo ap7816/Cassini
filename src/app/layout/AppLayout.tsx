@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useRef, useEffect, useState } from 'react';
+import { lazy, Suspense, useRef, useEffect, useState } from 'react';
 import logo from '../../assets/logo.svg';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
@@ -15,6 +15,19 @@ import { UpdateBanner } from './UpdateBanner';
 import { SolarButton } from './SolarButton';
 import { readNavCollapsed, writeNavCollapsed } from '../../services/storage';
 import { scannerTousLesLaunchers } from '../../features/library/services/libraryScan';
+
+/**
+ * Panneau de débogage — développement seulement.
+ *
+ * `import.meta.env.DEV` est remplacé par `false` à la compilation de
+ * production. La branche devient morte, le bundler l'élimine, et l'import
+ * dynamique disparaît avec elle : le module du panneau n'est même pas émis.
+ * Ce n'est pas un contrôle à l'exécution qu'on pourrait contourner — il n'y a
+ * tout simplement rien à trouver dans la version publiée.
+ */
+const DebugPanel = import.meta.env.DEV
+  ? lazy(() => import('../../features/debug/DebugPanel').then((m) => ({ default: m.DebugPanel })))
+  : null;
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -299,6 +312,11 @@ export function AppLayout() {
       {location.pathname !== '/solar' && <MusicVisualizer />}
       <UpdateBanner u={updater} />
       <Toasts />
+      {DebugPanel && (
+        <Suspense fallback={null}>
+          <DebugPanel />
+        </Suspense>
+      )}
     </div>
   );
 }

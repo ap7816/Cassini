@@ -24,4 +24,13 @@ export type PlanetEntry = {
   node: number;
   /** Teinte de l'atmosphère, reprise par la lueur de repérage. */
   tint: THREE.Color;
+
+  // Valeurs calculées à la construction. Un placement choisi par l'utilisateur
+  // modifie les champs ci-dessus ; ceux-ci permettent d'y revenir.
+  orbiteBase: number;
+  rayonBase: number;
+  rayonVisuelBase: number;
+  incBase: number;
+  /** Anneau d'orbite, redimensionné quand la planète change de distance. */
+  orbite: THREE.Mesh;
 };

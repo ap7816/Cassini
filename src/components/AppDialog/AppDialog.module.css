@@ -116,3 +116,10 @@
   from { transform: scale(0.93) translateY(8px); opacity: 0; }
   to   { transform: scale(1)    translateY(0);   opacity: 1; }
 }
+
+/* Le contour global d'App.css était annulé plus haut : sans lui, rien ne
+   signalait le focus au clavier. */
+.input:focus-visible {
+  outline: 2px solid rgba(108, 142, 251, 0.9);
+  outline-offset: 2px;
+}

@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TrackWithIdx } from '../lib/folderTree';
+import { usePiegeFocus } from '../../../hooks/useFocus';
 import css from './FolderPickerModal.module.css';
 
 type Props = {
@@ -19,6 +20,20 @@ export function FolderPickerModal({
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const fenetreRef = useRef<HTMLDivElement>(null);
+  usePiegeFocus(fenetreRef);
+
+  // Échap ferme, comme partout ailleurs : sans elle, la seule sortie au
+  // clavier était de retrouver le bouton « Annuler ».
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   // Racine + tous les sous-dossiers, sauf celui où la piste se trouve déjà
   const folders = useMemo(() => {
@@ -33,12 +48,20 @@ export function FolderPickerModal({
 
   return (
     <div className={css.overlay} onClick={onClose}>
-      <div className={css.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={fenetreRef}
+        className={css.modal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('music.moveModalTitle', { title: track.title })}
+      >
         <div className={css.header}>{t('music.moveModalTitle', { title: track.title })}</div>
 
         <input
           className={css.search}
           placeholder={t('music.moveModalSearch')}
+          aria-label={t('music.moveModalSearch')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus

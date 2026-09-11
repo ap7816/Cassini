@@ -1,0 +1,44 @@
+/* Poignée de redimensionnement, posée sur la frontière d'une colonne.
+
+   Large de huit pixels et décalée de quatre : la zone de saisie chevauche la
+   frontière, alors qu'un trait d'un pixel se manquerait à la souris. */
+
+.poignee {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  margin-right: -4px;
+  z-index: 12;
+  cursor: col-resize;
+  /* Sans quoi le navigateur interprète le glissement comme un défilement. */
+  touch-action: none;
+}
+
+/* Le trait n'apparaît qu'à l'approche : au repos, la frontière se suffit. */
+.poignee::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background 120ms;
+}
+
+.poignee:hover::after,
+.poignee:focus-visible::after {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.poignee:focus-visible {
+  outline: 2px solid rgba(108, 142, 251, 0.9);
+  outline-offset: -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poignee::after {
+    transition: none;
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { usePiegeFocus } from '../../hooks/useFocus';
 import css from './AppDialog.module.css';
 
 export type DialogState =
@@ -17,6 +18,8 @@ export function AppDialog({ state, onClose }: {
     state.type === 'prompt' ? (state.defaultValue ?? '') : '',
   );
   const inputRef = useRef<HTMLInputElement>(null);
+  const fenetreRef = useRef<HTMLDivElement>(null);
+  usePiegeFocus(fenetreRef);
 
   // Donne le focus et sélectionne le texte dans l'input au moment de l'ouverture
   useEffect(() => {
@@ -70,7 +73,13 @@ export function AppDialog({ state, onClose }: {
       className={css.overlay}
       onMouseDown={e => { if (e.target === e.currentTarget) handleCancel(); }}
     >
-      <div className={css.dialog} role="dialog" aria-modal="true">
+      <div
+        ref={fenetreRef}
+        className={css.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label={state.type === 'prompt' ? state.title : state.message}
+      >
 
         {state.type === 'prompt' && (
           <form onSubmit={handleSubmit}>
@@ -78,6 +87,7 @@ export function AppDialog({ state, onClose }: {
             <input
               ref={inputRef}
               className={css.input}
+              aria-label={state.title}
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               autoComplete="off"

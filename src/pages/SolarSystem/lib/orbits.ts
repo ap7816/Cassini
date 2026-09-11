@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Game } from '../../../features/types';
 import { ORB_BASE, PLN_R_MAX, PLN_R_MIN } from '../constants';
+import { lireReglages } from '../../../features/debug/tuning';
 
 // Angle d'or (~137,5°). Espacer les planètes de cet angle garantit qu'elles se
 // répartissent tout autour du soleil sans jamais s'aligner, quel que soit leur
@@ -68,9 +69,9 @@ export function orbitPos(
  * L'exposant 0,7 (au lieu d'une racine carrée) creuse volontairement l'écart :
  * dans une bibliothèque allant jusqu'à 120 Go, un jeu de 50 Go fait environ
  * 0,65× le rayon du plus gros — la différence se voit immédiatement, sans que
- * les petits jeux ne deviennent des points invisibles.
+ * les petits jeux ne deviennent des points invisibles. L'exposant se règle par
+ * `tailleContraste`, dont 0,7 est le défaut.
  */
-const SIZE_CURVE = 0.7;
 
 export function makeRadiusScale(games: Game[]): (g: Game) => number {
   const sizes = games.map((g) => g.sizeOnDisk ?? 0).filter((s) => s > 0);
@@ -84,12 +85,13 @@ export function makeRadiusScale(games: Game[]): (g: Game) => number {
   const min = Math.min(...sizes);
   const max = Math.max(...sizes);
   const span = Math.max(max - min, 1);
+  const courbe = lireReglages().tailleContraste;
 
   return (g: Game): number => {
     const s = g.sizeOnDisk ?? 0;
     // Taille inconnue → petit, sans être le minimum absolu
     if (s <= 0) return PLN_R_MIN * 1.15;
-    const t = Math.pow((s - min) / span, SIZE_CURVE);
+    const t = Math.pow((s - min) / span, courbe);
     return PLN_R_MIN + (PLN_R_MAX - PLN_R_MIN) * t;
   };
 }

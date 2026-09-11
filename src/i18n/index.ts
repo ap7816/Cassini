@@ -21,10 +21,24 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
+/**
+ * Annonce la langue au document.
+ *
+ * Sans cet attribut, un lecteur d'écran prononce le français avec les règles
+ * de l'anglais — la page était déclarée anglaise quelle que soit la langue
+ * choisie.
+ */
+function annoncerLangue(lang: string): void {
+  if (typeof document !== 'undefined') document.documentElement.lang = lang;
+}
+
+annoncerLangue(getInitialLanguage());
+
 // Change la langue active dans i18next et la persiste dans le stockage
 export function setLanguage(lang: 'fr' | 'en') {
   void i18n.changeLanguage(lang);
   writeLanguage(lang);
+  annoncerLangue(lang);
 }
 
 // Retourne la langue active ('fr' ou 'en'), avec 'fr' comme valeur par défaut

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { seededRng } from '../lib/random';
+import { lireReglages } from '../../../features/debug/tuning';
 
 /**
  * Champ d'étoiles proche, en parallaxe par-dessus la nébuleuse de fond.
@@ -7,7 +8,8 @@ import { seededRng } from '../lib/random';
  * *à l'intérieur* des orbites sur une grosse bibliothèque.
  */
 export function createStarfield(outerR: number): THREE.Points {
-  const n = 5000;
+  const reglages = lireReglages();
+  const n = Math.max(0, Math.round(reglages.etoilesNombre));
   const pos = new Float32Array(n * 3);
   const col = new Float32Array(n * 3);
   const min = Math.max(900, outerR * 2.2);
@@ -33,14 +35,14 @@ export function createStarfield(outerR: number): THREE.Points {
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
-  return new THREE.Points(
+  const points = new THREE.Points(
     geo,
     new THREE.PointsMaterial({
-      size: 1.6,
+      size: reglages.etoilesTaille,
       vertexColors: true,
       sizeAttenuation: true,
       transparent: true,
-      opacity: 0.85,
+      opacity: reglages.etoilesOpacite,
       // Hors de la brume. Elle est réglée sur l'échelle d'un système, alors que
       // les étoiles se tiennent bien au-delà de la galaxie : soumises à elle,
       // elles seraient effacées jusqu'à la dernière et le ciel deviendrait un
@@ -48,6 +50,9 @@ export function createStarfield(outerR: number): THREE.Points {
       fog: false,
     }),
   );
+  // Repéré par la scène, qui en ajuste taille et opacité à chaud.
+  points.userData.reglage = 'etoiles';
+  return points;
 }
 
 /**
@@ -77,8 +82,9 @@ export function createSun(
   // c'est ce qu'on vise pour s'y rendre.
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(sunR, 64, 64),
-    new THREE.MeshBasicMaterial({ color: 0xffdd44, fog: false }),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(lireReglages().soleilCouleur), fog: false }),
   );
+  core.userData.reglage = 'soleil';
   group.add(core);
 
   const corona: [number, number, number][] = [
@@ -88,22 +94,26 @@ export function createSun(
     [3.4, 0xff3300, 0.03],
   ];
 
+  const intensite = lireReglages().couronneIntensite;
   for (const [scale, color, opacity] of corona) {
     const rayon = sunR * scale;
     if (rayon > haloMax) continue;
-    group.add(
-      new THREE.Mesh(
-        new THREE.SphereGeometry(rayon, 32, 32),
-        new THREE.MeshBasicMaterial({
-          color,
-          transparent: true,
-          opacity,
-          side: THREE.BackSide,
-          depthWrite: false,
-          fog: false,
-        }),
-      ),
+    const couche = new THREE.Mesh(
+      new THREE.SphereGeometry(rayon, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: opacity * intensite,
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+      }),
     );
+    // L'opacité propre de la couche est gardée : le réglage la multiplie, il
+    // ne la remplace pas — sinon les quatre couches finiraient au même niveau.
+    couche.userData.reglage = 'couronne';
+    couche.userData.opaciteBase = opacity;
+    group.add(couche);
   }
 
   return { group, core };
@@ -121,7 +131,14 @@ export function createBelt(outerR: number, planetCount: number): THREE.Instanced
 
   const beltR = outerR * 1.34;
   const spread = THREE.MathUtils.clamp(outerR * 0.1, 3, 44);
-  const count = Math.round(THREE.MathUtils.clamp(planetCount * 75, 120, 1800));
+  const reglages = lireReglages();
+  const plafond = Math.max(0, Math.round(reglages.asteroidesMax));
+  // Le plancher de 120 ne doit pas contredire un plafond plus bas : à zéro,
+  // il n'y a plus de ceinture du tout.
+  const count = Math.round(
+    THREE.MathUtils.clamp(planetCount * reglages.asteroidesParPlanete, Math.min(120, plafond), plafond),
+  );
+  if (count <= 0) return null;
   const scale = THREE.MathUtils.clamp(outerR * 0.018, 0.22, 1.25);
 
   const belt = new THREE.InstancedMesh(
@@ -153,9 +170,6 @@ export function createBelt(outerR: number, planetCount: number): THREE.Instanced
   return belt;
 }
 
-
-/** Diamètre d'une balise solaire, en pixels — indépendant de la distance. */
-const BALISE_PX = 26;
 
 /** Pastille dégradée servant de balise. Une seule pour toute la galaxie. */
 function makeBeaconTexture(): THREE.CanvasTexture {
@@ -213,7 +227,8 @@ export function createSunBeacons(
 
   const map = makeBeaconTexture();
   const mat = new THREE.PointsMaterial({
-    size: BALISE_PX,
+    // Diamètre en pixels, indépendant de la distance.
+    size: lireReglages().baliseTaille,
     sizeAttenuation: false,
     map,
     vertexColors: true,
@@ -225,6 +240,7 @@ export function createSunBeacons(
   });
 
   const points = new THREE.Points(geo, mat);
+  points.userData.reglage = 'balise';
   // Les soleils ne bougent pas, mais la sphère englobante calculée au montage
   // écarterait tout l'objet dès qu'un seul soleil quitte le champ.
   points.frustumCulled = false;

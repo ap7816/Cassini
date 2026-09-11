@@ -25,9 +25,9 @@
      voisinage — laissait donc filtrer un bruit permanent, et la carte semblait
      trembler alors que sa position ne bouge pas d'un pixel. À 97 % d'opacité,
      le flou n'apportait de toute façon rien de visible. */
-  background: #080c14;
+  background: rgba(8, 12, 20, var(--dbg-fiche-op, 1));
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
+  border-radius: calc(14px * var(--dbg-arrondi, 1));
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
   animation: panelIn 160ms ease-out forwards;
 }
@@ -69,7 +69,7 @@
   justify-content: center;
   gap: 10px;
   font-weight: 800;
-  font-size: 52px;
+  font-size: calc(52px * var(--ui-font-scale, 1));
   opacity: 0.6;
 }
 
@@ -83,13 +83,13 @@
   top: 8px;
   right: 44px;
   z-index: 2;
-  width: 28px;
-  height: 28px;
+  width: calc(28px * var(--dbg-icones, 1.25));
+  height: calc(28px * var(--dbg-icones, 1.25));
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.5);
   color: rgba(255, 255, 255, 0.85);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -102,7 +102,7 @@
 .banner:hover .bannerEdit { opacity: 1; }
 
 .bannerEditFallback {
-  font-size: 11px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
   font-weight: 500;
   padding: 4px 8px;
   border-radius: 8px;
@@ -129,8 +129,8 @@
   top: 8px;
   right: 8px;
   z-index: 3;
-  width: 28px;
-  height: 28px;
+  width: calc(28px * var(--dbg-icones, 1.25));
+  height: calc(28px * var(--dbg-icones, 1.25));
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 0, 0.5);
@@ -167,7 +167,7 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-font-scale, 1));
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -185,7 +185,7 @@
 }
 
 .badge {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   padding: 3px 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -193,7 +193,7 @@
 }
 
 .favPill {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   padding: 3px 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -201,8 +201,8 @@
 }
 
 .dot        { opacity: 0.5; }
-.muted      { opacity: 0.75; font-size: 12px; }
-.lastPlayed { font-size: 12px; opacity: 0.75; }
+.muted      { opacity: 0.75; font-size: calc(12px * var(--ui-font-scale, 1)); }
+.lastPlayed { font-size: calc(12px * var(--ui-font-scale, 1)); opacity: 0.75; }
 
 /* ── Actions ────────────────────────────────────────────────────────────── */
 
@@ -216,8 +216,8 @@
 }
 
 .favBtn {
-  width: 32px;
-  height: 32px;
+  width: calc(32px * var(--dbg-icones, 1.25));
+  height: calc(32px * var(--dbg-icones, 1.25));
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
@@ -227,7 +227,7 @@
   place-items: center;
   padding: 0;
   box-shadow: none;
-  font-size: 18px;
+  font-size: calc(18px * var(--ui-font-scale, 1));
   line-height: 1;
   transition: transform 120ms, background 120ms, border-color 120ms, filter 120ms;
 }
@@ -263,7 +263,7 @@
 .play {
   flex: 1;
   min-width: 0;
-  height: 34px;
+  height: calc(34px * var(--dbg-icones, 1.25));
   padding: 0 12px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -316,9 +316,9 @@
 .folder,
 .remove {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: calc(34px * var(--dbg-icones, 1.25));
+  height: calc(34px * var(--dbg-icones, 1.25));
+  border-radius: calc(10px * var(--dbg-arrondi, 1));
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
@@ -326,7 +326,7 @@
   display: grid;
   place-items: center;
   padding: 0;
-  font-size: 15px;
+  font-size: calc(15px * var(--ui-font-scale, 1));
   box-shadow: none;
   transition: background 120ms, transform 120ms;
 }

@@ -19,11 +19,11 @@
      fenêtre étroite la liste finissait par occuper plus de place que la scène.
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
-  --list-w: min(196px, 26%);
+  --list-w: min(var(--dbg-liste-l, 196px), 26%);
   /* Barre des launchers. Elle se replie avec la liste — la languette de repli
      suffit à tout rappeler, et laisser une colonne d'icônes en bord d'écran
      revenait à ne jamais rendre toute la largeur à la scène. */
-  --rail-w: 40px;
+  --rail-w: var(--dbg-rail-l, calc(40px * var(--dbg-icones, 1.25)));
   --side-w: calc(var(--list-w) + var(--rail-w));
 }
 
@@ -114,6 +114,14 @@
   transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Poignée en cours de glissement : la courbe ci-dessus est faite pour un repli,
+   qui bascule d'un coup. Sous la main, elle ferait traîner le recadrage de la
+   scène 220 ms derrière le curseur, et la scène ne se poserait qu'après le
+   relâché. Pendant le glissement, la sonde colle à la largeur réelle. */
+.pageGlisse .sideProbe {
+  transition: none;
+}
+
 /* Labels positionnés via `transform` et non `left`/`top` : transform est géré
    par le compositeur, sans recalcul de mise en page à chaque frame. */
 .orbitLabel,
@@ -131,7 +139,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-shadow: 0 0 8px currentColor, 0 1px 3px rgba(0, 0, 0, 0.8);
-  opacity: 0.75;
+  font-size: var(--dbg-etiq-orbite, 11px);
+  opacity: var(--dbg-etiq-orbite-op, 0.75);
 }
 
 /* Nom du jeu, sous sa planète — visible au seul survol.
@@ -139,6 +148,7 @@
    qu'il ne clignote quand le curseur balaie plusieurs planètes. */
 .planetLabel {
   font: 700 11px/1 Inter, sans-serif;
+  font-size: var(--dbg-etiq-planete, 11px);
   color: #fff;
   white-space: nowrap;
   max-width: 130px;
@@ -193,7 +203,7 @@
   width: 12px;
   height: 12px;
   /* Opaque, comme le fond de la carte qu'il prolonge (voir GamePanel). */
-  background: #080c14;
+  background: rgba(8, 12, 20, var(--dbg-fiche-op, 1));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0 0 3px;
@@ -239,5 +249,6 @@
   letter-spacing: 0.04em;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   pointer-events: none;
+  display: var(--dbg-fps-display, block);
   user-select: none;
 }

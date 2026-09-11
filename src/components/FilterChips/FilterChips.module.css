@@ -54,3 +54,10 @@
   background-color: #1a1d2e;
   color: #e0e6f0;
 }
+
+/* Le contour global d'App.css était annulé plus haut : sans lui, rien ne
+   signalait le focus au clavier. */
+.select:focus-visible {
+  outline: 2px solid rgba(108, 142, 251, 0.9);
+  outline-offset: 2px;
+}

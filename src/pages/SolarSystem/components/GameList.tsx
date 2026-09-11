@@ -8,6 +8,10 @@ import {
 } from '../../../features/library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
 import { formaterVolume, useDiskSpace } from '../../../features/system/useDiskSpace';
+import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
+import { IconeSysteme } from './IconeSysteme';
+import { PoigneeLargeur } from './PoigneeLargeur';
+import { LARGEUR_LISTE, LARGEUR_RAIL, type Colonne } from '../lib/largeurs';
 import css from './GameList.module.css';
 
 const GB = 1024 ** 3;
@@ -104,7 +108,29 @@ type Props = {
   /** Liste dépliée. Repliée, elle sort par la droite et rend la place à la scène. */
   open: boolean;
   onToggle: () => void;
+  /** Nom affiché en tête de liste : le launcher, ou le système personnalisé. */
+  titre: string;
+  /** Teinte du système consulté. */
+  teinte: string;
+  /** Systèmes personnalisés, rangés dans la barre après les launchers. */
+  systemes: SystemePerso[];
+  onCreerSysteme: () => void;
+  /** Ouvre la modification du système personnalisé consulté. */
+  onModifierSysteme: () => void;
+  /** Système personnalisé consulté : ajoute un jeu trouvé ailleurs. */
+  onAjouterAuSysteme?: (game: Game) => void;
+  /** Système personnalisé consulté : retire un de ses jeux. */
+  onRetirerDuSysteme?: (game: Game) => void;
+  /** Largeurs en vigueur, poignées comprises. */
+  largeurListe: number;
+  largeurRail: number;
+  onLargeurListe: (v: number, enregistrer: boolean) => void;
+  onLargeurRail: (v: number, enregistrer: boolean) => void;
+  onLargeursParDefaut: (colonne: Colonne) => void;
 };
+
+/** Petit bouton porté par une ligne, révélé au survol. */
+type ActionLigne = { symbole: string; libelle: string; faire: (game: Game) => void };
 
 /** Au-delà, la liste des résultats venus d'ailleurs cesse d'être consultable. */
 const MAX_AILLEURS = 40;
@@ -118,10 +144,20 @@ const MAX_AILLEURS = 40;
 export function GameList({
   games, allGames, selectedId, platform, platforms, icons,
   sgdbKeySet, onPickGame, onPickPlatform, open, onToggle,
+  titre, teinte, systemes, onCreerSysteme, onModifierSysteme,
+  onAjouterAuSysteme, onRetirerDuSysteme,
+  largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
 }: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const color = PLATFORM_CSS[platform] ?? '#7a8a9a';
+  const color = teinte;
+  const perso = estSystemePerso(platform);
+  const retrait: ActionLigne | undefined = perso && onRetirerDuSysteme
+    ? { symbole: '−', libelle: 'Retirer de ce système', faire: onRetirerDuSysteme }
+    : undefined;
+  const ajout: ActionLigne | undefined = perso && onAjouterAuSysteme
+    ? { symbole: '+', libelle: 'Ajouter à ce système', faire: onAjouterAuSysteme }
+    : undefined;
   const listId = useId();
   const disque = useDiskSpace();
 
@@ -157,10 +193,14 @@ export function GameList({
   const ailleurs = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
+    // Ce qui figure déjà dans la liste n'est pas « ailleurs ». Pour un launcher
+    // cela revient à exclure sa plateforme ; pour un système personnalisé, la
+    // plateforme du jeu ne dit rien de sa présence ici.
+    const ici = new Set(games.map((g) => g.id));
     return allGames
-      .filter((g) => (g.platform || 'Other') !== platform && g.title.toLowerCase().includes(q))
+      .filter((g) => !ici.has(g.id) && g.title.toLowerCase().includes(q))
       .slice(0, MAX_AILLEURS);
-  }, [allGames, platform, query]);
+  }, [allGames, games, query]);
 
   return (
     <>
@@ -193,14 +233,46 @@ export function GameList({
         </svg>
       </button>
 
+      {/* Frontières saisissables. Repliée, la colonne n'a plus de largeur à
+          régler : les poignées disparaissent avec elle. */}
+      {open && (
+        <>
+          <PoigneeLargeur
+            valeur={largeurListe}
+            min={LARGEUR_LISTE.min}
+            max={LARGEUR_LISTE.max}
+            libelle="Largeur de la liste des jeux"
+            droite="var(--side-w, 0px)"
+            onChange={(v) => onLargeurListe(v, false)}
+            onFin={(v) => onLargeurListe(v, true)}
+            onDefaut={() => onLargeursParDefaut('liste')}
+          />
+          <PoigneeLargeur
+            valeur={largeurRail}
+            min={LARGEUR_RAIL.min}
+            max={LARGEUR_RAIL.max}
+            libelle="Largeur de la barre des launchers"
+            droite="var(--rail-w, 0px)"
+            onChange={(v) => onLargeurRail(v, false)}
+            onFin={(v) => onLargeurRail(v, true)}
+            onDefaut={() => onLargeursParDefaut('rail')}
+          />
+        </>
+      )}
+
       <aside
         id={listId}
         className={[css.list, open ? '' : css.listHidden].filter(Boolean).join(' ')}
       >
         <div className={css.head}>
-          <span className={css.headTitle} style={{ color }}>
-            {platform}
-          </span>
+          <h2 className={css.headTitle} style={{ color }}>
+            {titre}
+          </h2>
+          {perso && (
+            <button type="button" className={css.headModifier} onClick={onModifierSysteme}>
+              Modifier
+            </button>
+          )}
         </div>
 
         {/* Occupation du disque système — pas de tous les disques : un jeu
@@ -222,6 +294,7 @@ export function GameList({
         <input
           className={css.search}
           placeholder={t('nav.searchPlaceholder')}
+          aria-label={t('nav.searchLabel')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -236,6 +309,7 @@ export function GameList({
               selected={g.id === selectedId}
               sgdbKeySet={sgdbKeySet}
               onPick={onPickGame}
+              action={retrait}
             />
           ))}
 
@@ -253,6 +327,7 @@ export function GameList({
                   selected={g.id === selectedId}
                   sgdbKeySet={sgdbKeySet}
                   onPick={onPickGame}
+                  action={retrait}
                 />
               ))}
             </>
@@ -260,7 +335,7 @@ export function GameList({
 
           {ailleurs.length > 0 && (
             <>
-              <li className={css.groupe}>Autres launchers</li>
+              <li className={css.groupe}>{perso ? 'Hors de ce système' : 'Autres launchers'}</li>
               {ailleurs.map((g) => (
                 <Ligne
                   key={g.id}
@@ -269,6 +344,7 @@ export function GameList({
                   selected={false}
                   sgdbKeySet={sgdbKeySet}
                   onPick={onPickGame}
+                  action={ajout}
                 />
               ))}
             </>
@@ -310,6 +386,37 @@ export function GameList({
             </button>
           );
         })}
+
+        {systemes.length > 0 && <span className={css.railSeparateur} aria-hidden="true" />}
+
+        {systemes.map((s) => {
+          const cle = cleSysteme(s);
+          return (
+            <button
+              key={cle}
+              type="button"
+              className={[css.railBtn, cle === platform ? css.railBtnActive : ''].filter(Boolean).join(' ')}
+              style={{ '--teinte': s.couleur } as CSSProperties}
+              onClick={() => onPickPlatform(cle)}
+              aria-current={cle === platform}
+              title={`${s.nom} — ${s.jeux.length} ${s.jeux.length > 1 ? 'jeux' : 'jeu'}`}
+            >
+              <IconeSysteme nom={s.icone} couleur={s.couleur} className={css.railIcon} />
+            </button>
+          );
+        })}
+
+        <button
+          type="button"
+          className={css.railAjout}
+          onClick={onCreerSysteme}
+          title="Créer un système solaire"
+          aria-label="Créer un système solaire"
+        >
+          <svg viewBox="0 0 24 24" className={css.railAjoutIcone} aria-hidden="true">
+            <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+        </button>
       </nav>
     </>
   );
@@ -322,18 +429,19 @@ export function GameList({
  * couleur de son launcher, seule information utile pour situer le jeu.
  */
 function Ligne({
-  game, orbit, selected, sgdbKeySet, onPick,
+  game, orbit, selected, sgdbKeySet, onPick, action,
 }: {
   game: Game;
   orbit: number | null;
   selected: boolean;
   sgdbKeySet: boolean;
   onPick: (game: Game) => void;
+  action?: ActionLigne;
 }) {
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
   const absent = game.installed === false;
   return (
-    <li>
+    <li className={action ? css.ligneAvecAction : undefined}>
       <button
         type="button"
         className={[
@@ -351,11 +459,16 @@ function Ligne({
         {orbit !== null ? (
           <span className={css.orbitNum}>{orbit}</span>
         ) : (
-          <span
-            className={css.puce}
-            style={{ background: teinte, color: teinte }}
-            aria-hidden="true"
-          />
+          <>
+            <span
+              className={css.puce}
+              style={{ background: teinte, color: teinte }}
+              aria-hidden="true"
+            />
+            {/* La pastille ne dit la plateforme que par sa couleur : seule
+                information portée par la couleur dans toute la liste. */}
+            <span className="sr-only">{game.platform}</span>
+          </>
         )}
         <Thumb game={game} color={teinte} sgdbKeySet={sgdbKeySet} />
         <span className={css.labels}>
@@ -372,6 +485,19 @@ function Ligne({
           </span>
         </span>
       </button>
+      {/* À côté du bouton de la ligne et non dedans : un bouton dans un bouton
+          n'est pas valide, et le clic sélectionnerait aussi la planète. */}
+      {action && (
+        <button
+          type="button"
+          className={css.ligneAction}
+          onClick={() => action.faire(game)}
+          title={action.libelle}
+          aria-label={`${action.libelle} : ${game.title}`}
+        >
+          {action.symbole}
+        </button>
+      )}
     </li>
   );
 }

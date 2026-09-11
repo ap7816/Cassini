@@ -1,0 +1,344 @@
+/* Panneau de débogage — absent de la version publiée (voir AppLayout).
+
+   Tailles en pixels et police fixée : le panneau ne doit pas se déformer sous
+   les réglages qu'il pilote. Monter la taille du texte à 1,6 ne doit pas rendre
+   illisible le panneau qui sert à la redescendre. */
+
+.bascule {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2000;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  background: rgba(8, 12, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  opacity: 0.45;
+}
+
+.bascule:hover,
+.bascule[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.panneau {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  bottom: 46px;
+  z-index: 2000;
+  width: min(340px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(224, 230, 240, 0.92);
+  background: rgba(8, 12, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.titre {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sousTitre {
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.fermer {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* ── Recherche et repli ───────────────────────────────────────────────── */
+
+.outils {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.recherche {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.recherche:focus {
+  border-color: rgba(108, 142, 251, 0.6);
+}
+
+.outil {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* ── Groupes ──────────────────────────────────────────────────────────── */
+
+.corps {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+}
+
+.groupe {
+  padding-top: 4px;
+}
+
+.groupeTete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0 -4px;
+  padding: 6px 4px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+}
+
+.groupeTete:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chevron {
+  display: inline-block;
+  width: 10px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.5;
+  transition: transform 120ms ease-out;
+}
+
+.chevronOuvert {
+  transform: rotate(90deg);
+}
+
+.groupeTitre {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Nombre de réglages modifiés dans le groupe : ce qu'on cherche en rouvrant
+   un panneau replié. */
+.groupeModifies {
+  min-width: 16px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #0b1020;
+  background: #6c8efb;
+  border-radius: 999px;
+}
+
+.groupeNombre {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.35;
+}
+
+.vide {
+  padding: 18px 0;
+  text-align: center;
+  opacity: 0.45;
+}
+
+/* ── Lignes ───────────────────────────────────────────────────────────── */
+
+.ligne {
+  margin: 0 -8px;
+  padding: 6px 8px;
+  border-left: 2px solid transparent;
+  border-radius: 4px;
+}
+
+/* Ce qui s'écarte du défaut se voit d'un coup d'œil. */
+.ligneModifiee {
+  border-left-color: #6c8efb;
+  background: rgba(108, 142, 251, 0.07);
+}
+
+.ligneTete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.libelle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ligneActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.retablir {
+  padding: 1px 6px;
+  font-size: 10px;
+  color: #9fb4ff;
+  background: transparent;
+  border: 1px solid rgba(108, 142, 251, 0.35);
+  border-radius: 4px;
+}
+
+.interrupteur {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #6c8efb;
+}
+
+.nombre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nombre input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: #6c8efb;
+}
+
+.saisie {
+  width: 62px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.unite {
+  width: 16px;
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.couleur {
+  width: 100%;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.choix {
+  width: 100%;
+  padding: 3px 6px;
+  font-size: 12px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.choix option {
+  background: #0b1020;
+}
+
+.aide {
+  margin-top: 3px;
+  font-size: 10.5px;
+  opacity: 0.45;
+}
+
+/* ── Pied ─────────────────────────────────────────────────────────────── */
+
+.pied {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.action {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.action:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.message {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #9fb4ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

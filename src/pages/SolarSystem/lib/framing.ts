@@ -1,3 +1,5 @@
+import { REGLAGES_DEFAUT, lireReglages } from '../../../features/debug/tuning';
+
 /**
  * Cadrage d'une planète sélectionnée, de façon à laisser place à sa fiche.
  *
@@ -23,15 +25,17 @@ const MARGE = 30;
  * devient illisible avant d'atteindre son plancher, alors qu'une part fixe
  * assortie d'une base garde un texte utilisable partout.
  */
-export const FICHE_PLANCHER = 200;
-const FICHE_MAXI = 340;
-const FICHE_BASE = 120;
-const FICHE_PART = 0.18;
+//
+// Les valeurs vivent dans les réglages, où le panneau de débogage les ajuste.
+// Le plancher par défaut reste exporté pour qui doit raisonner sur la borne
+// d'origine plutôt que sur celle du moment.
+export const FICHE_PLANCHER = REGLAGES_DEFAUT.ficheMini;
 
 /** Largeur de fiche visée pour une bande donnée, bornes comprises. */
 export function largeurFicheVoulue(bande: number): number {
-  if (!(bande > 0)) return FICHE_PLANCHER;
-  return Math.min(FICHE_MAXI, Math.max(FICHE_PLANCHER, FICHE_BASE + bande * FICHE_PART));
+  const r = lireReglages();
+  if (!(bande > 0)) return r.ficheMini;
+  return Math.min(r.ficheMaxi, Math.max(r.ficheMini, r.ficheBase + bande * r.fichePart));
 }
 
 export type BesoinCadrage = {
@@ -70,7 +74,7 @@ export type PlaceFiche = {
  */
 export function composerFiche(b: BesoinCadrage): PlaceFiche {
   const voulue = b.largeurVoulue ?? largeurFicheVoulue(b.bande);
-  const mini = Math.min(b.largeurMini ?? FICHE_PLANCHER, voulue);
+  const mini = Math.min(b.largeurMini ?? lireReglages().ficheMini, voulue);
   const demiBande = b.bande / 2;
 
   // Place restante quand la planète est poussée au maximum sur le côté, son
@@ -181,12 +185,13 @@ export function distanceApproche(
   largeurVoulue?: number,
 ): number {
   const voulue = largeurVoulue ?? largeurFicheVoulue(bande);
-  const mini = rayonVisuel * 2.6;
+  const reglages = lireReglages();
+  const mini = rayonVisuel * reglages.camReculMin;
   // Vingt rayons et non quatorze : sur une bande étroite, quatorze ne
   // permettaient pas de reculer assez pour dégager la fiche — il manquait une
   // douzaine de pixels, et la carte se reposait sur la planète. À cette
   // distance elle occupe encore une cinquantaine de pixels : on la voit.
-  const maxi = rayonVisuel * 20;
+  const maxi = rayonVisuel * reglages.camReculMax;
   if (bande <= 0 || hauteurEcran <= 0) return rayonVisuel * 5;
 
   // Demi-largeur que la planète peut occuper sans chasser la fiche.

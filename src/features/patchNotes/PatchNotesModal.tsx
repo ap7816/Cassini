@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CHANGELOG, type SectionType } from './changelog';
+import { usePiegeFocus } from '../../hooks/useFocus';
 import css from './PatchNotesModal.module.css';
 
 // Retourne l'emoji correspondant au type de section de changelog
@@ -35,6 +36,8 @@ interface Props {
 export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) {
   const { t } = useTranslation();
   const latest = CHANGELOG[0];
+  const fenetreRef = useRef<HTMLDivElement>(null);
+  usePiegeFocus(fenetreRef);
 
   // Ferme le modal quand l'utilisateur appuie sur Échap
   useEffect(() => {
@@ -46,6 +49,7 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
   return (
     <div className={css.overlay} onClick={onClose}>
       <div
+        ref={fenetreRef}
         className={css.modal}
         onClick={e => e.stopPropagation()}
         role="dialog"

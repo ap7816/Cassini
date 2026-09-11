@@ -1,3 +1,5 @@
+import { lireReglages } from '../../../features/debug/tuning';
+
 /**
  * Trajet de la caméra d'un système solaire à un autre.
  *
@@ -20,9 +22,7 @@ export type Obstacle = { centre: Point; rayon: number };
 const RECUL_TRAJET = 0.45;
 const RECUL_GALAXIE = 0.55;
 
-/** Bornes de durée, en secondes. */
-const DUREE_MIN = 1.6;
-const DUREE_MAX = 3.4;
+// Bornes de durée, en secondes : `volDureeMin` et `volDureeMax` dans les réglages.
 
 /** Distance de référence : un trajet du rayon de la galaxie dure ~1,8 s. */
 const DUREE_REF = 0.55;
@@ -63,8 +63,8 @@ export function composerTrajet(
       z: (depart.z + arrivee.z) / 2,
     },
     duree: Math.min(
-      DUREE_MAX,
-      Math.max(DUREE_MIN, distance / Math.max(1, rayonGalaxie * DUREE_REF)),
+      lireReglages().volDureeMax,
+      Math.max(lireReglages().volDureeMin, distance / Math.max(1, rayonGalaxie * DUREE_REF)),
     ),
   };
 }
