@@ -23,5 +23,6 @@
   "terminal.integrated.defaultProfile.windows": "Git Bash",
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  }
+  },
+  "robotcode.disableExtension": true
 }
