@@ -118,8 +118,20 @@ export function makeRingTexture(
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.minFilter = tex.magFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
+  // Mipmaps, et non un simple filtrage linéaire.
+  //
+  // Une bande de 1024 texels tient parfois dans une dizaine de pixels à
+  // l'écran : un anneau étroit vu de loin, ou n'importe quel anneau vu par la
+  // tranche. Sans niveaux réduits, un texel sur cent est échantillonné et le
+  // rubanage se change en pointillés qui grouillent dès que la planète tourne.
+  // Les niveaux moyennent ce qu'on n'a pas la place de dessiner.
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  // La compression est bien plus forte radialement qu'en longueur d'anneau :
+  // c'est exactement ce que corrige le filtrage anisotrope. La valeur est
+  // ramenée au maximum de la machine au moment du téléversement.
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -149,5 +161,43 @@ export function radialRingGeometry(
     uv.setXY(i, (v.length() - inner) / (outer - inner), 0.5);
   }
   uv.needsUpdate = true;
+  return geo;
+}
+
+/**
+ * Secteur d'anneau dont les deux extrémités s'éteignent en fondu.
+ *
+ * Un secteur découpé net se lit comme un éclat de coquille posé à côté de la
+ * planète, pas comme la portion dense d'un anneau : ce sont ses bouts carrés
+ * qui trahissent la géométrie. Le fondu est porté par la couleur des sommets —
+ * dont le canal alpha multiplie celui de la texture — plutôt que par une
+ * seconde dimension de texture : la bande reste à une dimension, et le dégradé
+ * ne coûte qu'un attribut.
+ */
+export function arcRingGeometry(
+  inner: number,
+  outer: number,
+  segments: number,
+  thetaStart: number,
+  thetaLength: number,
+): THREE.RingGeometry {
+  const geo = radialRingGeometry(inner, outer, segments, thetaStart, thetaLength);
+  const pos = geo.attributes.position;
+  const couleurs = new Float32Array(pos.count * 4);
+  const deuxPi = Math.PI * 2;
+
+  for (let i = 0; i < pos.count; i++) {
+    // Angle du sommet ramené dans le secteur. Le modulo évite que le passage
+    // par ±π d'`atan2` ne coupe l'arc en deux.
+    let rel = (Math.atan2(pos.getY(i), pos.getX(i)) - thetaStart) % deuxPi;
+    if (rel < 0) rel += deuxPi;
+    const t = Math.min(1, Math.max(0, rel / thetaLength));
+
+    const o = i * 4;
+    couleurs[o] = couleurs[o + 1] = couleurs[o + 2] = 1;
+    couleurs[o + 3] = Math.pow(Math.sin(Math.PI * t), 0.6);
+  }
+
+  geo.setAttribute('color', new THREE.BufferAttribute(couleurs, 4));
   return geo;
 }

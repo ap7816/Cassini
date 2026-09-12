@@ -10,7 +10,7 @@ import { hashStr, seededRng } from '../lib/random';
 import { GOLDEN_ANGLE, makeRadiusScale, orbitPos, orbitRadius } from '../lib/orbits';
 import { atmosphereType, makePlaceholderTexture, makeProcTexture } from '../textures/procedural';
 import { loadArtImage, makeGameTexture } from '../textures/gameArt';
-import { makeRingTexture, radialRingGeometry, type ProfilAnneau } from '../textures/rings';
+import { makeRingTexture, radialRingGeometry, arcRingGeometry, type ProfilAnneau } from '../textures/rings';
 import type { PlanetEntry } from './types';
 import { lireReglages } from '../../../features/debug/tuning';
 
@@ -347,7 +347,9 @@ const FAMILLES: FamilleAnneau[] = [
     inclinaison: 0.6,
     opacite: [0.8, 1],
     profil: { divisions: 0, contraste: 0.7, douceur: 0.4, eclat: 0.9, saturation: 0.6 },
-    arcs: [2, 4],
+    // Trois à cinq, et non deux à quatre : sous trois, rien ne dit qu'ils
+    // partagent un cercle, et la planète paraît flanquée de deux morceaux.
+    arcs: [3, 5],
   },
 ];
 
@@ -390,17 +392,32 @@ function createPlanetRing(
   const map = makeRingTexture(seed + 13, teinte, famille.profil);
   const opacite = entre(rng, famille.opacite);
 
+  // Chaque nappe garde son opacité de départ à part : le réglage la multiplie
+  // sans l'écraser, les familles restent donc distinctes les unes des autres,
+  // et le voile des arcs reste un voile quel que soit le curseur.
+  const nappe = (geo: THREE.BufferGeometry, op: number, fondu: boolean) => {
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      map, transparent: true, opacity: op * lireReglages().anneauxOpacite,
+      side: THREE.DoubleSide, depthWrite: false, vertexColors: fondu,
+    }));
+    mesh.userData.reglage = 'anneau';
+    mesh.userData.opaciteBase = op;
+    groupe.add(mesh);
+  };
+
   const nbArcs = famille.arcs ? Math.round(entre(rng, famille.arcs)) : 1;
 
   if (nbArcs === 1) {
-    groupe.add(new THREE.Mesh(
-      radialRingGeometry(inner, outer, 128),
-      new THREE.MeshBasicMaterial({
-        map, transparent: true, opacity: opacite * lireReglages().anneauxOpacite,
-        side: THREE.DoubleSide, depthWrite: false,
-      }),
-    ));
+    nappe(radialRingGeometry(inner, outer, 128), opacite, false);
   } else {
+    // Le voile continu sur lequel les arcs se détachent.
+    //
+    // Sans lui, quelques secteurs isolés ne se lisent pas comme un anneau mais
+    // comme des débris flottant autour de la planète : rien à l'écran ne dit
+    // qu'ils appartiennent au même cercle. C'est ainsi que se présentent les
+    // arcs de Neptune, qui sont des surdensités d'un anneau, pas des objets.
+    nappe(radialRingGeometry(inner, outer, 128), opacite * 0.16, false);
+
     // Chaque arc occupe une fraction de son secteur, le reste est le vide qui
     // le rend lisible comme arc. Partir de secteurs égaux garantit qu'ils ne se
     // chevauchent pas, quel que soit le tirage.
@@ -408,25 +425,13 @@ function createPlanetRing(
     for (let i = 0; i < nbArcs; i += 1) {
       const etendue = secteur * (0.2 + rng() * 0.3);
       const debut = i * secteur + rng() * (secteur - etendue);
-      groupe.add(new THREE.Mesh(
-        radialRingGeometry(inner, outer, 64, debut, etendue),
-        new THREE.MeshBasicMaterial({
-          map, transparent: true, opacity: opacite * lireReglages().anneauxOpacite,
-          side: THREE.DoubleSide, depthWrite: false,
-        }),
-      ));
+      nappe(arcRingGeometry(inner, outer, 64, debut, etendue), opacite, true);
     }
   }
 
   groupe.rotation.x = Math.PI / 2 + (rng() - 0.5) * famille.inclinaison;
   groupe.rotation.y = (rng() - 0.5) * famille.inclinaison * 0.7;
 
-  // Opacité tirée gardée à part : le réglage la multiplie sans l'écraser, les
-  // familles d'anneaux restent donc distinctes les unes des autres.
-  for (const arc of groupe.children) {
-    arc.userData.reglage = 'anneau';
-    arc.userData.opaciteBase = opacite;
-  }
   return { groupe, rayon: outer };
 }
 
