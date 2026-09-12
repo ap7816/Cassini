@@ -262,7 +262,15 @@ export function useSolarScene({
 
     // ── Renderer, caméra, contrôles ──────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      // Pas de multi-échantillonnage sur le tampon de la canvas.
+      //
+      // Il ne servait à rien : toute la scène passe par le compositeur, dont
+      // les cibles de rendu n'ont pas d'échantillons multiples. Ce qu'on voit
+      // sort de ces cibles-là. Le tampon de la canvas, lui, ne reçoit que le
+      // quadrilatère plein écran de la dernière passe — qui n'a aucune arête
+      // intérieure à adoucir. On payait donc un tampon multi-échantillonné, et
+      // sa résolution à chaque image, pour exactement zéro pixel lissé.
+
       // Réclame la carte dédiée. Sur un portable à double GPU, le moteur de
       // rendu web retient par défaut le circuit intégré pour économiser la
       // batterie — soit, sur cette scène, un facteur plusieurs fois supérieur
