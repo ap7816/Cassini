@@ -51,11 +51,25 @@ Un onglet dédié liste les launchers installés (Steam, Epic, Battle.net, etc.)
 
 ### Lecteur de musique
 
-Un lecteur MP3/FLAC/WAV/OGG/M4A/.opus complet intégré dans l'app. On choisit un dossier, l'app scanne récursivement les sous-dossiers (côté Rust) et affiche la liste groupée par dossier. Les dossiers sont repliés par défaut. La barre de recherche filtre les pistes en temps réel. Un mini-player persistant reste visible en bas de l'écran sur toutes les pages, avec titre, contrôles, barre de progression et volume. La dernière piste jouée et le volume sont mémorisés en localStorage.
+Un lecteur MP3/FLAC/WAV/OGG/M4A/.opus intégré. On choisit un dossier, l'app scanne récursivement les sous-dossiers (côté Rust). La dernière piste jouée et le volume sont mémorisés en localStorage.
+
+La musique ne vit plus dans une page : elle se pose **sur le système solaire**, en calque, par `Ctrl+M` ou le bouton de la barre des launchers. Quitter la vue pour changer d'album, c'était perdre ce qu'on regardait. Le calque est un lecteur et rien d'autre — pochette, titre, une course de lecture, cinq commandes, le volume, une recherche, et deux sections : ce qu'on vient d'écouter puis tout le reste, quatre-vingts lignes au plus (au-delà, on cherche, on ne fait pas défiler). Aucune métadonnée n'est lue pour la liste : titre et dossier suffisent à choisir, et les lire toutes ralentirait l'ouverture pour rien.
+
+La page musique reste, pour ce qui demande de la place et se fait rarement : renommer, déplacer, changer une pochette, colorer un dossier. Un lien discret du lecteur y mène. Ses lignes partagent désormais une grille avec leur en-tête, l'album s'efface sous 780 px, et le numéro de piste devient le triangle de lecture au survol.
+
+En bas à gauche de la vue, un bandeau réduit dit ce qui joue : pochette, titre, de quoi changer de piste, et un fil de progression sur le bord. Tout ce qu'il portait en plus — aléatoire, répétition, volume — est dans le lecteur, à un clic sur la pochette.
 
 ### Enrichissement musical (iTunes)
 
-Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (artiste, album, pochette) de **toutes** les pistes. Les résultats sont gardés en mémoire uniquement (pas de persistance). L'algorithme construit un terme de recherche au format `"Artiste - Titre"` (en utilisant le tag ID3 artiste si disponible), puis un score de correspondance est calculé côté Rust (`word_recall`, seuil ≥ 0.7). Les pistes sans correspondance satisfaisante n'affichent rien plutôt qu'une mauvaise pochette. La pochette trouvée s'affiche sur la carte de la piste ET dans le mini-lecteur en bas de l'écran.
+Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (artiste, album, pochette) de **toutes** les pistes. Les résultats sont gardés en mémoire uniquement (pas de persistance). L'algorithme construit un terme de recherche au format `"Artiste - Titre"` (en utilisant le tag ID3 artiste si disponible), puis un score de correspondance est calculé côté Rust (`word_recall`, seuil ≥ 0.7). Les pistes sans correspondance satisfaisante n'affichent rien plutôt qu'une mauvaise pochette. La pochette trouvée s'affiche sur la ligne de la piste, dans le lecteur et dans le bandeau du bas.
+
+### Ce qui se pose sur la vue
+
+La barre latérale de navigation n'existe plus : à terme il ne doit rester que le système solaire. Ce qu'elle portait s'est réparti sur les quatre coins de la vue — la marque en haut à gauche, le compteur d'images en haut à droite, les commandes de déplacement en bas à droite, ce qui joue en bas à gauche. Les deux premiers se calent contre la colonne de droite et suivent sa largeur, qui se règle.
+
+Les réglages et la musique sont deux **calques** posés sur la scène (`Ctrl+,` et `Ctrl+M`, ou les deux boutons au pied de la barre des launchers ; le numéro de version est sous celui des réglages). Ils ne démontent jamais la scène : elle reste là, derrière. Les deux retiennent la tabulation, rendent le focus à son point de départ, et se ferment par Échap ou par un clic à côté.
+
+Les autres pages — bibliothèque, launchers — sont masquées par défaut. Les réglages les rappellent une à une, et leur bouton apparaît alors au même endroit. Elles ne sont pas supprimées : seulement retirées du chemin le plus court.
 
 ### Système
 
@@ -92,14 +106,14 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Réinitialisation complète de l'appli                                     | ✅ Done    |
 | Architecture deux-repos (`.exe` privé + `latest.json` public)            | ✅ Done    |
 | Lecteur de musique MP3 avec scan récursif des sous-dossiers              | ✅ Done    |
-| Lecteur: dossiers repliables, recherche, mini-player persistant          | ✅ Done    |
+| Lecteur: dossiers repliables, recherche, bandeau « ce qui joue »         | ✅ Done    |
 | Lecteur: mémorisation dernière piste + volume                            | ✅ Done    |
 | Lancement automatique au démarrage de Windows                            | ✅ Done    |
 | Rester en arrière-plan (icône tray)                                      | ✅ Done    |
 | Lecteur: section « Récemment écoutés » (10 dernières pistes)             | ✅ Done    |
 | Animations de transition entre pages                                     | ✅ Done    |
 | Mini-lecteur animé (slide-up/down)                                       | ✅ Done    |
-| Refonte visuelle globale (sidebar, typo, scrollbars, animations)         | ✅ Done    |
+| Refonte visuelle globale (typo, scrollbars, animations)                  | ✅ Done    |
 | Taille des jeux sur disque                                               | ✅ Done    |
 | Vue Système Solaire                                                      | ✅ Done    |
 | Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
@@ -122,10 +136,10 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Cache des jaquettes avec TTL (SteamGridDB)                               | ❌ À faire |
 | Lecteur: couleur personnalisée par dossier (clic droit)                  | ✅ Done    |
 | Lecteur: déplacer une piste via clic droit → modale de sélection         | ✅ Done    |
-| Lecteur: clic sur le titre du mini-lecteur → navigue dans le bon dossier | ✅ Done    |
+| Lecteur: clic sur le bandeau du bas → ouvre le lecteur                   | ✅ Done    |
 | Lecteur: affichage pochette d'album (ID3 tags embarqués)                 | ✅ Done    |
 | Lecteur: enrichissement iTunes (pochette en ligne pour toutes)           | ✅ Done    |
-| Lecteur: pochette enrichie visible dans le mini-lecteur                  | ✅ Done    |
+| Lecteur: pochette enrichie visible dans le bandeau du bas                | ✅ Done    |
 | Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans)                              | 🟡 Partiel |
@@ -139,6 +153,11 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 | Barre des launchers : icônes agrandies, bouton de création               | ✅ Done    |
 | Système solaire d'ouverture au choix                                     | ❌ À faire |
 | Taille de police augmentée                                               | ❌ À faire |
+| Musique en calque sur la scène + lecteur compact                         | ✅ Done    |
+| Réglages en calque sur la scène, barre latérale supprimée                | ✅ Done    |
+| Pages secondaires masquées, réactivables depuis les Réglages             | ✅ Done    |
+| Largeur réglable de la liste et de la barre des launchers                | ✅ Done    |
+| Quatre familles d'anneaux planétaires                                    | ✅ Done    |
 | Menu de débogage, absent des versions publiées                           | ✅ Done    |
 | Support HoYoverse (Genshin, Honkai, Zenless)                             | ❌ À faire |
 | Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | 🟡 Partiel |
@@ -191,6 +210,10 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 - **Vue Système Solaire**
   **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les sept launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, non du temps joué — ce dernier reste une piste, voir « Personnalisation d'une planète ».
 
+  Une planète sur trois environ porte des anneaux, tirés parmi quatre familles calquées sur le système solaire : la nappe large et divisée de Saturne, les rubans étroits et très basculés d'Uranus, le voile de poussière de Jupiter, et les arcs de Neptune. Ce qui les distingue de loin, ce sont la largeur relative, l'opacité, l'inclinaison et le fait d'être complets ou non — la seule graine n'en changeait que le grain, et deux anneaux se ressemblaient dès qu'on les regardait de loin.
+
+  Les arcs ont dû être repris : ils tiraient deux à quatre secteurs isolés, découpés net, sans rien pour dire qu'ils appartenaient au même cercle — on voyait des éclats flotter autour de la planète. Un voile continu les porte désormais, leurs extrémités s'éteignent en fondu (canal alpha des sommets, la bande de texture reste à une dimension), et le tirage est passé à trois à cinq. La texture d'anneau est aussi passée en mipmaps : ses 1024 texels tiennent parfois dans dix pixels — un anneau étroit vu de loin, ou n'importe lequel vu par la tranche — et sans niveaux réduits le rubanage se changeait en pointillés qui grouillaient dès que la planète tournait.
+
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.
 
@@ -213,7 +236,7 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
   Côté Rust : les jeux Xbox sont dans `C:\XboxGames\` ou dans les packages UWP (`Get-AppxPackage` PowerShell). La détection est complexe car Microsoft ne fournit pas de manifest standard. Piste : lire `C:\Program Files\WindowsApps\` (nécessite des droits admin) ou utiliser la base de registre `HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\`. `launchUrl` : `ms-xbl-{titleId}://` ou `shell:AppsFolder\{packageFamilyName}!App`.
 
 - **Raccourcis clavier**
-  **À moitié fait.** Le système solaire a son déplacement au clavier (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`), et `Échap` ferme la barre latérale. Il manque les raccourcis d'application décrits ici : `Espace` pour la musique, `F` pour le favori survolé, `Ctrl+F` pour la recherche, `1-5` pour la navigation, et une modale d'aide sur `?`.
+  **Largement fait.** Le système solaire a son déplacement au clavier (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`). `Ctrl+,` ouvre les réglages, `Ctrl+M` la musique, `Échap` ferme le calque ouvert, `Espace` lit ou met en pause quand le lecteur est là — en capture et propagation coupée, sans quoi la même touche ferait décoller la caméra derrière le calque. Les largeurs de colonne se règlent aux flèches, les courses du lecteur aussi. **Reste à faire** : `F` pour le favori survolé, `Ctrl+F` pour la recherche, `1-5` pour la navigation, et une modale d'aide sur `?`.
 
 - **Vue liste (jeux)**
   Ajouter `viewMode: 'grid' | 'list'` dans les params URL de `LibraryPage`. En mode liste : chaque jeu = une ligne compacte avec miniature, titre, plateforme, dernière session et bouton Jouer. Le composant `GameCard` actuel reste pour la grille ; créer un `GameRow` pour la liste. Toggle via icône dans la toolbar à côté du tri.
@@ -237,7 +260,29 @@ Au démarrage, l'app recherche automatiquement sur iTunes les métadonnées (art
 
   Sémantique : la page d'accueil a un titre pour lecteur d'écran, la liste un `h2`, le champ de recherche une étiquette, et le launcher d'un jeu — jusque-là porté par la seule couleur d'une pastille — est annoncé. La scène et ses étiquettes sont écartées de l'arbre d'accessibilité : un canvas ne s'explore pas, et la liste en donne l'équivalent — mêmes jeux, vrais boutons, atteignables au clavier.
 
+  Deuxième passe, après la refonte en calques. Les deux calques — réglages et musique — retiennent la tabulation et rendent le focus à son point de départ. Trois courses réglables étaient de simples `div` à l'écoute de la souris : la progression et le volume du lecteur, le fil du bandeau du bas. Invisibles pour un lecteur d'écran, hors d'atteinte au clavier. Elles passent par `components/Glissiere`, qui porte `role="slider"`, le nom, la valeur et sa lecture en clair (« 1:23 sur 4:10 » plutôt que « 33 »), les flèches, Origine et Fin, et un contour de focus — sans changer un pixel de ce qu'on voit. Le bouton de répétition, dont le contenu est un emoji, n'avait pas de nom accessible.
+
   **Reste à faire** : exposer dans les Paramètres la taille du texte et l'opacité de la liste (la plomberie existe, elle n'est aujourd'hui pilotée que par le panneau de débogage), prendre en compte `prefers-contrast`, et éprouver la mise en page à 200 % de zoom. Le panneau de débogage, lui, ne sert qu'à éprouver les réactions de l'application : il n'est pas une voie d'accès.
+
+- **Sécurité — état de la revue**
+  Revue menée sur toute la surface exposée. La politique de contenu est stricte : `default-src 'self'`, `script-src 'self'` sans `unsafe-inline` ni `eval`, `object-src 'none'`, `frame-ancestors 'none'`, `form-action 'none'`, et une liste nommée d'hôtes d'images. Le protocole `asset:` est borné au profil utilisateur, avec un refus explicite de `.ssh`, `.aws`, `.gnupg` et des magasins d'identifiants de Windows. Les permissions Tauri n'ouvrent que sept schémas d'URL et treize exécutables de launcher, nommés un par un.
+
+  Côté Rust, les trente-cinq commandes ont été reprises une à une : **toutes** celles qui reçoivent un chemin le valident avant de s'en servir — confinement sous la racine musique pour ce qui écrit, sous le profil utilisateur pour ce qui lit, résolution canonique des `..` et des liens. `launch_target` n'accepte qu'un des cinq schémas connus ou un chemin local existant sur une lettre de lecteur : ni UNC, ni `..`, ni caractère de contrôle. Rien ne passe plus par `cmd /c start`, qui reparsait `&` et `|` (voir `security.rs`, quatre tests).
+
+  Côté JavaScript, aucun `dangerouslySetInnerHTML`, aucun `eval`, aucune construction de fonction ; le seul `innerHTML` est un vidage. La clé SteamGridDB reste dans le gestionnaire d'identifiants Windows et ne traverse jamais le JavaScript. Les mises à jour sont signées (minisign), l'index public.
+
+  **Corrigé au passage** : `react-router-dom` traînait deux alertes de gravité haute (7.13.0 → 7.18.3, `npm audit` à zéro). Les cinq avis concernaient le rendu côté serveur, que cette application n'utilise pas — mais un correctif mineur ne se discute pas.
+
+  **Reste à faire** : `cargo audit` n'est pas installé, les dépendances Rust ne sont donc pas encore passées au crible. Et l'identifiant du bundle est resté `com.anton.tauri-app` : le changer déplacerait le magasin de données, c'est un choix délibéré (voir le renommage en Cassini).
+
+- **Optimisation — ce qui a été mesuré**
+  L'application tourne à 60 images par seconde pour 16,7 ms par image. Ce n'est pas un coût de calcul : c'est exactement 1/60 s, la synchronisation verticale. L'écran de développement ne propose que du 60 Hz (`2560×1440 @ 60`), c'est donc un plafond matériel, pas un symptôme. Le compteur, lui, mesure l'intervalle entre deux images et non le travail : à 60 · 16,7 on ne sait pas s'il reste 3 ms de marge ou zéro.
+
+  **Trouvé et supprimé** : `antialias: true` sur le contexte WebGL ne lissait aucun pixel. Toute la scène passe par le compositeur, dont les cibles de rendu n'ont pas d'échantillons multiples ; le tampon de la canvas ne reçoit que le quadrilatère plein écran de la dernière passe, qui n'a aucune arête intérieure. On payait un tampon multi-échantillonné en 2560×1440 et sa résolution à chaque image pour rien.
+
+  Le reste de la boucle est serré et a été vérifié plutôt que supposé : les lectures de mise en page sont regroupées avant toute écriture de style, le raycast de survol est conditionné au mouvement de la souris, les systèmes se construisent à l'approche et se libèrent à l'éloignement, le débordement lumineux est calculé à demi-résolution, et la scène s'arrête de dessiner quand un calque la recouvre. Le découpage du bundle est déjà juste : 1 008 kB pour la page d'accueil (three.js et la scène, nécessaires au premier affichage) et tout le reste en morceaux chargés à la demande, aucun au-dessus de 24 kB.
+
+  **Reste à faire** : afficher le temps de travail à côté de l'intervalle, seule mesure qui dirait la marge réelle ; et vérifier sur quelle carte WebView2 rend effectivement, la machine en ayant deux (l'application journalise celle qu'elle obtient).
 
 - **Menu de débogage, absent des versions publiées**
   **Fait.** Panneau flottant, ouvert par Ctrl+Alt+D ou par le bouton 🐞 en bas à gauche : 61 réglages en seize groupes repliables, avec une recherche insensible aux accents. Interface générale (police, taille du texte, arrondis, flou), navigation (largeur, logo, entrées), en-tête, liste des jeux (largeur, vignettes, espacement), barre des launchers (taille des icônes, largeur, opacités), fiche du jeu (opacité, bornes de largeur), étiquettes 3D, caméra (champ, zoom, amorti, approche, durée des voyages), lumière, atmosphère, planètes, soleils, systèmes, chargement, mouvement — et des outils de mise en page : contours des éléments, animations coupées, compteur d'images.
