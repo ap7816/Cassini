@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import {
@@ -99,9 +99,6 @@ type Props = {
   onPickGame: (game: Game) => void;
   /** Mène la caméra jusqu'à ce launcher, et la liste suit. */
   onPickPlatform: (platform: string) => void;
-  /** Liste dépliée. Repliée, elle sort par la droite et rend la place à la scène. */
-  open: boolean;
-  onToggle: () => void;
   /** Nom affiché en tête de liste : le launcher, ou le système personnalisé. */
   titre: string;
   /** Teinte du système consulté. */
@@ -137,7 +134,7 @@ const MAX_AILLEURS = 40;
  */
 export function GameList({
   games, allGames, selectedId, platform, platforms, icons,
-  sgdbKeySet, onPickGame, onPickPlatform, open, onToggle,
+  sgdbKeySet, onPickGame, onPickPlatform,
   titre, teinte, systemes, onCreerSysteme, onModifierSysteme,
   onAjouterAuSysteme, onRetirerDuSysteme,
   largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
@@ -152,7 +149,6 @@ export function GameList({
   const ajout: ActionLigne | undefined = perso && onAjouterAuSysteme
     ? { symbole: '+', libelle: t('solar.addToSystem'), faire: onAjouterAuSysteme }
     : undefined;
-  const listId = useId();
   const disque = useDiskSpace();
 
   // Même ordre que les orbites : la n-ième entrée est la n-ième planète.
@@ -198,66 +194,29 @@ export function GameList({
 
   return (
     <>
-      <button
-        type="button"
-        className={css.toggle}
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={listId}
-        title={open ? t('solar.hideList') : t('solar.showList')}
-      >
-        {/* Chevron vectoriel plutôt qu'un caractère : à cette taille, « › »
-            reste fin et dépend de la police disponible. Il pointe vers la
-            droite pour renvoyer la liste, et s'inverse pour la rappeler. */}
-        <svg
-          className={[css.toggleIcon, open ? '' : css.toggleIconFlipped].filter(Boolean).join(' ')}
-          width="11"
-          height="18"
-          viewBox="0 0 11 18"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M2.5 2L9 9l-6.5 7"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+      {/* Frontières saisissables, une par colonne. */}
+      <PoigneeLargeur
+        valeur={largeurListe}
+        min={LARGEUR_LISTE.min}
+        max={LARGEUR_LISTE.max}
+        libelle={t('solar.listWidth')}
+        droite="var(--side-w, 0px)"
+        onChange={(v) => onLargeurListe(v, false)}
+        onFin={(v) => onLargeurListe(v, true)}
+        onDefaut={() => onLargeursParDefaut('liste')}
+      />
+      <PoigneeLargeur
+        valeur={largeurRail}
+        min={LARGEUR_RAIL.min}
+        max={LARGEUR_RAIL.max}
+        libelle={t('solar.railWidth')}
+        droite="var(--rail-w, 0px)"
+        onChange={(v) => onLargeurRail(v, false)}
+        onFin={(v) => onLargeurRail(v, true)}
+        onDefaut={() => onLargeursParDefaut('rail')}
+      />
 
-      {/* Frontières saisissables. Repliée, la colonne n'a plus de largeur à
-          régler : les poignées disparaissent avec elle. */}
-      {open && (
-        <>
-          <PoigneeLargeur
-            valeur={largeurListe}
-            min={LARGEUR_LISTE.min}
-            max={LARGEUR_LISTE.max}
-            libelle={t('solar.listWidth')}
-            droite="var(--side-w, 0px)"
-            onChange={(v) => onLargeurListe(v, false)}
-            onFin={(v) => onLargeurListe(v, true)}
-            onDefaut={() => onLargeursParDefaut('liste')}
-          />
-          <PoigneeLargeur
-            valeur={largeurRail}
-            min={LARGEUR_RAIL.min}
-            max={LARGEUR_RAIL.max}
-            libelle={t('solar.railWidth')}
-            droite="var(--rail-w, 0px)"
-            onChange={(v) => onLargeurRail(v, false)}
-            onFin={(v) => onLargeurRail(v, true)}
-            onDefaut={() => onLargeursParDefaut('rail')}
-          />
-        </>
-      )}
-
-      <aside
-        id={listId}
-        className={[css.list, open ? '' : css.listHidden].filter(Boolean).join(' ')}
-      >
+      <aside className={css.list}>
         <div className={css.head}>
           <h2 className={css.headTitle} style={{ color }}>
             {titre}
@@ -354,12 +313,9 @@ export function GameList({
 
       {/* Barre des launchers, adossée au bord droit.
 
-          Hors de l'`aside` : elle reste accessible une fois la liste repliée,
-          alors que portée par elle, elle sortirait de l'écran avec elle. */}
-      <nav
-        className={[css.rail, open ? '' : css.railHidden].filter(Boolean).join(' ')}
-        aria-label={t('nav.launchers')}
-      >
+          Hors de l'`aside` : les deux colonnes se règlent en largeur
+          séparément, chacune par sa propre poignée. */}
+      <nav className={css.rail} aria-label={t('nav.launchers')}>
         {platforms.map((p) => {
           const teinte = PLATFORM_CSS[p.name] ?? '#7a8a9a';
           const icone = icons[p.name];

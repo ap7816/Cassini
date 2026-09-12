@@ -225,8 +225,6 @@
     "edit": "Modifier"
   },
   "solar": {
-    "showList": "Afficher la liste des jeux",
-    "hideList": "Masquer la liste des jeux",
     "listWidth": "Largeur de la liste des jeux",
     "railWidth": "Largeur de la barre des launchers",
     "resizeHint": "{{label}} — glisser, ou flèches gauche et droite. Double-clic : largeur par défaut.",

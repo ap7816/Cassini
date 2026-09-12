@@ -20,19 +20,10 @@
      Les deux usages (largeur de la liste, `right` de la canvas) se résolvent
      sur `.page`, la valeur reste donc cohérente. */
   --list-w: min(var(--dbg-liste-l, 196px), 26%);
-  /* Barre des launchers. Elle se replie avec la liste — la languette de repli
-     suffit à tout rappeler, et laisser une colonne d'icônes en bord d'écran
-     revenait à ne jamais rendre toute la largeur à la scène. */
+  /* Barre des launchers, accolée à la liste. Sa largeur se règle elle aussi ;
+     à défaut de choix, elle suit la taille des icônes qu'elle porte. */
   --rail-w: var(--dbg-rail-l, calc(40px * var(--dbg-icones, 1.25)));
   --side-w: calc(var(--list-w) + var(--rail-w));
-}
-
-/* Liste repliée : la zone 3D récupère toute la largeur.
-   Seule la place réservée tombe à zéro ; la liste garde sa largeur propre et
-   sort par translation. La rétrécir ferait déferler son contenu pendant
-   l'animation, titres tronqués et vignettes écrasées. */
-.pageListHidden {
-  --side-w: 0px;
 }
 
 /* Conteneur de la canvas Three.js.
@@ -114,10 +105,11 @@
   transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Poignée en cours de glissement : la courbe ci-dessus est faite pour un repli,
-   qui bascule d'un coup. Sous la main, elle ferait traîner le recadrage de la
-   scène 220 ms derrière le curseur, et la scène ne se poserait qu'après le
-   relâché. Pendant le glissement, la sonde colle à la largeur réelle. */
+/* Poignée en cours de glissement : la courbe ci-dessus est faite pour un saut
+   de largeur — une remise au défaut, un bond au clavier. Sous la main, elle
+   ferait traîner le recadrage de la scène 220 ms derrière le curseur, et la
+   scène ne se poserait qu'après le relâché. Pendant le glissement, la sonde
+   colle donc à la largeur réelle. */
 .pageGlisse .sideProbe {
   transition: none;
 }

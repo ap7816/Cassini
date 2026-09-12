@@ -113,7 +113,6 @@ export function SolarSystemPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
   const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
-  const [listOpen, setListOpen] = useState(true);
   // `null` tant que rien n'a été choisi : la feuille de style garde alors sa
   // largeur par défaut, et son plafond en pourcentage.
   const [largeurs, setLargeurs] = useState<Largeurs>(chargerLargeurs);
@@ -444,9 +443,7 @@ export function SolarSystemPage() {
 
   return (
     <div
-      className={[css.page, listOpen ? '' : css.pageListHidden, glisse ? css.pageGlisse : '']
-        .filter(Boolean)
-        .join(' ')}
+      className={[css.page, glisse ? css.pageGlisse : ''].filter(Boolean).join(' ')}
       style={styleColonnes}
     >
       {/* La page n'avait aucun titre : un lecteur d'écran ne pouvait pas la
@@ -471,7 +468,7 @@ export function SolarSystemPage() {
 
       <FlyKeysPanel settings={flySettings} onChange={setFlySettings} />
 
-      {/* Liste des jeux du launcher, repliable par sa languette. */}
+      {/* Liste des jeux du launcher, réglable en largeur par ses poignées. */}
       <GameList
         games={visibleGames}
         allGames={games}
@@ -482,8 +479,6 @@ export function SolarSystemPage() {
         sgdbKeySet={settings.sgdbKeySet}
         onPickGame={handlePickGame}
         onPickPlatform={choisirSysteme}
-        open={listOpen}
-        onToggle={() => setListOpen((v) => !v)}
         titre={titreListe}
         teinte={teinteListe}
         systemes={systemesPerso}

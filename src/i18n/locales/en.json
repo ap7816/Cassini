@@ -225,8 +225,6 @@
     "edit": "Edit"
   },
   "solar": {
-    "showList": "Show game list",
-    "hideList": "Hide game list",
     "listWidth": "Game list width",
     "railWidth": "Launcher bar width",
     "resizeHint": "{{label}} — drag, or use the left and right arrow keys. Double-click: default width.",
