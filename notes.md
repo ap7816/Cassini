@@ -273,7 +273,18 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   **Corrigé au passage** : `react-router-dom` traînait deux alertes de gravité haute (7.13.0 → 7.18.3, `npm audit` à zéro). Les cinq avis concernaient le rendu côté serveur, que cette application n'utilise pas — mais un correctif mineur ne se discute pas.
 
-  **Reste à faire** : `cargo audit` n'est pas installé, les dépendances Rust ne sont donc pas encore passées au crible. Et l'identifiant du bundle est resté `com.anton.tauri-app` : le changer déplacerait le magasin de données, c'est un choix délibéré (voir le renommage en Cassini).
+  **Dépendances Rust** : `cargo audit` passe les 690 entrées du verrou. Huit alertes au premier passage, sept levées par une mise à jour du seul fichier de verrouillage — aucun changement de code, cinq versions déplacées :
+
+  - `rustls-webpki` 0.103.10 → 0.103.15. La plus sérieuse : c'est la bibliothèque qui valide les certificats du **mise à jour automatique**. Trois avis — contraintes de nom acceptées à tort pour des URI, contraintes acceptées pour un certificat à nom générique, et une panique atteignable en lisant une liste de révocation.
+  - `h2` 0.4.14 → 0.4.19. Trames DATA vides sans borne, sur le chemin HTTP/2 de `reqwest` — celui qui interroge iTunes et SteamGridDB.
+  - `quick-xml` 0.38.4 → 0.41.0, via `plist` 1.8.0 → 1.10.0. Deux alertes de gravité 7,5 : temps quadratique sur les attributs en double, et allocation sans borne des déclarations d'espace de noms. `plist` ne se compile que sur macOS, la version publiée est Windows : l'exposition réelle était nulle, mais la contrainte `^0.38` de `plist` interdisait de bouger — le passage à 1.10 la lève.
+  - `crossbeam-epoch` 0.9.18 → 0.9.21. Déréférencement de pointeur invalide dans un affichage de mise au point, via `rayon` et le décodeur d'images `exr`.
+
+  **La huitième reste**, et c'est un faux positif : `rkyv` 0.7.46 est une dépendance **optionnelle** de `rust_decimal`, lui-même tiré par `byte-unit` puis `tauri-plugin-log`. La fonctionnalité n'est pas activée — `cargo tree -i rkyv`, toutes cibles et tous types d'arêtes confondus, ne renvoie rien. Le code n'est donc jamais compilé. `cargo audit` lit le fichier de verrouillage, où figurent aussi les dépendances optionnelles.
+
+  Restent seize avertissements « non maintenu » ou « non sûr » (`paste`, `fxhash`, les `unic-*`, `glib`, `anyhow`, `rand`) : tous transitifs, aucun avec une version corrigée à ce jour. Rien à faire tant que `tauri` n'aura pas bougé.
+
+  **Reste à faire** : l'identifiant du bundle est resté `com.anton.tauri-app` — le changer déplacerait le magasin de données, c'est un choix délibéré (voir le renommage en Cassini).
 
 - **Optimisation — ce qui a été mesuré**
   L'application tourne à 60 images par seconde pour 16,7 ms par image. Ce n'est pas un coût de calcul : c'est exactement 1/60 s, la synchronisation verticale. L'écran de développement ne propose que du 60 Hz (`2560×1440 @ 60`), c'est donc un plafond matériel, pas un symptôme. Le compteur, lui, mesure l'intervalle entre deux images et non le travail : à 60 · 16,7 on ne sait pas s'il reste 3 ms de marge ou zéro.
