@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -8,6 +8,7 @@ import type { TrackDto } from '../../features/music/MusicContext';
 import { getEnriched } from '../../features/music/enrichMeta';
 import { writeMusicFolder } from '../../services/storage';
 import { Equalizer } from './components/Equalizer';
+import { Glissiere } from '../../components/Glissiere/Glissiere';
 import css from './LecteurRapide.module.css';
 
 /** Secondes → `M:SS`. */
@@ -18,22 +19,6 @@ function tempsCourt(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-/** Suit un glissement horizontal sur une barre et rapporte la fraction [0,1]. */
-function suivreGlissement(e: MouseEvent<HTMLDivElement>, onChange: (ratio: number) => void) {
-  e.preventDefault();
-  const rect = e.currentTarget.getBoundingClientRect();
-  const fractionA = (x: number) => Math.min(1, Math.max(0, (x - rect.left) / rect.width));
-
-  onChange(fractionA(e.clientX));
-
-  const bouge = (ev: globalThis.MouseEvent) => onChange(fractionA(ev.clientX));
-  const relache = () => {
-    window.removeEventListener('mousemove', bouge);
-    window.removeEventListener('mouseup', relache);
-  };
-  window.addEventListener('mousemove', bouge);
-  window.addEventListener('mouseup', relache);
-};
 
 /**
  * Au-delà, la liste cesse d'être consultable et coûterait à afficher : une
@@ -181,7 +166,6 @@ export function LecteurRapide({ onFermer }: Props) {
   }
 
   const avancement = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
-  const volume = music.volume * 100;
 
   const auDebut = !music.shuffleMode && music.currentIndex <= 0 && music.repeatMode !== 'all';
   const aLaFin =
@@ -209,13 +193,19 @@ export function LecteurRapide({ onFermer }: Props) {
       {/* ── Progression ── */}
       <div className={css.progression}>
         <span className={css.temps}>{tempsCourt(music.progress)}</span>
-        <div
+        <Glissiere
           className={css.barre}
-          onMouseDown={(e) => suivreGlissement(e, music.seekTo)}
-          style={{ '--part': `${avancement}%` } as CSSProperties}
+          valeur={music.duration > 0 ? music.progress / music.duration : 0}
+          onChange={music.seekTo}
+          label={t('music.seekLabel')}
+          texteValeur={t('music.seekValue', {
+            position: tempsCourt(music.progress),
+            duree: tempsCourt(music.duration),
+          })}
+          pas={0.02}
         >
           <span className={css.curseur} style={{ left: `${avancement}%` }} />
-        </div>
+        </Glissiere>
         <span className={css.temps}>{tempsCourt(music.duration)}</span>
       </div>
 
@@ -270,15 +260,23 @@ export function LecteurRapide({ onFermer }: Props) {
                 ? t('music.repeatAll')
                 : t('music.repeatOne')
           }
+          aria-label={
+            music.repeatMode === 'none'
+              ? t('music.repeatOff')
+              : music.repeatMode === 'all'
+                ? t('music.repeatAll')
+                : t('music.repeatOne')
+          }
         >
           {music.repeatMode === 'one' ? '🔂' : '🔁'}
         </button>
 
-        <div
+        <Glissiere
           className={css.volume}
-          onMouseDown={(e) => suivreGlissement(e, music.setVolume)}
-          title={t('music.volumeLabel', { pct: Math.round(music.volume * 100) })}
-          style={{ '--part': `${volume}%` } as CSSProperties}
+          valeur={music.volume}
+          onChange={music.setVolume}
+          label={t('music.volumeLabel', { pct: Math.round(music.volume * 100) })}
+          texteValeur={`${Math.round(music.volume * 100)} %`}
         />
       </div>
 

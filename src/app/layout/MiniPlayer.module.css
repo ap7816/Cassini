@@ -148,6 +148,22 @@
   height: 3px;
   cursor: pointer;
   transition: height 0.12s;
+  /* La part lue est posée en `--part` par la course elle-même : un dégradé
+     recalculé chaque seconde coûte moins qu'un élément de plus à composer. */
+  background: linear-gradient(
+    to right,
+    var(--accent, #6c8efb) 0%,
+    var(--accent, #6c8efb) var(--part, 0%),
+    rgba(255, 255, 255, 0.14) var(--part, 0%),
+    rgba(255, 255, 255, 0.14) 100%
+  );
+}
+
+/* Le contour de focus, sinon invisible sur un fil de 3 px collé au bord. */
+.progressBar:focus-visible {
+  height: 6px;
+  outline: 2px solid var(--accent, #6c8efb);
+  outline-offset: 1px;
 }
 
 .progressBar:hover {

@@ -153,7 +153,9 @@
     "moveModalConfirm": "Move here",
     "ctxColor": "🎨 Color",
     "ctxRename": "✏️ Rename",
-    "ctxDelete": "🗑️ Delete"
+    "ctxDelete": "🗑️ Delete",
+    "seekLabel": "Playback position",
+    "seekValue": "{{position}} of {{duree}}"
   },
   "settings": {
     "title": "Settings",

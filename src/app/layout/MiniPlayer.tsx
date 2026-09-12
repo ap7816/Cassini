@@ -1,34 +1,23 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMusicPlayer } from '../../features/music/MusicContext';
 import { useSingleMeta } from '../../features/music/useTrackMeta';
 import { getEnriched } from '../../features/music/enrichMeta';
 import { useCalques } from '../../features/calques/useCalques';
+import { Glissiere } from '../../components/Glissiere/Glissiere';
 import css from './MiniPlayer.module.css';
+
+/** Secondes → `M:SS`. */
+function tempsCourt(sec: number): string {
+  if (!isFinite(sec) || isNaN(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 /** Durée de l'animation de sortie, doit rester alignée sur le CSS. */
 const LEAVE_MS = 280;
 
-/**
- * Suit un glissement horizontal sur une barre et rapporte la position en
- * fraction [0,1].
- */
-function trackDrag(e: MouseEvent<HTMLDivElement>, onChange: (ratio: number) => void) {
-  e.preventDefault();
-  const rect = e.currentTarget.getBoundingClientRect();
-  const ratioAt = (clientX: number) =>
-    Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-
-  onChange(ratioAt(e.clientX));
-
-  const onMove = (ev: globalThis.MouseEvent) => onChange(ratioAt(ev.clientX));
-  const onUp = () => {
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
-  };
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
-}
 
 /**
  * Ce qui joue, en bas à gauche.
@@ -79,7 +68,6 @@ export function MiniPlayer() {
   const enrichedCover = track ? (getEnriched(track.path)?.coverUrl ?? null) : null;
   const cover = meta?.coverDataUrl ?? enrichedCover;
 
-  const progressPct = music.duration > 0 ? (music.progress / music.duration) * 100 : 0;
 
   if (!visible) return null;
 
@@ -158,12 +146,16 @@ export function MiniPlayer() {
 
       {/* Fil de progression sur le bord bas : il dit l'avancement sans prendre
           de hauteur, et reste saisissable. */}
-      <div
+      <Glissiere
         className={css.progressBar}
-        onMouseDown={(e) => trackDrag(e, music.seekTo)}
-        style={{
-          background: `linear-gradient(to right, var(--accent, #6c8efb) 0%, var(--accent, #6c8efb) ${progressPct}%, rgba(255,255,255,0.14) ${progressPct}%, rgba(255,255,255,0.14) 100%)`,
-        }}
+        valeur={music.duration > 0 ? music.progress / music.duration : 0}
+        onChange={music.seekTo}
+        label={t('music.seekLabel')}
+        texteValeur={t('music.seekValue', {
+          position: tempsCourt(music.progress),
+          duree: tempsCourt(music.duration),
+        })}
+        pas={0.02}
       />
     </div>
   );

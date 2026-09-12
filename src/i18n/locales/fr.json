@@ -153,7 +153,9 @@
     "moveModalConfirm": "Déplacer ici",
     "ctxColor": "🎨 Couleur",
     "ctxRename": "✏️ Renommer",
-    "ctxDelete": "🗑️ Supprimer"
+    "ctxDelete": "🗑️ Supprimer",
+    "seekLabel": "Position de lecture",
+    "seekValue": "{{position}} sur {{duree}}"
   },
   "settings": {
     "title": "Paramètres",

@@ -93,6 +93,14 @@
   flex: 1;
 }
 
+/* Les deux courses se règlent au clavier : sans contour visible, on ne sait
+   pas laquelle on tient. */
+.barre:focus-visible,
+.volume:focus-visible {
+  outline: 2px solid var(--accent, #6c8efb);
+  outline-offset: 3px;
+}
+
 .volume {
   width: 62px;
   flex-shrink: 0;
