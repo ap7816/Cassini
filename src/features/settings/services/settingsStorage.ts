@@ -15,7 +15,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   // launchers. Ces réglages rappellent les pages une à une.
   showLibrary: false,
   showLaunchers: false,
-  showMusic: false,
 };
 
 // Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
@@ -60,7 +59,6 @@ export function loadSettings(): AppSettings {
       // une installation neuve.
       showLibrary: parsed.showLibrary === true,
       showLaunchers: parsed.showLaunchers === true,
-      showMusic: parsed.showMusic === true,
     };
   } catch {
     return DEFAULT_SETTINGS;

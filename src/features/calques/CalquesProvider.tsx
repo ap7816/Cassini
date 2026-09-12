@@ -1,33 +1,48 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PanneauReglagesContext } from './panneauReglagesContext';
+import { CalquesContext, type Calque } from './calquesContext';
 
 const PanneauReglages = lazy(() =>
-  import('../../../pages/Settings/PanneauReglages').then((m) => ({ default: m.PanneauReglages })),
+  import('../../pages/Settings/PanneauReglages').then((m) => ({ default: m.PanneauReglages })),
+);
+
+const PanneauMusique = lazy(() =>
+  import('../../pages/Music/PanneauMusique').then((m) => ({ default: m.PanneauMusique })),
 );
 
 /**
- * Les réglages, ouvrables d'où l'on veut.
+ * Les calques posés sur l'application : réglages, musique.
  *
- * Ils ne changent plus de page : ils se posent par-dessus, pour ne pas démonter
- * la scène du système solaire et la reconstruire au retour. Le panneau vit donc
- * au-dessus des routes, et n'importe quel bouton peut l'appeler — la navigation
- * de gauche aujourd'hui, la barre des launchers qui lui survivra.
+ * Aucun ne change de page. Aller les chercher par une route démontait la scène
+ * du système solaire pour la reconstruire au retour, et surtout : c'est la vue
+ * qui doit tout contenir, pas une navigation par-dessus elle.
  *
- * Chargé à la première ouverture, et non au démarrage.
+ * Ils vivent donc au-dessus des routes, et n'importe quel bouton peut les
+ * appeler — la barre des launchers aujourd'hui.
  */
-export function PanneauReglagesProvider({ children }: { children: ReactNode }) {
-  const [ouvert, setOuvert] = useState(false);
-  const valeur = useMemo(() => ({ ouvert, ouvrir: () => setOuvert(true) }), [ouvert]);
+export function CalquesProvider({ children }: { children: ReactNode }) {
+  const [ouvert, setOuvert] = useState<Calque | null>(null);
 
-  // Le code des réglages n'est chargé qu'à la première ouverture, ce qui lui
-  // coûtait trois cents millisecondes d'attente avant d'apparaître. On le
-  // précharge dès que l'application n'a plus rien d'urgent — au repos plutôt
-  // qu'après un délai fixe : le démarrage a déjà fort à faire, entre le scan
-  // des launchers et le montage de la scène.
+  const valeur = useMemo(
+    () => ({
+      ouvert,
+      ouvrir: (calque: Calque) => setOuvert(calque),
+      basculer: (calque: Calque) => setOuvert((v) => (v === calque ? null : calque)),
+      fermer: () => setOuvert(null),
+    }),
+    [ouvert],
+  );
+
+  // Leur code n'est chargé qu'à la première ouverture, ce qui coûtait une
+  // attente avant que le calque apparaisse. On le précharge dès que
+  // l'application n'a plus rien d'urgent — au repos plutôt qu'après un délai
+  // fixe : le démarrage a déjà fort à faire, entre le scan des launchers et le
+  // montage de la scène.
   useEffect(() => {
     let annule = false;
     const precharger = () => {
-      if (!annule) void import('../../../pages/Settings/PanneauReglages');
+      if (annule) return;
+      void import('../../pages/Settings/PanneauReglages');
+      void import('../../pages/Music/PanneauMusique');
     };
 
     if (typeof window.requestIdleCallback === 'function') {
@@ -47,26 +62,33 @@ export function PanneauReglagesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // `Ctrl+,` comme dans la plupart des applications. Les touches de vol du
-  // système solaire sont des lettres nues : aucune collision.
+  // `Ctrl+,` pour les réglages, `Ctrl+M` pour la musique, comme ailleurs. Les
+  // touches de vol du système solaire sont des lettres nues : aucune collision.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.key !== ',') return;
-      e.preventDefault();
-      setOuvert(true);
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === ',') {
+        e.preventDefault();
+        setOuvert('reglages');
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setOuvert((v) => (v === 'musique' ? null : 'musique'));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   return (
-    <PanneauReglagesContext.Provider value={valeur}>
+    <CalquesContext.Provider value={valeur}>
       {children}
-      {ouvert && (
+      {ouvert !== null && (
         <Suspense fallback={null}>
-          <PanneauReglages onFermer={() => setOuvert(false)} />
+          {ouvert === 'reglages'
+            ? <PanneauReglages onFermer={valeur.fermer} />
+            : <PanneauMusique onFermer={valeur.fermer} />}
         </Suspense>
       )}
-    </PanneauReglagesContext.Provider>
+    </CalquesContext.Provider>
   );
 }

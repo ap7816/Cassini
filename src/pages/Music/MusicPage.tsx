@@ -30,16 +30,18 @@ import {
   type TrackWithIdx,
 } from './lib/folderTree';
 import { absPath } from './lib/format';
+import { formaterDuree } from '../../i18n/formats';
 import { Breadcrumb } from './components/Breadcrumb';
 import { FolderContextMenu, TrackContextMenu, type FolderCtxMenu } from './components/ContextMenus';
 import { FolderCard, TrackCard } from './components/MusicCards';
+import { EnTeteColonnes, TrackRow } from './components/TrackRow';
 import { FolderPickerModal } from './components/FolderPickerModal';
 import { SortDropdown } from './components/SortDropdown';
 import css from './MusicPage.module.css';
 
 // Page principale de la bibliothèque musicale : navigateur de dossiers, lecture et enrichissement
 export function MusicPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings } = useAppSettings();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -257,6 +259,27 @@ export function MusicPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNode.tracks, sortBy, sortDir, metaLoading]);
 
+  // Toutes les pistes du dossier courant, sous-dossiers compris : c'est ce que
+  // l'en-tête décrit. Compter les seules pistes posées ici annoncerait « aucune
+  // piste » à la racine d'une bibliothèque rangée en albums.
+  const pistesDuDossier = useMemo(() => {
+    const sortie: TrackWithIdx[] = [];
+    const parcourir = (n: FolderNode) => {
+      sortie.push(...n.tracks);
+      n.children.forEach(parcourir);
+    };
+    parcourir(currentNode);
+    return sortie;
+  }, [currentNode]);
+
+  const dureeDuDossier = useMemo(
+    () => pistesDuDossier.reduce((somme, p) => somme + (getMeta(p.path)?.durationSecs ?? 0), 0),
+    // getMeta lit un cache de module ; `metaLoading` force le recalcul quand le
+    // lot de métadonnées se termine.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pistesDuDossier, metaLoading],
+  );
+
   const searchResults = useMemo(() => {
     if (!query) return [];
     return allTracks
@@ -271,23 +294,44 @@ export function MusicPage() {
     <div className={css.page} style={{ position: 'relative' }} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
       {settings.musicParticles && <MusicSnowVisualizer />}
 
-      {/* ── Header ── */}
+      {/* ── En-tête ── */}
       <div className={css.header}>
-        <button className={css.chooseBtn} onClick={handleChooseFolder}>{t('music.chooseFolder')}</button>
-        {/* Recharge le dossier actuel sans en choisir un nouveau */}
-        {music.folderPath && (
-          <button
-            className={css.refreshBtn}
-            onClick={() => music.loadFolder(music.folderPath)}
-            disabled={music.loading}
-            title={t('music.refresh')}
-          >{t('music.refresh')}</button>
-        )}
-        {folderName && <span className={css.selectedFolderName} title={music.folderPath}>{folderName}</span>}
-        {music.loading && <span className={css.loadingText}>{t('music.scanning')}</span>}
-        {!music.loading && music.tracks.length > 0 && (
-          <span className={css.trackCount}>{t('music.trackCount', { count: music.tracks.length })}</span>
-        )}
+        <div className={css.enteteTitre}>
+          <h1 className={css.titrePage} title={music.folderPath}>
+            {currentPath.length > 0 ? currentPath[currentPath.length - 1] : folderName ?? t('nav.music')}
+          </h1>
+          <p className={css.sousTitre}>
+            {music.loading
+              ? t('music.scanning')
+              : music.tracks.length === 0
+                ? t('music.chooseFirst')
+                : `${t('music.trackCount', { count: pistesDuDossier.length })} · ${formaterDuree(dureeDuDossier, i18n.language)}`}
+          </p>
+        </div>
+
+        <div className={css.enteteActions}>
+          {sortedTracks.length > 0 && (
+            <button
+              className={css.chooseBtn}
+              onClick={() => music.selectTrack(sortedTracks[0].originalIndex)}
+            >
+              <svg viewBox="0 0 24 24" className={css.iconeLecture} aria-hidden="true">
+                <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+              </svg>
+              {t('music.playAll')}
+            </button>
+          )}
+          {/* Recharge le dossier actuel sans en choisir un nouveau */}
+          {music.folderPath && (
+            <button
+              className={css.refreshBtn}
+              onClick={() => music.loadFolder(music.folderPath)}
+              disabled={music.loading}
+              title={t('music.refresh')}
+            >{t('music.refresh')}</button>
+          )}
+          <button className={css.refreshBtn} onClick={handleChooseFolder}>{t('music.chooseFolder')}</button>
+        </div>
       </div>
 
       {music.error && <div className={css.errorMsg}>{music.error}</div>}
@@ -349,14 +393,15 @@ export function MusicPage() {
         searchResults.length === 0
           ? <div className={css.emptyState}>{t('music.noResults', { query })}</div>
           : <div className={css.gridScroll}>
-              <div className={css.fileGrid}>
+              <EnTeteColonnes />
+              <div className={css.liste}>
                 {searchResults.map((track, idx) => (
-                  <TrackCard
+                  <TrackRow
                     key={track.path}
                     track={track}
-                    index={idx}
-                    isActive={track.originalIndex === music.currentIndex}
-                    isPlaying={music.isPlaying}
+                    rang={idx + 1}
+                    active={track.originalIndex === music.currentIndex}
+                    enLecture={music.isPlaying}
                     onSelect={() => music.selectTrack(track.originalIndex)}
                     onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                     meta={getMeta(track.path)}
@@ -367,39 +412,54 @@ export function MusicPage() {
             </div>
       )}
 
-      {/* ── Grid browser ── */}
+      {/* ── Dossiers, puis pistes ──
+
+          Séparés : les dossiers sont des albums qu'on parcourt du regard, les
+          pistes une liste qu'on lit. Mêlés dans une même grille de vignettes,
+          les seconds perdaient leur album et leur durée faute de place. */}
       {!isEmpty && !query && (
         <div className={css.gridScroll}>
-          <div className={css.fileGrid} data-maingrid="true">
-            {sortedFolders.map(folder => (
-              <FolderCard
-                key={folder.fullPath}
-                folder={folder}
-                color={getFolderColor(folder.fullPath)}
-                currentIndex={music.currentIndex}
-                isPlaying={music.isPlaying}
-                onClick={() => setCurrentPath([...currentPath, folder.name])}
-                onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
-              />
-            ))}
-            {sortedTracks.map((track, idx) => {
-              const isActive = track.originalIndex === music.currentIndex;
-              return (
-                <TrackCard
-                  key={track.path}
-                  track={track}
-                  index={idx}
-                  isActive={isActive}
-                  isPlaying={music.isPlaying}
-                  onSelect={() => music.selectTrack(track.originalIndex)}
-                  onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
-                  meta={getMeta(track.path)}
-                  enriched={getEnriched(track.path)}
-                  scrollTarget
-                />
-              );
-            })}
-          </div>
+          {sortedFolders.length > 0 && (
+            <section className={css.section}>
+              <h2 className={css.sectionTitre}>{t('music.folders')}</h2>
+              <div className={css.fileGrid} data-maingrid="true">
+                {sortedFolders.map(folder => (
+                  <FolderCard
+                    key={folder.fullPath}
+                    folder={folder}
+                    color={getFolderColor(folder.fullPath)}
+                    currentIndex={music.currentIndex}
+                    isPlaying={music.isPlaying}
+                    onClick={() => setCurrentPath([...currentPath, folder.name])}
+                    onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {sortedTracks.length > 0 && (
+            <section className={css.section}>
+              {sortedFolders.length > 0 && <h2 className={css.sectionTitre}>{t('music.tracks')}</h2>}
+              <EnTeteColonnes />
+              <div className={css.liste}>
+                {sortedTracks.map((track, idx) => (
+                  <TrackRow
+                    key={track.path}
+                    track={track}
+                    rang={idx + 1}
+                    active={track.originalIndex === music.currentIndex}
+                    enLecture={music.isPlaying}
+                    onSelect={() => music.selectTrack(track.originalIndex)}
+                    onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
+                    meta={getMeta(track.path)}
+                    enriched={getEnriched(track.path)}
+                    cibleDefilement
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
 

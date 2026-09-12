@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './layout/AppLayout';
 import { SolarSystemPage } from '../pages/SolarSystem/SolarSystemPage';
 import { PatchNotesProvider } from '../features/patchNotes/PatchNotesContext';
-import { PanneauReglagesProvider } from '../features/settings/context/PanneauReglagesProvider';
+import { CalquesProvider } from '../features/calques/CalquesProvider';
 import { RouteFallback } from './RouteFallback';
 
 // Le système solaire est la page d'accueil : il reste dans le bundle principal.
@@ -32,7 +32,7 @@ const SettingsPage = lazy(() =>
 export function AppRouter() {
   return (
     <PatchNotesProvider>
-      <PanneauReglagesProvider>
+      <CalquesProvider>
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Navigate to="/solar" replace />} />
@@ -74,7 +74,7 @@ export function AppRouter() {
             <Route path="*" element={<Navigate to="/solar" replace />} />
           </Route>
         </Routes>
-      </PanneauReglagesProvider>
+      </CalquesProvider>
     </PatchNotesProvider>
   );
 }

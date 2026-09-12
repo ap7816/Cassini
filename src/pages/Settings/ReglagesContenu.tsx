@@ -70,7 +70,6 @@ const isPresetColor = (color: string) => ACCENT_COLORS.some((c) => c.value === c
 const PAGES_RAPPELABLES: { reglage: PageRappelable; labelKey: string; hintKey: string }[] = [
   { reglage: 'showLibrary', labelKey: 'settings.showLibraryLabel', hintKey: 'settings.showLibraryHint' },
   { reglage: 'showLaunchers', labelKey: 'settings.showLaunchersLabel', hintKey: 'settings.showLaunchersHint' },
-  { reglage: 'showMusic', labelKey: 'settings.showMusicLabel', hintKey: 'settings.showMusicHint' },
 ];
 
 type Props = {
@@ -456,7 +455,7 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Autres pages */}
-      {(tab === 'params' || !!q) && matches('settings.navTitle', 'settings.showLibraryLabel', 'settings.showLibraryHint', 'settings.showLaunchersLabel', 'settings.showLaunchersHint', 'settings.showMusicLabel', 'settings.showMusicHint') && (
+      {(tab === 'params' || !!q) && matches('settings.navTitle', 'settings.showLibraryLabel', 'settings.showLibraryHint', 'settings.showLaunchersLabel', 'settings.showLaunchersHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.navTitle')}</div>
 

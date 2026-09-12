@@ -1,0 +1,344 @@
+/* Lecteur compact : ce qui joue, les commandes, de quoi choisir. */
+
+.lecteur {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── Ce qui joue ─────────────────────────────────────────── */
+.enCours {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pochette {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pochetteVide {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.enCoursTextes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.enCoursTitre,
+.enCoursArtiste {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ui-font-family, Inter), sans-serif;
+}
+
+.enCoursTitre {
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  font-weight: 700;
+}
+
+.enCoursArtiste {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.6);
+}
+
+/* ── Progression et volume ───────────────────────────────── */
+.progression {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.temps {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.5);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* La part lue vient d'une variable posée en ligne : un dégradé recalculé à
+   chaque seconde coûte moins qu'un élément de plus à composer. */
+.barre,
+.volume {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--accent, #6c8efb) 0%,
+    var(--accent, #6c8efb) var(--part, 0%),
+    rgba(255, 255, 255, 0.18) var(--part, 0%),
+    rgba(255, 255, 255, 0.18) 100%
+  );
+}
+
+.barre {
+  flex: 1;
+}
+
+.volume {
+  width: 62px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.curseur {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--accent, #6c8efb);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ── Commandes ───────────────────────────────────────────── */
+.commandes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bouton {
+  width: calc(30px * var(--dbg-icones, 1.25));
+  height: calc(30px * var(--dbg-icones, 1.25));
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(224, 230, 240, 0.75);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.bouton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.bouton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.boutonActif {
+  color: var(--accent, #6c8efb);
+}
+
+.boutonLecture {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+  width: calc(36px * var(--dbg-icones, 1.25));
+  height: calc(36px * var(--dbg-icones, 1.25));
+  font-size: calc(15px * var(--ui-font-scale, 1));
+}
+
+.boutonLecture:hover:not(:disabled) {
+  background: var(--accent, #6c8efb);
+  color: #0f141a;
+  filter: brightness(1.12);
+}
+
+/* ── Choisir une piste ───────────────────────────────────── */
+.recherche {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border-radius: calc(9px * var(--dbg-arrondi, 1));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-family: var(--ui-font-family, Inter), sans-serif;
+}
+
+.recherche:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.liste {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.liste::-webkit-scrollbar {
+  width: 5px;
+}
+
+.liste::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+}
+
+.sectionTitre {
+  padding: 8px 6px 4px;
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(224, 230, 240, 0.4);
+}
+
+.ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 6px;
+  border: none;
+  border-radius: calc(7px * var(--dbg-arrondi, 1));
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ligne:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ligneActive {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
+}
+
+/* Pochette à gauche, et la lecture en cours marquée dessus plutôt qu'à côté :
+   une colonne dédiée n'aurait servi qu'à elle et aurait repoussé l'image. */
+.vignette {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imageVide {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+}
+
+.voile {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 7, 12, 0.58);
+  color: var(--accent, #6c8efb);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+
+.ligneTextes {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+
+.ligneTitre,
+.ligneDossier {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ui-font-family, Inter), sans-serif;
+}
+
+.ligneTitre {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+}
+
+.ligneDossier {
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.45);
+}
+
+.ligneActive .ligneTitre {
+  color: var(--accent, #6c8efb);
+  font-weight: 600;
+}
+
+.aucun,
+.vide {
+  padding: 18px 6px;
+  text-align: center;
+  color: rgba(224, 230, 240, 0.45);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+}
+
+.vide {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+
+.principal {
+  padding: 8px 14px;
+  border-radius: calc(10px * var(--dbg-arrondi, 1));
+  border: 1px solid var(--accent, #6c8efb);
+  background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
+  color: inherit;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  cursor: pointer;
+}
+
+/* Vers le rangement de la bibliothèque : rare, donc discret. */
+.lien {
+  flex-shrink: 0;
+  padding: 6px;
+  border: none;
+  background: none;
+  color: rgba(224, 230, 240, 0.45);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lien:hover {
+  color: rgba(224, 230, 240, 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bouton {
+    transition: none;
+  }
+}

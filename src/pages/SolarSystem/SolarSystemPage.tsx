@@ -10,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { nomPlateforme } from '../../i18n/plateformes';
 import logo from '../../assets/logo.svg';
-import { usePanneauReglages } from '../../features/settings/context/usePanneauReglages';
+import { useCalques } from '../../features/calques/useCalques';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -130,13 +130,14 @@ export function SolarSystemPage() {
   const [edition, setEdition] = useState<{ systeme: SystemePerso | null } | null>(null);
 
   // La scène s'arrête de dessiner quand un calque la recouvre entièrement : les
-  // réglages, ou la fenêtre de création d'un système. Pas l'éditeur, qui sert
-  // justement à regarder la scène changer pendant qu'on la règle.
-  const reglages = usePanneauReglages();
+  // réglages, la musique, ou la fenêtre de création d'un système. Pas
+  // l'éditeur, qui sert justement à regarder la scène changer pendant qu'on la
+  // règle.
+  const calques = useCalques();
   const pauseScene = useRef(false);
   useEffect(() => {
-    pauseScene.current = reglages.ouvert || edition !== null;
-  }, [reglages.ouvert, edition]);
+    pauseScene.current = calques.ouvert !== null || edition !== null;
+  }, [calques.ouvert, edition]);
   const { settings } = useAppSettings();
 
   // Plateformes présentes dans la bibliothèque, la plus fournie en premier

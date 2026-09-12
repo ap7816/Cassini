@@ -1,0 +1,163 @@
+/* Une piste en ligne : rang, pochette, titre et artiste, album, durée.
+
+   Les colonnes de l'en-tête et celles des lignes partagent la même grille :
+   deux déclarations qui divergeraient décaleraient les titres de leurs
+   colonnes. */
+.ligne,
+.enTete {
+  display: grid;
+  grid-template-columns: 32px 40px minmax(0, 2.2fr) minmax(0, 1.4fr) 52px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.enTete {
+  padding: 0 10px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 4px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  font-family: var(--ui-font-family, Inter), sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(224, 230, 240, 0.4);
+}
+
+.ligne {
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: calc(8px * var(--dbg-arrondi, 1));
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.ligne:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ligne:focus-visible {
+  outline: 2px solid var(--accent, #6c8efb);
+  outline-offset: -2px;
+}
+
+.ligneActive {
+  background: color-mix(in srgb, var(--accent, #6c8efb) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #6c8efb) 28%, transparent);
+}
+
+/* Le rang et le symbole de lecture occupent la même case : l'un s'efface quand
+   l'autre apparaît, et la ligne ne bouge pas d'un pixel au survol. */
+.rang {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  color: rgba(224, 230, 240, 0.45);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-variant-numeric: tabular-nums;
+}
+
+.numero,
+.lecture {
+  grid-area: 1 / 1;
+  transition: opacity 0.12s;
+}
+
+.lecture {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+}
+
+.ligne:hover .numero,
+.ligne:focus-visible .numero {
+  opacity: 0;
+}
+
+.ligne:hover .lecture,
+.ligne:focus-visible .lecture {
+  opacity: 1;
+}
+
+.pochette {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  display: block;
+}
+
+.pochette img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.titres {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.titre,
+.artiste,
+.album,
+.duree {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ui-font-family, Inter), sans-serif;
+}
+
+.titre {
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+}
+
+.artiste {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.6);
+}
+
+.album {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.55);
+}
+
+.duree {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: rgba(224, 230, 240, 0.5);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ligneActive .titre,
+.ligneActive .rang {
+  color: var(--accent, #6c8efb);
+}
+
+/* Fenêtre étroite : l'album cède la place au titre, qu'on ne peut pas perdre. */
+@media (max-width: 780px) {
+  .ligne,
+  .enTete {
+    grid-template-columns: 32px 40px minmax(0, 1fr) 52px;
+  }
+
+  .album {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ligne,
+  .numero,
+  .lecture {
+    transition: none;
+  }
+}

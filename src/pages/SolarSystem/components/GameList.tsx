@@ -11,7 +11,7 @@ import { PLATFORM_CSS } from '../constants';
 import { useDiskSpace } from '../../../features/system/useDiskSpace';
 import { formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
-import { usePanneauReglages } from '../../../features/settings/context/usePanneauReglages';
+import { useCalques } from '../../../features/calques/useCalques';
 import { useAppSettings } from '../../../features/settings/context/useAppSettings';
 import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
@@ -139,7 +139,6 @@ const MAX_AILLEURS = 40;
 const PAGES_RAPPELABLES = [
   { to: '/library', reglage: 'showLibrary', cle: 'nav.library', icone: 'manette' },
   { to: '/launchers', reglage: 'showLaunchers', cle: 'nav.launchers', icone: 'fusee' },
-  { to: '/music', reglage: 'showMusic', cle: 'nav.music', icone: 'musique' },
 ] as const;
 
 /**
@@ -156,7 +155,7 @@ export function GameList({
   largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
 }: Props) {
   const { t, i18n } = useTranslation();
-  const reglages = usePanneauReglages();
+  const calques = useCalques();
   const { settings } = useAppSettings();
   const navigate = useNavigate();
   const location = useLocation();
@@ -413,13 +412,26 @@ export function GameList({
             <IconeSysteme nom={p.icone} couleur="currentColor" className={css.railAjoutIcone} />
           </button>
         ))}
+        {/* La musique se pose sur la vue, elle aussi : choisir un album ne doit
+            pas faire quitter ce qu'on regarde. */}
         <button
           type="button"
           className={css.railReglages}
-          onClick={reglages.ouvrir}
+          onClick={() => calques.basculer('musique')}
+          title={t('nav.music')}
+          aria-label={t('nav.music')}
+          aria-expanded={calques.ouvert === 'musique'}
+        >
+          <IconeSysteme nom="musique" couleur="currentColor" className={css.railAjoutIcone} />
+        </button>
+
+        <button
+          type="button"
+          className={css.railReglages}
+          onClick={() => calques.basculer('reglages')}
           title={t('nav.settings')}
           aria-label={t('nav.settings')}
-          aria-expanded={reglages.ouvert}
+          aria-expanded={calques.ouvert === 'reglages'}
         >
           {/* Trois curseurs plutôt qu'une roue dentée : c'est de curseurs et
               d'interrupteurs qu'est faite la page qu'il ouvre. */}

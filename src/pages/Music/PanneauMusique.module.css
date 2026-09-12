@@ -1,0 +1,62 @@
+/* Lecteur posé sur la vue.
+
+   Même rang et même forme que le panneau des réglages (1200) : au-dessus de la
+   liste des jeux et de la fiche d'un jeu, sous les confirmations et les
+   notifications. Sans flou d'arrière-plan — il porterait sur toute la fenêtre,
+   au-dessus d'une scène qui change à chaque image. */
+.fond {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(4, 7, 12, 0.62);
+}
+
+.panneau {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: min(420px, calc(100vw - 24px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(10, 14, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.55);
+}
+
+.entete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.titre {
+  margin: 0;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  font-weight: 700;
+}
+
+.fermer {
+  flex-shrink: 0;
+  width: calc(28px * var(--dbg-icones, 1.25));
+  height: calc(28px * var(--dbg-icones, 1.25));
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: calc(8px * var(--dbg-arrondi, 1));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.fermer:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}

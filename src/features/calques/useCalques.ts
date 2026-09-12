@@ -1,9 +1,9 @@
 import { useContext } from 'react';
-import { PanneauReglagesContext } from './panneauReglagesContext';
+import { CalquesContext } from './calquesContext';
 
-/** Ouvre les réglages — doit être utilisé dans PanneauReglagesProvider. */
-export function usePanneauReglages() {
-  const ctx = useContext(PanneauReglagesContext);
-  if (!ctx) throw new Error('usePanneauReglages must be used within PanneauReglagesProvider');
+/** Ouvre et ferme les calques — doit être utilisé dans CalquesProvider. */
+export function useCalques() {
+  const ctx = useContext(CalquesContext);
+  if (!ctx) throw new Error('useCalques must be used within CalquesProvider');
   return ctx;
 }

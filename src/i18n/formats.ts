@@ -56,6 +56,38 @@ export function formaterTaille(octets: number, langue: string): string {
   return unite(langue, 'megabyte', 0).format(octets / MO);
 }
 
+/**
+ * Durée parlée : « 47 min », « 1 h 12 min ».
+ *
+ * Pour un total — la durée d'un dossier de musique, par exemple. « 72:14 » se
+ * lit comme une piste très longue avant de se lire comme une heure et douze
+ * minutes.
+ */
+export function formaterDuree(secondes: number, langue: string): string {
+  const total = Math.max(0, Math.round(secondes / 60));
+  const heures = Math.floor(total / 60);
+  const minutes = total % 60;
+
+  const enMinutes = uniteSimple(langue, 'minute');
+  if (heures === 0) return enMinutes.format(minutes);
+
+  const enHeures = uniteSimple(langue, 'hour');
+  return minutes === 0
+    ? enHeures.format(heures)
+    : `${enHeures.format(heures)} ${enMinutes.format(minutes)}`;
+}
+
+function uniteSimple(langue: string, u: 'hour' | 'minute'): Intl.NumberFormat {
+  return formateur(`${langue}|${u}`, () =>
+    new Intl.NumberFormat(langue, {
+      style: 'unit',
+      unit: u,
+      unitDisplay: 'short',
+      maximumFractionDigits: 0,
+    }),
+  );
+}
+
 /** Nombre à décimales fixes, avec le séparateur décimal de la langue. */
 export function formaterNombre(valeur: number, langue: string, decimales: number): string {
   return formateur(`${langue}|nombre|${decimales}`, () =>

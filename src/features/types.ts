@@ -38,8 +38,7 @@ export type AppSettings = {
    */
   showLibrary: boolean;
   showLaunchers: boolean;
-  showMusic: boolean;
 };
 
 /** Les pages qu'on peut rappeler dans la barre. */
-export type PageRappelable = 'showLibrary' | 'showLaunchers' | 'showMusic';
+export type PageRappelable = 'showLibrary' | 'showLaunchers';
