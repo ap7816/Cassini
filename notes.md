@@ -142,7 +142,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Lecteur: pochette enrichie visible dans le bandeau du bas                | ✅ Done    |
 | Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
-| Tests unitaires (déduplication, tri, scans)                              | 🟡 Partiel |
+| Tests unitaires (déduplication, tri, scans)                              | ✅ Done    |
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
@@ -312,4 +312,10 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **RAWG n'est plus la source** : les jaquettes viennent du CDN Steam et de SteamGridDB (`coverArtService.ts`, qui garde son ancien nom de fichier par endroits). Le TTL, lui, n'existe toujours pas : le cache stocke `{ clé: url }` sans date. Le rendre `{ clé: { url, fetchedAt } }` et ignorer les entrées de plus de trente jours à la lecture ; ajouter un bouton « vider le cache expiré » à côté du bouton « tout vider ».
 
 - **Tests unitaires**
-  **À moitié fait.** Côté Rust, neuf tests tournent sous `cargo test` (scans Hytale, catalogue des launchers, chemins). Côté JavaScript, **rien dans le dépôt** : les vérifications écrites jusqu'ici sont des scripts jetables, hors du projet, qui importent les vrais modules avec un DOM simulé — elles ne protègent donc personne d'une régression future. Mettre en place Vitest et y porter les plus utiles : `deduplicateGames`, `appliquerScan`, `composerFiche` et `placePopup`.
+  **Fait.** Neuf tests Rust sous `cargo test` (scans Hytale, catalogue des launchers, chemins) et trente-cinq tests JavaScript sous `npm test`, dans quatre fichiers posés à côté de ce qu'ils vérifient. Vitest en environnement Node, avec sa propre configuration : celle de l'application est asynchrone et porte le serveur de développement, mêler les deux rendait les tests tributaires de réglages qui changent pour d'autres raisons.
+
+  Ce qui est couvert est ce dont une régression ne se voit pas : `deduplicateGames` et `mergeById` (priorité entre plateformes, remontée du favori et de la dernière partie depuis la copie écartée), `appliquerScan` (un scan ne perd jamais rien, et un scanner ne touche qu'à sa propre plateforme — sans quoi scanner Steam marquerait désinstallés tous les jeux Epic), `placePopup` (la carte ne sort jamais du cadre, l'ergot reste dans la carte) et `composerFiche` (le couplage entre largeur de fiche et décalage de la planète, que toute retouche isolée casse sans bruit).
+
+  Deux enseignements de l'écriture. `normalizeName` **supprime** le trait d'union au lieu de le remplacer par une espace : « Spider-Man » devient `spiderman` et ne rejoint pas « Spider Man ». Le cas est rare — les deux stores écrivent le plus souvent le titre de la même façon — et le comportement est consigné par un test plutôt que corrigé en passant. Et la fiche tient centrée jusqu'à près de 848 px de bande : en dessous seulement, la planète commence à être poussée sur le côté.
+
+  **Reste à faire** : les composants React ne sont pas couverts (il faudrait jsdom, qu'on ajoutera le jour où un composant le justifiera plutôt que de charger un navigateur simulé pour des fonctions qui calculent).
