@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { nomPlateforme } from '../../i18n/plateformes';
 import logo from '../../assets/logo.svg';
 import { useCalques } from '../../features/calques/useCalques';
+import { AideRaccourcis } from './components/AideRaccourcis';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -113,6 +114,9 @@ export function SolarSystemPage() {
   // resynchroniser deux états — la copie détenue par la scène 3D, elle, est
   // volontairement figée (voir useSceneGames).
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [aideOuverte, setAideOuverte] = useState(false);
+  /** Champ de recherche de la liste, que `Ctrl+F` ramène sous la main. */
+  const rechercheRef = useRef<HTMLInputElement>(null);
   // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
   const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
   // `null` tant que rien n'a été choisi : la feuille de style garde alors sa
@@ -438,6 +442,81 @@ export function SolarSystemPage() {
     focusPlanetRef.current(game.id);
   }
 
+  /**
+   * Raccourcis de l'application, en une seule écoute.
+   *
+   * Répartis entre plusieurs composants, ils finissaient par se marcher dessus
+   * — et personne ne pouvait dire lesquels existaient. Ceux de la scène
+   * (déplacement) restent à la scène : ils se règlent, et ils ne valent que
+   * lorsqu'elle a le focus.
+   *
+   * Rien ne se déclenche pendant qu'on tape : un champ de saisie ou une zone
+   * éditable garde la main, sans quoi écrire « favori » dans la recherche
+   * basculerait huit fois le favori du jeu choisi.
+   */
+  const raccourcisRef = useRef({ selectedGame, systemes: [] as string[] });
+  useEffect(() => {
+    raccourcisRef.current.selectedGame = selectedGame;
+    raccourcisRef.current.systemes = [
+      ...platforms.map((p) => p.name),
+      ...systemesPerso.map((sys) => cleSysteme(sys)),
+    ];
+  }, [selectedGame, platforms, systemesPerso]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const cible = e.target as HTMLElement | null;
+      const saisie = !!cible && (
+        cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA' || cible.isContentEditable
+      );
+
+      // Chercher : la seule qui doit fonctionner **depuis** un champ, pour
+      // revenir à la recherche quand on s'est égaré ailleurs.
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        rechercheRef.current?.focus();
+        rechercheRef.current?.select();
+        return;
+      }
+
+      if (saisie || e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // `?` se tape avec Maj sur un clavier français comme anglais : on lit le
+      // caractère produit, non la touche physique.
+      if (e.key === '?') {
+        e.preventDefault();
+        setAideOuverte((v) => !v);
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        const jeu = raccourcisRef.current.selectedGame;
+        if (!jeu) return;
+        e.preventDefault();
+        handleGameUpdate({ ...jeu, favorite: !jeu.favorite });
+        return;
+      }
+
+      // Les chiffres suivent l'ordre de la barre : launchers, puis systèmes
+      // personnalisés. `e.code` plutôt que `e.key` pour que la rangée du haut
+      // marche aussi sur un clavier AZERTY, où elle produit des symboles.
+      const rang = /^Digit([1-9])$/.exec(e.code);
+      if (rang) {
+        const cle = raccourcisRef.current.systemes[Number(rang[1]) - 1];
+        if (!cle) return;
+        e.preventDefault();
+        choisirSysteme(cle);
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // `choisirSysteme` et `handleGameUpdate` sont redéfinis à chaque rendu ;
+    // les données changeantes passent par la référence ci-dessus, l'écoute
+    // n'est donc posée qu'une fois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleGameUpdate(updated: Game) {
     setGames((prev) => {
       const next = prev.map((g) => (g.id === updated.id ? updated : g));
@@ -514,7 +593,10 @@ export function SolarSystemPage() {
         onLargeurListe={(v, e) => poserLargeur('liste', v, e)}
         onLargeurRail={(v, e) => poserLargeur('rail', v, e)}
         onLargeursParDefaut={largeurParDefaut}
+        rechercheRef={rechercheRef}
       />
+
+      {aideOuverte && <AideRaccourcis onFermer={() => setAideOuverte(false)} />}
 
       {(() => {
         const edite = editeur ? systemesPerso.find((x) => x.id === editeur) : undefined;

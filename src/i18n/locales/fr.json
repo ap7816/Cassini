@@ -493,5 +493,19 @@
     "cancel": "Annuler",
     "ok": "OK",
     "confirm": "Confirmer"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "groupView": "Système solaire",
+    "groupPanels": "Panneaux",
+    "groupPlayer": "Lecteur",
+    "system": "Aller au système correspondant",
+    "search": "Chercher un jeu",
+    "favorite": "Favori du jeu choisi",
+    "escape": "Fermer ce qui est ouvert",
+    "music": "Musique",
+    "help": "Cette liste",
+    "playPause": "Lecture ou pause",
+    "flyNote": "Les touches de déplacement se règlent dans « Commandes », en bas à droite de la vue."
   }
 }

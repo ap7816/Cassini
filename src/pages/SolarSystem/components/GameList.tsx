@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Game } from '../../../features/types';
@@ -121,6 +121,8 @@ type Props = {
   onLargeurListe: (v: number, enregistrer: boolean) => void;
   onLargeurRail: (v: number, enregistrer: boolean) => void;
   onLargeursParDefaut: (colonne: Colonne) => void;
+  /** Champ de recherche, que `Ctrl+F` ramène sous la main depuis la page. */
+  rechercheRef?: RefObject<HTMLInputElement | null>;
 };
 
 /** Petit bouton porté par une ligne, révélé au survol. */
@@ -153,6 +155,7 @@ export function GameList({
   titre, teinte, systemes, onCreerSysteme, onModifierSysteme,
   onAjouterAuSysteme, onRetirerDuSysteme,
   largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
+  rechercheRef,
 }: Props) {
   const { t, i18n } = useTranslation();
   const calques = useCalques();
@@ -266,6 +269,7 @@ export function GameList({
         )}
 
         <input
+          ref={rechercheRef}
           className={css.search}
           placeholder={t('nav.searchPlaceholder')}
           aria-label={t('nav.searchLabel')}

@@ -128,7 +128,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Support Riot Games                                                       | ✅ Done    |
 | Support Rockstar Games Launcher                                          | ✅ Done    |
 | Support Xbox / Microsoft Store (Game Pass)                               | ❌ À faire |
-| Raccourcis clavier                                                       | 🟡 Partiel |
+| Raccourcis clavier                                                       | ✅ Done    |
 | Vue liste (alternative à la grille)                                      | ❌ À faire |
 | Notes par jeu                                                            | ❌ À faire |
 | Scan en arrière-plan automatique                                         | ✅ Done    |
@@ -236,7 +236,13 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Côté Rust : les jeux Xbox sont dans `C:\XboxGames\` ou dans les packages UWP (`Get-AppxPackage` PowerShell). La détection est complexe car Microsoft ne fournit pas de manifest standard. Piste : lire `C:\Program Files\WindowsApps\` (nécessite des droits admin) ou utiliser la base de registre `HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\`. `launchUrl` : `ms-xbl-{titleId}://` ou `shell:AppsFolder\{packageFamilyName}!App`.
 
 - **Raccourcis clavier**
-  **Largement fait.** Le système solaire a son déplacement au clavier (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`). `Ctrl+,` ouvre les réglages, `Ctrl+M` la musique, `Échap` ferme le calque ouvert, `Espace` lit ou met en pause quand le lecteur est là — en capture et propagation coupée, sans quoi la même touche ferait décoller la caméra derrière le calque. Les largeurs de colonne se règlent aux flèches, les courses du lecteur aussi. **Reste à faire** : `F` pour le favori survolé, `Ctrl+F` pour la recherche, `1-5` pour la navigation, et une modale d'aide sur `?`.
+  **Fait.** Le déplacement dans la scène reste à la scène (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`) : il se règle, et il ne vaut que lorsque la vue a le focus. Tout le reste passe par une écoute unique, dans `SolarSystemPage` — répartis entre plusieurs composants, les raccourcis finissaient par se marcher dessus, et personne ne pouvait dire lesquels existaient.
+
+  `1` à `9` mènent au système correspondant de la barre, launchers puis systèmes personnalisés — et non plus « 1-5 pour la navigation », qui n'avait plus d'objet depuis que la barre latérale a disparu. `Ctrl+F` ramène la recherche sous la main, `F` bascule le favori du jeu choisi, `?` ouvre la liste des raccourcis, `Échap` ferme ce qui est ouvert. `Ctrl+,` et `Ctrl+M` restent portés par les calques, `Espace` par le lecteur.
+
+  Deux précautions. Rien ne se déclenche pendant qu'on tape : un champ de saisie ou une zone éditable garde la main, sans quoi écrire « favori » dans la recherche basculerait huit fois le favori du jeu choisi — seul `Ctrl+F` traverse, pour revenir à la recherche depuis n'importe où. Et les chiffres sont lus par `e.code` et non `e.key` : sur un clavier AZERTY la rangée du haut produit des symboles.
+
+  `AideRaccourcis` est la seule page où ils sont tous. Les touches de déplacement n'y sont pas recopiées — elles se règlent, et une seconde source de vérité finit toujours par mentir ; la liste renvoie au panneau « Commandes », qui les affiche.
 
 - **Vue liste (jeux)**
   Ajouter `viewMode: 'grid' | 'list'` dans les params URL de `LibraryPage`. En mode liste : chaque jeu = une ligne compacte avec miniature, titre, plateforme, dernière session et bouton Jouer. Le composant `GameCard` actuel reste pour la grille ; créer un `GameRow` pour la liste. Toggle via icône dans la toolbar à côté du tri.

@@ -493,5 +493,19 @@
     "cancel": "Cancel",
     "ok": "OK",
     "confirm": "Confirm"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "groupView": "Solar system",
+    "groupPanels": "Panels",
+    "groupPlayer": "Player",
+    "system": "Go to that system",
+    "search": "Search for a game",
+    "favorite": "Favourite the selected game",
+    "escape": "Close whatever is open",
+    "music": "Music",
+    "help": "This list",
+    "playPause": "Play or pause",
+    "flyNote": "Movement keys are set in “Controls”, at the bottom right of the view."
   }
 }
