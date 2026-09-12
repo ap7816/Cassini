@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { nomPlateforme } from '../../i18n/plateformes';
+import logo from '../../assets/logo.svg';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -449,6 +450,14 @@ export function SolarSystemPage() {
       {/* La page n'avait aucun titre : un lecteur d'écran ne pouvait pas la
           nommer. Visible pour lui seul, la barre d'en-tête l'affiche déjà. */}
       <h1 className="sr-only">{t('nav.solarSystem')}</h1>
+
+      {/* Marque de l'application, dans le coin haut gauche de la scène — là où
+          le panneau de navigation la portait. Décorative : le nom est déjà
+          annoncé par le titre ci-dessus, et rien ne se clique ici. */}
+      <div className={css.marque} aria-hidden="true">
+        <img src={logo} className={css.marqueLogo} alt="" draggable={false} />
+        <span className={css.marqueNom}>{t('nav.brandName')}</span>
+      </div>
 
       {/* La scène et ses étiquettes sont écartées de l'arbre d'accessibilité :
           un canvas ne s'explore pas, et la liste de droite en donne l'équivalent

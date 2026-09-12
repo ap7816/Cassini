@@ -5,6 +5,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  /* Le contrôle passe sous le libellé quand la place manque. Dans le panneau,
+     large de 460 px, la rangée de la clé d'API débordait par la droite et son
+     bouton d'enregistrement se retrouvait coupé. */
+  flex-wrap: wrap;
 }
 
 /* Séparateur porté par le CSS plutôt que par des éléments <div> explicites.
@@ -17,16 +21,20 @@
    deux lignes voisines et le trait disparaîtrait. */
 .row ~ .row {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 11px;
+  padding-top: 11px;
 }
 
+/* Les réglages héritaient de la taille de texte du document — 16 px, taillés
+   pour une page pleine largeur, trop gros dans un panneau. Ils suivent
+   désormais la taille de texte de l'application, comme le reste. */
 .label {
   font-weight: 700;
+  font-size: calc(13px * var(--ui-font-scale, 1));
 }
 
 .hint {
   opacity: 0.75;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 3px;
+  font-size: calc(11px * var(--ui-font-scale, 1));
 }

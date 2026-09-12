@@ -28,4 +28,18 @@ export type AppSettings = {
   autostart: boolean;
   runInBackground: boolean;
   musicParticles: boolean;
+  /**
+   * Pages encore atteignables depuis la barre des launchers.
+   *
+   * Le système solaire absorbe peu à peu ce que ces pages faisaient — la
+   * galaxie est la bibliothèque, la barre est la liste des launchers. Leurs
+   * entrées sont donc masquées, et ces réglages les rappellent le temps que
+   * tout ait trouvé sa place dans la vue.
+   */
+  showLibrary: boolean;
+  showLaunchers: boolean;
+  showMusic: boolean;
 };
+
+/** Les pages qu'on peut rappeler dans la barre. */
+export type PageRappelable = 'showLibrary' | 'showLaunchers' | 'showMusic';

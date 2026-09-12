@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { Game } from '../../../features/types';
 import {
   fetchCoverArt,
@@ -10,6 +11,8 @@ import { PLATFORM_CSS } from '../constants';
 import { useDiskSpace } from '../../../features/system/useDiskSpace';
 import { formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
+import { usePanneauReglages } from '../../../features/settings/context/usePanneauReglages';
+import { useAppSettings } from '../../../features/settings/context/useAppSettings';
 import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
 import { PoigneeLargeur } from './PoigneeLargeur';
@@ -127,6 +130,19 @@ type ActionLigne = { symbole: string; libelle: string; faire: (game: Game) => vo
 const MAX_AILLEURS = 40;
 
 /**
+ * Pages rappelables dans la barre, dans l'ordre où elles s'y rangent.
+ *
+ * Leurs icônes sont celles que l'application dessine déjà pour les systèmes
+ * personnalisés : une manette pour la bibliothèque de jeux, une fusée pour les
+ * launchers, une note pour la musique.
+ */
+const PAGES_RAPPELABLES = [
+  { to: '/library', reglage: 'showLibrary', cle: 'nav.library', icone: 'manette' },
+  { to: '/launchers', reglage: 'showLaunchers', cle: 'nav.launchers', icone: 'fusee' },
+  { to: '/music', reglage: 'showMusic', cle: 'nav.music', icone: 'musique' },
+] as const;
+
+/**
  * Liste des jeux du launcher courant, à droite de la scène.
  *
  * Cliquer une entrée produit exactement le même effet qu'un clic sur la
@@ -140,6 +156,10 @@ export function GameList({
   largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const reglages = usePanneauReglages();
+  const { settings } = useAppSettings();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [query, setQuery] = useState('');
   const color = teinte;
   const perso = estSystemePerso(platform);
@@ -372,6 +392,53 @@ export function GameList({
             <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
           </svg>
         </button>
+
+        {/* Ce qui règle l'application, poussé en bas : les systèmes occupent le
+            haut de la barre, le reste vit sous un trait. */}
+        <span className={css.railEspace} aria-hidden="true" />
+        <span className={css.railSeparateur} aria-hidden="true" />
+
+        {/* Pages que le système solaire n'a pas encore absorbées. Masquées par
+            défaut, rappelées une à une depuis les réglages. */}
+        {PAGES_RAPPELABLES.filter((p) => settings[p.reglage]).map((p) => (
+          <button
+            key={p.to}
+            type="button"
+            className={css.railReglages}
+            onClick={() => navigate(p.to)}
+            title={t(p.cle)}
+            aria-label={t(p.cle)}
+            aria-current={location.pathname === p.to}
+          >
+            <IconeSysteme nom={p.icone} couleur="currentColor" className={css.railAjoutIcone} />
+          </button>
+        ))}
+        <button
+          type="button"
+          className={css.railReglages}
+          onClick={reglages.ouvrir}
+          title={t('nav.settings')}
+          aria-label={t('nav.settings')}
+          aria-expanded={reglages.ouvert}
+        >
+          {/* Trois curseurs plutôt qu'une roue dentée : c'est de curseurs et
+              d'interrupteurs qu'est faite la page qu'il ouvre. */}
+          <svg viewBox="0 0 24 24" className={css.railAjoutIcone} aria-hidden="true">
+            <path
+              d="M4 7h8M18 7h2M4 12h2M12 12h8M4 17h6M16 17h4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <circle cx="15" cy="7" r="2.2" fill="currentColor" />
+            <circle cx="9" cy="12" r="2.2" fill="currentColor" />
+            <circle cx="13" cy="17" r="2.2" fill="currentColor" />
+          </svg>
+        </button>
+
+        {/* La version vivait en pied du panneau de navigation. */}
+        <span className={css.railVersion}>v{__APP_VERSION__}</span>
       </nav>
     </>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import type { AppSettings } from '../../types';
+import type { AppSettings, PageRappelable } from '../../types';
 import { loadSettings, saveSettings, migrateAndCheckKey } from '../services/settingsStorage';
 import { AppSettingsContext } from './appSettingsContext';
 
@@ -67,6 +67,11 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, musicParticles: enabled }));
   }
 
+  // Rappelle ou masque l'entrée d'une page dans la barre des launchers
+  function setPageVisible(page: PageRappelable, visible: boolean) {
+    setSettings((prev) => ({ ...prev, [page]: visible }));
+  }
+
   // Mémoïse l'objet de contexte pour éviter des re-rendus inutiles chez tous les consommateurs
   const value = useMemo(
     () => ({
@@ -79,6 +84,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setAutostart,
       setRunInBackground,
       setMusicParticles,
+      setPageVisible,
     }),
     [settings],
   );

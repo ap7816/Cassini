@@ -26,6 +26,38 @@
   --side-w: calc(var(--list-w) + var(--rail-w));
 }
 
+/* Marque de l'application, posée dans le coin haut gauche de la scène.
+
+   Au-dessus de la canvas (0) mais sous la liste (8) et la fiche d'un jeu (15) :
+   elle ne doit jamais recouvrir ce qu'on consulte. Sans événements de pointeur,
+   elle ne vole aucun clic à la scène. */
+.marque {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.8;
+  pointer-events: none;
+  user-select: none;
+}
+
+.marqueLogo {
+  height: calc(24px * var(--dbg-icones, 1.25));
+  width: auto;
+  display: block;
+}
+
+.marqueNom {
+  font: 700 15px/1 Inter, sans-serif;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  font-family: var(--ui-font-family, Inter), sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+}
+
 /* Conteneur de la canvas Three.js.
 
    Il occupe toute la page, y compris sous la colonne de droite qui le

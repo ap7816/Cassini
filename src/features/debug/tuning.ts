@@ -28,9 +28,6 @@ export type Reglages = {
   uiFlou: number;
 
   // ── Navigation ─────────────────────────────────────────────────────────
-  navLargeur: number;
-  navLogo: number;
-  navEspacement: number;
 
   // ── En-tête ────────────────────────────────────────────────────────────
   enteteOpacite: number;
@@ -135,9 +132,6 @@ export const REGLAGES_DEFAUT: Readonly<Reglages> = Object.freeze({
   uiArrondi: 1,
   uiFlou: 1,
 
-  navLargeur: 220,
-  navLogo: 72,
-  navEspacement: 9,
 
   enteteOpacite: 0.6,
   rechercheLargeur: 480,
@@ -146,7 +140,9 @@ export const REGLAGES_DEFAUT: Readonly<Reglages> = Object.freeze({
   // Montée de 0,34 : sous une planète claire qui défile, le texte de la liste
   // tombait à 2,4 de contraste. À 0,80, le pire cas reste au-dessus du seuil.
   opaciteListe: 0.8,
-  listeVignette: 1,
+  // Deux fois et demie le dessin d'origine : à ×1, la vignette d'un jeu faisait
+  // 34 px de large et ne montrait rien de sa jaquette.
+  listeVignette: 2.5,
   listeEspacement: 1,
 
   // Un quart plus grandes que le dessin d'origine : à ×1, les icônes des

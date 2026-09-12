@@ -135,8 +135,8 @@
 .thumb,
 .thumbFallback {
   flex-shrink: 0;
-  width: calc(34px * var(--dbg-vignette, 1) * var(--img-e, 1));
-  height: calc(16px * var(--dbg-vignette, 1) * var(--img-e, 1));
+  width: calc(34px * var(--dbg-vignette, 2.5) * var(--img-e, 1));
+  height: calc(16px * var(--dbg-vignette, 2.5) * var(--img-e, 1));
   border-radius: 3px;
   object-fit: cover;
   display: block;
@@ -391,6 +391,63 @@
   height: 1px;
   margin: 2px 0;
   background: rgba(255, 255, 255, 0.14);
+}
+
+/* Pousse ce qui suit tout en bas de la barre, quand les systèmes ne la
+   remplissent pas. Avec assez de launchers, il se réduit à rien et le groupe
+   du bas suit simplement les autres. */
+.railEspace {
+  flex: 1;
+  min-height: 8px;
+}
+
+/* Règle l'application, et non un système : d'où sa place sous le trait. */
+.railReglages {
+  flex-shrink: 0;
+  width: calc(28px * var(--dbg-icones, 1.25) * var(--img-e, 1));
+  height: calc(28px * var(--dbg-icones, 1.25) * var(--img-e, 1));
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: calc(7px * var(--dbg-arrondi, 1));
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: color 130ms, border-color 130ms, background 130ms;
+}
+
+.railReglages:hover,
+.railReglages[aria-expanded='true'] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.railReglages:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 1px;
+}
+
+.railReglages[aria-current='true'] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railReglages { transition: none; }
+}
+
+/* Numéro de version, sous le bouton des réglages : il vivait en pied du
+   panneau de navigation, qui n'existe plus. Discret — on le cherche quand on
+   en a besoin, on ne le lit pas tous les jours. */
+.railVersion {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font: 500 9px/1 Inter, sans-serif;
+  font-size: calc(9px * var(--ui-font-scale, 1));
+  font-family: var(--ui-font-family, Inter), sans-serif;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
 }
 
 /* Bouton de création, en pointillés : une place qui attend un système. */

@@ -11,6 +11,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   autostart: false,
   runInBackground: false,
   musicParticles: true,
+  // Masquées : la galaxie est la bibliothèque et la barre est la liste des
+  // launchers. Ces réglages rappellent les pages une à une.
+  showLibrary: false,
+  showLaunchers: false,
+  showMusic: false,
 };
 
 // Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
@@ -51,6 +56,11 @@ export function loadSettings(): AppSettings {
       autostart,
       runInBackground,
       musicParticles,
+      // Absentes d'une entrée écrite avant ces réglages : masquées, comme pour
+      // une installation neuve.
+      showLibrary: parsed.showLibrary === true,
+      showLaunchers: parsed.showLaunchers === true,
+      showMusic: parsed.showMusic === true,
     };
   } catch {
     return DEFAULT_SETTINGS;

@@ -19,9 +19,9 @@
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .actions {
@@ -36,7 +36,8 @@
 }
 
 .primary {
-  padding: 10px 12px;
+  padding: 7px 11px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--accent, #e5e7eb) 35%, transparent);
   background: color-mix(in srgb, var(--accent, #e5e7eb) 18%, transparent);
@@ -50,7 +51,8 @@
 }
 
 .button {
-  padding: 10px 12px;
+  padding: 7px 11px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
@@ -216,7 +218,7 @@
 /* Integrations */
 .sectionTitle {
   font-weight: 700;
-  font-size: 14px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   opacity: 0.6;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -226,17 +228,21 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  min-width: 280px;
+  /* Elle prend la largeur disponible et se replie sous le libellé quand il n'y
+     en a plus, au lieu d'imposer 280 px que le panneau n'a pas toujours. */
+  flex: 1 1 240px;
+  min-width: 0;
 }
 
 .apiKeyInput {
   flex: 1;
-  padding: 8px 12px;
+  min-width: 0;
+  padding: 7px 10px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
-  font-size: 13px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   box-shadow: none;
 }
 
@@ -319,12 +325,12 @@
 
 .tab {
   position: relative;
-  padding: 8px 20px;
+  padding: 7px 14px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
   border: none;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 14px;
   font-weight: 500;
   opacity: 0.45;
   transition: opacity 0.15s;

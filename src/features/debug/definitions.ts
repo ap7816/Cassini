@@ -10,7 +10,6 @@ import type { Reglages } from './tuning';
 
 export const GROUPES = [
   'Interface',
-  'Navigation',
   'En-tête',
   'Liste des jeux',
   'Barre des launchers',
@@ -89,21 +88,6 @@ export const DEFINITIONS: readonly Definition[] = [
     cle: 'uiFlou', libelle: 'Flou derrière les panneaux', groupe: 'Interface', type: 'nombre',
     min: 0, max: 3, pas: 0.05, unite: '×', css: { variable: '--dbg-flou' }, fichier: MODULES,
     aide: 'En-tête, liste et barre des launchers.',
-  },
-
-  // ── Navigation ─────────────────────────────────────────────────────────
-  {
-    cle: 'navLargeur', libelle: 'Largeur', groupe: 'Navigation', type: 'nombre',
-    min: 160, max: 360, pas: 2, unite: 'px', css: { variable: '--dbg-nav-l', suffixe: 'px' }, fichier: LAYOUT,
-    aide: 'La vue 3D se recadre d’elle-même.',
-  },
-  {
-    cle: 'navLogo', libelle: 'Taille du logo', groupe: 'Navigation', type: 'nombre',
-    min: 24, max: 160, pas: 2, unite: 'px', css: { variable: '--dbg-logo', suffixe: 'px' }, fichier: LAYOUT,
-  },
-  {
-    cle: 'navEspacement', libelle: 'Hauteur des entrées', groupe: 'Navigation', type: 'nombre',
-    min: 2, max: 24, pas: 1, unite: 'px', css: { variable: '--dbg-nav-pad', suffixe: 'px' }, fichier: LAYOUT,
   },
 
   // ── En-tête ────────────────────────────────────────────────────────────

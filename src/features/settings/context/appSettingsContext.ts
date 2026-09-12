@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { AppSettings } from '../../types';
+import type { AppSettings, PageRappelable } from '../../types';
 
 // Forme du contexte exposé par AppSettingsProvider à tous les composants enfants
 export type AppSettingsContextValue = {
@@ -12,6 +12,8 @@ export type AppSettingsContextValue = {
   setAutostart: (enabled: boolean) => void;
   setRunInBackground: (enabled: boolean) => void;
   setMusicParticles: (enabled: boolean) => void;
+  /** Affiche ou masque l'entrée d'une page dans la barre des launchers. */
+  setPageVisible: (page: PageRappelable, visible: boolean) => void;
 };
 
 // Contexte React pour les paramètres globaux de l'application (null tant que le provider n'est pas monté)

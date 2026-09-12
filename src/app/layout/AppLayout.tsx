@@ -1,7 +1,6 @@
-import { NavLink, Outlet, useSearchParams, useLocation } from 'react-router-dom';
+import { Outlet, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { lazy, Suspense, useRef, useEffect, useState } from 'react';
-import logo from '../../assets/logo.svg';
+import { lazy, Suspense, useRef, useEffect } from 'react';
 import css from './AppLayout.module.css';
 import { useAppLayout } from './useAppLayout';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
@@ -12,8 +11,6 @@ import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
-import { SolarButton } from './SolarButton';
-import { readNavCollapsed, writeNavCollapsed } from '../../services/storage';
 import { scannerTousLesLaunchers } from '../../features/library/services/libraryScan';
 
 /**
@@ -39,8 +36,9 @@ export function AppLayout() {
     { to: '/settings', label: t('nav.settings') },
   ];
 
-  const { isMobile, sidebarOpen, pageTitle, openSidebar, closeSidebar } = useAppLayout(navItems, 900);
+  const { pageTitle } = useAppLayout(navItems);
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get('q') ?? '';
 
@@ -51,28 +49,6 @@ export function AppLayout() {
     else next.set('q', nextValue);
     setSearchParams(next, { replace: true });
   }
-
-  // Repli du panneau de navigation, sur écran large uniquement : en dessous de
-  // 900 px il est déjà escamotable par le bouton hamburger, et deux mécanismes
-  // concurrents pour le même panneau se contrediraient.
-  //
-  // Le choix est retenu d'une session à l'autre : c'est une préférence de
-  // place à l'écran, pas un état de navigation.
-  const [navReplie, setNavReplie] = useState(readNavCollapsed);
-
-  function basculerNav() {
-    setNavReplie((v) => {
-      writeNavCollapsed(!v);
-      return !v;
-    });
-  }
-
-  const sidebarClassName = [
-    css.sidebar,
-    isMobile ? css.sidebarMobile : css.sidebarDesktop,
-    isMobile ? (sidebarOpen ? css.sidebarMobileOpen : css.sidebarMobileClosed) : '',
-    !isMobile && navReplie ? css.sidebarCollapsed : '',
-  ].filter(Boolean).join(' ');
 
   const { settings } = useAppSettings();
 
@@ -214,85 +190,43 @@ export function AppLayout() {
 
   return (
     <div className={css.shell} style={bgStyle}>
-      {isMobile && sidebarOpen && (
-        <div className={css.backdrop} onClick={closeSidebar} aria-hidden="true" />
-      )}
-
-      {!isMobile && (
-        <button
-          type="button"
-          className={css.navToggle}
-          onClick={basculerNav}
-          aria-expanded={!navReplie}
-          title={navReplie ? t('nav.expandMenu') : t('nav.collapseMenu')}
-          aria-label={navReplie ? t('nav.expandMenu') : t('nav.collapseMenu')}
-        >
-          <svg
-            className={[css.navToggleIcon, navReplie ? css.navToggleIconFlipped : '']
-              .filter(Boolean).join(' ')}
-            width="11" height="18" viewBox="0 0 11 18" fill="none" aria-hidden="true"
-          >
-            <path
-              d="M8.5 2L2 9l6.5 7"
-              stroke="currentColor" strokeWidth="2.2"
-              strokeLinecap="round" strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      )}
-
-      <aside className={sidebarClassName} aria-hidden={!isMobile && navReplie}>
-        <div className={css.brand}>
-          <img src={logo} alt={t('nav.logoAlt')} className={css.logo} />
-          <div className={css.brandSubtitle}>{t('nav.brandName')}</div>
-        </div>
-
-        <nav className={css.nav}>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                isActive ? `${css.navItem} ${css.navItemActive}` : css.navItem
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <SolarButton active={location.pathname === '/solar'} />
-
-        <div className={css.sidebarFooter}>
-          <div className={css.muted}>v{__APP_VERSION__}</div>
-        </div>
-      </aside>
-
       <main className={css.main}>
-        <header className={css.header}>
-          <div className={css.headerLeft}>
-            {isMobile && (
+        {/* Pas d'en-tête sur le système solaire : il n'y portait qu'un titre
+            que la page dit déjà, et une recherche que la liste des jeux fait
+            mieux. La vue récupère la hauteur.
+
+            Ailleurs, il porte le retour : la barre des launchers, qui ramène
+            partout ailleurs, vit dans le système solaire et n'existe pas ici. */}
+        {location.pathname !== '/solar' && (
+          <header className={css.header}>
+            <div className={css.headerLeft}>
               <button
                 type="button"
-                className={css.burger}
-                onClick={openSidebar}
-                aria-label={t('nav.openMenu')}
-                title={t('nav.openMenu')}
+                className={css.retour}
+                onClick={() => navigate('/solar')}
+                aria-label={t('nav.solarSystem')}
+                title={t('nav.solarSystem')}
               >
-                <span className={css.burgerIcon} aria-hidden="true">☰</span>
+                <svg width="11" height="18" viewBox="0 0 11 18" fill="none" aria-hidden="true">
+                  <path
+                    d="M8.5 2L2 9l6.5 7"
+                    stroke="currentColor" strokeWidth="2.2"
+                    strokeLinecap="round" strokeLinejoin="round"
+                  />
+                </svg>
               </button>
-            )}
-            <div className={css.headerTitle}>{pageTitle}</div>
-          </div>
+              <div className={css.headerTitle}>{pageTitle}</div>
+            </div>
 
-          <input
-            className={css.search}
-            placeholder={t('nav.searchPlaceholder')}
-            value={q}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            aria-label={t('nav.searchLabel')}
-          />
-        </header>
+            <input
+              className={css.search}
+              placeholder={t('nav.searchPlaceholder')}
+              value={q}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              aria-label={t('nav.searchLabel')}
+            />
+          </header>
+        )}
 
         <section className={css.content}>
           {/* Clé = pathname seul → animation uniquement au changement de route, pas sur même page */}
