@@ -160,7 +160,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Quatre familles d'anneaux planétaires                                    | ✅ Done    |
 | Menu de débogage, absent des versions publiées                           | ✅ Done    |
 | Support HoYoverse (Genshin, Honkai, Zenless)                             | ❌ À faire |
-| Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | 🟡 Partiel |
+| Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | ❌ À faire |
 | Accessibilité : langue, contrastes, focus, mouvement réduit              | ✅ Done    |
 | Accessibilité : réglages de confort dans les Paramètres                  | ❌ À faire |
 
@@ -193,7 +193,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   La vue s'ouvre aujourd'hui sur un système décidé par le code. Le rendre configurable — y compris sur un système personnalisé, une fois ceux-ci possibles.
 
 - **Ajouter ses propres jeux et programmes**
-  **Le plus gros est déjà là, mais débranché.** `createGameFromPath` fabrique un `Game` depuis un chemin d'exécutable ou de raccourci — titre déduit du nom de fichier, identifiant stable dérivé du chemin, plateforme `'Other'` — et `addGameFromPicker` dans `useLibraryGames` ouvre le sélecteur de fichier et l'ajoute à la bibliothèque. **Aucun composant ne l'appelle** : il ne manque que le bouton, et de quoi choisir titre et icône. Le risque que je redoutais n'existe pas : `appliquerScan` ne touche qu'aux jeux de la plateforme scannée, et `'Other'` n'est le domaine d'aucun scanner — une entrée manuelle ne sera donc jamais marquée désinstallée.
+  **Rien n'est accessible, mais le code est écrit.** Le tableau le porte en « à faire » et non en « partiel » : il décrit ce qu'on peut faire, pas ce qui dort dans le dépôt. `createGameFromPath` fabrique un `Game` depuis un chemin d'exécutable ou de raccourci — titre déduit du nom de fichier, identifiant stable dérivé du chemin, plateforme `'Other'` — et `addGameFromPicker` dans `useLibraryGames` ouvre le sélecteur de fichier et l'ajoute à la bibliothèque. **Aucun composant ne l'appelle** : il ne manque que le bouton, et de quoi choisir titre et icône. Le risque que je redoutais n'existe pas : `appliquerScan` ne touche qu'aux jeux de la plateforme scannée, et `'Other'` n'est le domaine d'aucun scanner — une entrée manuelle ne sera donc jamais marquée désinstallée.
 
 - **Support HoYoverse (Genshin, Honkai, Zenless)**
   Un scanner de plus dans `src-tauri/src/`, sur le modèle des six autres, ajouté au `CATALOGUE` de `launcher_scan.rs` et aux `SCANNERS` de `libraryScan.ts`. HoYoPlay écrit ses jeux dans la base de registre et tient un fichier de configuration par jeu.
