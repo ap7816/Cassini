@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { nomPlateforme } from '../../i18n/plateformes';
 import logo from '../../assets/logo.svg';
+import { usePanneauReglages } from '../../features/settings/context/usePanneauReglages';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -127,6 +128,15 @@ export function SolarSystemPage() {
   const sansRechargerRef = useRef<string | null>(null);
   // Dialogue ouvert : `systeme` vaut null pour une création.
   const [edition, setEdition] = useState<{ systeme: SystemePerso | null } | null>(null);
+
+  // La scène s'arrête de dessiner quand un calque la recouvre entièrement : les
+  // réglages, ou la fenêtre de création d'un système. Pas l'éditeur, qui sert
+  // justement à regarder la scène changer pendant qu'on la règle.
+  const reglages = usePanneauReglages();
+  const pauseScene = useRef(false);
+  useEffect(() => {
+    pauseScene.current = reglages.ouvert || edition !== null;
+  }, [reglages.ouvert, edition]);
   const { settings } = useAppSettings();
 
   // Plateformes présentes dans la bibliothèque, la plus fournie en premier
@@ -409,6 +419,7 @@ export function SolarSystemPage() {
     sideProbeRef,
     navProbeRef,
     fpsRef,
+    pauseRef: pauseScene,
     flyToRef: flyToSystemRef,
     onSysteme: handleSysteme,
     flySettingsRef,

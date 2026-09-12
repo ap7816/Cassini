@@ -5,12 +5,15 @@
    demande de confirmation venue d'un réglage doit rester lisible par-dessus
    lui. */
 
+/* Sans flou d'arrière-plan : il porterait sur toute la fenêtre, au-dessus d'une
+   scène 3D qui change à chaque image — le compositeur devrait tout reflouter
+   soixante fois par seconde. Un voile un peu plus dense fait le même travail
+   pour rien. */
 .fond {
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(4, 7, 12, 0.55);
-  backdrop-filter: blur(2px);
+  background: rgba(4, 7, 12, 0.62);
 }
 
 /* Adossé au bord droit : c'est de ce côté que vivent la liste et la barre des
@@ -97,6 +100,14 @@
   gap: 12px;
   /* De quoi ne pas coller la barre de défilement aux cartes. */
   padding-right: 2px;
+}
+
+/* Les cartes floutent ce qui est derrière elles : utile sur la page, où le fond
+   de l'application transparaît. Ici le panneau est déjà opaque — le flou ne
+   montrerait que lui, et chaque carte coûterait une passe de compositeur. */
+.corps > * {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .corps::-webkit-scrollbar {

@@ -19,6 +19,34 @@ export function PanneauReglagesProvider({ children }: { children: ReactNode }) {
   const [ouvert, setOuvert] = useState(false);
   const valeur = useMemo(() => ({ ouvert, ouvrir: () => setOuvert(true) }), [ouvert]);
 
+  // Le code des réglages n'est chargé qu'à la première ouverture, ce qui lui
+  // coûtait trois cents millisecondes d'attente avant d'apparaître. On le
+  // précharge dès que l'application n'a plus rien d'urgent — au repos plutôt
+  // qu'après un délai fixe : le démarrage a déjà fort à faire, entre le scan
+  // des launchers et le montage de la scène.
+  useEffect(() => {
+    let annule = false;
+    const precharger = () => {
+      if (!annule) void import('../../../pages/Settings/PanneauReglages');
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      // Au plus deux secondes d'attente : passé ce délai, mieux vaut charger
+      // même si l'application s'affaire encore.
+      const id = window.requestIdleCallback(precharger, { timeout: 2000 });
+      return () => {
+        annule = true;
+        window.cancelIdleCallback(id);
+      };
+    }
+
+    const id = window.setTimeout(precharger, 2000);
+    return () => {
+      annule = true;
+      window.clearTimeout(id);
+    };
+  }, []);
+
   // `Ctrl+,` comme dans la plupart des applications. Les touches de vol du
   // système solaire sont des lettres nues : aucune collision.
   useEffect(() => {

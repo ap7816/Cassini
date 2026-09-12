@@ -191,6 +191,14 @@ type Options = {
   /** Réceptacle du compteur d'images, écrit directement dans le DOM. */
   fpsRef: RefObject<HTMLDivElement | null>;
   /**
+   * Un calque recouvre entièrement la scène : elle cesse de dessiner.
+   *
+   * Lu à chaque image plutôt que porté par une dépendance : basculer une
+   * dépendance démonterait la scène et la reconstruirait, ce qu'on cherche
+   * précisément à éviter en posant ces calques par-dessus.
+   */
+  pauseRef: RefObject<boolean>;
+  /**
    * Reçoit une fonction menant la caméra jusqu'à un launcher.
    *
    * C'est ce qui remplace la traversée de portail : plus de scène détruite ni
@@ -235,6 +243,7 @@ export function useSolarScene({
   sideProbeRef,
   navProbeRef,
   fpsRef,
+  pauseRef,
   flyToRef,
   onSysteme,
   flySettingsRef,
@@ -1198,6 +1207,15 @@ export function useSolarScene({
       const dt = Math.min((t - prevT) / 1000, 0.1);
       prevT = t;
 
+      // Un calque recouvre la scène : rien de ce qu'on dessinerait ne se voit,
+      // et tout se paie — la galaxie, sa floraison, et le compositeur qui
+      // recompose le calque par-dessus à chaque image.
+      //
+      // La boucle reste vivante pour que la reprise soit immédiate, mais elle
+      // s'arrête ici. `prevT` vient d'être remis à jour : au retour, le delta
+      // repart de zéro et rien ne saute.
+      if (pauseRef.current) return;
+
       // ── Lectures de mise en page ───────────────────────────────────────
       // Toutes regroupées ici, avant la moindre écriture de style. Le
       // navigateur ne recalcule alors la mise en page qu'une fois : intercalée
@@ -1393,7 +1411,7 @@ export function useSolarScene({
     // chaque voyage était précisément le défaut.
     cleScene, parPlateformeRef, editionRef, labelClass, orbitLabelClass,
     mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef,
-    sideProbeRef, navProbeRef, fpsRef, onSysteme, flySettingsRef, platformRef,
+    sideProbeRef, navProbeRef, fpsRef, pauseRef, onSysteme, flySettingsRef, platformRef,
     structure,
   ]);
 }
