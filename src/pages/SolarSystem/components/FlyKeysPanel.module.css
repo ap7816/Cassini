@@ -1,12 +1,13 @@
-/* Panneau des commandes de déplacement, en bas à droite de la zone 3D.
-   Posé au-dessus du compteur d'images, dans le coin opposé au sélecteur de
-   launcher pour ne jamais le recouvrir. */
+/* Panneau des commandes de déplacement.
 
+   En bas à droite de la scène, contre la colonne : le coin bas gauche est pris
+   par ce qui joue, le haut droit par le compteur d'images. Le décalage suit la
+   largeur de la colonne, qui se règle. */
 .open,
 .panel {
   position: absolute;
-  left: 16px;
-  bottom: 52px;
+  right: calc(var(--side-w, 0px) + 14px);
+  bottom: 14px;
   z-index: 13;
 }
 

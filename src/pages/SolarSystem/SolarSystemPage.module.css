@@ -254,12 +254,15 @@
   }
 }
 
-/* Compteur d'images — coin bas gauche, discret mais lisible sur le fond
-   étoilé. Son contenu est écrit par la scène, jamais par React. */
+/* Compteur d'images — discret mais lisible sur le fond étoilé. Son contenu est
+   écrit par la scène, jamais par React.
+
+   En haut à droite, contre la colonne : le coin bas gauche revient à ce qui
+   joue. Le décalage suit la largeur de la colonne, qui se règle. */
 .fps {
   position: absolute;
-  left: 16px;
-  bottom: 14px;
+  top: 12px;
+  right: calc(var(--side-w, 0px) + 14px);
   z-index: 12;
   padding: 5px 10px;
   border-radius: 8px;
