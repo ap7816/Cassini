@@ -12,12 +12,29 @@ export function IconeSysteme({
   couleur,
   taille = 20,
   className,
+  image,
 }: {
   nom: string;
   couleur: string;
   taille?: number;
   className?: string;
+  /** Image choisie par l'utilisateur : elle prend la place du dessin. */
+  image?: string | null;
 }) {
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className={className}
+        width={taille}
+        height={taille}
+        style={{ objectFit: 'contain', display: 'block' }}
+      />
+    );
+  }
   const dessin = iconeParNom(nom);
   return (
     <svg className={className} width={taille} height={taille} viewBox="0 0 24 24" aria-hidden="true">

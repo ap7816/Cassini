@@ -8,6 +8,7 @@ import { PLATFORM_CSS } from '../constants';
 import { COULEURS_SYSTEME, NOM_MAX, nouveauSysteme, nouvelId, type SystemePerso } from '../lib/customSystems';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from '../lib/iconesSysteme';
 import { IconeSysteme } from './IconeSysteme';
+import { ChoixImageIcone } from './ChoixImageIcone';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './SystemeDialog.module.css';
 
@@ -40,6 +41,11 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
 
   const [nom, setNom] = useState(systeme?.nom ?? '');
   const [icone, setIcone] = useState(systeme?.icone ?? ICONE_PAR_DEFAUT);
+  // L'image importée reste disponible pendant toute la saisie, même quand on
+  // essaie un dessin de la grille : on peut revenir dessus d'un clic.
+  const [image, setImage] = useState<string | null>(systeme?.image ?? null);
+  const [avecImage, setAvecImage] = useState(Boolean(systeme?.image));
+  const imageRetenue = avecImage ? image : null;
   // Une couleur différente pour chaque nouveau système : deux systèmes créés
   // d'affilée ne se confondent pas dans la barre.
   const [couleur, setCouleur] = useState(
@@ -89,7 +95,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   function valider(e: FormEvent) {
     e.preventDefault();
     if (manque) return;
-    const champs = { nom: nomPropre.slice(0, NOM_MAX), icone, couleur, jeux };
+    const champs = { nom: nomPropre.slice(0, NOM_MAX), icone, image: imageRetenue, couleur, jeux };
     onEnregistrer(
       systeme ? { ...systeme, ...champs } : nouveauSysteme({ id: nouvelId(existants), ...champs }),
     );
@@ -124,15 +130,25 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
         style={{ '--teinte': couleur } as CSSProperties}
       >
         <header className={css.entete}>
-          <div className={css.apercu}>
-            <IconeSysteme nom={icone} couleur={couleur} taille={30} />
-          </div>
           <div className={css.enteteTexte}>
             <h2 id={titreId} className={css.titre}>
               {systeme ? t('systems.editTitle') : t('systems.newTitle')}
             </h2>
+            {/* Aperçu en une ligne : l'icône à sa couleur, le nom, le compte. On
+                voit le système prendre forme sans qu'il occupe l'en-tête. */}
             <p className={css.sousTitre}>
-              {nomPropre || t('systems.untitled')} · {t('library.gameCount', { count: jeux.length })}
+              <IconeSysteme
+                nom={icone}
+                image={imageRetenue}
+                couleur={couleur}
+                taille={14}
+                className={css.sousTitreIcone}
+              />
+              <span className={nomPropre ? css.sousTitreNom : css.sousTitreVide}>
+                {nomPropre || t('systems.untitled')}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>{t('library.gameCount', { count: jeux.length })}</span>
             </p>
           </div>
           <button type="button" className={css.fermer} onClick={onFermer} aria-label={t('common.close')}>
@@ -157,7 +173,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
             <span className={css.etiquette}>{t('systems.icon')}</span>
             <div className={css.icones} role="radiogroup" aria-label={t('systems.icon')}>
               {ICONES_SYSTEME.map((i) => {
-                const choisie = i.nom === icone;
+                const choisie = !imageRetenue && i.nom === icone;
                 return (
                   <button
                     key={i.nom}
@@ -166,13 +182,29 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                     aria-checked={choisie}
                     title={t(`systems.icons.${i.nom}`)}
                     className={choisie ? `${css.icone} ${css.iconeChoisie}` : css.icone}
-                    onClick={() => setIcone(i.nom)}
+                    onClick={() => {
+                      setIcone(i.nom);
+                      setAvecImage(false);
+                    }}
                   >
                     <IconeSysteme nom={i.nom} couleur={choisie ? couleur : 'currentColor'} taille={20} />
                   </button>
                 );
               })}
             </div>
+            <ChoixImageIcone
+              image={image}
+              active={avecImage}
+              onImage={(nouvelle) => {
+                setImage(nouvelle);
+                setAvecImage(true);
+              }}
+              onActiver={() => setAvecImage(true)}
+              onRetirer={() => {
+                setImage(null);
+                setAvecImage(false);
+              }}
+            />
           </div>
 
           <div className={css.champ}>
@@ -202,7 +234,8 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
 
           <div className={`${css.champ} ${css.champJeux}`}>
             <span className={css.etiquette}>
-              {t('systems.games')} <span className={css.compte}>{jeux.length}</span>
+              {t('systems.games')}
+              <span className={css.compte}>{jeux.length}</span>
             </span>
             <input
               className={css.saisie}
@@ -277,7 +310,7 @@ function LigneJeu({
         {/* Le rang annonce l'orbite : le premier jeu coché tourne au plus près du soleil. */}
         <span className={css.jeuRang}>{rang ?? ''}</span>
         <span className={css.jeuTitre}>{game.title}</span>
-        <span className={css.jeuLauncher} style={{ color: teinte }}>
+        <span className={css.jeuLauncher} style={{ '--pf': teinte } as CSSProperties}>
           {nomPlateforme(game.platform, t)}
         </span>
       </label>

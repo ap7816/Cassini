@@ -322,6 +322,21 @@
       "sortSize": "Taille sur disque",
       "sortRecent": "Jouées récemment",
       "sortNote": "Ne change que l’ordre des orbites. Une planète que vous avez placée reste où vous l’avez mise."
+    },
+    "image": {
+      "choose": "Choisir une image…",
+      "change": "Changer l’image",
+      "remove": "Retirer",
+      "use": "Utiliser cette image comme icône",
+      "drop": "Choisir une image, ou en déposer une ici",
+      "preparing": "Préparation…",
+      "rules": "PNG, JPG, WebP, GIF ou SVG · 8 Mo au plus · 16 px au moins. Carrée de préférence : une grande image est recadrée automatiquement.",
+      "errors": {
+        "type": "Ce format n’est pas accepté : choisissez un PNG, JPG, WebP, GIF ou SVG.",
+        "poids": "Fichier trop lourd : 8 Mo au plus.",
+        "petite": "Image trop petite : il faut au moins 16 px de côté.",
+        "illisible": "Cette image n’a pas pu être lue."
+      }
     }
   },
   "flyKeys": {

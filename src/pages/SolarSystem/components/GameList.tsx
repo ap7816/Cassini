@@ -379,7 +379,7 @@ export function GameList({
               aria-current={cle === platform}
               title={t('solar.railItem', { name: s.nom, games: t('library.gameCount', { count: s.jeux.length }) })}
             >
-              <IconeSysteme nom={s.icone} couleur={s.couleur} className={css.railIcon} />
+              <IconeSysteme nom={s.icone} image={s.image} couleur={s.couleur} className={css.railIcon} />
             </button>
           );
         })}

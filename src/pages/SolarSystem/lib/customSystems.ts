@@ -1,5 +1,6 @@
 import type { Game } from '../../../features/types';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from './iconesSysteme';
+import { estImageIconeValide } from './imageIcone';
 
 /**
  * Systèmes solaires créés par l'utilisateur, en plus de ceux des launchers.
@@ -27,6 +28,12 @@ export type SystemePerso = {
   nom: string;
   /** Nom d'une icône de `ICONES_SYSTEME`. */
   icone: string;
+  /**
+   * Image choisie par l'utilisateur, déjà redessinée en petite icône (voir
+   * `imageIcone.ts`). Quand elle est là, elle remplace `icone` — qui reste
+   * renseignée, pour qu'on retombe sur un dessin si on retire l'image.
+   */
+  image: string | null;
   /** Couleur au format #rrggbb. */
   couleur: string;
   /** Identifiants des jeux, dans l'ordre des orbites. */
@@ -152,6 +159,9 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
       id,
       nom,
       icone,
+      // Une valeur qui n'a pas la forme exacte d'une icône préparée est
+      // écartée : le stockage ne doit jamais faire afficher autre chose.
+      image: estImageIconeValide(o.image) ? o.image : null,
       couleur,
       jeux,
       soleil: borne(o.soleil, BORNES.soleil),
@@ -169,10 +179,11 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
 
 /** Un système neuf, avec ses réglages par défaut. */
 export function nouveauSysteme(
-  champs: Pick<SystemePerso, 'id' | 'nom' | 'icone' | 'couleur' | 'jeux'>,
+  champs: Pick<SystemePerso, 'id' | 'nom' | 'icone' | 'couleur' | 'jeux'> & { image?: string | null },
 ): SystemePerso {
   return {
     ...champs,
+    image: champs.image ?? null,
     soleil: BORNES.soleil.defaut,
     vitesse: BORNES.vitesse.defaut,
     aPlat: false,

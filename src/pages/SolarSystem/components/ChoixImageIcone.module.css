@@ -1,0 +1,134 @@
+/* Import d'une image comme icône : une vignette, deux actions, les règles. */
+
+.bloc {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Vignette : aperçu de l'image, ou emplacement vide où déposer un fichier. */
+.vignette {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  border: 1px dashed var(--hud-ligne-forte);
+  background: rgb(0 0 0 / 0.22);
+  color: var(--hud-texte-faible);
+  cursor: pointer;
+  transition: border-color 100ms, background 100ms, color 100ms;
+}
+
+.vignette:hover {
+  color: var(--hud-texte);
+  border-color: var(--hud-texte-doux);
+}
+
+/* L'image importée est l'icône retenue : même contour que dans la grille. */
+.vignetteActive,
+.vignetteActive:hover {
+  border: 1px solid var(--teinte, rgb(var(--hud)));
+  outline: 1px solid var(--teinte, rgb(var(--hud)));
+  outline-offset: 2px;
+}
+
+/* Un fichier survole la vignette : elle se signale comme destination. */
+.vignetteSurvol {
+  border-style: solid;
+  border-color: rgb(var(--hud));
+  background: rgb(var(--hud) / 0.12);
+}
+
+.apercu {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
+.vide {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.textes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bouton {
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: transparent;
+  color: var(--hud-texte);
+  font-size: calc(12.5px * var(--ui-font-scale, 1));
+  font-weight: 600;
+}
+
+.bouton:hover:not(:disabled) {
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.06);
+}
+
+.bouton:disabled {
+  color: var(--hud-texte-faible);
+  cursor: progress;
+}
+
+.retirer {
+  padding: 5px 8px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-texte-doux);
+  font-size: calc(12.5px * var(--ui-font-scale, 1));
+}
+
+.retirer:hover {
+  color: rgb(var(--hud-danger));
+}
+
+.regles,
+.erreur {
+  margin: 0;
+  font-size: calc(11.5px * var(--ui-font-scale, 1));
+  line-height: 1.45;
+}
+
+.regles {
+  color: var(--hud-texte-faible);
+}
+
+.erreur {
+  color: rgb(var(--hud-danger));
+}
+
+/* Le champ de fichier natif reste dans l'arbre pour être déclenché, mais
+   hors de vue et hors de la tabulation : le bouton le remplace. */
+.champ {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vignette {
+    transition: none;
+  }
+}

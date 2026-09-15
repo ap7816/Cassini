@@ -61,6 +61,16 @@ describe('normaliserSystemes', () => {
     expect(s.couleurSoleil).toBeNull();
   });
 
+  it('garde une image préparée et écarte tout le reste', () => {
+    const [ok] = normaliserSystemes([{ id: '1', nom: 'A', image: 'data:image/png;base64,iVBORw0KGgo=' }]);
+    const [svg] = normaliserSystemes([{ id: '2', nom: 'B', image: 'data:image/svg+xml;base64,PHN2Zz4=' }]);
+    const [url] = normaliserSystemes([{ id: '3', nom: 'C', image: 'https://exemple.com/a.png' }]);
+
+    expect(ok.image).toBe('data:image/png;base64,iVBORw0KGgo=');
+    expect(svg.image).toBeNull();
+    expect(url.image).toBeNull();
+  });
+
   it('écarte un système sans identifiant ni nom', () => {
     expect(normaliserSystemes([{ nom: 'A' }, { id: '1' }, null, 'x'])).toHaveLength(0);
   });

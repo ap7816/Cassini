@@ -322,6 +322,21 @@
       "sortSize": "Size on disk",
       "sortRecent": "Recently played",
       "sortNote": "Only changes orbit order. A planet you placed stays where you put it."
+    },
+    "image": {
+      "choose": "Choose an image…",
+      "change": "Change image",
+      "remove": "Remove",
+      "use": "Use this image as the icon",
+      "drop": "Choose an image, or drop one here",
+      "preparing": "Preparing…",
+      "rules": "PNG, JPG, WebP, GIF or SVG · 8 MB max · 16 px min. Square works best: a large image is cropped automatically.",
+      "errors": {
+        "type": "This format isn’t supported: choose a PNG, JPG, WebP, GIF or SVG.",
+        "poids": "File too large: 8 MB max.",
+        "petite": "Image too small: it needs at least 16 px per side.",
+        "illisible": "This image couldn’t be read."
+      }
     }
   },
   "flyKeys": {

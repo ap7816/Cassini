@@ -24,6 +24,7 @@ import { formaterNombre } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import type { EditionScene, EtatEdition } from '../scene/edition';
 import { IconeSysteme } from './IconeSysteme';
+import { ChoixImageIcone } from './ChoixImageIcone';
 import css from './EditeurSysteme.module.css';
 
 type Props = {
@@ -58,6 +59,9 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
   const facteur = (v: number) => `×${formaterNombre(v, i18n.language, 2)}`;
   const parId = useMemo(() => new Map(games.map((g) => [g.id, g])), [games]);
   const [brouillon, setBrouillon] = useState(systeme);
+  // L'image importée reste proposée même quand un dessin la remplace dans le
+  // brouillon : la reprendre ne demande pas de la réimporter.
+  const [imageGardee, setImageGardee] = useState<string | null>(systeme.image);
   // L'aperçu démarre à l'ouverture. L'appel est idempotent : le double rendu du
   // mode strict ne fait que réappliquer le même état.
   const [etat, setEtat] = useState<EtatEdition | null>(() =>
@@ -110,7 +114,7 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
       style={{ '--teinte': brouillon.couleur } as CSSProperties}
     >
       <header className={css.entete}>
-        <IconeSysteme nom={brouillon.icone} couleur={brouillon.couleur} taille={26} />
+        <IconeSysteme nom={brouillon.icone} image={brouillon.image} couleur={brouillon.couleur} taille={26} />
         <input
           className={css.nom}
           value={brouillon.nom}
@@ -131,18 +135,31 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                 key={i.nom}
                 type="button"
                 title={t(`systems.icons.${i.nom}`)}
-                aria-pressed={i.nom === brouillon.icone}
-                className={i.nom === brouillon.icone ? `${css.icone} ${css.iconeChoisie}` : css.icone}
-                onClick={() => modifier({ ...brouillon, icone: i.nom })}
+                aria-pressed={!brouillon.image && i.nom === brouillon.icone}
+                className={!brouillon.image && i.nom === brouillon.icone ? `${css.icone} ${css.iconeChoisie}` : css.icone}
+                onClick={() => modifier({ ...brouillon, icone: i.nom, image: null })}
               >
                 <IconeSysteme
                   nom={i.nom}
-                  couleur={i.nom === brouillon.icone ? brouillon.couleur : 'currentColor'}
+                  couleur={!brouillon.image && i.nom === brouillon.icone ? brouillon.couleur : 'currentColor'}
                   taille={16}
                 />
               </button>
             ))}
           </div>
+          <ChoixImageIcone
+            image={imageGardee}
+            active={brouillon.image !== null}
+            onImage={(nouvelle) => {
+              setImageGardee(nouvelle);
+              modifier({ ...brouillon, image: nouvelle });
+            }}
+            onActiver={() => modifier({ ...brouillon, image: imageGardee })}
+            onRetirer={() => {
+              setImageGardee(null);
+              modifier({ ...brouillon, image: null });
+            }}
+          />
           <div className={css.couleurs}>
             {COULEURS_SYSTEME.map((c) => (
               <button
