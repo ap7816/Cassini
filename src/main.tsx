@@ -7,6 +7,14 @@ import { MusicProvider } from './features/music/MusicContext';
 import { ToastProvider } from './features/toast/ToastContext';
 import { initStorage } from './services/storage';
 import { appliquerLangueEnregistree } from './i18n';
+// Polices du cockpit, servies par l'application elle-même : la politique de
+// contenu n'autorise que `font-src 'self'`, et une interface d'instrument ne
+// doit pas dépendre du réseau pour afficher ses chiffres.
+import '@fontsource/chakra-petch/400.css';
+import '@fontsource/chakra-petch/500.css';
+import '@fontsource/chakra-petch/600.css';
+import '@fontsource/chakra-petch/700.css';
+import '@fontsource/share-tech-mono/400.css';
 import './App.css';
 
 initStorage().then(async () => {

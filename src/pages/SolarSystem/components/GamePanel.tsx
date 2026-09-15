@@ -15,6 +15,7 @@ import { tauriInvoke } from '../../../services/tauri';
 import { formaterDate, formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './GamePanel.module.css';
+import { IconeHud } from '../../../components/IconeHud/IconeHud';
 
 type Props = {
   game: Game;
@@ -212,7 +213,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
               onClick={() => void tauriInvoke('open_folder', { path: game.installPath })}
               title={t('gameCard.openFolder')}
             >
-              📁
+              <IconeHud nom="dossier" />
             </button>
           )}
 

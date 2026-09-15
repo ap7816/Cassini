@@ -564,6 +564,10 @@ export function SolarSystemPage() {
       <div ref={navProbeRef} className={css.navProbe} />
 
       {/* Compteur d'images, écrit par la scène sans passer par React. */}
+      {/* Verrière du cockpit, décorative : elle encadre la scène sans rien
+          capter ni rien annoncer. */}
+      <div className={css.verriere} aria-hidden="true" />
+
       <div ref={fpsRef} className={css.fps} />
 
       <FlyKeysPanel settings={flySettings} onChange={setFlySettings} />

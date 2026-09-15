@@ -1,8 +1,8 @@
 .card {
   display: grid;
   grid-template-rows: auto 1fr;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
   overflow: hidden;
@@ -12,7 +12,7 @@
 }
 
 .cardFavorite {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgb(var(--hud) / 0.287);
   background: rgba(15, 20, 26, 0.7);
 }
 
@@ -40,10 +40,10 @@
   right: 6px;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.23);
+  background: rgb(5 12 22 / 0.5);
+  color: rgb(223 246 255 / 0.85);
   font-size: 13px;
   cursor: pointer;
   display: grid;
@@ -66,8 +66,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--hud) / 0.046);
+  border-bottom: 1px solid rgb(var(--hud) / 0.092);
   font-weight: 800;
   font-size: 36px;
   opacity: 0.6;
@@ -77,10 +77,10 @@
   font-size: 11px;
   font-weight: 500;
   padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.23);
+  background: rgb(var(--hud) / 0.069);
+  color: rgb(223 246 255 / 0.7);
   cursor: pointer;
   box-shadow: none;
   opacity: 0;
@@ -138,17 +138,17 @@
 .badge {
   font-size: 12px;
   padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.057);
 }
 
 .favPill {
   font-size: 12px;
   padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.09);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.103);
   opacity: 0.95;
 }
 
@@ -177,10 +177,10 @@
 .fav {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.034);
+  color: rgb(223 246 255 / 0.9);
   cursor: pointer;
 
   display: grid;
@@ -201,7 +201,7 @@
 }
 
 .fav:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
   transform: scale(1.03);
 }
 
@@ -210,7 +210,7 @@
 }
 
 .fav:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.22);
+  outline: 2px solid rgb(var(--hud) / 0.253);
   outline-offset: 2px;
 }
 
@@ -249,9 +249,9 @@
 .secondary {
   height: 34px;
   padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -266,7 +266,7 @@
 }
 
 .secondary:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
   transform: translateY(-1px);
 }
 
@@ -275,7 +275,7 @@
 }
 
 .secondary:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.18);
+  outline: 2px solid rgb(var(--hud) / 0.207);
   outline-offset: 2px;
 }
 
@@ -336,9 +336,9 @@
   content: '';
   width: 12px;
   height: 12px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-top-color: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  border: 2px solid rgb(var(--hud) / 0.322);
+  border-top-color: rgb(var(--hud) / 0.977);
   position: absolute;
   left: 10px;
   top: 50%;
@@ -356,9 +356,9 @@
 .play {
   height: 34px;
   padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.092);
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -371,7 +371,7 @@
 }
 
 .play:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--hud) / 0.115);
   transform: translateY(-1px);
 }
 
@@ -391,9 +391,9 @@
   content: '';
   width: 11px;
   height: 11px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  border: 2px solid rgb(var(--hud) / 0.287);
+  border-top-color: rgb(var(--hud) / 1);
   position: absolute;
   left: 10px;
   top: 50%;
@@ -408,9 +408,9 @@
 .folder {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -424,16 +424,16 @@
 }
 
 .folder:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
   transform: translateY(-1px);
 }
 
 .remove {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -446,7 +446,7 @@
 }
 
 .remove:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
   transform: translateY(-1px);
 }
 

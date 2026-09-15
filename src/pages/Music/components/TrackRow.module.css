@@ -16,19 +16,19 @@
 
 .enTete {
   padding: 0 10px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgb(var(--hud) / 0.081);
   margin-bottom: 4px;
   font-size: calc(11px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .ligne {
   padding: 6px 10px;
   border: 1px solid transparent;
-  border-radius: calc(8px * var(--dbg-arrondi, 1));
+  border-radius: calc(2px * var(--dbg-arrondi, 1));
   background: none;
   color: inherit;
   cursor: pointer;
@@ -36,7 +36,7 @@
 }
 
 .ligne:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--hud) / 0.069);
 }
 
 .ligne:focus-visible {
@@ -55,7 +55,7 @@
   display: grid;
   place-items: center;
   height: 24px;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-variant-numeric: tabular-nums;
 }
@@ -85,9 +85,9 @@
 .pochette {
   width: 40px;
   height: 40px;
-  border-radius: 6px;
+  border-radius: 2px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--hud) / 0.069);
   display: block;
 }
 
@@ -112,7 +112,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
 }
 
 .titre {
@@ -122,17 +122,17 @@
 
 .artiste {
   font-size: calc(11px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.6);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .album {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.55);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .duree {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(223 246 255 / 0.6);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }

@@ -10,6 +10,7 @@ import { writeMusicFolder } from '../../services/storage';
 import { Equalizer } from './components/Equalizer';
 import { Glissiere } from '../../components/Glissiere/Glissiere';
 import css from './LecteurRapide.module.css';
+import { IconeHud } from '../../components/IconeHud/IconeHud';
 
 /** Secondes → `M:SS`. */
 function tempsCourt(sec: number): string {
@@ -218,7 +219,7 @@ export function LecteurRapide({ onFermer }: Props) {
           title={music.shuffleMode ? t('music.shuffleOn') : t('music.shuffleOff')}
           aria-label={music.shuffleMode ? t('music.shuffleOn') : t('music.shuffleOff')}
         >
-          🔀
+          <IconeHud nom="aleatoire" />
         </button>
         <button
           type="button"
@@ -228,7 +229,7 @@ export function LecteurRapide({ onFermer }: Props) {
           title={t('music.prevTrack')}
           aria-label={t('music.prevTrack')}
         >
-          ⏮
+          <IconeHud nom="precedent" />
         </button>
         <button
           type="button"
@@ -237,7 +238,7 @@ export function LecteurRapide({ onFermer }: Props) {
           title={music.isPlaying ? t('music.pauseTitle') : t('music.playTitle')}
           aria-label={music.isPlaying ? t('music.pauseTitle') : t('music.playTitle')}
         >
-          {music.isPlaying ? '⏸' : '▶'}
+          <IconeHud nom={music.isPlaying ? 'pause' : 'lecture'} />
         </button>
         <button
           type="button"
@@ -247,7 +248,7 @@ export function LecteurRapide({ onFermer }: Props) {
           title={t('music.nextTrack')}
           aria-label={t('music.nextTrack')}
         >
-          ⏭
+          <IconeHud nom="suivant" />
         </button>
         <button
           type="button"
@@ -268,16 +269,25 @@ export function LecteurRapide({ onFermer }: Props) {
                 : t('music.repeatOne')
           }
         >
-          {music.repeatMode === 'one' ? '🔂' : '🔁'}
+          <IconeHud nom={music.repeatMode === 'one' ? 'repeterUn' : 'repeter'} />
         </button>
 
-        <Glissiere
-          className={css.volume}
-          valeur={music.volume}
-          onChange={music.setVolume}
-          label={t('music.volumeLabel', { pct: Math.round(music.volume * 100) })}
-          texteValeur={`${Math.round(music.volume * 100)} %`}
-        />
+        {/* L'icône suit le niveau — coupé, bas, haut. Décorative : la course
+            porte déjà son nom et sa valeur pour les lecteurs d'écran. */}
+        <div className={css.volumeBloc}>
+          <span className={css.volumeIcone}>
+            <IconeHud
+              nom={music.volume === 0 ? 'volumeMuet' : music.volume < 0.5 ? 'volumeBas' : 'volume'}
+            />
+          </span>
+          <Glissiere
+            className={css.volume}
+            valeur={music.volume}
+            onChange={music.setVolume}
+            label={t('music.volumeLabel', { pct: Math.round(music.volume * 100) })}
+            texteValeur={`${Math.round(music.volume * 100)} %`}
+          />
+        </div>
       </div>
 
       {/* ── Choisir une piste ── */}

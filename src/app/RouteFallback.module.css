@@ -8,11 +8,11 @@
 .spinner {
   width: 26px;
   height: 26px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  border: 2px solid rgb(var(--hud) / 0.161);
   border-top-color: var(--accent, #6c8efb);
 
-  /* Démarre invisible et n'apparaît qu'après 180 ms : un chunk déjà en cache
+  /* Démarre invisible et n'apparaît qu'après 180 ms: un chunk déjà en cache
      arrive plus vite que ça, et faire clignoter un spinner est pire que ne
      rien afficher. */
   opacity: 0;

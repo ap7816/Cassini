@@ -17,7 +17,7 @@
 }
 
 .sep {
-  color: rgba(224, 230, 240, 0.25);
+  color: rgb(223 246 255 / 0.6);
   font-size: 0.85rem;
   flex-shrink: 0;
   padding: 0 2px;
@@ -26,11 +26,11 @@
 .btn {
   background: none;
   border: none;
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(223 246 255 / 0.6);
   font-size: 0.82rem;
   cursor: pointer;
   padding: 3px 6px;
-  border-radius: 5px;
+  border-radius: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -39,12 +39,12 @@
 }
 
 .btn:hover:not(:disabled) {
-  color: rgba(224, 230, 240, 0.9);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgb(223 246 255 / 0.9);
+  background: rgb(var(--hud) / 0.069);
 }
 
 .current {
-  color: rgba(224, 230, 240, 0.92);
+  color: rgb(223 246 255 / 0.92);
   font-weight: 600;
   cursor: default;
 }

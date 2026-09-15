@@ -15,10 +15,10 @@
 }
 
 .card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 20, 26, 0.6);
+  border: 1px solid var(--hud-ligne);
+  background: var(--hud-crochets), rgb(var(--hud) / 0.035);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 14px;
   display: grid;
   gap: 12px;
@@ -38,12 +38,13 @@
 .primary {
   padding: 7px 11px;
   font-size: calc(12px * var(--ui-font-scale, 1));
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent, #e5e7eb) 35%, transparent);
-  background: color-mix(in srgb, var(--accent, #e5e7eb) 18%, transparent);
-  color: inherit;
+  border-radius: 2px;
+  border: 1px solid var(--accent, rgb(var(--hud)));
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 24%, transparent);
+  color: #fff;
   cursor: pointer;
   box-shadow: none;
+  letter-spacing: 0.08em;
 }
 
 .primary:hover {
@@ -53,16 +54,16 @@
 .button {
   padding: 7px 11px;
   font-size: calc(12px * var(--ui-font-scale, 1));
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
   cursor: pointer;
   box-shadow: none;
 }
 
 .button:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
 }
 
 .button:disabled {
@@ -72,10 +73,10 @@
 
 .danger {
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud-danger) / 0.7);
+  background: rgb(var(--hud-danger) / 0.14);
+  color: rgb(var(--hud-danger));
   cursor: pointer;
   box-shadow: none;
   white-space: nowrap;
@@ -99,8 +100,8 @@
   width: 100%;
   max-height: 240px;
   object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
 }
 
 .empty {
@@ -136,6 +137,8 @@
   text-align: right;
   font-size: 13px;
   opacity: 0.8;
+  font-family: var(--police-donnee);
+  color: rgb(var(--hud));
 }
 
 /* Swatches */
@@ -153,7 +156,7 @@
   cursor: pointer;
   border: 2px solid transparent;
   padding: 0;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 1px rgb(var(--hud) / 0.172);
   transition: transform 0.1s, border-color 0.15s;
 }
 
@@ -162,7 +165,7 @@
 }
 
 .swatchActive {
-  border-color: rgba(255, 255, 255, 0.85);
+  border-color: rgb(var(--hud) / 0.977);
   transform: scale(1.15);
 }
 
@@ -201,8 +204,8 @@
 /* Langue */
 .langSelect {
   padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
   background: #e5e7eb;
   color: #1a1f2b;
   cursor: pointer;
@@ -221,7 +224,8 @@
   font-size: calc(12px * var(--ui-font-scale, 1));
   opacity: 0.6;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.2em;
+  color: rgb(var(--hud) / 0.85);
 }
 
 .apiKeyRow {
@@ -238,9 +242,9 @@
   flex: 1;
   min-width: 0;
   padding: 7px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.057);
   color: inherit;
   font-size: calc(12px * var(--ui-font-scale, 1));
   box-shadow: none;
@@ -287,9 +291,9 @@
 .toggleSlider {
   position: absolute;
   inset: 0;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.138);
+  border: 1px solid rgb(var(--hud) / 0.207);
   transition: background 0.2s, border-color 0.2s;
 }
 
@@ -298,16 +302,17 @@
   position: absolute;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
-  background: rgba(224, 230, 240, 0.5);
+  border-radius: 1px;
+  background: rgb(223 246 255 / 0.6);
   top: 2px;
   left: 2px;
   transition: transform 0.2s, background 0.2s;
 }
 
 .toggle input:checked + .toggleSlider {
-  background: var(--accent, #6c8efb);
-  border-color: var(--accent, #6c8efb);
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 45%, transparent);
+  border-color: var(--accent, rgb(var(--hud)));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent, rgb(var(--hud))) 45%, transparent);
 }
 
 .toggle input:checked + .toggleSlider::before {
@@ -319,7 +324,7 @@
 .tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgb(var(--hud) / 0.115);
   margin-bottom: 8px;
 }
 
@@ -331,9 +336,11 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-weight: 500;
-  opacity: 0.45;
+  font-weight: 600;
+  opacity: 0.55;
   transition: opacity 0.15s;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .tab::after {
@@ -343,9 +350,10 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #fff;
+  background: rgb(var(--hud));
   transform: scaleX(0);
   transition: transform 0.2s ease;
+  box-shadow: 0 0 8px rgb(var(--hud) / 0.8);
 }
 
 .tab:hover {
@@ -354,6 +362,7 @@
 
 .tabActive {
   opacity: 1;
+  color: rgb(var(--hud));
 }
 
 .tabActive::after {

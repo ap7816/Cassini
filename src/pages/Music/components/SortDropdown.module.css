@@ -11,10 +11,10 @@
   align-items: center;
   gap: 5px;
   padding: 5px 11px;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(224, 230, 240, 0.75);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.057);
+  color: rgb(223 246 255 / 0.75);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -24,15 +24,15 @@
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: rgba(224, 230, 240, 1);
+  background: rgb(var(--hud) / 0.115);
+  border-color: rgb(var(--hud) / 0.253);
+  color: rgb(223 246 255 / 1);
 }
 
 .btnOpen {
   background: rgba(108, 142, 251, 0.14);
   border-color: rgba(108, 142, 251, 0.35);
-  color: rgba(224, 230, 240, 1);
+  color: rgb(223 246 255 / 1);
 }
 
 .arrow {
@@ -47,10 +47,10 @@
   z-index: 9000;
   min-width: 160px;
   background: #161a28;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  border: 1px solid rgb(var(--hud) / 0.138);
+  border-radius: 2px;
   padding: 4px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 32px rgb(5 12 22 / 0.6), 0 2px 8px rgb(5 12 22 / 0.35);
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -64,17 +64,17 @@
   padding: 7px 10px;
   border: none;
   background: none;
-  color: rgba(224, 230, 240, 0.85);
+  color: rgb(223 246 255 / 0.85);
   font-size: 0.83rem;
   cursor: pointer;
-  border-radius: 7px;
+  border-radius: 2px;
   text-align: left;
   transition: background 0.1s;
 }
 
 .option:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(224, 230, 240, 1);
+  background: rgb(var(--hud) / 0.081);
+  color: rgb(223 246 255 / 1);
 }
 
 .check {
@@ -87,6 +87,6 @@
 
 .divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--hud) / 0.081);
   margin: 3px 6px;
 }

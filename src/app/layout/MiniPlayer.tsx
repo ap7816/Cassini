@@ -6,6 +6,7 @@ import { getEnriched } from '../../features/music/enrichMeta';
 import { useCalques } from '../../features/calques/useCalques';
 import { Glissiere } from '../../components/Glissiere/Glissiere';
 import css from './MiniPlayer.module.css';
+import { IconeHud } from '../../components/IconeHud/IconeHud';
 
 /** Secondes → `M:SS`. */
 function tempsCourt(sec: number): string {
@@ -103,13 +104,13 @@ export function MiniPlayer() {
       <div className={css.controls}>
         <button
           type="button"
-          className={css.btn}
+          className={`${css.btn} ${css.saut}`}
           onClick={music.prevTrack}
           disabled={atFirst}
           title={t('music.prevTrack')}
           aria-label={t('music.prevTrack')}
         >
-          ⏮
+          <IconeHud nom="precedent" />
         </button>
 
         <button
@@ -119,18 +120,18 @@ export function MiniPlayer() {
           title={music.isPlaying ? t('music.pauseTitle') : t('music.playTitle')}
           aria-label={music.isPlaying ? t('music.pauseTitle') : t('music.playTitle')}
         >
-          {music.isPlaying ? '⏸' : '▶'}
+          <IconeHud nom={music.isPlaying ? 'pause' : 'lecture'} />
         </button>
 
         <button
           type="button"
-          className={css.btn}
+          className={`${css.btn} ${css.saut}`}
           onClick={music.nextTrack}
           disabled={atLast}
           title={t('music.nextTrack')}
           aria-label={t('music.nextTrack')}
         >
-          ⏭
+          <IconeHud nom="suivant" />
         </button>
 
         <button
@@ -156,7 +157,11 @@ export function MiniPlayer() {
           duree: tempsCourt(music.duration),
         })}
         pas={0.02}
-      />
+      >
+        {/* Poignée à saisir : un fil de 3 px se visait mal, surtout pour
+            reprendre un morceau à un endroit précis. */}
+        <span className={css.poignee} />
+      </Glissiere>
     </div>
   );
 }

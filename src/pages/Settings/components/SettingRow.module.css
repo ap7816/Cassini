@@ -20,7 +20,7 @@
    intercalent un bloc d'aperçu entre deux réglages, `+` n'y verrait plus
    deux lignes voisines et le trait disparaîtrait. */
 .row ~ .row {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgb(var(--hud) / 0.092);
   margin-top: 11px;
   padding-top: 11px;
 }

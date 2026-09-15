@@ -13,11 +13,11 @@
   width: min(310px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
-  color: rgba(224, 230, 240, 0.92);
-  background: rgba(8, 12, 20, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+  color: rgb(223 246 255 / 0.92);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.96);
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-radius: 2px;
+  box-shadow: 0 0 30px rgb(var(--hud) / 0.12), 0 14px 44px rgb(0 0 0 / 0.6);
   animation: panneauIn 0.18s ease-out;
 }
 
@@ -31,14 +31,14 @@
   align-items: center;
   gap: 10px;
   padding: 12px 12px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--hud-ligne-moyenne);
 }
 
 .nom {
   flex: 1;
   min-width: 0;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid transparent;
   background: transparent;
   color: #fff;
@@ -48,8 +48,8 @@
 
 .nom:hover,
 .nom:focus {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.046);
 }
 
 .fermer {
@@ -57,8 +57,8 @@
   width: 26px;
   height: 26px;
   padding: 0;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
   background: transparent;
   color: inherit;
   font-size: 0.75rem;
@@ -73,7 +73,7 @@
 
 .section {
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgb(var(--hud) / 0.057);
 }
 
 .section:last-child {
@@ -84,15 +84,15 @@
   margin: 0 0 8px;
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(var(--hud) / 0.82);
 }
 
 .note {
   margin: 6px 0 0;
   font-size: 0.72rem;
-  color: rgba(224, 230, 240, 0.42);
+  color: rgb(223 246 255 / 0.6);
 }
 
 /* ── Apparence ────────────────────────────────────────────────────────── */
@@ -108,10 +108,10 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(224, 230, 240, 0.5);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  background: rgb(var(--hud) / 0.034);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .iconeChoisie {
@@ -143,8 +143,8 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  border: 1px dashed rgb(var(--hud) / 0.345);
+  border-radius: 2px;
   background: transparent;
 }
 
@@ -164,7 +164,7 @@
 
 .valeur {
   font-variant-numeric: tabular-nums;
-  color: rgba(224, 230, 240, 0.6);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .curseur input[type='range'] {
@@ -190,11 +190,11 @@
 .planete {
   margin: 0 -6px 2px;
   padding: 2px 6px;
-  border-radius: 8px;
+  border-radius: 2px;
 }
 
 .planeteOuverte {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--hud) / 0.046);
 }
 
 .planeteTete {
@@ -223,7 +223,7 @@
   text-align: right;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .titreJeu {
@@ -248,10 +248,10 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(224, 230, 240, 0.7);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  background: rgb(var(--hud) / 0.034);
+  color: rgb(223 246 255 / 0.7);
   font-size: 0.72rem;
 }
 
@@ -278,7 +278,7 @@
 }
 
 .lien:disabled {
-  color: rgba(224, 230, 240, 0.3);
+  color: rgb(223 246 255 / 0.6);
   cursor: default;
 }
 
@@ -287,9 +287,9 @@
   box-sizing: border-box;
   margin-top: 8px;
   padding: 7px 9px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
   font-size: 0.82rem;
 }
@@ -301,7 +301,7 @@
   width: 100%;
   margin-top: 2px;
   padding: 5px 6px;
-  border-radius: 7px;
+  border-radius: 2px;
   border: none;
   background: transparent;
   color: inherit;
@@ -310,7 +310,7 @@
 }
 
 .candidat:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--hud) / 0.069);
 }
 
 .plus {
@@ -333,14 +333,14 @@
   align-items: center;
   gap: 6px;
   padding: 10px 12px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgb(var(--hud) / 0.081);
 }
 
 .manque {
   flex: 1;
   min-width: 0;
   font-size: 0.72rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   text-align: right;
 }
 
@@ -349,7 +349,7 @@
 .supprimer {
   flex-shrink: 0;
   padding: 7px 11px;
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -366,8 +366,8 @@
 }
 
 .secondaire {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.046);
   color: inherit;
 }
 
@@ -386,7 +386,7 @@
 .tri {
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgb(var(--hud) / 0.081);
 }
 
 .triTitre {
@@ -396,7 +396,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .triBoutons {
@@ -409,17 +409,17 @@
    portent un libellé, pas un chevron. */
 .petitLarge {
   padding: 4px 9px;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(224, 230, 240, 0.78);
+  border-radius: calc(2px * var(--dbg-arrondi, 1));
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.057);
+  color: rgb(223 246 255 / 0.78);
   font-size: calc(11px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
   cursor: pointer;
   box-shadow: none;
 }
 
 .petitLarge:hover {
-  background: rgba(255, 255, 255, 0.11);
+  background: rgb(var(--hud) / 0.127);
   color: #fff;
 }

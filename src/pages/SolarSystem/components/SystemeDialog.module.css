@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.66);
+  background: rgb(5 12 22 / 0.66);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   animation: fondIn 0.18s ease;
@@ -29,10 +29,10 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: rgba(10, 14, 24, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.98);
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-radius: 2px;
+  box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
   overflow: hidden;
   animation: fenetreIn 0.24s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
@@ -49,7 +49,7 @@
   align-items: center;
   gap: 14px;
   padding: 18px 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgb(var(--hud) / 0.081);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--teinte, #6c8efb) 16%, transparent) 0%,
@@ -63,8 +63,8 @@
   height: 52px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--teinte, #6c8efb) 14%, rgba(255, 255, 255, 0.03));
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--teinte, #6c8efb) 14%, rgb(var(--hud) / 0.034));
   border: 1px solid color-mix(in srgb, var(--teinte, #6c8efb) 45%, transparent);
   box-shadow: 0 0 22px color-mix(in srgb, var(--teinte, #6c8efb) 30%, transparent);
 }
@@ -78,13 +78,16 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #fff;
+  color: rgb(var(--hud));
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgb(var(--hud) / 0.45);
 }
 
 .sousTitre {
   margin: 3px 0 0;
   font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.55);
+  color: rgb(223 246 255 / 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -95,15 +98,15 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(224, 230, 240, 0.8);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
+  color: rgb(223 246 255 / 0.8);
   font-size: 0.8rem;
 }
 
 .fermer:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--hud) / 0.115);
 }
 
 /* ── Corps ────────────────────────────────────────────────────────────── */
@@ -130,15 +133,15 @@
   gap: 6px;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(var(--hud) / 0.8);
 }
 
 .compte {
   min-width: 18px;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: 2px;
   text-align: center;
   font-size: 0.7rem;
   color: #0b1020;
@@ -149,16 +152,16 @@
   width: 100%;
   box-sizing: border-box;
   padding: 9px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(224, 230, 240, 0.92);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.046);
+  color: rgb(223 246 255 / 0.92);
   font-size: 0.9rem;
 }
 
 .saisie:focus {
   border-color: color-mix(in srgb, var(--teinte, #6c8efb) 70%, transparent);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--hud) / 0.069);
 }
 
 /* Icônes */
@@ -174,16 +177,16 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(224, 230, 240, 0.5);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  background: rgb(var(--hud) / 0.034);
+  color: rgb(223 246 255 / 0.6);
   transition: background 120ms, border-color 120ms, color 120ms;
 }
 
 .icone:hover {
-  color: rgba(224, 230, 240, 0.9);
-  background: rgba(255, 255, 255, 0.07);
+  color: rgb(223 246 255 / 0.9);
+  background: rgb(var(--hud) / 0.081);
 }
 
 .iconeChoisie {
@@ -206,7 +209,7 @@
   padding: 0;
   border-radius: 50%;
   border: 2px solid transparent;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  box-shadow: 0 0 0 1px rgb(5 12 22 / 0.4) inset;
   transition: transform 120ms;
 }
 
@@ -223,8 +226,8 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  border: 1px dashed rgb(var(--hud) / 0.345);
+  border-radius: 2px;
   background: transparent;
   cursor: pointer;
 }
@@ -241,9 +244,9 @@
   padding: 4px;
   max-height: 260px;
   overflow-y: auto;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(0, 0, 0, 0.18);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.081);
+  background: rgb(5 12 22 / 0.18);
 }
 
 .jeu {
@@ -251,14 +254,14 @@
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: 7px;
+  border-radius: 2px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: rgba(224, 230, 240, 0.78);
+  color: rgb(223 246 255 / 0.78);
 }
 
 .jeu:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--hud) / 0.057);
 }
 
 .jeu input {
@@ -277,7 +280,7 @@
   text-align: right;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .jeuTitre {
@@ -298,14 +301,14 @@
 .separation {
   height: 1px;
   margin: 5px 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgb(var(--hud) / 0.092);
 }
 
 .vide {
   padding: 16px;
   text-align: center;
   font-size: 0.85rem;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
 }
 
 /* ── Pied ─────────────────────────────────────────────────────────────── */
@@ -315,14 +318,14 @@
   align-items: center;
   gap: 8px;
   padding: 14px 20px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgb(var(--hud) / 0.081);
 }
 
 .manque {
   flex: 1;
   min-width: 0;
   font-size: 0.78rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   text-align: right;
 }
 
@@ -331,7 +334,7 @@
 .supprimer {
   flex-shrink: 0;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 2px;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -348,9 +351,9 @@
 }
 
 .secondaire {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(224, 230, 240, 0.85);
+  border: 1px solid rgb(var(--hud) / 0.138);
+  background: rgb(var(--hud) / 0.046);
+  color: rgb(223 246 255 / 0.85);
 }
 
 .supprimer {

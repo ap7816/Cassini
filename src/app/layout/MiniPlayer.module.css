@@ -9,17 +9,17 @@
   left: 12px;
   bottom: 12px;
   z-index: 10;
-  width: min(300px, calc(100vw - 24px));
+  width: min(340px, calc(100vw - 24px));
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px 10px;
+  padding: 8px 10px 18px;
   overflow: hidden;
-  background: rgba(6, 10, 16, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  background: var(--hud-crochets), var(--hud-trame), rgb(4 11 21 / 0.94);
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-radius: 2px;
+  box-shadow: 0 0 24px rgb(var(--hud) / 0.12), 0 8px 26px rgb(0 0 0 / 0.5);
   animation: playerSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -41,17 +41,18 @@
 .art {
   width: calc(34px * var(--dbg-icones, 1.25));
   height: calc(34px * var(--dbg-icones, 1.25));
-  border-radius: 6px;
+  border-radius: 1px;
   object-fit: cover;
   flex-shrink: 0;
   display: block;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--hud) / 0.057);
+  border: 1px solid var(--hud-ligne);
 }
 
 .artPlaceholder {
   display: grid;
   place-items: center;
-  color: rgba(224, 230, 240, 0.3);
+  color: rgb(223 246 255 / 0.6);
   font-size: calc(14px * var(--ui-font-scale, 1));
 }
 
@@ -67,30 +68,31 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
 }
 
 .titleText {
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-weight: 600;
-  color: rgba(224, 230, 240, 0.9);
+  color: rgb(223 246 255 / 0.9);
   transition: color 0.15s;
+  letter-spacing: 0.03em;
 }
 
 .ouvrir:hover .titleText {
-  color: var(--accent, #6c8efb);
+  color: rgb(var(--hud));
 }
 
 .artist {
   font-size: calc(10px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
 }
 
 /* ── Transport ────────────────────────────────────────────── */
 .controls {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 5px;
   flex-shrink: 0;
 }
 
@@ -102,9 +104,9 @@
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 2px;
   background: transparent;
-  color: rgba(224, 230, 240, 0.7);
+  color: rgb(var(--hud) / 0.85);
   font-size: calc(11px * var(--ui-font-scale, 1));
   line-height: 1;
   cursor: pointer;
@@ -113,61 +115,115 @@
 
 .btn:hover:not(:disabled),
 .stopBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--hud) / 0.115);
   color: #fff;
 }
 
 .btn:disabled {
-  opacity: 0.28;
+  opacity: 0.35;
   cursor: default;
 }
 
+/* Précédent et suivant : les commandes qu'on vise le plus souvent, souvent à
+   l'aveugle pendant qu'on regarde autre chose. Une cible de 30 px sans cadre
+   se ratait facilement ; elles gagnent de la surface, un cadre qui les
+   dessine, et une icône lisible. */
+.saut {
+  width: calc(30px * var(--dbg-icones, 1.25));
+  height: calc(27px * var(--dbg-icones, 1.25));
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: rgb(var(--hud) / 0.06);
+  color: rgb(var(--hud));
+  font-size: calc(16px * var(--ui-font-scale, 1));
+}
+
+.saut:hover:not(:disabled) {
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.16);
+  box-shadow: var(--hud-lueur);
+}
+
+/* Un retour sous le doigt : le clic se sent, même quand la piste met un
+   instant à changer. */
+.saut:active:not(:disabled) {
+  transform: scale(0.94);
+  background: rgb(var(--hud) / 0.24);
+}
+
 .playBtn {
-  background: var(--accent, #6c8efb);
-  color: #0b0f16;
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent);
+  color: #fff;
   width: calc(28px * var(--dbg-icones, 1.25));
   height: calc(28px * var(--dbg-icones, 1.25));
+  border: 1px solid var(--accent, rgb(var(--hud)));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent, rgb(var(--hud))) 40%, transparent);
 }
 
 .playBtn:hover:not(:disabled) {
-  background: var(--accent, #6c8efb);
-  color: #0b0f16;
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 45%, transparent);
+  color: #fff;
   filter: brightness(1.12);
 }
 
 .stopBtn:hover {
-  color: #ff7a7a;
+  color: rgb(var(--hud-danger));
 }
 
 /* ── Fil de progression ───────────────────────────────────── */
 .progressBar {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
+  /* En retrait des bords et au-dessus du bas de la barre : la poignée déborde
+     du fil de part et d'autre, et `.player` rogne ce qui dépasse. */
+  left: 12px;
+  right: 12px;
+  bottom: 7px;
+  height: 4px;
   cursor: pointer;
   transition: height 0.12s;
-  /* La part lue est posée en `--part` par la course elle-même : un dégradé
+  /* La part lue est posée en `--part` par la course elle-même: un dégradé
      recalculé chaque seconde coûte moins qu'un élément de plus à composer. */
-  background: linear-gradient(
-    to right,
-    var(--accent, #6c8efb) 0%,
-    var(--accent, #6c8efb) var(--part, 0%),
-    rgba(255, 255, 255, 0.14) var(--part, 0%),
-    rgba(255, 255, 255, 0.14) 100%
-  );
+  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(3 8 15) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
 }
 
 /* Le contour de focus, sinon invisible sur un fil de 3 px collé au bord. */
 .progressBar:focus-visible {
-  height: 6px;
-  outline: 2px solid var(--accent, #6c8efb);
-  outline-offset: 1px;
+  outline: 2px solid rgb(var(--hud) / 0.85);
+  outline-offset: 5px;
 }
 
-.progressBar:hover {
-  height: 6px;
+/* Zone de saisie bien plus haute que le fil : invisible, elle fait partie de
+   la course pour le pointeur, et un clic un peu au-dessus compte encore. */
+.progressBar::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -8px;
+  bottom: -6px;
+}
+
+/* Poignée carrée, posée sur la part lue. Toujours visible : on ne cherche
+   pas ce qu'on peut attraper. */
+.poignee {
+  position: absolute;
+  top: 50%;
+  left: var(--part, 0%);
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1px solid rgb(var(--hud));
+  background: #fff;
+  box-shadow: 0 0 8px rgb(var(--hud) / 0.9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: width 0.12s, height 0.12s;
+}
+
+.progressBar:hover .poignee,
+.progressBar:active .poignee,
+.progressBar:focus-visible .poignee {
+  width: 14px;
+  height: 14px;
 }
 
 .playerLeaving {
@@ -208,4 +264,9 @@
   .progressBar {
     transition: none;
   }
+}
+
+/* Écarté de « suivant » : viser l'un et toucher l'autre couperait la musique. */
+.stopBtn {
+  margin-left: 4px;
 }

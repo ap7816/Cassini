@@ -8,8 +8,8 @@
   align-items: center;
   gap: 7px;
   padding: 10px 6px 9px;
-  border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.069);
   background: rgba(12, 16, 26, 0.38);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -21,10 +21,10 @@
 }
 
 .gridItem:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.13);
+  background: rgb(var(--hud) / 0.103);
+  border-color: rgb(var(--hud) / 0.149);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgb(5 12 22 / 0.35);
 }
 
 .gridItemFolderActive {
@@ -41,7 +41,7 @@
 .gridItemTrackActive .trackShape {
   border-color: var(--accent, #6c8efb);
   background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+  box-shadow: inset 0 1px 0 rgb(var(--hud) / 0.115),
               0 0 12px color-mix(in srgb, var(--accent, #6c8efb) 30%, transparent);
 }
 
@@ -69,19 +69,19 @@
 
 .gridItemWithArt .gridLabel {
   color: #ffffff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 4px rgb(5 12 22 / 0.85);
 }
 
 .gridItemWithArt .trackArtist {
-  color: rgba(255, 255, 255, 0.82);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  color: rgb(223 246 255 / 0.82);
+  text-shadow: 0 1px 3px rgb(5 12 22 / 0.75);
 }
 
 .gridLabel {
   font-size: 0.72rem;
   line-height: 1.3;
-  color: rgba(224, 230, 240, 0.88);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  color: rgb(223 246 255 / 0.88);
+  text-shadow: 0 1px 4px rgb(5 12 22 / 0.6);
   width: 100%;
   text-align: center;
   display: -webkit-box;
@@ -99,7 +99,7 @@
   position: relative;
   pointer-events: none;
   flex-shrink: 0;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 4px 10px rgb(5 12 22 / 0.45));
   transition: filter 0.15s, transform 0.15s;
 }
 
@@ -110,7 +110,7 @@
   width: 26px;
   height: 10px;
   background: color-mix(in srgb, var(--fc, #e6a817) 80%, #fff);
-  border-radius: 5px 5px 0 0;
+  border-radius: 2px 2px 0 0;
   z-index: 1;
 }
 
@@ -121,13 +121,13 @@
   right: 0;
   bottom: 0;
   background: color-mix(in srgb, var(--fc, #e6a817) 88%, #000);
-  border-radius: 3px 8px 8px 8px;
+  border-radius: 2px 2px 2px 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.25),
-              inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 -4px 8px rgb(5 12 22 / 0.25),
+              inset 0 1px 0 rgb(var(--hud) / 0.138);
 }
 
 .folderShapeBody::after {
@@ -137,7 +137,7 @@
   left: 0;
   right: 0;
   height: 48%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgb(var(--hud) / 0.207) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -153,8 +153,8 @@
 .folderCount {
   font-size: 0.95rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: rgb(223 246 255 / 0.72);
+  text-shadow: 0 1px 4px rgb(5 12 22 / 0.5);
   z-index: 1;
 }
 
@@ -164,9 +164,9 @@
   pointer-events: none;
   width: 72px;
   height: 58px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.057);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -176,7 +176,7 @@
   position: relative;
   overflow: hidden;
   transition: background 0.12s, border-color 0.12s;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgb(var(--hud) / 0.092);
 }
 
 .trackShape::before {
@@ -185,7 +185,7 @@
   bottom: 4px;
   right: 6px;
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.07);
+  color: rgb(223 246 255 / 0.62);
   pointer-events: none;
   line-height: 1;
 }
@@ -212,11 +212,11 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border-radius: 7px;
+  border-radius: 2px;
 }
 
 .trackShapeActiveArtOverlay {
-  background: rgba(0, 0, 0, 0.48);
+  background: rgb(5 12 22 / 0.48);
 }
 
 .trackArt {
@@ -226,21 +226,21 @@
   height: 100%;
   object-fit: cover;
   opacity: 1;
-  border-radius: 7px;
+  border-radius: 2px;
   pointer-events: none;
 }
 
 .trackNum {
   font-size: 1.1rem;
   font-weight: 700;
-  color: rgba(224, 230, 240, 0.3);
+  color: rgb(223 246 255 / 0.6);
   line-height: 1;
   letter-spacing: -0.02em;
 }
 
 .trackDurationGrid {
   font-size: 0.6rem;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(223 246 255 / 0.6);
   line-height: 1;
   letter-spacing: 0.02em;
 }
@@ -251,10 +251,10 @@
   right: 5px;
   font-size: 0.58rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(0, 0, 0, 0.62);
+  color: rgb(223 246 255 / 0.95);
+  background: rgb(5 12 22 / 0.62);
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: 2px;
   line-height: 1.5;
   z-index: 2;
   pointer-events: none;
@@ -263,7 +263,7 @@
 
 .trackArtist {
   font-size: 0.62rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

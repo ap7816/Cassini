@@ -10,22 +10,81 @@ html, body, #root {
 }
 
 :root {
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  /* ── Cockpit ──────────────────────────────────────────────────────────
+
+     L'interface se lit comme l'instrumentation d'un vaisseau : une structure
+     en lignes fines et froides, posée sur des vitres teintées plutôt que sur
+     du noir plat, et une seule couleur chaude réservée à ce qui alerte.
+
+     Deux familles de couleur, qui ne se remplacent pas l'une l'autre :
+     - `--hud` porte la structure — cadres, graduations, libellés. Elle est
+       fixe : c'est elle qui fait qu'on reconnaît l'application ;
+     - `--accent`, choisie par l'utilisateur, désigne ce qui est actif ou
+       sélectionné. Blanche, orange ou violette, elle reste lisible sur la
+       structure cyan, comme un voyant sur un tableau de bord.
+
+     Les couleurs sont données en composantes pour s'écrire
+     `rgb(var(--hud) / 0.3)` : une seule teinte, toutes les opacités. */
+  --hud: 111 220 255;
+  --hud-alerte: 255 180 84;
+  --hud-danger: 255 107 107;
+
+  --hud-texte: #dff6ff;
+  /* Contrastes mesurés sur la vitre la plus claire : 8,1 et 4,6 — le second
+     tient le seuil AA, il reste réservé aux libellés secondaires. */
+  --hud-texte-doux: rgb(190 225 240 / 0.7);
+  --hud-texte-faible: rgb(170 205 222 / 0.6);
+
+  --hud-vitre: rgb(6 16 28 / 0.74);
+  --hud-vitre-forte: rgb(5 12 22 / 0.95);
+  --hud-ligne: rgb(var(--hud) / 0.16);
+  --hud-ligne-moyenne: rgb(var(--hud) / 0.32);
+  --hud-ligne-forte: rgb(var(--hud) / 0.66);
+  --hud-lueur: 0 0 14px rgb(var(--hud) / 0.26);
+
+  /* Crochets d'angle, à poser en tête d'une pile de fonds :
+     `background: var(--hud-crochets), var(--hud-vitre);`
+     Des dégradés plutôt que des pseudo-éléments : les composants se servent
+     déjà de `::before` et `::after`, et un fond ne se dispute avec personne. */
+  --hud-crochets:
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 0 0 / 10px 1px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 0 0 / 1px 10px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 100% 0 / 10px 1px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 100% 0 / 1px 10px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 0 100% / 10px 1px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 0 100% / 1px 10px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 100% 100% / 10px 1px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.75) 0 0) 100% 100% / 1px 10px no-repeat;
+
+  /* Trame de balayage, à peine visible : elle suffit à faire d'une surface
+     sombre un écran plutôt qu'un aplat. */
+  --hud-trame: repeating-linear-gradient(
+    0deg,
+    rgb(var(--hud) / 0.028) 0 1px,
+    transparent 1px 3px
+  );
+
+  --police-ui: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  /* Chiffres à chasse fixe : un compteur qui change de largeur à chaque
+     mise à jour tressaute dans son cadre. */
+  --police-donnee: 'Share Tech Mono', ui-monospace, Consolas, monospace;
+
+  font-family: var(--police-ui);
   font-size: 15px;
   line-height: 1.55;
   font-weight: 400;
-  color: rgba(224, 230, 240, 0.92);
-  background: #0f141a;
+  color: var(--hud-texte);
+  background: #040a13;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbars fines et discrètes ────────────────────────── */
+/* ── Barres de défilement, en fil d'instrument ────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.13) transparent;
+  scrollbar-color: rgb(var(--hud) / 0.28) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -38,25 +97,27 @@ html, body, #root {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.13);
-  border-radius: 999px;
+  background: rgb(var(--hud) / 0.26);
+  border-radius: 0;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgb(var(--hud) / 0.5);
 }
 
 /* ── Sélection de texte ───────────────────────────────────── */
 ::selection {
-  background: rgba(108, 142, 251, 0.32);
-  color: inherit;
+  background: rgb(var(--hud) / 0.3);
+  color: #fff;
 }
 
 /* ── Focus visible (navigation clavier) ──────────────────── */
+/* Cyan franc et non l'accent : l'accent de l'utilisateur peut être gris, et
+   un focus qui se confond avec la sélection ne dit plus où l'on est. */
 :focus-visible {
-  outline: 2px solid rgba(108, 142, 251, 0.65);
+  outline: 2px solid rgb(var(--hud) / 0.85);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 /* ── Éléments interactifs ─────────────────────────────────── */

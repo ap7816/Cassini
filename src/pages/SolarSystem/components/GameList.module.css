@@ -18,51 +18,74 @@
 
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 6px;
+  gap: 8px;
+  padding: 12px 8px 10px;
 
-  background: rgba(6, 10, 17, var(--liste-fond-opacite, 0.8));
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  /* Une vitre d'instrument : trame de balayage, un reflet froid qui descend
+     du haut, puis la teinte. L'opacité de la teinte reste réglable. */
+  background:
+    var(--hud-trame),
+    linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 140px),
+    rgb(4 11 21 / var(--liste-fond-opacite, 0.82));
+  border-left: 1px solid var(--hud-ligne-moyenne);
+  box-shadow:
+    inset 1px 0 0 rgb(var(--hud) / 0.07),
+    -18px 0 40px rgb(0 0 0 / 0.35);
   backdrop-filter: blur(calc(12px * var(--dbg-flou, 1)));
 }
 
 .head {
+  position: relative;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 4px;
+  padding: 0 2px 8px 14px;
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px)
+      0 100% / 100% 3px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
 }
 
 .headTitle {
-  font: 700 11px/1 Inter, sans-serif;
-  font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  letter-spacing: 0.09em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font: 700 11px/1 var(--police-ui);
+  font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  color: rgb(var(--hud));
+  text-shadow: 0 0 10px rgb(var(--hud) / 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
 .search {
   flex-shrink: 0;
-  padding: 6px 8px;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.06);
-  color: inherit;
-  font: 500 12px/1 Inter, sans-serif;
+  padding: 7px 8px 7px 18px;
+  border-radius: 2px;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background:
+    linear-gradient(rgb(var(--hud) / 0.85) 0 0) 8px 50% / 2px 12px no-repeat,
+    rgb(var(--hud) / 0.05);
+  color: var(--hud-texte);
+  font: 500 12px/1 var(--police-ui);
   font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.04em;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .search:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--hud-ligne-forte);
+  background:
+    linear-gradient(rgb(var(--hud)) 0 0) 8px 50% / 2px 12px no-repeat,
+    rgb(var(--hud) / 0.09);
+  box-shadow: var(--hud-lueur), inset 0 0 12px rgb(var(--hud) / 0.08);
 }
 
 /* La liste seule défile : l'en-tête et la recherche restent visibles. */
@@ -84,12 +107,12 @@
 }
 
 .items::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 3px;
+  background: rgb(var(--hud) / 0.26);
+  border-radius: 0;
 }
 
 .items::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgb(var(--hud) / 0.5);
 }
 
 /* Les écarts et éléments fixes de la ligne sont serrés : tout ce qu'ils ne
@@ -100,21 +123,27 @@
   gap: 7px;
   width: 100%;
   padding: calc(4px * var(--dbg-liste-esp, 1)) 5px;
-  border-radius: calc(8px * var(--dbg-arrondi, 1));
+  border-radius: 2px;
   border: 1px solid transparent;
+  border-left: 2px solid transparent;
   background: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
 
 .item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(90deg, rgb(var(--hud) / 0.16), rgb(var(--hud) / 0.02));
+  border-left-color: var(--hud-ligne-forte);
 }
 
 .itemActive {
-  background: rgba(255, 255, 255, 0.17);
+  background:
+    var(--hud-crochets),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 26%, transparent), transparent 85%);
+  border-left-color: var(--accent, rgb(var(--hud)));
+  box-shadow: inset 12px 0 18px -14px var(--accent, rgb(var(--hud)));
 }
 
 /* Rang orbital : la n-ième entrée est la n-ième orbite depuis le soleil */
@@ -122,12 +151,11 @@
   flex-shrink: 0;
   /* Suit le texte qu'elle contient, sans quoi un rang à deux chiffres
      déborderait de sa colonne dès que la liste s'élargit. */
-  width: calc(14px * var(--txt-e, 1));
+  width: calc(15px * var(--txt-e, 1));
   text-align: right;
-  font: 600 11px/1 Inter, sans-serif;
+  font: 400 11px/1 var(--police-donnee);
   font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgb(var(--hud) / 0.72);
   font-variant-numeric: tabular-nums;
 }
 
@@ -137,7 +165,9 @@
   flex-shrink: 0;
   width: calc(34px * var(--dbg-vignette, 2.5) * var(--img-e, 1));
   height: calc(16px * var(--dbg-vignette, 2.5) * var(--img-e, 1));
-  border-radius: 3px;
+  box-sizing: border-box;
+  border-radius: 1px;
+  border: 1px solid var(--hud-ligne);
   object-fit: cover;
   display: block;
 }
@@ -145,10 +175,10 @@
 .thumbFallback {
   display: grid;
   place-items: center;
-  font: 800 11px/1 Inter, sans-serif;
+  font: 700 11px/1 var(--police-ui);
   font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--ui-font-family, var(--police-ui));
+  color: var(--hud-texte-doux);
 }
 
 .labels {
@@ -160,35 +190,37 @@
 }
 
 .name {
-  font: 600 12px/1.2 Inter, sans-serif;
-  font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  font: 600 12px/1.2 var(--police-ui);
+  font-size: calc(12.5px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.02em;
+  color: var(--hud-texte);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .meta {
-  font: 500 11px/1 Inter, sans-serif;
+  font: 400 11px/1 var(--police-donnee);
   font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.75);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: var(--hud-texte-doux);
+  letter-spacing: 0.02em;
 }
 
 .fav {
-  color: #f0c040;
+  color: rgb(var(--hud-alerte));
+  text-shadow: 0 0 8px rgb(var(--hud-alerte) / 0.6);
 }
 
 .empty {
   padding: 18px 8px;
   text-align: center;
-  font: 500 12px/1 Inter, sans-serif;
+  font: 500 12px/1 var(--police-ui);
   font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-texte-faible);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -218,12 +250,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 12px 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: rgba(6, 10, 17, var(--dbg-rail-op, 0.42));
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  /* Plus sombre que la liste : c'est le montant du tableau de bord, pas une
+     vitre qu'on consulte. */
+  background:
+    var(--hud-trame),
+    rgb(3 8 16 / calc(var(--dbg-rail-op, 0.42) + 0.45));
+  border-left: 1px solid var(--hud-ligne-moyenne);
   backdrop-filter: blur(calc(12px * var(--dbg-flou, 1)));
 }
 
@@ -238,29 +274,34 @@
   padding: 0;
   display: grid;
   place-items: center;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid var(--hud-ligne);
+  background: rgb(var(--hud) / 0.04);
   cursor: pointer;
-  opacity: var(--dbg-rail-repos, 0.55);
-  transition: opacity 130ms, background 130ms, border-color 130ms;
+  opacity: calc(var(--dbg-rail-repos, 0.55) + 0.15);
+  transition: opacity 130ms, background 130ms, border-color 130ms, box-shadow 130ms;
 }
 
 .railBtn:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.1);
+  box-shadow: var(--hud-lueur);
 }
 
 .railBtn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 1px;
+  outline: 2px solid rgb(var(--hud) / 0.85);
+  outline-offset: 2px;
 }
 
 /* Launcher consulté dans la liste. */
 .railBtnActive {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.14);
-  border-color: var(--teinte, rgba(255, 255, 255, 0.4));
+  background: color-mix(in srgb, var(--teinte, rgb(var(--hud))) 16%, transparent);
+  border-color: var(--teinte, rgb(var(--hud)));
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--teinte, rgb(var(--hud))) 45%, transparent),
+    inset 3px 0 0 var(--teinte, rgb(var(--hud)));
 }
 
 .railIcon {
@@ -271,10 +312,11 @@
 }
 
 .railInitiale {
-  font: 800 11px/1 Inter, sans-serif;
-  font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font: 700 11px/1 var(--police-ui);
+  font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  font-family: var(--ui-font-family, var(--police-ui));
   color: var(--teinte, #fff);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--teinte, #fff) 60%, transparent);
 }
 
 /* Séparateur de section : jeux désinstallés, résultats venus d'ailleurs. */
@@ -283,23 +325,24 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 6px;
-  margin: 10px 4px 3px;
+  margin: 12px 2px 4px;
   padding-top: 8px;
   /* Un trait plutôt qu'un simple écart : sur une liste qui défile, l'espace
      seul se confond avec la fin de la liste. */
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font: 700 11px/1 Inter, sans-serif;
-  font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  letter-spacing: 0.09em;
+  border-top: 1px dashed var(--hud-ligne-moyenne);
+  font: 700 11px/1 var(--police-ui);
+  font-size: calc(10.5px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  color: rgb(var(--hud) / 0.78);
 }
 
 .groupeCompte {
+  font-family: var(--police-donnee);
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0;
+  color: var(--hud-texte-doux);
 }
 
 /* Jeu désinstallé : la ligne reste cliquable — on peut vouloir sa fiche, son
@@ -342,15 +385,14 @@
   display: flex;
   justify-content: space-between;
   gap: 6px;
-  font: 600 11px/1 Inter, sans-serif;
+  font: 400 11px/1 var(--police-donnee);
   font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  color: var(--hud-texte-doux);
+  text-transform: uppercase;
 }
 
 .disqueLibre {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(var(--hud));
 }
 
 /* Jauge. La part occupée est portée par `--part`, écrite en ligne.
@@ -363,10 +405,12 @@
    C'est donc le *vide* qu'on recouvre, à partir de `--part`. */
 .disqueJauge {
   position: relative;
-  height: 3px;
-  border-radius: 999px;
+  height: 5px;
+  border-radius: 0;
   overflow: hidden;
-  background: linear-gradient(90deg, #5ea7d4 0%, #6fbf7f 45%, #e0a83c 78%, #d4574e 100%);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 5px, rgb(3 8 15) 5px 7px),
+    linear-gradient(90deg, #45c8f5 0%, #5fe0b0 45%, #ffb454 78%, #ff6b6b 100%);
 }
 
 .disqueJauge::after {
@@ -377,8 +421,11 @@
   left: var(--part, 0%);
   right: 0;
   /* Assez opaque pour masquer le dégradé : le panneau lui-même est translucide,
-     un voile clair laisserait le rouge transparaître sur un disque vide. */
-  background: rgba(4, 7, 12, 0.88);
+     un voile clair laisserait le rouge transparaître sur un disque vide. Les
+     segments vides restent dessinés en creux. */
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.14) 0 5px, transparent 5px 7px),
+    rgb(3 8 15 / 0.95);
 }
 
 /* ── Systèmes personnalisés ───────────────────────────────────────────── */
@@ -390,7 +437,8 @@
   width: 18px;
   height: 1px;
   margin: 2px 0;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--hud-ligne-forte);
+  box-shadow: 0 0 6px rgb(var(--hud) / 0.5);
 }
 
 /* Pousse ce qui suit tout en bas de la barre, quand les systèmes ne la
@@ -409,28 +457,31 @@
   padding: 0;
   display: grid;
   place-items: center;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
+  border-radius: 2px;
   border: 1px solid transparent;
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgb(var(--hud) / 0.7);
   cursor: pointer;
-  transition: color 130ms, border-color 130ms, background 130ms;
+  transition: color 130ms, border-color 130ms, background 130ms, box-shadow 130ms;
 }
 
 .railReglages:hover,
 .railReglages[aria-expanded='true'] {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.1);
+  box-shadow: var(--hud-lueur);
 }
 
 .railReglages:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 1px;
+  outline: 2px solid rgb(var(--hud) / 0.85);
+  outline-offset: 2px;
 }
 
 .railReglages[aria-current='true'] {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -443,10 +494,10 @@
 .railVersion {
   flex-shrink: 0;
   margin-top: 2px;
-  font: 500 9px/1 Inter, sans-serif;
-  font-size: calc(9px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(255, 255, 255, 0.4);
+  font: 400 9px/1 var(--police-donnee);
+  font-size: calc(9.5px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-faible);
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -458,23 +509,24 @@
   padding: 0;
   display: grid;
   place-items: center;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
-  border: 1px dashed rgba(255, 255, 255, 0.28);
+  border-radius: 2px;
+  border: 1px dashed var(--hud-ligne-moyenne);
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgb(var(--hud) / 0.7);
   cursor: pointer;
-  transition: color 130ms, border-color 130ms, background 130ms;
+  transition: color 130ms, border-color 130ms, background 130ms, box-shadow 130ms;
 }
 
 .railAjout:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.08);
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.08);
+  box-shadow: var(--hud-lueur);
 }
 
 .railAjout:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 1px;
+  outline: 2px solid rgb(var(--hud) / 0.85);
+  outline-offset: 2px;
 }
 
 .railAjoutIcone {
@@ -485,20 +537,24 @@
 
 .headModifier {
   flex-shrink: 0;
-  padding: 2px 7px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
-  font: 600 11px/1.2 Inter, sans-serif;
-  font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  padding: 3px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: rgb(var(--hud) / 0.06);
+  color: rgb(var(--hud) / 0.9);
+  font: 600 11px/1.2 var(--police-ui);
+  font-size: calc(10.5px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  font-family: var(--ui-font-family, var(--police-ui));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
 .headModifier:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.14);
+  box-shadow: var(--hud-lueur);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -522,11 +578,11 @@
   padding: 0;
   display: grid;
   place-items: center;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(16, 23, 36, 0.95);
-  color: rgba(255, 255, 255, 0.85);
-  font: 700 13px/1 Inter, sans-serif;
+  border-radius: 2px;
+  border: 1px solid var(--hud-ligne-forte);
+  background: rgb(4 12 22 / 0.96);
+  color: rgb(var(--hud));
+  font: 700 13px/1 var(--police-ui);
   cursor: pointer;
   opacity: 0;
   transform: translateY(-50%);
@@ -539,6 +595,27 @@
 }
 
 .ligneAction:hover {
-  background: rgba(40, 54, 80, 0.98);
+  background: rgb(var(--hud) / 0.2);
   color: #fff;
+}
+
+/* Losange de repère, décoratif : pas de contenu textuel, rien n'est lu. */
+.head::before
+.head::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: calc(50% - 7px);
+  width: 6px;
+  height: 6px;
+  background: rgb(var(--hud));
+  box-shadow: 0 0 8px rgb(var(--hud) / 0.8);
+  transform: rotate(45deg);
+}
+
+.search::placeholder
+.search::placeholder {
+  color: var(--hud-texte-faible);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }

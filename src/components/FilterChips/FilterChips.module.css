@@ -15,7 +15,7 @@
 
 .selectLabel {
   font-size: 0.75rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -24,13 +24,13 @@
 .select {
   height: 30px;
   padding: 0 28px 0 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.138);
   background-color: rgba(26, 29, 46, 0.85);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;
-  color: rgba(224, 230, 240, 0.85);
+  color: rgb(223 246 255 / 0.85);
   font-size: 0.82rem;
   cursor: pointer;
   appearance: none;
@@ -41,13 +41,13 @@
 }
 
 .select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgb(var(--hud) / 0.253);
   background-color: rgba(26, 29, 46, 0.95);
 }
 
 .select:focus {
   border-color: var(--accent, #6c8efb);
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: rgb(var(--hud) / 0.081);
 }
 
 .select option {

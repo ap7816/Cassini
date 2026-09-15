@@ -123,7 +123,7 @@ export type Reglages = {
 };
 
 export const REGLAGES_DEFAUT: Readonly<Reglages> = Object.freeze({
-  policeFamille: 'Inter',
+  policeFamille: 'Chakra Petch',
   policeEchelle: 1,
   // La feuille de style dit rgba(224, 230, 240, 0.92). Un hexadécimal ne sait
   // pas porter l'opacité : c'est pourquoi le panneau n'écrit cette couleur que

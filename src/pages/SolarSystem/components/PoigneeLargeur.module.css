@@ -29,7 +29,7 @@
 
 .poignee:hover::after,
 .poignee:focus-visible::after {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgb(var(--hud) / 0.517);
 }
 
 .poignee:focus-visible {

@@ -8,12 +8,12 @@
   width: 272px;
   background: rgba(12, 16, 28, 0.97);
   border: 1px solid color-mix(in srgb, var(--accent, #6c8efb) 40%, transparent);
-  border-radius: 14px;
+  border-radius: 2px;
   padding: 14px 16px;
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.7),
+    0 16px 48px rgb(5 12 22 / 0.7),
     0 0 0 1px rgba(108, 142, 251, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    inset 0 1px 0 rgb(var(--hud) / 0.069);
   backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
@@ -30,20 +30,20 @@
 .title {
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgba(224, 230, 240, 0.95);
+  color: rgb(223 246 255 / 0.95);
 }
 
 .dismiss {
   background: none;
   border: none;
-  color: rgba(224, 230, 240, 0.25);
+  color: rgb(223 246 255 / 0.6);
   font-size: 0.7rem;
   cursor: pointer;
   padding: 0;
   line-height: 1;
   transition: color 0.12s;
 }
-.dismiss:hover { color: rgba(224, 230, 240, 0.7); }
+.dismiss:hover { color: rgb(223 246 255 / 0.7); }
 
 .version {
   font-size: 0.75rem;
@@ -53,7 +53,7 @@
 
 .body {
   font-size: 0.74rem;
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(223 246 255 / 0.6);
   margin: 0;
   line-height: 1.5;
   max-height: 56px;
@@ -66,7 +66,7 @@
 .btn {
   margin-top: 2px;
   padding: 7px 14px;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--accent, #6c8efb);
   background: color-mix(in srgb, var(--accent, #6c8efb) 15%, transparent);
   color: var(--accent, #6c8efb);
@@ -83,20 +83,20 @@
 
 .progressBar {
   height: 5px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.092);
   overflow: hidden;
   margin-top: 4px;
 }
 .progressFill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--accent, #6c8efb);
   transition: width 0.35s ease;
 }
 .pct {
   font-size: 0.7rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   text-align: right;
 }
 

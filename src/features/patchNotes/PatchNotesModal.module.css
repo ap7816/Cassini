@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgb(5 12 22 / 0.72);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   animation: overlayIn 0.22s ease;
@@ -24,13 +24,10 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: rgba(10, 14, 24, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 22px;
-  box-shadow:
-    0 40px 100px rgba(0, 0, 0, 0.8),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.98);
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-radius: 2px;
+  box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
   overflow: hidden;
   animation: modalIn 0.3s cubic-bezier(0.34, 1.25, 0.64, 1);
 }
@@ -46,7 +43,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 22px 24px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgb(var(--hud) / 0.081);
   background: linear-gradient(
     135deg,
     rgba(108, 142, 251, 0.12) 0%,
@@ -76,14 +73,16 @@
 .headerTitle {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #e0e6f0;
+  color: rgb(var(--hud));
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgb(var(--hud) / 0.45);
 }
 
 .headerSub {
   font-size: 0.78rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   margin: 0;
 }
 
@@ -91,9 +90,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(224, 230, 240, 0.55);
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.057);
+  color: rgb(223 246 255 / 0.6);
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
@@ -104,8 +103,8 @@
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgb(var(--hud) / 0.138);
+  border-color: rgb(var(--hud) / 0.23);
   color: #e0e6f0;
 }
 
@@ -143,18 +142,20 @@
 .versionNum {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #e0e6f0;
+  color: rgb(var(--hud));
   letter-spacing: -0.02em;
+  font-family: var(--police-donnee);
 }
 
 .versionDate {
   font-size: 0.72rem;
-  color: rgba(224, 230, 240, 0.35);
+  color: rgb(223 246 255 / 0.6);
   padding: 2px 8px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  background: rgb(var(--hud) / 0.034);
   font-variant-numeric: tabular-nums;
+  font-family: var(--police-donnee);
 }
 
 .newBadge {
@@ -165,7 +166,7 @@
   color: #0f141a;
   background: var(--accent, #6c8efb);
   padding: 2px 8px;
-  border-radius: 20px;
+  border-radius: 2px;
   box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #6c8efb) 50%, transparent);
 }
 
@@ -174,9 +175,9 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-radius: 12px;
+  border-radius: 2px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgb(var(--hud) / 0.069);
 }
 
 .sectionHeader {
@@ -204,12 +205,12 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgb(var(--hud) / 0.023);
 }
 
 .item {
   font-size: 0.84rem;
-  color: rgba(224, 230, 240, 0.82);
+  color: rgb(223 246 255 / 0.82);
   line-height: 1.5;
   padding-left: 16px;
   position: relative;
@@ -219,7 +220,7 @@
   content: '–';
   position: absolute;
   left: 0;
-  color: rgba(224, 230, 240, 0.25);
+  color: rgb(223 246 255 / 0.6);
 }
 
 /* ─── Footer ──────────────────────────────────────────────────── */
@@ -229,17 +230,17 @@
   justify-content: space-between;
   gap: 12px;
   padding: 16px 24px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgb(var(--hud) / 0.081);
+  background: rgb(5 12 22 / 0.25);
   flex-shrink: 0;
 }
 
 .dismissBtn {
   font-size: 0.8rem;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  border-radius: 2px;
   padding: 8px 14px;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
@@ -247,14 +248,14 @@
 }
 
 .dismissBtn:hover {
-  color: rgba(224, 230, 240, 0.75);
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgb(223 246 255 / 0.75);
+  border-color: rgb(var(--hud) / 0.207);
+  background: rgb(var(--hud) / 0.057);
 }
 
 .closeMainBtn {
   padding: 9px 28px;
-  border-radius: 10px;
+  border-radius: 2px;
   border: none;
   background: var(--accent, #6c8efb);
   color: #fff;

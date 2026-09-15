@@ -7,7 +7,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(4, 7, 12, 0.55);
+  background: rgb(5 12 22 / 0.55);
 }
 
 .fenetre {
@@ -16,10 +16,10 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background: rgba(8, 12, 20, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: calc(14px * var(--dbg-arrondi, 1));
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 160px), rgb(4 11 21 / 0.98);
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-radius: calc(2px * var(--dbg-arrondi, 1));
+  box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
 }
 
 .entete {
@@ -28,14 +28,18 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--hud-ligne-moyenne);
 }
 
 .titre {
   margin: 0;
   font-size: calc(15px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
   font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(var(--hud));
+  text-shadow: 0 0 12px rgb(var(--hud) / 0.5);
 }
 
 .fermer {
@@ -46,16 +50,17 @@
   place-items: center;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(224, 230, 240, 0.7);
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.057);
+  color: rgb(223 246 255 / 0.7);
   font-size: calc(12px * var(--ui-font-scale, 1));
   cursor: pointer;
 }
 
 .fermer:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--hud-danger) / 0.18);
   color: #fff;
+  border-color: rgb(var(--hud-danger) / 0.7);
 }
 
 .corps {
@@ -73,9 +78,9 @@
   margin: 0 0 6px;
   font-size: calc(10px * var(--ui-font-scale, 1));
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(var(--hud) / 0.8);
 }
 
 .liste {
@@ -93,12 +98,20 @@
 }
 
 .touche {
-  /* Chasse fixe et largeur figée : sans elles, la colonne des libellés se
+  /* Chasse fixe et largeur figée: sans elles, la colonne des libellés se
      décale d'une ligne à l'autre et la liste cesse de se lire en colonne. */
-  flex: 0 0 92px;
-  font: 600 11px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: calc(11px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.92);
+  flex: 0 0 auto;
+  font: 400 12px/1.5 var(--police-donnee);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: rgb(var(--hud));
+  min-width: 78px;
+  box-sizing: border-box;
+  padding: 2px 8px;
+  border: 1px solid var(--hud-ligne-moyenne);
+  border-bottom-width: 2px;
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.06);
+  text-align: center;
 }
 
 .quoi {
@@ -106,15 +119,15 @@
   flex: 1;
   min-width: 0;
   font-size: calc(12px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(224, 230, 240, 0.7);
+  font-family: var(--ui-font-family, var(--police-ui));
+  color: rgb(223 246 255 / 0.7);
 }
 
 .note {
   margin: 0;
   padding: 10px 16px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--hud-ligne-moyenne);
   font-size: calc(11px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
-  color: rgba(224, 230, 240, 0.45);
+  font-family: var(--ui-font-family, var(--police-ui));
+  color: rgb(223 246 255 / 0.6);
 }

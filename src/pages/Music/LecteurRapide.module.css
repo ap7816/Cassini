@@ -20,17 +20,19 @@
   width: 56px;
   height: 56px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 1px;
   object-fit: cover;
   display: block;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--hud) / 0.069);
+  border: 1px solid var(--hud-ligne-moyenne);
+  box-shadow: 0 0 14px rgb(var(--hud) / 0.15);
 }
 
 .pochetteVide {
   display: grid;
   place-items: center;
   font-size: 22px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgb(223 246 255 / 0.62);
 }
 
 .enCoursTextes {
@@ -45,17 +47,19 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
 }
 
 .enCoursTitre {
   font-size: calc(14px * var(--ui-font-scale, 1));
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .enCoursArtiste {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.6);
+  color: rgb(223 246 255 / 0.6);
 }
 
 /* ── Progression et volume ───────────────────────────────── */
@@ -67,9 +71,10 @@
 
 .temps {
   font-size: calc(11px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.5);
+  color: rgb(var(--hud) / 0.85);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  font-family: var(--police-donnee);
 }
 
 /* La part lue vient d'une variable posée en ligne : un dégradé recalculé à
@@ -77,16 +82,10 @@
 .barre,
 .volume {
   position: relative;
-  height: 4px;
-  border-radius: 999px;
+  height: 5px;
+  border-radius: 0;
   cursor: pointer;
-  background: linear-gradient(
-    to right,
-    var(--accent, #6c8efb) 0%,
-    var(--accent, #6c8efb) var(--part, 0%),
-    rgba(255, 255, 255, 0.18) var(--part, 0%),
-    rgba(255, 255, 255, 0.18) 100%
-  );
+  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(3 8 15) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
 }
 
 .barre {
@@ -104,19 +103,35 @@
 .volume {
   width: 62px;
   flex-shrink: 0;
+}
+
+/* L'icône et la course forment un seul groupe, poussé au bout de la rangée. */
+.volumeBloc {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+.volumeIcone {
+  display: grid;
+  place-items: center;
+  color: rgb(var(--hud) / 0.85);
+  font-size: calc(14px * var(--ui-font-scale, 1));
 }
 
 .curseur {
   position: absolute;
   top: 50%;
-  width: 9px;
-  height: 9px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: var(--accent, #6c8efb);
+  width: 4px;
+  height: 13px;
+  margin-left: -2px;
+  border-radius: 0;
+  background: #fff;
   transform: translateY(-50%);
   pointer-events: none;
+  box-shadow: 0 0 8px rgb(var(--hud));
 }
 
 /* ── Commandes ───────────────────────────────────────────── */
@@ -133,9 +148,9 @@
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 2px;
   background: transparent;
-  color: rgba(224, 230, 240, 0.75);
+  color: rgb(var(--hud) / 0.85);
   font-size: calc(13px * var(--ui-font-scale, 1));
   line-height: 1;
   cursor: pointer;
@@ -143,7 +158,7 @@
 }
 
 .bouton:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--hud) / 0.115);
   color: #fff;
 }
 
@@ -153,20 +168,23 @@
 }
 
 .boutonActif {
-  color: var(--accent, #6c8efb);
+  color: rgb(var(--hud-alerte));
+  text-shadow: 0 0 8px rgb(var(--hud-alerte) / 0.6);
 }
 
 .boutonLecture {
-  background: var(--accent, #6c8efb);
-  color: #0f141a;
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent);
+  color: #fff;
   width: calc(36px * var(--dbg-icones, 1.25));
   height: calc(36px * var(--dbg-icones, 1.25));
   font-size: calc(15px * var(--ui-font-scale, 1));
+  border: 1px solid var(--accent, rgb(var(--hud)));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent, rgb(var(--hud))) 40%, transparent);
 }
 
 .boutonLecture:hover:not(:disabled) {
-  background: var(--accent, #6c8efb);
-  color: #0f141a;
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 46%, transparent);
+  color: #fff;
   filter: brightness(1.12);
 }
 
@@ -175,17 +193,19 @@
   width: 100%;
   box-sizing: border-box;
   padding: 7px 10px;
-  border-radius: calc(9px * var(--dbg-arrondi, 1));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: calc(2px * var(--dbg-arrondi, 1));
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: linear-gradient(rgb(var(--hud) / 0.85) 0 0) 9px 50% / 2px 12px no-repeat, rgb(var(--hud) / 0.05);
   color: inherit;
   font-size: calc(12px * var(--ui-font-scale, 1));
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
+  padding-left: 20px;
 }
 
 .recherche:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--hud-ligne-forte);
+  box-shadow: var(--hud-lueur);
 }
 
 .liste {
@@ -202,17 +222,17 @@
 }
 
 .liste::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 3px;
+  background: rgb(var(--hud) / 0.161);
+  border-radius: 2px;
 }
 
 .sectionTitre {
   padding: 8px 6px 4px;
   font-size: calc(10px * var(--ui-font-scale, 1));
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(224, 230, 240, 0.4);
+  color: rgb(var(--hud) / 0.8);
 }
 
 .ligne {
@@ -222,7 +242,7 @@
   width: 100%;
   padding: 5px 6px;
   border: none;
-  border-radius: calc(7px * var(--dbg-arrondi, 1));
+  border-radius: calc(2px * var(--dbg-arrondi, 1));
   background: none;
   color: inherit;
   text-align: left;
@@ -230,11 +250,11 @@
 }
 
 .ligne:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: linear-gradient(90deg, rgb(var(--hud) / 0.14), transparent);
 }
 
 .ligneActive {
-  background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
+  background: var(--hud-crochets), linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent), transparent 85%);
 }
 
 /* Pochette à gauche, et la lecture en cours marquée dessus plutôt qu'à côté :
@@ -244,9 +264,9 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  border-radius: 5px;
+  border-radius: 1px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--hud) / 0.057);
 }
 
 .image {
@@ -261,7 +281,7 @@
   height: 100%;
   display: grid;
   place-items: center;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgb(223 246 255 / 0.62);
   font-size: calc(13px * var(--ui-font-scale, 1));
 }
 
@@ -270,7 +290,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(4, 7, 12, 0.58);
+  background: rgb(5 12 22 / 0.58);
   color: var(--accent, #6c8efb);
   font-size: calc(11px * var(--ui-font-scale, 1));
 }
@@ -288,7 +308,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--ui-font-family, Inter), sans-serif;
+  font-family: var(--ui-font-family, var(--police-ui));
 }
 
 .ligneTitre {
@@ -297,11 +317,11 @@
 
 .ligneDossier {
   font-size: calc(10px * var(--ui-font-scale, 1));
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
 }
 
 .ligneActive .ligneTitre {
-  color: var(--accent, #6c8efb);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -309,7 +329,7 @@
 .vide {
   padding: 18px 6px;
   text-align: center;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(223 246 255 / 0.6);
   font-size: calc(12px * var(--ui-font-scale, 1));
 }
 
@@ -321,12 +341,14 @@
 
 .principal {
   padding: 8px 14px;
-  border-radius: calc(10px * var(--dbg-arrondi, 1));
-  border: 1px solid var(--accent, #6c8efb);
-  background: color-mix(in srgb, var(--accent, #6c8efb) 16%, transparent);
+  border-radius: 2px;
+  border: 1px solid var(--accent, rgb(var(--hud)));
+  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent);
   color: inherit;
   font-size: calc(12px * var(--ui-font-scale, 1));
   cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 /* Vers le rangement de la bibliothèque : rare, donc discret. */
@@ -335,14 +357,15 @@
   padding: 6px;
   border: none;
   background: none;
-  color: rgba(224, 230, 240, 0.45);
+  color: rgb(var(--hud) / 0.75);
   font-size: calc(11px * var(--ui-font-scale, 1));
   text-decoration: underline;
   cursor: pointer;
+  letter-spacing: 0.06em;
 }
 
 .lien:hover {
-  color: rgba(224, 230, 240, 0.8);
+  color: rgb(223 246 255 / 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {

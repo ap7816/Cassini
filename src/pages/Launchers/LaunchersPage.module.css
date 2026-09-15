@@ -28,28 +28,28 @@
 }
 
 .note {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--hud) / 0.138);
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 12px;
   opacity: 0.85;
 }
 
 .error {
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgb(var(--hud) / 0.172);
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 12px;
   opacity: 0.95;
 }
 
 .empty {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--hud) / 0.138);
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 18px;
   display: grid;
   gap: 8px;
@@ -79,10 +79,10 @@
 }
 
 .card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--hud) / 0.138);
   background: rgba(15, 20, 26, 0.6);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 14px;
   display: grid;
   gap: 12px;
@@ -99,7 +99,7 @@
    avant même qu'on ait lu le sous-titre. */
 .cardMissing {
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.09);
+  border-color: rgb(var(--hud) / 0.103);
   background: rgba(15, 20, 26, 0.28);
   opacity: 0.55;
 }
@@ -125,9 +125,9 @@
 .badge {
   font-size: 12px;
   padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.115);
+  background: rgb(var(--hud) / 0.057);
   flex: 0 0 auto;
 }
 
@@ -155,8 +155,8 @@
 .button {
   height: 34px;
   padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.172);
   background: rgba(15, 20, 26, 0.55);
   backdrop-filter: blur(8px);
   color: inherit;
@@ -176,16 +176,16 @@
 .primaryButton {
   height: 34px;
   padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.161);
+  background: rgb(var(--hud) / 0.115);
   color: inherit;
   cursor: pointer;
   box-shadow: none;
 }
 
 .primaryButton:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--hud) / 0.138);
 }
 
 .primaryButton:disabled {
@@ -206,17 +206,17 @@
 
 .progressTrack {
   height: 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+  border: 1px solid rgb(var(--hud) / 0.092);
+  background: rgb(var(--hud) / 0.046);
   overflow: hidden;
   position: relative;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.161);
 }
 
 /* Indeterminate animation */
@@ -256,11 +256,11 @@
 .iconWrap {
   width: 34px;
   height: 34px;
-  border-radius: 12px;
+  border-radius: 2px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--hud) / 0.069);
+  border: 1px solid rgb(var(--hud) / 0.115);
   overflow: hidden;
   flex: 0 0 auto;
 }

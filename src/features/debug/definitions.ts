@@ -71,7 +71,7 @@ export const DEFINITIONS: readonly Definition[] = [
   // ── Interface ──────────────────────────────────────────────────────────
   {
     cle: 'policeFamille', libelle: 'Police', groupe: 'Interface', type: 'choix', fichier: APP,
-    options: ['Inter', 'Segoe UI', 'system-ui', 'Georgia', 'Consolas'],
+    options: ['Chakra Petch', 'Share Tech Mono', 'Inter', 'Segoe UI', 'system-ui'],
   },
   {
     cle: 'policeEchelle', libelle: 'Taille du texte', groupe: 'Interface', type: 'nombre',
