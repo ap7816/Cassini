@@ -1,9 +1,11 @@
 /* Dialogue de création d'un système solaire personnalisé.
 
-   Même langage que les autres modales de l'application : fond assombri et
-   flouté, carte sombre aux coins arrondis. La teinte choisie (`--teinte`)
-   colore l'aperçu, la sélection et le bouton principal, pour qu'on voie le
-   système prendre forme pendant qu'on le compose. */
+   Sobre à dessein. Les effets qu'on retrouve partout — lueurs, dégradés,
+   libellés en capitales espacées, pastilles de couleur à double anneau —
+   s'additionnaient ici jusqu'à ce que plus rien ne ressorte. Il en reste le
+   cadre du cockpit, une hiérarchie tenue par la taille et la graisse, et une
+   seule couleur vive : celle que l'utilisateur choisit (`--teinte`), posée
+   uniquement sur ce qui est sélectionné. */
 
 .fond {
   position: fixed;
@@ -13,10 +15,8 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgb(5 12 22 / 0.66);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  animation: fondIn 0.18s ease;
+  background: rgb(3 8 15 / 0.7);
+  animation: fondIn 0.14s ease-out;
 }
 
 @keyframes fondIn {
@@ -25,48 +25,33 @@
 }
 
 .fenetre {
-  width: min(520px, 100%);
+  width: min(500px, 100%);
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.98);
+  background: var(--hud-crochets), rgb(6 13 23);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
-  box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
   overflow: hidden;
-  animation: fenetreIn 0.24s cubic-bezier(0.34, 1.2, 0.64, 1);
+  animation: fenetreIn 0.16s ease-out;
 }
 
+/* Un simple glissé : le rebond d'une modale qui « saute » à l'écran est
+   précisément ce qui fait gadget. */
 @keyframes fenetreIn {
-  from { opacity: 0; transform: scale(0.94) translateY(12px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* ── En-tête ──────────────────────────────────────────────────────────── */
 
 .entete {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 20px 16px;
-  border-bottom: 1px solid rgb(var(--hud) / 0.081);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--teinte, #6c8efb) 16%, transparent) 0%,
-    transparent 100%
-  );
-}
-
-.apercu {
-  flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--teinte, #6c8efb) 14%, rgb(var(--hud) / 0.034));
-  border: 1px solid color-mix(in srgb, var(--teinte, #6c8efb) 45%, transparent);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--teinte, #6c8efb) 30%, transparent);
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--hud-ligne);
 }
 
 .enteteTexte {
@@ -76,37 +61,61 @@
 
 .titre {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: rgb(var(--hud));
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-shadow: 0 0 12px rgb(var(--hud) / 0.45);
+  font-size: calc(17px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--hud-texte);
 }
 
 .sousTitre {
-  margin: 3px 0 0;
-  font-size: 0.8rem;
-  color: rgb(223 246 255 / 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0 0;
+  min-width: 0;
+  font-family: var(--police-donnee);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-doux);
   white-space: nowrap;
+}
+
+.sousTitreIcone {
+  flex-shrink: 0;
+}
+
+.sousTitreNom,
+.sousTitreVide {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.sousTitreNom {
+  color: var(--hud-texte);
+}
+
+.sousTitreVide {
+  font-style: italic;
+}
+
+/* Fermer sans cadre au repos : c'est une sortie, pas une action du formulaire. */
 .fermer {
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
+  margin: -4px -6px 0 0;
   padding: 0;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.115);
-  background: rgb(var(--hud) / 0.046);
-  color: rgb(223 246 255 / 0.8);
-  font-size: 0.8rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-texte-doux);
+  font-size: calc(13px * var(--ui-font-scale, 1));
 }
 
 .fermer:hover {
-  background: rgb(var(--hud) / 0.115);
+  color: var(--hud-texte);
+  border-color: var(--hud-ligne-moyenne);
+  background: rgb(var(--hud) / 0.06);
 }
 
 /* ── Corps ────────────────────────────────────────────────────────────── */
@@ -117,119 +126,135 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 20px;
+  padding: 18px 20px;
 }
 
 .champ {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
+/* Libellés en casse normale et en retrait : ils nomment, ils ne crient pas.
+   La hiérarchie vient de la graisse, pas d'une couleur de plus. */
 .etiquette {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(var(--hud) / 0.8);
+  align-items: baseline;
+  gap: 8px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  color: var(--hud-texte-doux);
 }
 
 .compte {
-  min-width: 18px;
-  padding: 1px 6px;
-  border-radius: 2px;
-  text-align: center;
-  font-size: 0.7rem;
-  color: #0b1020;
-  background: var(--teinte, #6c8efb);
+  font-family: var(--police-donnee);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--hud-texte-faible);
 }
 
 .saisie {
   width: 100%;
   box-sizing: border-box;
-  padding: 9px 12px;
+  padding: 9px 11px;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.115);
-  background: rgb(var(--hud) / 0.046);
-  color: rgb(223 246 255 / 0.92);
-  font-size: 0.9rem;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: rgb(0 0 0 / 0.22);
+  color: var(--hud-texte);
+  font-size: calc(14px * var(--ui-font-scale, 1));
+}
+
+.saisie::placeholder {
+  color: var(--hud-texte-faible);
 }
 
 .saisie:focus {
-  border-color: color-mix(in srgb, var(--teinte, #6c8efb) 70%, transparent);
-  background: rgb(var(--hud) / 0.069);
+  outline: none;
+  border-color: var(--teinte, rgb(var(--hud)));
 }
 
 /* Icônes */
 
+/* Colonnes de 32 px au moins : les douze icônes tiennent sur une rangée dans
+   la largeur de la fenêtre, au lieu d'en laisser une seule à la ligne. */
 .icones {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+  gap: 4px;
 }
 
 .icone {
-  height: 40px;
+  height: 36px;
   display: grid;
   place-items: center;
   padding: 0;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.092);
-  background: rgb(var(--hud) / 0.034);
-  color: rgb(223 246 255 / 0.6);
-  transition: background 120ms, border-color 120ms, color 120ms;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-texte-faible);
+  transition: background 100ms, border-color 100ms, color 100ms;
 }
 
 .icone:hover {
-  color: rgb(223 246 255 / 0.9);
-  background: rgb(var(--hud) / 0.081);
+  color: var(--hud-texte);
+  background: rgb(var(--hud) / 0.06);
 }
 
-.iconeChoisie {
-  border-color: var(--teinte, #6c8efb);
-  background: color-mix(in srgb, var(--teinte, #6c8efb) 14%, transparent);
+.iconeChoisie,
+.iconeChoisie:hover {
+  border-color: var(--teinte, rgb(var(--hud)));
+  background: transparent;
 }
 
-/* Couleurs */
+/* Couleurs : des carrés, comme tout le reste de l'interface. La sélection
+   est un contour détaché, lisible quelle que soit la couleur choisie. */
 
 .couleurs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pastille {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   padding: 0;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  box-shadow: 0 0 0 1px rgb(5 12 22 / 0.4) inset;
-  transition: transform 120ms;
+  border-radius: 2px;
+  border: none;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+  outline: 1px solid transparent;
+  outline-offset: 3px;
 }
 
 .pastille:hover {
-  transform: scale(1.1);
+  outline-color: var(--hud-ligne-forte);
 }
 
-.pastilleChoisie {
-  border-color: #fff;
-  transform: scale(1.1);
+.pastilleChoisie,
+.pastilleChoisie:hover {
+  outline: 2px solid var(--hud-texte);
+  outline-offset: 2px;
 }
 
 .couleurLibre {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   padding: 0;
-  border: 1px dashed rgb(var(--hud) / 0.345);
+  border: 1px dashed var(--hud-ligne-forte);
   border-radius: 2px;
   background: transparent;
   cursor: pointer;
+}
+
+.couleurLibre::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.couleurLibre::-webkit-color-swatch {
+  border: none;
+  border-radius: 1px;
 }
 
 /* Jeux */
@@ -241,46 +266,78 @@
 .jeux {
   list-style: none;
   margin: 0;
-  padding: 4px;
+  padding: 0;
   max-height: 260px;
   overflow-y: auto;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.081);
-  background: rgb(5 12 22 / 0.18);
+  border: 1px solid var(--hud-ligne);
 }
 
 .jeu {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 2px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgb(var(--hud) / 0.06);
   cursor: pointer;
-  font-size: 0.85rem;
-  color: rgb(223 246 255 / 0.78);
+  font-size: calc(13.5px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-doux);
 }
 
 .jeu:hover {
-  background: rgb(var(--hud) / 0.057);
+  background: rgb(var(--hud) / 0.05);
+  color: var(--hud-texte);
 }
 
+/* Case à cocher dessinée : la case native grise était la seule chose de la
+   fenêtre à ne pas appartenir à l'application. */
 .jeu input {
+  flex-shrink: 0;
+  appearance: none;
+  width: 15px;
+  height: 15px;
   margin: 0;
-  accent-color: var(--teinte, #6c8efb);
+  border: 1px solid var(--hud-ligne-forte);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.jeu input:checked {
+  border-color: var(--teinte, rgb(var(--hud)));
+  background: var(--teinte, rgb(var(--hud)));
+}
+
+/* Coche tracée en bordures tournées : pas d'image, pas de police. */
+.jeu input:checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  margin-top: -2px;
+  border: solid #06101c;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.jeu input:focus-visible {
+  outline: 2px solid rgb(var(--hud) / 0.85);
+  outline-offset: 2px;
 }
 
 .jeuChoisi {
-  color: #fff;
-  background: color-mix(in srgb, var(--teinte, #6c8efb) 10%, transparent);
+  color: var(--hud-texte);
 }
 
 .jeuRang {
-  width: 16px;
+  width: 14px;
   flex-shrink: 0;
   text-align: right;
-  font-size: 0.7rem;
+  font-family: var(--police-donnee);
+  font-size: calc(11px * var(--ui-font-scale, 1));
   font-variant-numeric: tabular-nums;
-  color: rgb(223 246 255 / 0.6);
+  color: var(--hud-texte-faible);
 }
 
 .jeuTitre {
@@ -291,24 +348,36 @@
   text-overflow: ellipsis;
 }
 
+/* Le launcher en texte neutre, sa couleur réduite à un repère : un nom en
+   vert ou en bleu à chaque ligne faisait une colonne de couleurs. */
 .jeuLauncher {
   flex-shrink: 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(11.5px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-faible);
+}
+
+.jeuLauncher::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--pf, currentColor);
 }
 
 .separation {
-  height: 1px;
-  margin: 5px 8px;
-  background: rgb(var(--hud) / 0.092);
+  height: 0;
+  margin: 0;
+  border-top: 1px solid var(--hud-ligne-moyenne);
 }
 
 .vide {
-  padding: 16px;
+  padding: 18px;
   text-align: center;
-  font-size: 0.85rem;
-  color: rgb(223 246 255 / 0.6);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-faible);
 }
 
 /* ── Pied ─────────────────────────────────────────────────────────────── */
@@ -317,53 +386,69 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 20px 16px;
-  border-top: 1px solid rgb(var(--hud) / 0.081);
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--hud-ligne);
 }
 
+/* Ce qui manque, à gauche, près de ce qu'on remplit — et non collé au bouton
+   comme une excuse. */
 .manque {
   flex: 1;
   min-width: 0;
-  font-size: 0.78rem;
-  color: rgb(223 246 255 / 0.6);
-  text-align: right;
+  font-size: calc(12.5px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-doux);
 }
 
 .principal,
 .secondaire,
 .supprimer {
   flex-shrink: 0;
-  padding: 9px 16px;
+  padding: 8px 16px;
   border-radius: 2px;
-  font-size: 0.85rem;
+  font-size: calc(13.5px * var(--ui-font-scale, 1));
   font-weight: 600;
 }
 
 .principal {
-  border: 1px solid transparent;
-  background: var(--teinte, #6c8efb);
-  color: #0b1020;
+  border: 1px solid var(--teinte, rgb(var(--hud)));
+  background: var(--teinte, rgb(var(--hud)));
+  color: #06101c;
 }
 
+.principal:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* Désactivé en neutre : la teinte assombrie donnait un bouton brun qu'on
+   prenait pour un choix de couleur. */
 .principal:disabled {
-  opacity: 0.35;
+  border-color: var(--hud-ligne-moyenne);
+  background: transparent;
+  color: var(--hud-texte-faible);
   cursor: default;
 }
 
 .secondaire {
-  border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgb(var(--hud) / 0.046);
-  color: rgb(223 246 255 / 0.85);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-texte-doux);
+}
+
+.secondaire:hover {
+  color: var(--hud-texte);
+  background: rgb(var(--hud) / 0.06);
 }
 
 .supprimer {
-  border: 1px solid rgba(232, 99, 111, 0.4);
+  margin-right: auto;
+  border: 1px solid transparent;
   background: transparent;
-  color: #f08a93;
+  color: rgb(var(--hud-danger));
 }
 
 .supprimer:hover {
-  background: rgba(232, 99, 111, 0.12);
+  border-color: rgb(var(--hud-danger) / 0.5);
+  background: rgb(var(--hud-danger) / 0.1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -371,8 +456,7 @@
   .fenetre {
     animation: none;
   }
-  .icone,
-  .pastille {
+  .icone {
     transition: none;
   }
 }
