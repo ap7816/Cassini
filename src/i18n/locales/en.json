@@ -312,7 +312,16 @@
       "addGamePlaceholder": "Add a game…",
       "addGame": "Add a game",
       "noOtherGame": "No other game matches.",
-      "discardChanges": "Discard your unsaved changes?"
+      "discardChanges": "Discard your unsaved changes?",
+      "sunColor": "Star colour",
+      "sunColorDefault": "Follow the general setting",
+      "sunColorOwn": "Chosen colour",
+      "sort": "Sort planets",
+      "sortAz": "A → Z",
+      "sortZa": "Z → A",
+      "sortSize": "Size on disk",
+      "sortRecent": "Recently played",
+      "sortNote": "Only changes orbit order. A planet you placed stays where you put it."
     }
   },
   "flyKeys": {

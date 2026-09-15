@@ -153,7 +153,7 @@ export function createGalaxy({
     //
     // Construit à sa taille calculée puis mis à l'échelle : l'éditeur change
     // cette échelle en direct, sans avoir à rebâtir l'astre.
-    const soleil = createSun(base.sunR, base.outerR * 0.42);
+    const soleil = createSun(base.sunR, base.outerR * 0.42, reglageDe?.(p.platform)?.couleurSoleil);
     soleil.group.scale.setScalar(echelleSoleil);
     groupe.add(soleil.group);
 

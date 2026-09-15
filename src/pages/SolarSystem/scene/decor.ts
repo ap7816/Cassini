@@ -71,6 +71,11 @@ export function createStarfield(outerR: number): THREE.Points {
 export function createSun(
   sunR: number,
   haloMax: number,
+  /**
+   * Couleur propre au système, si l'utilisateur en a choisi une. Absente, le
+   * soleil suit le réglage général — et continue de le suivre quand il change.
+   */
+  couleurPropre?: string | null,
 ): { group: THREE.Group; core: THREE.Mesh } {
   const group = new THREE.Group();
 
@@ -82,9 +87,16 @@ export function createSun(
   // c'est ce qu'on vise pour s'y rendre.
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(sunR, 64, 64),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(lireReglages().soleilCouleur), fog: false }),
+    new THREE.MeshBasicMaterial({
+      color: new THREE.Color(couleurPropre ?? lireReglages().soleilCouleur),
+      fog: false,
+    }),
   );
   core.userData.reglage = 'soleil';
+  // Marqué pour que le réglage général passe son chemin : sans cela, il
+  // repeindrait ce soleil à chaque image et le choix de l'utilisateur ne
+  // tiendrait pas une frame.
+  core.userData.couleurPropre = couleurPropre ?? null;
   group.add(core);
 
   const corona: [number, number, number][] = [

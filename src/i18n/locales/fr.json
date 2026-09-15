@@ -312,7 +312,16 @@
       "addGamePlaceholder": "Ajouter un jeu…",
       "addGame": "Ajouter un jeu",
       "noOtherGame": "Aucun autre jeu ne correspond.",
-      "discardChanges": "Abandonner les modifications en cours ?"
+      "discardChanges": "Abandonner les modifications en cours ?",
+      "sunColor": "Couleur de l’étoile",
+      "sunColorDefault": "Suivre le réglage général",
+      "sunColorOwn": "Couleur choisie",
+      "sort": "Ranger les planètes",
+      "sortAz": "A → Z",
+      "sortZa": "Z → A",
+      "sortSize": "Taille sur disque",
+      "sortRecent": "Jouées récemment",
+      "sortNote": "Ne change que l’ordre des orbites. Une planète que vous avez placée reste où vous l’avez mise."
     }
   },
   "flyKeys": {

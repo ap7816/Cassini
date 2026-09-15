@@ -458,6 +458,9 @@ export function useSolarScene({
         } else if (role === 'orbite' && o instanceof THREE.Mesh) {
           (o.material as THREE.MeshBasicMaterial).opacity = r.orbitesOpacite;
         } else if (role === 'soleil' && o instanceof THREE.Mesh) {
+          // Un système qui a choisi sa couleur la garde : le réglage général
+          // vaut pour les soleils qui n'en ont pas.
+          if (o.userData.couleurPropre) return;
           (o.material as THREE.MeshBasicMaterial).color.set(r.soleilCouleur);
         } else if (role === 'planete' && o instanceof THREE.Mesh) {
           (o.material as THREE.MeshStandardMaterial).emissiveIntensity = r.planeteEmissif;
@@ -875,7 +878,8 @@ export function useSolarScene({
     let apercu: { cle: string; reglage: ReglageSysteme; angles: Map<PlanetEntry, number> } | null = null;
 
     const REGLAGE_NEUTRE: ReglageSysteme = {
-      soleil: BORNES.soleil.defaut, vitesse: BORNES.vitesse.defaut, aPlat: false, placements: {},
+      soleil: BORNES.soleil.defaut, vitesse: BORNES.vitesse.defaut, aPlat: false,
+      couleurSoleil: null, placements: {},
     };
 
     const appliquerApercu = (sys: SystemeGalaxie, a: NonNullable<typeof apercu>) => {

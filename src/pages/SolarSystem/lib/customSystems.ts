@@ -37,12 +37,19 @@ export type SystemePerso = {
   vitesse: number;
   /** Toutes les orbites dans le plan du soleil, sans inclinaison. */
   aPlat: boolean;
+  /**
+   * Couleur du soleil, au format #rrggbb. `null` suit le réglage général.
+   *
+   * Distincte de `couleur`, qui teinte l'étiquette et l'icône dans la barre :
+   * un système peut porter un repère vif sans que son étoile soit verte.
+   */
+  couleurSoleil: string | null;
   /** Placements, par identifiant de jeu. */
   placements: Record<string, PlacementPlanete>;
 };
 
 /** Ce que la scène doit savoir d'un système pour en placer les astres. */
-export type ReglageSysteme = Pick<SystemePerso, 'soleil' | 'vitesse' | 'aPlat' | 'placements'>;
+export type ReglageSysteme = Pick<SystemePerso, 'soleil' | 'vitesse' | 'aPlat' | 'placements' | 'couleurSoleil'>;
 
 /**
  * Préfixe des clés de système personnalisé dans la galaxie.
@@ -150,6 +157,10 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
       soleil: borne(o.soleil, BORNES.soleil),
       vitesse: borne(o.vitesse, BORNES.vitesse),
       aPlat: o.aPlat === true,
+      couleurSoleil:
+        typeof o.couleurSoleil === 'string' && HEX.test(o.couleurSoleil)
+          ? o.couleurSoleil.toLowerCase()
+          : null,
       placements,
     });
   }
@@ -165,6 +176,7 @@ export function nouveauSysteme(
     soleil: BORNES.soleil.defaut,
     vitesse: BORNES.vitesse.defaut,
     aPlat: false,
+    couleurSoleil: null,
     placements: {},
   };
 }
@@ -244,4 +256,53 @@ export function retirerSysteme(liste: readonly SystemePerso[], id: string): Syst
 /** Couleur #rrggbb en entier, pour Three.js. Gris neutre si elle est invalide. */
 export function couleurEntier(hex: string): number {
   return HEX.test(hex) ? parseInt(hex.slice(1), 16) : 0x7a8a9a;
+}
+
+/** Critères de rangement automatique des planètes d'un système. */
+export type TriSysteme = 'az' | 'za' | 'taille' | 'recent';
+
+/**
+ * Range les planètes d'un système, de la plus proche du soleil à la plus
+ * lointaine.
+ *
+ * Les placements ne suivent pas : une planète que l'utilisateur a posée à une
+ * distance choisie y reste, c'est tout l'intérêt de l'avoir placée. Le tri ne
+ * décide que de l'ordre des orbites calculées.
+ *
+ * Un jeu du système absent de la bibliothèque garde sa place en fin de liste
+ * plutôt que d'être perdu : il peut n'être qu'absent temporairement — un
+ * disque externe débranché, un scan qui n'a pas encore tourné.
+ */
+export function trierJeux(
+  s: SystemePerso,
+  parId: ReadonlyMap<string, Game>,
+  critere: TriSysteme,
+): SystemePerso {
+  const connus = s.jeux.filter((id) => parId.has(id));
+  const inconnus = s.jeux.filter((id) => !parId.has(id));
+
+  const clef = (id: string) => parId.get(id)!;
+  const parNom = (a: string, b: string) =>
+    clef(a).title.localeCompare(clef(b).title, undefined, { sensitivity: 'base', numeric: true });
+
+  const ranges = [...connus];
+  if (critere === 'az') ranges.sort(parNom);
+  else if (critere === 'za') ranges.sort((a, b) => parNom(b, a));
+  else if (critere === 'taille') {
+    // La plus grosse au plus près du soleil : c'est elle qu'on vient voir.
+    ranges.sort((a, b) => (clef(b).sizeOnDisk ?? 0) - (clef(a).sizeOnDisk ?? 0) || parNom(a, b));
+  } else {
+    // Jamais jouée en dernier, et non en premier : une date absente n'est pas
+    // une date ancienne, mais elle intéresse moins que la partie d'hier.
+    ranges.sort((a, b) => {
+      const da = clef(a).lastPlayedAt ?? '';
+      const db = clef(b).lastPlayedAt ?? '';
+      if (da === db) return parNom(a, b);
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.localeCompare(da);
+    });
+  }
+
+  return { ...s, jeux: [...ranges, ...inconnus] };
 }

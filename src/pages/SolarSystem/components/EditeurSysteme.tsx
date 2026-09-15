@@ -14,7 +14,9 @@ import {
   jeuxDuSysteme,
   placer,
   retirerJeu,
+  trierJeux,
   type ReglageSysteme,
+  type TriSysteme,
   type SystemePerso,
 } from '../lib/customSystems';
 import { ICONES_SYSTEME } from '../lib/iconesSysteme';
@@ -37,6 +39,7 @@ const reglageDe = (s: SystemePerso): ReglageSysteme => ({
   soleil: s.soleil,
   vitesse: s.vitesse,
   aPlat: s.aPlat,
+  couleurSoleil: s.couleurSoleil,
   placements: s.placements,
 });
 
@@ -173,6 +176,46 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
             format={facteur}
             onChange={(v) => modifier({ ...brouillon, soleil: v })}
           />
+
+          {/* Distincte de la couleur du système, qui teinte l'étiquette et
+              l'icône : un système peut porter un repère vif sans que son
+              étoile soit verte. */}
+          <label className={css.bascule}>
+            <input
+              type="checkbox"
+              checked={brouillon.couleurSoleil !== null}
+              onChange={(e) =>
+                modifier({
+                  ...brouillon,
+                  couleurSoleil: e.target.checked ? brouillon.couleur : null,
+                })
+              }
+            />
+            {t('systems.editor.sunColorOwn')}
+          </label>
+          {brouillon.couleurSoleil !== null && (
+            <div className={css.couleurs}>
+              {COULEURS_SYSTEME.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={brouillon.couleurSoleil === c ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
+                  style={{ background: c }}
+                  onClick={() => modifier({ ...brouillon, couleurSoleil: c })}
+                  aria-label={t('systems.colorNamed', { color: c })}
+                  aria-pressed={brouillon.couleurSoleil === c}
+                />
+              ))}
+              <input
+                type="color"
+                className={css.couleurLibre}
+                value={brouillon.couleurSoleil}
+                onChange={(e) => modifier({ ...brouillon, couleurSoleil: e.target.value })}
+                aria-label={t('systems.editor.sunColor')}
+              />
+            </div>
+          )}
+          <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
         </Section>
 
         <Section titre={t('systems.editor.orbits')}>
@@ -197,6 +240,29 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
         </Section>
 
         <Section titre={t('systems.editor.planets', { n: jeux.length })}>
+          {jeux.length > 1 && (
+            <div className={css.tri}>
+              <span className={css.triTitre}>{t('systems.editor.sort')}</span>
+              <div className={css.triBoutons}>
+                {([
+                  ['az', 'systems.editor.sortAz'],
+                  ['za', 'systems.editor.sortZa'],
+                  ['taille', 'systems.editor.sortSize'],
+                  ['recent', 'systems.editor.sortRecent'],
+                ] as Array<[TriSysteme, string]>).map(([critere, cle]) => (
+                  <button
+                    key={critere}
+                    type="button"
+                    className={css.petitLarge}
+                    onClick={() => modifier(trierJeux(brouillon, parId, critere))}
+                  >
+                    {t(cle)}
+                  </button>
+                ))}
+              </div>
+              <p className={css.note}>{t('systems.editor.sortNote')}</p>
+            </div>
+          )}
           {jeux.map((g, i) => {
             const e = etat?.planetes.find((p) => p.id === g.id);
             const place = brouillon.placements[g.id] !== undefined;
