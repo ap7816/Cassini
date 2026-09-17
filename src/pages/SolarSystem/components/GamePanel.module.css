@@ -360,6 +360,7 @@
 }
 
 .folder,
+.uninstall,
 .remove {
   flex-shrink: 0;
   width: calc(34px * var(--dbg-icones, 1.25));
@@ -378,6 +379,7 @@
 }
 
 .folder:hover,
+.uninstall:hover,
 .remove:hover {
   background: rgb(var(--hud) / 0.12);
   border-color: var(--hud-ligne-forte);
@@ -413,4 +415,18 @@
   background: rgb(var(--hud-danger) / 0.16);
   border-color: rgb(var(--hud-danger) / 0.7);
   color: rgb(var(--hud-danger));
+}
+
+/* Désinstaller : sobre au repos, franchement rouge au survol. C'est une
+   action qu'on ne doit pas déclencher en visant le dossier d'à côté, mais qui
+   ne doit pas non plus crier tant qu'on ne la vise pas. */
+.uninstall:hover:not(:disabled) {
+  background: rgb(var(--hud-danger) / 0.16);
+  border-color: rgb(var(--hud-danger) / 0.7);
+  color: rgb(var(--hud-danger));
+}
+
+.uninstall:disabled {
+  opacity: 0.45;
+  cursor: progress;
 }

@@ -25,7 +25,8 @@ export type NomIconeHud =
   | 'arret'
   | 'volume'
   | 'volumeBas'
-  | 'volumeMuet';
+  | 'volumeMuet'
+  | 'desinstaller';
 
 const TRACES: Record<NomIconeHud, ReactNode> = {
   dossier: <path d="M3 7h6l2 2h10v10H3z" />,
@@ -73,6 +74,14 @@ const TRACES: Record<NomIconeHud, ReactNode> = {
     </>
   ),
   arret: <path d="M6 6l12 12M18 6L6 18" />,
+  // Un bac et son couvercle : ce que Windows montre pour « désinstaller ».
+  desinstaller: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M9 7V4h6v3" />
+      <path d="M6 7l1 13h10l1-13" />
+    </>
+  ),
   // Le haut-parleur est commun ; les ondes disent le niveau.
   volume: (
     <>

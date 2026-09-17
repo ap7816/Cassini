@@ -11,6 +11,7 @@ mod secret_store;
 mod security;
 mod steam_scan;
 mod ubisoft_scan;
+mod uninstall;
 use security::MusicRoot;
 use tauri_plugin_log;
 
@@ -605,6 +606,70 @@ fn launch_target(target: String) -> Result<(), String> {
     }
 
     detached::open_via_shell(t)
+}
+
+// Commande Tauri : le désinstalleur officiel d'un jeu, s'il existe.
+//
+// Sert à décider ce qu'on propose et ce qu'on annonce avant d'agir : sans
+// désinstalleur trouvé, l'interface ne montre pas de bouton qui échouerait.
+#[tauri::command]
+fn find_uninstaller(title: String, path: Option<String>) -> Option<uninstall::Desinstalleur> {
+    uninstall::trouver(&title, path.as_deref())
+}
+
+// Commande Tauri : ce que Windows sait désinstaller, le plus ressemblant d'abord.
+//
+// Recours quand la recherche automatique ne trouve rien — un jeu déclaré sous
+// un autre nom que le sien. L'utilisateur choisit alors l'entrée lui-même ;
+// c'est lui qui tranche, pas une heuristique.
+#[tauri::command]
+fn list_uninstallers(title: String, path: Option<String>) -> Vec<uninstall::Entree> {
+    uninstall::lister(&title, path.as_deref())
+}
+
+// Commande Tauri : désinstalle via l'entrée Windows choisie.
+//
+// Ne reçoit qu'une clé de registre, jamais une ligne de commande : celle-ci
+// est relue et revalidée côté Rust, pour que rien de ce qui vient de
+// l'interface ne puisse devenir un programme à exécuter.
+#[tauri::command]
+fn uninstall_entry(key: String) -> Result<String, String> {
+    let d = uninstall::par_cle(&key)?;
+    let args: Vec<&str> = d.arguments.iter().map(String::as_str).collect();
+    detached::spawn_detached(&d.programme, &args)?;
+    Ok(d.nom)
+}
+
+// Commande Tauri : lance la désinstallation d'un jeu.
+//
+// Cassini ne supprime rien lui-même (voir `uninstall.rs`). Steam passe par son
+// propre protocole, qui ouvre sa boîte de dialogue ; les autres jeux par le
+// désinstalleur que Windows leur connaît. Dans les deux cas, c'est ce
+// programme qui demande la confirmation finale et fait le travail.
+//
+// Renvoie le nom de ce qui a été lancé, pour que l'interface puisse le dire.
+#[tauri::command]
+fn uninstall_game(
+    platform: String,
+    id: String,
+    title: String,
+    path: Option<String>,
+) -> Result<String, String> {
+    if platform == "Steam" {
+        if let Some(appid) = id.strip_prefix("steam-") {
+            if !appid.is_empty() && appid.chars().all(|c| c.is_ascii_digit()) {
+                detached::open_via_shell(&format!("steam://uninstall/{appid}"))?;
+                return Ok("Steam".to_string());
+            }
+        }
+    }
+
+    let Some(d) = uninstall::trouver(&title, path.as_deref()) else {
+        return Err("Aucun désinstalleur trouvé pour ce jeu".to_string());
+    };
+    let args: Vec<&str> = d.arguments.iter().map(String::as_str).collect();
+    detached::spawn_detached(&d.programme, &args)?;
+    Ok(d.nom)
 }
 
 // Résultat d'enrichissement renvoyé au frontend : artiste, album, URL de pochette et source API
@@ -1380,6 +1445,10 @@ pub fn run() {
             scan_launchers, get_file_icon_data_url, open_folder,
             launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
             launch_target,
+            find_uninstaller,
+            uninstall_game,
+            list_uninstallers,
+            uninstall_entry,
             scan_music_folder, get_autostart, set_autostart, list_music_dirs,
             set_music_root,
             create_music_folder, delete_music_folder, rename_music_folder,

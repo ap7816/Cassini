@@ -8,6 +8,15 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { launchGame } from '../../../features/library/services/launchGame';
+import {
+  desinstallerJeu,
+  desinstallerParEntree,
+  listerDesinstalleurs,
+  trouverDesinstalleur,
+  type EntreeDesinstallation,
+} from '../../../features/library/services/uninstallGame';
+import { ChoixDesinstalleur } from './ChoixDesinstalleur';
+import { useToast } from '../../../features/toast/ToastContext';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { PLATFORM_CSS } from '../constants';
@@ -35,6 +44,10 @@ type Props = {
 export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Props) {
   const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
+  const toast = useToast();
+  const [desinstallation, setDesinstallation] = useState(false);
+  /** Entrées proposées au choix quand la recherche automatique échoue. */
+  const [choixDesinstalleur, setChoixDesinstalleur] = useState<EntreeDesinstallation[] | null>(null);
 
   const isSteam = game.platform === 'Steam';
   const resolvedAppId =
@@ -102,6 +115,64 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
       await launchGame(game);
     } finally {
       setLaunching(false);
+    }
+  }
+
+  /**
+   * Désinstalle le jeu — ou plutôt, ouvre ce qui sait le faire.
+   *
+   * On cherche d'abord le désinstalleur, pour nommer dans la confirmation ce
+   * qui va s'ouvrir, et pour ne rien promettre quand il n'y en a pas. Steam
+   * n'a pas besoin de cette recherche : son protocole ouvre sa propre fenêtre.
+   *
+   * Le résultat nous échappe ensuite : c'est un autre programme qui agit, et
+   * l'utilisateur peut encore annuler chez lui. Le jeu n'est donc pas retiré
+   * de la bibliothèque ici — le prochain scan le marquera non installé.
+   */
+  async function handleUninstall() {
+    if (!game.installed) {
+      toast.info(t('gameCard.uninstallOnlyInstalled'));
+      return;
+    }
+    setDesinstallation(true);
+    try {
+      const nom = isSteam ? 'Steam' : await trouverDesinstalleur(game);
+      if (!nom) {
+        // Rien de sûr : plutôt que de refuser, on montre ce que Windows
+        // connaît et on laisse l'utilisateur désigner le bon programme.
+        const entrees = await listerDesinstalleurs(game);
+        if (entrees.length === 0) {
+          toast.error(t('gameCard.uninstallNoneAtAll'));
+          return;
+        }
+        setChoixDesinstalleur(entrees);
+        return;
+      }
+      const cle = isSteam ? 'gameCard.uninstallConfirmSteam' : 'gameCard.uninstallConfirm';
+      if (!(await confirm(t(cle, { name: game.title }), { danger: true }))) return;
+
+      const lance = await desinstallerJeu(game);
+      toast.success(t('gameCard.uninstallStarted', { name: lance }));
+      onClose();
+    } catch (e) {
+      toast.error(t('gameCard.uninstallFailed', { error: String(e) }));
+    } finally {
+      setDesinstallation(false);
+    }
+  }
+
+  /** Une entrée a été désignée dans la liste : on confirme, puis on lance. */
+  async function handleChoix(entree: EntreeDesinstallation) {
+    setChoixDesinstalleur(null);
+    if (!(await confirm(t('gameCard.uninstallPickConfirm', { entry: entree.nom }), { danger: true }))) {
+      return;
+    }
+    try {
+      const lance = await desinstallerParEntree(entree.cle);
+      toast.success(t('gameCard.uninstallStarted', { name: lance }));
+      onClose();
+    } catch (e) {
+      toast.error(t('gameCard.uninstallFailed', { error: String(e) }));
     }
   }
 
@@ -217,6 +288,19 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
             </button>
           )}
 
+          {game.installed && (
+            <button
+              type="button"
+              className={css.uninstall}
+              onClick={() => void handleUninstall()}
+              disabled={desinstallation}
+              title={t('gameCard.uninstall')}
+              aria-label={t('gameCard.uninstall')}
+            >
+              <IconeHud nom="desinstaller" />
+            </button>
+          )}
+
           <button
             type="button"
             className={css.remove}
@@ -229,6 +313,15 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
 
         <div className={css.lastPlayed}>{lastPlayedLabel}</div>
       </div>
+
+      {choixDesinstalleur && (
+        <ChoixDesinstalleur
+          jeu={game.title}
+          entrees={choixDesinstalleur}
+          onChoisir={(e) => void handleChoix(e)}
+          onFermer={() => setChoixDesinstalleur(null)}
+        />
+      )}
 
       {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
     </div>
