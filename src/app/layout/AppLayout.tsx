@@ -94,14 +94,52 @@ export function AppLayout() {
   // lui-même quand la bibliothèque change (voir subscribeGames).
   useEffect(() => {
     if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
-    void scannerTousLesLaunchers().then((r) => {
-      if (r.modifiee) {
-        console.info(
-          `[bibliothèque] scan de démarrage : ${r.ajoutes} jeu(x) découvert(s)`
-          + (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
-        );
-      }
-    });
+
+    const scanner = (raison: string) =>
+      void scannerTousLesLaunchers().then((r) => {
+        if (r.modifiee) {
+          console.info(
+            `[bibliothèque] ${raison} : ${r.ajoutes} jeu(x) découvert(s)`
+            + (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
+          );
+        }
+      });
+
+    scanner('scan de démarrage');
+
+    // Et à chaque retour sur l'application.
+    //
+    // Ce qui change la bibliothèque se passe ailleurs : on installe un jeu
+    // depuis Steam, on en désinstalle un par son désinstalleur — que Cassini
+    // lance sans jamais savoir quand il a fini. Le moment où l'utilisateur
+    // revient est justement celui où il s'attend à voir l'état à jour.
+    //
+    // Un délai de garde évite de relancer sept scans à chaque aller-retour
+    // entre deux fenêtres ; le scan n'écrit de toute façon rien si la
+    // bibliothèque n'a pas changé.
+    const GARDE = 20_000;
+    let dernier = Date.now();
+    const auRetour = () => {
+      if (Date.now() - dernier < GARDE) return;
+      dernier = Date.now();
+      scanner('retour sur l’application');
+    };
+
+    // Deux signaux, deux conditions. Un focus de fenêtre dit à lui seul qu'on
+    // est revenu ; un changement de visibilité, non — il se déclenche aussi
+    // quand on part. Consulter `visibilityState` dans les deux cas revenait à
+    // ne rien faire là où l'hôte dit la fenêtre masquée alors qu'elle a le
+    // focus, ce qui arrive dans certains conteneurs.
+    const auChangementDeVisibilite = () => {
+      if (document.visibilityState === 'visible') auRetour();
+    };
+
+    window.addEventListener('focus', auRetour);
+    document.addEventListener('visibilitychange', auChangementDeVisibilite);
+    return () => {
+      window.removeEventListener('focus', auRetour);
+      document.removeEventListener('visibilitychange', auChangementDeVisibilite);
+    };
   }, []);
 
   // Music player
