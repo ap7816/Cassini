@@ -617,29 +617,6 @@ fn find_uninstaller(title: String, path: Option<String>) -> Option<uninstall::De
     uninstall::trouver(&title, path.as_deref())
 }
 
-// Commande Tauri : ce que Windows sait désinstaller, le plus ressemblant d'abord.
-//
-// Recours quand la recherche automatique ne trouve rien — un jeu déclaré sous
-// un autre nom que le sien. L'utilisateur choisit alors l'entrée lui-même ;
-// c'est lui qui tranche, pas une heuristique.
-#[tauri::command]
-fn list_uninstallers(title: String, path: Option<String>) -> Vec<uninstall::Entree> {
-    uninstall::lister(&title, path.as_deref())
-}
-
-// Commande Tauri : désinstalle via l'entrée Windows choisie.
-//
-// Ne reçoit qu'une clé de registre, jamais une ligne de commande : celle-ci
-// est relue et revalidée côté Rust, pour que rien de ce qui vient de
-// l'interface ne puisse devenir un programme à exécuter.
-#[tauri::command]
-fn uninstall_entry(key: String) -> Result<String, String> {
-    let d = uninstall::par_cle(&key)?;
-    let args: Vec<&str> = d.arguments.iter().map(String::as_str).collect();
-    detached::spawn_detached(&d.programme, &args)?;
-    Ok(d.nom)
-}
-
 // Commande Tauri : lance la désinstallation d'un jeu.
 //
 // Cassini ne supprime rien lui-même (voir `uninstall.rs`). Steam passe par son
@@ -668,7 +645,7 @@ fn uninstall_game(
         return Err("Aucun désinstalleur trouvé pour ce jeu".to_string());
     };
     let args: Vec<&str> = d.arguments.iter().map(String::as_str).collect();
-    detached::spawn_detached(&d.programme, &args)?;
+    detached::spawn_avec_elevation(&d.programme, &args)?;
     Ok(d.nom)
 }
 
@@ -1447,8 +1424,6 @@ pub fn run() {
             launch_target,
             find_uninstaller,
             uninstall_game,
-            list_uninstallers,
-            uninstall_entry,
             scan_music_folder, get_autostart, set_autostart, list_music_dirs,
             set_music_root,
             create_music_folder, delete_music_folder, rename_music_folder,
