@@ -8,14 +8,7 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { launchGame } from '../../../features/library/services/launchGame';
-import {
-  desinstallerJeu,
-  desinstallerParEntree,
-  listerDesinstalleurs,
-  trouverDesinstalleur,
-  type EntreeDesinstallation,
-} from '../../../features/library/services/uninstallGame';
-import { ChoixDesinstalleur } from './ChoixDesinstalleur';
+import { desinstallerJeu, trouverDesinstalleur } from '../../../features/library/services/uninstallGame';
 import { useToast } from '../../../features/toast/ToastContext';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
@@ -47,8 +40,6 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
   const toast = useToast();
   const [desinstallation, setDesinstallation] = useState(false);
   /** Entrées proposées au choix quand la recherche automatique échoue. */
-  const [choixDesinstalleur, setChoixDesinstalleur] = useState<EntreeDesinstallation[] | null>(null);
-
   const isSteam = game.platform === 'Steam';
   const resolvedAppId =
     game.steamAppId ??
@@ -138,14 +129,10 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
     try {
       const nom = isSteam ? 'Steam' : await trouverDesinstalleur(game);
       if (!nom) {
-        // Rien de sûr : plutôt que de refuser, on montre ce que Windows
-        // connaît et on laisse l'utilisateur désigner le bon programme.
-        const entrees = await listerDesinstalleurs(game);
-        if (entrees.length === 0) {
-          toast.error(t('gameCard.uninstallNoneAtAll'));
-          return;
-        }
-        setChoixDesinstalleur(entrees);
+        // Le nom exact ou le même dossier d'installation, sinon rien : une
+        // correspondance approximative désinstallerait « Portal 2 » pour
+        // « Portal ». Mieux vaut le dire que de se tromper de jeu.
+        toast.error(t('gameCard.uninstallNone', { name: game.title }));
         return;
       }
       const cle = isSteam ? 'gameCard.uninstallConfirmSteam' : 'gameCard.uninstallConfirm';
@@ -158,21 +145,6 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
       toast.error(t('gameCard.uninstallFailed', { error: String(e) }));
     } finally {
       setDesinstallation(false);
-    }
-  }
-
-  /** Une entrée a été désignée dans la liste : on confirme, puis on lance. */
-  async function handleChoix(entree: EntreeDesinstallation) {
-    setChoixDesinstalleur(null);
-    if (!(await confirm(t('gameCard.uninstallPickConfirm', { entry: entree.nom }), { danger: true }))) {
-      return;
-    }
-    try {
-      const lance = await desinstallerParEntree(entree.cle);
-      toast.success(t('gameCard.uninstallStarted', { name: lance }));
-      onClose();
-    } catch (e) {
-      toast.error(t('gameCard.uninstallFailed', { error: String(e) }));
     }
   }
 
@@ -313,15 +285,6 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
 
         <div className={css.lastPlayed}>{lastPlayedLabel}</div>
       </div>
-
-      {choixDesinstalleur && (
-        <ChoixDesinstalleur
-          jeu={game.title}
-          entrees={choixDesinstalleur}
-          onChoisir={(e) => void handleChoix(e)}
-          onFermer={() => setChoixDesinstalleur(null)}
-        />
-      )}
 
       {dlgState && <AppDialog state={dlgState} onClose={closeDialog} />}
     </div>

@@ -233,64 +233,6 @@ pub fn score(titre_jeu: &str, nom_entree: &str, emplacement: Option<&str>, chemi
     None
 }
 
-/// Une entrée « Applications installées » de Windows, proposée au choix.
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct Entree {
-    /// Désigne l'entrée sans transporter sa ligne de commande : le front
-    /// renvoie cette clé, et c'est le Rust qui relit et revalide le registre.
-    pub cle: String,
-    pub nom: String,
-    pub editeur: Option<String>,
-    pub emplacement: Option<String>,
-    /// Ressemble assez au jeu pour être proposée en tête.
-    pub proche: bool,
-}
-
-/// Ressemblance entre deux titres, par mots partagés.
-///
-/// Sert uniquement à **ordonner** une liste que l'utilisateur va lire, jamais
-/// à décider seul : c'est la différence avec `score`, qui autorise une action
-/// irréversible et n'accepte donc que l'égalité ou le même dossier.
-pub fn similarite(titre: &str, nom: &str) -> u32 {
-    let a = normaliser_titre(titre);
-    let b = normaliser_titre(nom);
-    if a.is_empty() || b.is_empty() {
-        return 0;
-    }
-    if a == b {
-        return 1000;
-    }
-
-    let mots_a: Vec<&str> = a.split(' ').filter(|m| !m.is_empty()).collect();
-    let mots_b: Vec<&str> = b.split(' ').filter(|m| !m.is_empty()).collect();
-    let communs = mots_a.iter().filter(|m| mots_b.contains(m)).count() as u32;
-    if communs == 0 {
-        return 0;
-    }
-
-    // Rapporté au nombre de mots du jeu : « Hytale » entièrement retrouvé dans
-    // « Hytale Launcher » vaut mieux qu'un mot sur cinq.
-    let part = (communs * 100) / mots_a.len() as u32;
-    let bonus = if b.starts_with(&a) || a.starts_with(&b) { 60 } else { 0 };
-    part + bonus
-}
-
-/// Encode l'emplacement d'une entrée : indice de ruche et sous-clé.
-pub fn encoder_cle(ruche: usize, sous_cle: &str) -> String {
-    format!("{ruche}|{sous_cle}")
-}
-
-/// Relit une clé encodée. Refuse tout ce qui sort des trois ruches connues ou
-/// qui tenterait de remonter l'arborescence.
-pub fn decoder_cle(cle: &str) -> Option<(usize, String)> {
-    let (ruche, sous_cle) = cle.split_once('|')?;
-    let i: usize = ruche.parse().ok()?;
-    if i >= 3 || sous_cle.is_empty() || sous_cle.contains("..") || sous_cle.contains('\\') {
-        return None;
-    }
-    Some((i, sous_cle.to_string()))
-}
-
 /// Éditeurs dont on ne touche jamais aux logiciels depuis Cassini.
 ///
 /// Pilotes, composants système, utilitaires constructeur : rien de tout cela
@@ -338,29 +280,6 @@ const MOTIFS_SYSTEME: [&str; 18] = [
     "battleye",
 ];
 
-/// Cassini lui-même, qui n'a rien à faire dans la liste.
-///
-/// L'application est installée comme n'importe quel programme : elle
-/// apparaissait donc parmi les entrées, et se serait proposée en désinstaller
-/// une autre alors qu'elle se retirait elle-même. On la reconnaît à son
-/// dossier — le nom, lui, peut changer.
-pub fn est_soi_meme(emplacement: Option<&str>, dossier_appli: Option<&str>) -> bool {
-    match (emplacement, dossier_appli) {
-        (Some(e), Some(d)) => {
-            let e = e.trim_end_matches(['\\', '/']).to_lowercase();
-            let d = d.trim_end_matches(['\\', '/']).to_lowercase();
-            !e.is_empty() && (e == d || d.starts_with(&format!("{e}\\")))
-        }
-        _ => false,
-    }
-}
-
-/// Dossier d'où tourne Cassini, s'il est connaissable.
-fn dossier_de_l_application() -> Option<String> {
-    let exe = std::env::current_exe().ok()?;
-    Some(exe.parent()?.to_string_lossy().to_string())
-}
-
 /// Ce qu'on refuse de désinstaller depuis Cassini, à lister comme à lancer.
 ///
 /// Cassini est un lanceur de jeux : il n'a aucune raison de servir de panneau
@@ -380,9 +299,7 @@ pub fn est_systeme(nom: &str, editeur: Option<&str>) -> bool {
     }
 }
 
-/// Cherche dans le registre le désinstalleur d'un jeu.
-/// Les trois endroits où Windows liste ce qui est installé. L'ordre fixe les
-/// indices employés par `encoder_cle` : ne pas le changer à la légère.
+/// Les trois endroits où Windows liste ce qui est installé.
 #[cfg(target_os = "windows")]
 const RACINES: [(isize, &str); 3] = [
     (HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
@@ -390,6 +307,7 @@ const RACINES: [(isize, &str); 3] = [
     (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
 ];
 
+/// Cherche dans le registre le désinstalleur d'un jeu.
 #[cfg(target_os = "windows")]
 pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
     let mut meilleur: Option<(u32, Desinstalleur)> = None;
@@ -438,169 +356,14 @@ pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
     meilleur.map(|(_, d)| d)
 }
 
-/// Toutes les entrées désinstallables de Windows, les plus ressemblantes d'abord.
-///
-/// Sert quand la recherche automatique ne trouve rien : plutôt que de laisser
-/// l'utilisateur sans recours, on lui montre ce que Windows connaît et on le
-/// laisse désigner la bonne entrée. Un jeu déclaré sous un autre nom — Hytale
-/// sous « Hytale Launcher » — redevient ainsi désinstallable.
-#[cfg(target_os = "windows")]
-pub fn lister(titre: &str, chemin_jeu: Option<&str>) -> Vec<Entree> {
-    let mut sortie: Vec<(u32, Entree)> = Vec::new();
-    let soi = dossier_de_l_application();
-
-    for (i, (ruche, chemin)) in RACINES.iter().enumerate() {
-        let Ok(base) = RegKey::predef(*ruche).open_subkey(chemin) else { continue };
-        for cle in base.enum_keys().flatten() {
-            let Ok(entree) = base.open_subkey(&cle) else { continue };
-            let nom: String = entree.get_value("DisplayName").unwrap_or_default();
-            if nom.is_empty() || entree.get_value::<u32, _>("SystemComponent").unwrap_or(0) == 1 {
-                continue;
-            }
-            let brute: String = entree
-                .get_value("QuietUninstallString")
-                .or_else(|_| entree.get_value("UninstallString"))
-                .unwrap_or_default();
-            // Ce qu'on ne saurait pas lancer n'a rien à faire dans la liste :
-            // le proposer serait promettre une action qui échouerait.
-            let Some((programme, arguments)) = decouper(&brute) else { continue };
-            if !commande_admise(&programme, &arguments) {
-                continue;
-            }
-
-            let emplacement: String = entree.get_value("InstallLocation").unwrap_or_default();
-            let editeur: String = entree.get_value("Publisher").unwrap_or_default();
-            let vide = |v: String| Some(v).filter(|x| !x.is_empty());
-            // Pilotes, composants système et anti-triche n'apparaissent pas :
-            // on ne propose pas ce qu'on refuse de lancer.
-            if est_systeme(&nom, vide(editeur.clone()).as_deref())
-                || est_soi_meme(vide(emplacement.clone()).as_deref(), soi.as_deref())
-            {
-                continue;
-            }
-            let certain = score(titre, &nom, vide(emplacement.clone()).as_deref(), chemin_jeu).is_some();
-            let note = if certain { 1000 } else { similarite(titre, &nom) };
-
-            sortie.push((
-                note,
-                Entree {
-                    cle: encoder_cle(i, &cle),
-                    nom,
-                    editeur: vide(editeur),
-                    emplacement: vide(emplacement),
-                    proche: note >= 100,
-                },
-            ));
-        }
-    }
-
-    sortie.sort_by(|a, b| {
-        b.0.cmp(&a.0)
-            .then_with(|| a.1.nom.to_lowercase().cmp(&b.1.nom.to_lowercase()))
-    });
-    sortie.into_iter().map(|(_, e)| e).collect()
-}
-
-/// Désinstalleur d'une entrée choisie par l'utilisateur.
-///
-/// La ligne de commande est relue et revalidée ici : le front ne transporte
-/// qu'une clé, jamais un programme à exécuter.
-#[cfg(target_os = "windows")]
-pub fn par_cle(cle: &str) -> Result<Desinstalleur, String> {
-    let (i, sous_cle) = decoder_cle(cle).ok_or("Entrée inconnue")?;
-    let (ruche, chemin) = RACINES[i];
-    let entree = RegKey::predef(ruche)
-        .open_subkey(chemin)
-        .and_then(|b| b.open_subkey(&sous_cle))
-        .map_err(|_| "Cette entrée n'existe plus".to_string())?;
-
-    let nom: String = entree.get_value("DisplayName").unwrap_or_default();
-    let editeur: String = entree.get_value("Publisher").unwrap_or_default();
-    // Revérifié ici et pas seulement à l'affichage : une clé peut arriver
-    // d'ailleurs que de la liste qu'on a produite.
-    if est_systeme(&nom, Some(editeur.as_str()).filter(|e| !e.is_empty())) {
-        return Err("Ce logiciel appartient au système : passez par Windows".to_string());
-    }
-    let emplacement: String = entree.get_value("InstallLocation").unwrap_or_default();
-    if est_soi_meme(
-        Some(emplacement.as_str()).filter(|e| !e.is_empty()),
-        dossier_de_l_application().as_deref(),
-    ) {
-        return Err("Cassini ne peut pas se désinstaller lui-même".to_string());
-    }
-
-    let brute: String = entree
-        .get_value("QuietUninstallString")
-        .or_else(|_| entree.get_value("UninstallString"))
-        .unwrap_or_default();
-    let (programme, arguments) = decouper(&brute).ok_or("Aucune commande de désinstallation")?;
-    if !commande_admise(&programme, &arguments) {
-        return Err("Commande de désinstallation refusée".to_string());
-    }
-    Ok(Desinstalleur { nom, programme, arguments })
-}
-
 #[cfg(not(target_os = "windows"))]
 pub fn trouver(_titre: &str, _chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
     None
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn lister(_titre: &str, _chemin_jeu: Option<&str>) -> Vec<Entree> {
-    Vec::new()
-}
-
-#[cfg(not(target_os = "windows"))]
-pub fn par_cle(_cle: &str) -> Result<Desinstalleur, String> {
-    Err("Désinstallation non prise en charge sur ce système".to_string())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn classe_par_ressemblance_sans_jamais_decider_seul() {
-        // « Hytale » déclaré sous « Hytale Launcher » : bien classé pour le
-        // choix manuel, mais toujours refusé par la décision automatique.
-        assert!(similarite("Hytale", "Hytale Launcher") >= 100);
-        assert!(score("Hytale", "Hytale Launcher", None, None).is_none());
-
-        // Un logiciel sans rapport reste en bas de liste.
-        assert_eq!(similarite("Hytale", "Microsoft Edge"), 0);
-        // Et le nom exact passe devant tout le reste.
-        assert!(similarite("Hytale", "Hytale") > similarite("Hytale", "Hytale Launcher"));
-    }
-
-    #[test]
-    fn la_cle_d_une_entree_fait_l_aller_retour() {
-        let cle = encoder_cle(2, "{1234-5678}_is1");
-        assert_eq!(decoder_cle(&cle), Some((2, "{1234-5678}_is1".to_string())));
-    }
-
-    #[test]
-    fn refuse_une_cle_qui_sortirait_des_ruches_connues() {
-        assert!(decoder_cle("3|X").is_none());
-        assert!(decoder_cle("0|..\\..\\Run").is_none());
-        assert!(decoder_cle("0|Sub\\Key").is_none());
-        assert!(decoder_cle("abc|X").is_none());
-        assert!(decoder_cle("0|").is_none());
-    }
-
-    #[test]
-    fn ne_se_propose_pas_elle_meme() {
-        assert!(est_soi_meme(
-            Some(r"C:\Users\a\AppData\Local\Cassini"),
-            Some(r"C:\Users\a\AppData\Local\Cassini"),
-        ));
-        // Le dossier d'exécution peut être plus profond que celui déclaré.
-        assert!(est_soi_meme(
-            Some(r"C:\Program Files\Cassini"),
-            Some(r"C:\Program Files\Cassini\bin"),
-        ));
-        assert!(!est_soi_meme(Some(r"C:\Jeux\Hytale"), Some(r"C:\Program Files\Cassini")));
-        assert!(!est_soi_meme(None, Some(r"C:\Program Files\Cassini")));
-    }
 
     #[test]
     fn ecarte_les_pilotes_et_composants_systeme() {

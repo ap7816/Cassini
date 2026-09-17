@@ -64,15 +64,9 @@
     "uninstallConfirm": "Uninstall {{name}}? Its uninstaller will open: it asks the final question and removes the files. Cassini deletes nothing itself.",
     "uninstallConfirmSteam": "Uninstall {{name}}? Steam will open its uninstall window.",
     "uninstallStarted": "Uninstall started by {{name}}. Refresh the library once it finishes.",
-    "uninstallNone": "No uninstaller found for this game. Use Windows’ installed apps instead.",
+    "uninstallNone": "Cassini can’t uninstall {{name}}: Windows doesn’t know it under that name. Use Windows’ installed apps instead.",
     "uninstallFailed": "The uninstall could not be started: {{error}}",
-    "uninstallOnlyInstalled": "This game is not installed.",
-    "uninstallPickTitle": "Uninstall {{name}}",
-    "uninstallPickHint": "Windows doesn’t know this game under that name. Pick the program to uninstall: the closest matches come first, and nothing runs before you confirm. Drivers, system components and anti-cheats are left out — those stay Windows’ business.",
-    "uninstallPickSearch": "Search installed programs…",
-    "uninstallPickNone": "No installed program matches.",
-    "uninstallPickConfirm": "Uninstall “{{entry}}”? Its uninstaller will open: it asks the final question and removes the files.",
-    "uninstallNoneAtAll": "Windows lists no uninstallable program."
+    "uninstallOnlyInstalled": "This game is not installed."
   },
   "emptyState": {
     "title": "Your library is empty",
