@@ -110,6 +110,15 @@ pub fn scan_hytale_games() -> Result<Vec<GameDto>, String> {
     // façon seul à savoir appliquer les mises à jour avant de démarrer.
     let launch_url = chemin_lanceur();
 
+    // Le lanceur peut avoir été désinstallé alors que les fichiers du jeu
+    // restent : son désinstalleur ne vide pas `AppData`. Sans lui, on ne sait
+    // plus démarrer Hytale — le jeu n'est donc plus jouable, même si son
+    // dossier pèse encore plusieurs gigaoctets. On le rapporte désinstallé
+    // plutôt que de proposer un bouton « Jouer » qui ne ferait rien.
+    let jouable = launch_url
+        .as_deref()
+        .is_some_and(|l| std::path::Path::new(l).is_file());
+
     // Taille du paquet complet, moteur de rendu et environnement Java compris —
     // c'est ce que la désinstallation libérerait.
     let taille = dir_size(&package);
@@ -118,7 +127,7 @@ pub fn scan_hytale_games() -> Result<Vec<GameDto>, String> {
         id: "hytale-client".to_string(),
         title: "Hytale".to_string(),
         platform: "Hytale".to_string(),
-        installed: true,
+        installed: jouable,
         last_played_at: None,
         launch_url,
         steam_app_id: None,
@@ -182,7 +191,6 @@ mod tests {
                 let j = &jeux[0];
                 assert_eq!(j.platform, "Hytale");
                 assert_eq!(j.title, "Hytale");
-                assert!(j.installed);
 
                 let chemin = j.install_path.as_deref().expect("dossier d'installation");
                 assert!(
@@ -190,16 +198,27 @@ mod tests {
                     "le client doit se trouver dans {chemin}"
                 );
 
-                let lanceur = j.launch_url.as_deref().expect("cible de lancement");
-                assert!(
-                    std::path::Path::new(lanceur).is_file(),
-                    "le lanceur doit exister : {lanceur}"
+                // Jouable seulement si le lanceur est là. Le cas contraire
+                // n'est pas théorique : désinstaller Hytale retire le lanceur
+                // et laisse les fichiers du jeu dans `AppData`.
+                let lanceur = j
+                    .launch_url
+                    .as_deref()
+                    .filter(|l| std::path::Path::new(l).is_file());
+                assert_eq!(
+                    j.installed,
+                    lanceur.is_some(),
+                    "« installé » doit suivre la présence du lanceur"
                 );
+                if lanceur.is_none() {
+                    eprintln!("Hytale : fichiers présents, lanceur désinstallé");
+                }
 
                 assert!(j.size_on_disk.unwrap_or(0) > 0, "taille sur disque non nulle");
                 eprintln!(
-                    "Hytale détecté — {} Go, lancé par {lanceur}",
-                    j.size_on_disk.unwrap_or(0) / 1_073_741_824
+                    "Hytale détecté — {} Go, lancé par {}",
+                    j.size_on_disk.unwrap_or(0) / 1_073_741_824,
+                    lanceur.unwrap_or("(lanceur absent)")
                 );
             }
         }
