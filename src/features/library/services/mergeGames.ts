@@ -9,7 +9,7 @@ import type { Game } from '../../types';
  */
 
 // Ordre de priorité pour la déduplication : Steam prime sur Epic, puis BattleNet, etc.
-const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5 };
+const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5, HoYoPlay: 6 };
 
 // Normalise un titre pour la comparaison de doublons : minuscules, sans ponctuation
 function normalizeName(title: string): string {

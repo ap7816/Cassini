@@ -5,11 +5,13 @@
 //! Désinstaller un jeu depuis Steam pendant que Cassini reste affiché laissait
 //! sa planète « installée ».
 //!
-//! Deux sources, parce que les launchers n'écrivent pas tous au même endroit :
+//! Trois sources, parce que les launchers n'écrivent pas tous au même endroit :
 //! - les manifestes de Steam (`steamapps/appmanifest_*.acf`) et d'Epic
 //!   (`Manifests/*.item`), surveillés par `notify` ;
 //! - les clés « Uninstall » du registre, où s'inscrivent les jeux de
-//!   Battle.net, Riot, Ubisoft, Rockstar, et le lanceur d'Hytale.
+//!   Battle.net, Riot, Ubisoft, Rockstar, HoYoPlay, et le lanceur d'Hytale ;
+//! - les dossiers des jeux HoYoPlay, dont l'exécutable n'apparaît qu'à la fin
+//!   du téléchargement, sans que le registre change.
 //!
 //! La veille ne scanne rien elle-même : elle prévient l'interface, qui relance
 //! le scan habituel. Les rafales — une installation touche plusieurs fichiers
@@ -93,7 +95,10 @@ fn est_manifeste(p: &Path) -> bool {
         .and_then(|n| n.to_str())
         .unwrap_or("")
         .to_ascii_lowercase();
-    (nom.starts_with("appmanifest_") && nom.ends_with(".acf")) || nom.ends_with(".item")
+    (nom.starts_with("appmanifest_") && nom.ends_with(".acf"))
+        || nom.ends_with(".item")
+        // Surveillés sans récursion : seuls ceux de la racine d'un jeu HoYoPlay.
+        || nom.ends_with(".exe")
 }
 
 /// Un fil par clé, bloqué sur `RegNotifyChangeKeyValue` jusqu'au prochain
@@ -154,6 +159,7 @@ mod tests {
         assert!(est_manifeste(Path::new(r"C:\ProgramData\Epic\Manifests\ABC123.item")));
         assert!(!est_manifeste(Path::new(r"D:\SteamLibrary\steamapps\libraryfolders.vdf")));
         assert!(!est_manifeste(Path::new(r"D:\SteamLibrary\steamapps\appmanifest_620.acf.tmp")));
+        assert!(est_manifeste(Path::new(r"C:\Program Files\HoYoPlay\games\ZZZ Game\ZenlessZoneZero.exe")));
     }
 
     #[test]

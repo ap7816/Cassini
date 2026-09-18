@@ -15,7 +15,7 @@ pub struct LauncherDto {
 }
 
 /// Les launchers gérés par Cassini, avec la fonction qui les cherche.
-type Catalogue = [(&'static str, &'static str, fn() -> Option<LauncherDto>); 7];
+type Catalogue = [(&'static str, &'static str, fn() -> Option<LauncherDto>); 8];
 
 const CATALOGUE: Catalogue = [
     ("steam", "Steam", detect_steam),
@@ -25,6 +25,7 @@ const CATALOGUE: Catalogue = [
     ("rockstar", "Rockstar Games", detect_rockstar_launcher),
     ("ubisoft", "Ubisoft Connect", detect_ubisoft_connect),
     ("hytale", "Hytale", detect_hytale),
+    ("hoyoplay", "HoYoPlay", detect_hoyoplay),
 ];
 
 // Détecte tous les launchers et retourne la liste complète du catalogue
@@ -335,6 +336,11 @@ fn detect_ubisoft_connect() -> Option<LauncherDto> {
     ];
 
     first_existing_path(&known).map(|p| make_exe_launcher("ubisoft", "Ubisoft Connect", p))
+}
+
+// Détecte HoYoPlay via l'inventaire qu'il tient dans le registre
+fn detect_hoyoplay() -> Option<LauncherDto> {
+    crate::hoyoplay_scan::chemin_lanceur().map(|exe| make_exe_launcher("hoyoplay", "HoYoPlay", exe))
 }
 
 // Détecte Hytale Launcher via le chemin connu ou le registre

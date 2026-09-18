@@ -2,6 +2,7 @@
 mod battlenet_scan;
 mod detached;
 mod epic_scan;
+mod hoyoplay_scan;
 mod hytale_scan;
 mod icon_extract;
 mod launcher_scan;
@@ -275,6 +276,12 @@ fn scan_hytale_games() -> Result<Vec<steam_scan::GameDto>, String> {
 #[tauri::command]
 fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
     riot_scan::scan_riot_games()
+}
+
+// Commande Tauri : jeux HoYoverse installés par HoYoPlay (inventaire du registre)
+#[tauri::command]
+fn scan_hoyoplay_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hoyoplay_scan::scan_hoyoplay_games()
 }
 
 // Commande Tauri : scanne les jeux Rockstar Games via le registre Windows
@@ -1378,6 +1385,7 @@ pub fn run() {
                 std::thread::spawn(move || {
                     let mut dossiers = steam_scan::dossiers_steamapps();
                     dossiers.extend(epic_scan::find_manifests_path());
+                    dossiers.extend(hoyoplay_scan::dossiers_jeux());
                     watcher::demarrer(app, dossiers);
                 });
             }
@@ -1437,7 +1445,7 @@ pub fn run() {
             greet,
             scan_steam_games, steam_playtimes, scan_epic_games, scan_battlenet_games,
             scan_hytale_games,
-            scan_riot_games, scan_rockstar_games, scan_ubisoft_games,
+            scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_hoyoplay_games,
             scan_launchers, get_file_icon_data_url, open_folder,
             launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
             launch_target,

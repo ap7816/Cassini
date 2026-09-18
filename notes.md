@@ -159,7 +159,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Largeur réglable de la liste et de la barre des launchers                | ✅ Done    |
 | Quatre familles d'anneaux planétaires                                    | ✅ Done    |
 | Menu de débogage, absent des versions publiées                           | ✅ Done    |
-| Support HoYoverse (Genshin, Honkai, Zenless)                             | ❌ À faire |
+| Support HoYoverse (Genshin, Honkai, Zenless)                             | ✅ Done    |
 | Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | ❌ À faire |
 | Accessibilité : langue, contrastes, focus, mouvement réduit              | ✅ Done    |
 | Accessibilité : réglages de confort dans les Paramètres                  | ❌ À faire |
@@ -202,7 +202,9 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Rien n'est accessible, mais le code est écrit.** Le tableau le porte en « à faire » et non en « partiel » : il décrit ce qu'on peut faire, pas ce qui dort dans le dépôt. `createGameFromPath` fabrique un `Game` depuis un chemin d'exécutable ou de raccourci — titre déduit du nom de fichier, identifiant stable dérivé du chemin, plateforme `'Other'` — et `addGameFromPicker` dans `useLibraryGames` ouvre le sélecteur de fichier et l'ajoute à la bibliothèque. **Aucun composant ne l'appelle** : il ne manque que le bouton, et de quoi choisir titre et icône. Le risque que je redoutais n'existe pas : `appliquerScan` ne touche qu'aux jeux de la plateforme scannée, et `'Other'` n'est le domaine d'aucun scanner — une entrée manuelle ne sera donc jamais marquée désinstallée.
 
 - **Support HoYoverse (Genshin, Honkai, Zenless)**
-  Un scanner de plus dans `src-tauri/src/`, sur le modèle des six autres, ajouté au `CATALOGUE` de `launcher_scan.rs` et aux `SCANNERS` de `libraryScan.ts`. HoYoPlay écrit ses jeux dans la base de registre et tient un fichier de configuration par jeu.
+  **Fait.** `hoyoplay_scan.rs` lit l'inventaire qu'HoYoPlay tient dans `HKCU\Software\Cognosphere\HYP\<version>\<code>` (et `miHoYo\HYP` pour la version chinoise) : un code par jeu (`hk4e_global`, `hkrpg_global`, `nap_global`, `bh3_global`) et son `GameInstallPath`. La branche `standalone`, qui décrit les copies d'autres boutiques comme Epic, est laissée à leur propre scanner. Le titre est celui qu'HoYoPlay inscrit dans la liste des programmes installés, reconnu à sa commande `--uninstall_game=<code>` ; à défaut, une table des jeux connus.
+
+  La clé existe dès le début d'un téléchargement : le jeu n'est dit installé que si son exécutable est là, et c'est lui qu'on lance — Windows demande l'élévation si le jeu l'exige. Comme l'exécutable apparaît à la fin du téléchargement sans que le registre change, la veille surveille aussi les dossiers des jeux. La désinstallation passe par la commande officielle d'HoYoPlay. Le lanceur figure au `CATALOGUE`.
 
 - **Taille de police**
   Augmenter la taille générale du texte de l'application.

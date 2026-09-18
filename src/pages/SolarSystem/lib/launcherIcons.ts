@@ -30,6 +30,7 @@ const PLATEFORME_PAR_LAUNCHER: Record<string, GamePlatform> = {
   rockstar: 'Rockstar',
   ubisoft: 'Ubisoft',
   hytale: 'Hytale',
+  hoyoplay: 'HoYoPlay',
 };
 
 type LauncherDto = {

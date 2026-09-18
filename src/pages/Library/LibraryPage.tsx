@@ -14,7 +14,7 @@ import { tauriInvoke } from '../../services/tauri';
 import { formaterTaille } from '../../i18n/formats';
 
 type ViewMode = 'games' | 'favorites';
-type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'Other';
+type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Other';
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
@@ -72,6 +72,7 @@ export function LibraryPage() {
     scanPcRockstar,
     scanPcUbisoft,
     scanPcHytale,
+    scanPcHoYoPlay,
     isScanning,
     scanError,
   } = useLibraryGames();
@@ -94,6 +95,7 @@ export function LibraryPage() {
       scanPcRockstar(),
       scanPcUbisoft(),
       scanPcHytale(),
+      scanPcHoYoPlay(),
     ]);
   }
 
@@ -113,6 +115,7 @@ export function LibraryPage() {
       ['Rockstar', 'Rockstar'],
       ['Ubisoft', 'Ubisoft Connect'],
       ['Hytale', 'Hytale'],
+      ['HoYoPlay', 'HoYoPlay'],
       ['Other', t('filters.other')],
     ];
     return [
