@@ -414,6 +414,27 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v4_0_0": {
+      "new_0": "[Interface] New spaceship-cockpit interface: frames, telemetry and instrument fonts",
+      "new_1": "[Settings] Settings open as a panel over the solar system, without leaving the view",
+      "new_2": "[Music] Compact player over the solar system, and a “now playing” strip at the bottom left",
+      "new_3": "[Languages] The whole app in French and English",
+      "new_4": "[Library] Uninstall a game from its card, through its own uninstaller",
+      "new_5": "[Library] Refresh button, and automatic update when you come back to the app",
+      "new_6": "[Systems] Custom systems: name, icon, colour and hand-picked games",
+      "new_7": "[Systems] Your own image as a system icon, cropped automatically",
+      "new_8": "[Systems] Custom star colour, and automatic planet sorting",
+      "new_9": "[Solar system] Adjustable width for the game list and launcher bar",
+      "new_10": "[Shortcuts] Keyboard shortcuts, listed with the “?” key",
+      "fix_0": "[Solar system] Arc rings read as rings again, without flickering",
+      "fix_1": "[Library] Hytale no longer stays “installed” after its launcher is uninstalled",
+      "fix_2": "[Music] Player progress and volume adjustable with the keyboard",
+      "fix_3": "[Languages] The chosen language is remembered between sessions",
+      "perf_0": "[Solar system] The scene pauses when a panel covers it: no more slowdown when opening settings",
+      "perf_1": "[Solar system] Less graphics memory used on every frame",
+      "change_0": "[Navigation] The sidebar is gone: library and launchers can be re-enabled from settings",
+      "change_1": "[Security] Dependencies updated, and uninstalling guarded against system programs"
+    },
     "v3_0_0": {
       "new_0": "[Cassini] ArcHive is now called Cassini, after the man who found the division in Saturn’s rings",
       "new_1": "[Solar system] Every launcher in a single galaxy: the camera glides from one system to the next",

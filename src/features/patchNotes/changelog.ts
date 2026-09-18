@@ -15,6 +15,51 @@ export interface ChangeEntry {
 // Historique complet des versions de l'application, du plus récent au plus ancien
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '4.0.0',
+    date: '2026-09-18',
+    sections: [
+      {
+        type: 'new',
+        itemKeys: [
+          'changelog.v4_0_0.new_0',
+          'changelog.v4_0_0.new_1',
+          'changelog.v4_0_0.new_2',
+          'changelog.v4_0_0.new_3',
+          'changelog.v4_0_0.new_4',
+          'changelog.v4_0_0.new_5',
+          'changelog.v4_0_0.new_6',
+          'changelog.v4_0_0.new_7',
+          'changelog.v4_0_0.new_8',
+          'changelog.v4_0_0.new_9',
+          'changelog.v4_0_0.new_10',
+        ],
+      },
+      {
+        type: 'fix',
+        itemKeys: [
+          'changelog.v4_0_0.fix_0',
+          'changelog.v4_0_0.fix_1',
+          'changelog.v4_0_0.fix_2',
+          'changelog.v4_0_0.fix_3',
+        ],
+      },
+      {
+        type: 'perf',
+        itemKeys: [
+          'changelog.v4_0_0.perf_0',
+          'changelog.v4_0_0.perf_1',
+        ],
+      },
+      {
+        type: 'change',
+        itemKeys: [
+          'changelog.v4_0_0.change_0',
+          'changelog.v4_0_0.change_1',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.0.0',
     date: '2026-09-09',
     sections: [

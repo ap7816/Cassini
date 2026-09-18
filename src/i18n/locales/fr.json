@@ -414,6 +414,27 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v4_0_0": {
+      "new_0": "[Interface] Nouvelle interface façon cockpit de vaisseau : cadres, télémétrie et polices d’instrument",
+      "new_1": "[Réglages] Les réglages s’ouvrent en panneau sur le système solaire, sans quitter la vue",
+      "new_2": "[Musique] Lecteur compact posé sur le système solaire, et bandeau « en cours » en bas à gauche",
+      "new_3": "[Langues] Toute l’application en français et en anglais",
+      "new_4": "[Bibliothèque] Désinstaller un jeu depuis sa fiche, par son propre désinstalleur",
+      "new_5": "[Bibliothèque] Bouton d’actualisation, et mise à jour automatique au retour sur l’application",
+      "new_6": "[Systèmes] Systèmes personnalisés : nom, icône, couleur et jeux choisis",
+      "new_7": "[Systèmes] Une image à soi comme icône de système, recadrée automatiquement",
+      "new_8": "[Systèmes] Couleur propre de l’étoile, et rangement automatique des planètes",
+      "new_9": "[Système solaire] Liste des jeux et barre des launchers réglables en largeur",
+      "new_10": "[Raccourcis] Raccourcis clavier, et leur liste avec la touche « ? »",
+      "fix_0": "[Système solaire] Les anneaux en arcs se lisent de nouveau comme des anneaux, sans scintiller",
+      "fix_1": "[Bibliothèque] Hytale ne reste plus « installé » après la désinstallation de son lanceur",
+      "fix_2": "[Musique] Progression et volume du lecteur réglables au clavier",
+      "fix_3": "[Langues] La langue choisie est retenue d’une session à l’autre",
+      "perf_0": "[Système solaire] La scène s’arrête quand un panneau la recouvre : plus de ralentissement à l’ouverture des réglages",
+      "perf_1": "[Système solaire] Moins de mémoire graphique utilisée à chaque image",
+      "change_0": "[Navigation] La barre latérale disparaît : bibliothèque et launchers se réactivent depuis les réglages",
+      "change_1": "[Sécurité] Dépendances mises à jour, et désinstallation protégée contre les programmes système"
+    },
     "v3_0_0": {
       "new_0": "[Cassini] ArcHive s’appelle désormais Cassini, du nom du découvreur de la division des anneaux de Saturne",
       "new_1": "[Système solaire] Tous les launchers réunis dans une seule galaxie : la caméra glisse d’un système à l’autre",
