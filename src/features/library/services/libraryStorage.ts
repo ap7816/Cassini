@@ -123,6 +123,10 @@ export function normalizeGames(input: unknown): Game[] {
       installPath:     sanitizeInstallPath(r.installPath),
       steamAppId:      asString(r.steamAppId),
       sizeOnDisk:      typeof r.sizeOnDisk === 'number' && r.sizeOnDisk >= 0 ? r.sizeOnDisk : null,
+      playtimeMinutes:
+        typeof r.playtimeMinutes === 'number' && Number.isFinite(r.playtimeMinutes) && r.playtimeMinutes >= 0
+          ? r.playtimeMinutes
+          : null,
     });
   }
 

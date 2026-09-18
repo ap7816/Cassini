@@ -14,6 +14,8 @@ export type Game = {
   steamAppId?: string | null;
   sizeOnDisk?: number | null;
   installPath?: string | null;
+  /** Temps de jeu en minutes, quand le launcher le tient (Steam seulement). */
+  playtimeMinutes?: number | null;
 };
 
 // Paramètres de personnalisation et de comportement de l'application
@@ -38,6 +40,11 @@ export type AppSettings = {
    */
   showLibrary: boolean;
   showLaunchers: boolean;
+  /**
+   * Taille des planètes d'après le temps de jeu plutôt que l'espace disque.
+   * Seul Steam le connaît : les autres systèmes gardent l'espace disque.
+   */
+  planetSizeByPlaytime: boolean;
 };
 
 /** Les pages qu'on peut rappeler dans la barre. */

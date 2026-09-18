@@ -88,7 +88,7 @@ fn parse_item_file(content: &str) -> Option<GameDto> {
 }
 
 // Localise le dossier Manifests d'Epic Games Launcher dans ProgramData
-fn find_manifests_path() -> Option<PathBuf> {
+pub fn find_manifests_path() -> Option<PathBuf> {
     let programdata =
         std::env::var("PROGRAMDATA").unwrap_or_else(|_| r"C:\ProgramData".to_string());
 

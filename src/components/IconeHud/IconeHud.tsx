@@ -27,7 +27,8 @@ export type NomIconeHud =
   | 'volumeBas'
   | 'volumeMuet'
   | 'desinstaller'
-  | 'actualiser';
+  | 'actualiser'
+  | 'valide';
 
 const TRACES: Record<NomIconeHud, ReactNode> = {
   dossier: <path d="M3 7h6l2 2h10v10H3z" />,
@@ -75,6 +76,8 @@ const TRACES: Record<NomIconeHud, ReactNode> = {
     </>
   ),
   arret: <path d="M6 6l12 12M18 6L6 18" />,
+  // Coche : l'action a abouti.
+  valide: <path d="M4.5 12.5l5 5 10-11" />,
   // Deux flèches qui tournent : le symbole d'actualisation partout reconnu.
   actualiser: (
     <>

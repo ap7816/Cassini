@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import type { Game } from '../../../features/types';
-import { PLATFORM_COLOR, PLN_R_MAX } from '../constants';
+import { PLATFORM_COLOR } from '../constants';
 import type { ReglageSysteme } from '../lib/customSystems';
-import { etendreTaille } from '../lib/etendue';
+import { RAYON_PLANETE_MAX, etendreTaille } from '../lib/etendue';
 import { appliquerPlacements } from './placements';
 import { placerSystemes, rayonGalaxie, type Astre } from '../lib/galaxyLayout';
 import { hashStr, seededRng } from '../lib/random';
 import { dimensionnerSysteme, type TailleSysteme } from '../lib/systemSize';
-import { createBelt, createSun } from './decor';
+import { createBelt, createNuageEtoiles, createSun } from './decor';
 import { createPlanetGlow, createPlanets } from './planets';
 import { lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
@@ -73,7 +73,7 @@ export type EntreeGalaxie = {
 };
 
 /** Rayon visuel le plus grand possible pour une planète, anneaux compris. */
-const RAYON_PLANETE_MAX = PLN_R_MAX * 4;
+
 
 type Options = {
   scene: THREE.Scene;
@@ -159,6 +159,14 @@ export function createGalaxy({
 
     const ceinture = createBelt(taille.outerR, p.games.length);
     if (ceinture) groupe.add(ceinture);
+
+    // Étoiles propres au système, si l'utilisateur en a demandé.
+    const nuage = createNuageEtoiles(
+      taille.systemR,
+      reglageDe?.(p.platform)?.etoiles ?? 0,
+      hashStr(p.platform),
+    );
+    if (nuage) groupe.add(nuage);
 
     const hitSoleil = new THREE.Mesh(
       new THREE.SphereGeometry(base.sunR * 1.6, 12, 12),

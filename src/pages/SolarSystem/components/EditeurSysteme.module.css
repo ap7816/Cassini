@@ -423,3 +423,17 @@
   background: rgb(var(--hud) / 0.127);
   color: #fff;
 }
+
+/* ── Anneaux d'une planète ──────────────────────────────────────────────── */
+
+.anneau {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.petitChoisi {
+  border-color: var(--teinte, rgb(var(--hud)));
+  color: rgb(var(--hud));
+  background: rgb(var(--hud) / 0.1);
+}

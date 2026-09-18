@@ -11,6 +11,7 @@ import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
+import { listen } from '@tauri-apps/api/event';
 import { scannerTousLesLaunchers } from '../../features/library/services/libraryScan';
 
 /**
@@ -136,7 +137,38 @@ export function AppLayout() {
 
     window.addEventListener('focus', auRetour);
     document.addEventListener('visibilitychange', auChangementDeVisibilite);
+
+    // Et en temps réel : le côté Rust surveille les manifestes de Steam et
+    // d'Epic et les clés « Uninstall » du registre (voir `watcher.rs`), et
+    // prévient quand un jeu s'installe ou disparaît — même fenêtre ouverte.
+    //
+    // Le registre bouge aussi pour des logiciels qui ne sont pas des jeux :
+    // pas plus d'un scan toutes les dix secondes, et le dernier signal d'une
+    // rafale n'est jamais perdu — il part à la fin du délai.
+    const ESPACEMENT = 10_000;
+    let dernierVeille = 0;
+    let differe: ReturnType<typeof setTimeout> | null = null;
+    const surChangement = () => {
+      if (differe) return;
+      const attente = Math.max(0, dernierVeille + ESPACEMENT - Date.now());
+      differe = setTimeout(() => {
+        differe = null;
+        dernierVeille = Date.now();
+        dernier = dernierVeille;
+        scanner('changement détecté');
+      }, attente);
+    };
+    let fini = false;
+    let arreterVeille: (() => void) | null = null;
+    void listen('bibliotheque-changee', surChangement).then((stop) => {
+      if (fini) stop();
+      else arreterVeille = stop;
+    });
+
     return () => {
+      fini = true;
+      arreterVeille?.();
+      if (differe) clearTimeout(differe);
       window.removeEventListener('focus', auRetour);
       document.removeEventListener('visibilitychange', auChangementDeVisibilite);
     };

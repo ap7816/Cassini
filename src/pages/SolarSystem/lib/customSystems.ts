@@ -21,7 +21,15 @@ export type PlacementPlanete = {
   angle?: number;
   /** Facteur appliqué au rayon calculé d'après la taille sur disque. */
   taille?: number;
+  /**
+   * Anneaux de la planète : une couleur #rrggbb, ou `ANNEAU_AUCUN`. Absent, la
+   * planète garde ce que le tirage lui a donné — un anneau sur trois environ.
+   */
+  anneau?: string;
 };
+
+/** Valeur de `PlacementPlanete.anneau` qui retire les anneaux. */
+export const ANNEAU_AUCUN = 'aucun';
 
 export type SystemePerso = {
   id: string;
@@ -51,12 +59,18 @@ export type SystemePerso = {
    * un système peut porter un repère vif sans que son étoile soit verte.
    */
   couleurSoleil: string | null;
+  /**
+   * Densité des étoiles qui entourent ce système, de 0 (aucune en plus du ciel
+   * commun) à 3. Le ciel de fond est partagé par toute la galaxie ; ce nuage-là
+   * appartient au système et le distingue de ses voisins.
+   */
+  etoiles: number;
   /** Placements, par identifiant de jeu. */
   placements: Record<string, PlacementPlanete>;
 };
 
 /** Ce que la scène doit savoir d'un système pour en placer les astres. */
-export type ReglageSysteme = Pick<SystemePerso, 'soleil' | 'vitesse' | 'aPlat' | 'placements' | 'couleurSoleil'>;
+export type ReglageSysteme = Pick<SystemePerso, 'soleil' | 'vitesse' | 'aPlat' | 'placements' | 'couleurSoleil' | 'etoiles'>;
 
 /**
  * Préfixe des clés de système personnalisé dans la galaxie.
@@ -73,6 +87,7 @@ export const BORNES = {
   soleil: { min: 0.3, max: 3, defaut: 1 },
   vitesse: { min: 0, max: 4, defaut: 1 },
   taille: { min: 0.3, max: 3, defaut: 1 },
+  etoiles: { min: 0, max: 3, defaut: 0 },
 } as const;
 
 export const COULEURS_SYSTEME: readonly string[] = [
@@ -112,6 +127,8 @@ function normaliserPlacement(brut: unknown): PlacementPlanete | null {
   if (typeof o.distance === 'number' && Number.isFinite(o.distance) && o.distance > 0) p.distance = o.distance;
   if (typeof o.angle === 'number' && Number.isFinite(o.angle)) p.angle = angleNormal(o.angle);
   if (typeof o.taille === 'number' && Number.isFinite(o.taille)) p.taille = borne(o.taille, BORNES.taille);
+  if (o.anneau === ANNEAU_AUCUN) p.anneau = ANNEAU_AUCUN;
+  else if (typeof o.anneau === 'string' && HEX.test(o.anneau)) p.anneau = o.anneau.toLowerCase();
   return Object.keys(p).length > 0 ? p : null;
 }
 
@@ -171,8 +188,58 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
         typeof o.couleurSoleil === 'string' && HEX.test(o.couleurSoleil)
           ? o.couleurSoleil.toLowerCase()
           : null,
+      etoiles: borne(o.etoiles, BORNES.etoiles),
       placements,
     });
+  }
+  return sortie;
+}
+
+/** Réglages d'un système qu'on n'a pas touché. */
+export const REGLAGE_DEFAUT: ReglageSysteme = {
+  soleil: BORNES.soleil.defaut,
+  vitesse: BORNES.vitesse.defaut,
+  aPlat: false,
+  couleurSoleil: null,
+  etoiles: BORNES.etoiles.defaut,
+  placements: {},
+};
+
+/** Ce que la scène doit savoir d'un système, extrait de lui. */
+export function reglageDeSysteme(s: ReglageSysteme): ReglageSysteme {
+  return {
+    soleil: s.soleil,
+    vitesse: s.vitesse,
+    aPlat: s.aPlat,
+    couleurSoleil: s.couleurSoleil,
+    etoiles: s.etoiles,
+    placements: s.placements,
+  };
+}
+
+/** Vrai quand un réglage ne change rien au système calculé. */
+export function estReglageDefaut(r: ReglageSysteme): boolean {
+  return JSON.stringify(reglageDeSysteme(r)) === JSON.stringify(REGLAGE_DEFAUT);
+}
+
+/**
+ * Réglages des systèmes des launchers, relus depuis le stockage.
+ *
+ * Un launcher n'est pas un système personnalisé — ni nom, ni icône, ni jeux
+ * choisis : il les tient de la bibliothèque. Mais son soleil, ses orbites et
+ * ses planètes se règlent de la même façon. Chaque entrée passe donc par la
+ * même normalisation, avec pour seuls jeux admis ceux qu'elle place ; un
+ * placement pour un jeu disparu est sans effet, la scène ne le trouvant pas.
+ */
+export function normaliserReglagesLaunchers(brut: unknown): Record<string, ReglageSysteme> {
+  const sortie: Record<string, ReglageSysteme> = {};
+  if (!brut || typeof brut !== 'object' || Array.isArray(brut)) return sortie;
+  for (const [plateforme, r] of Object.entries(brut as Record<string, unknown>)) {
+    if (!plateforme || estSystemePerso(plateforme) || !r || typeof r !== 'object') continue;
+    const o = r as Record<string, unknown>;
+    const jeux = o.placements && typeof o.placements === 'object' ? Object.keys(o.placements) : [];
+    const [propre] = normaliserSystemes([{ ...o, id: plateforme, nom: plateforme, jeux }]);
+    if (propre) sortie[plateforme] = reglageDeSysteme(propre);
   }
   return sortie;
 }
@@ -188,6 +255,7 @@ export function nouveauSysteme(
     vitesse: BORNES.vitesse.defaut,
     aPlat: false,
     couleurSoleil: null,
+    etoiles: BORNES.etoiles.defaut,
     placements: {},
   };
 }

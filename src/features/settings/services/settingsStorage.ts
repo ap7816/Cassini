@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   // launchers. Ces réglages rappellent les pages une à une.
   showLibrary: false,
   showLaunchers: false,
+  planetSizeByPlaytime: false,
 };
 
 // Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
@@ -59,6 +60,7 @@ export function loadSettings(): AppSettings {
       // une installation neuve.
       showLibrary: parsed.showLibrary === true,
       showLaunchers: parsed.showLaunchers === true,
+      planetSizeByPlaytime: parsed.planetSizeByPlaytime === true,
     };
   } catch {
     return DEFAULT_SETTINGS;

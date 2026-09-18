@@ -1,5 +1,9 @@
 import type { ReglageSysteme } from './customSystems';
-import type { TailleSysteme } from './systemSize';
+import { dimensionnerSysteme, type TailleSysteme } from './systemSize';
+import { PLN_R_MAX } from '../constants';
+
+/** Rayon visuel le plus grand qu'une planète puisse prendre, anneaux compris. */
+export const RAYON_PLANETE_MAX = PLN_R_MAX * 4;
 
 /**
  * Distance minimale entre une planète et le centre de son soleil.
@@ -45,4 +49,16 @@ export function etendreTaille(
     // Même formule que `dimensionnerSysteme`, ceinture comprise.
     systemR: outerR * 1.55 + sunR * 2,
   };
+}
+
+/**
+ * Rayon qu'occupe un système dans la galaxie, placements compris.
+ *
+ * La galaxie dispose ses systèmes d'après ce rayon, calculé une fois à sa
+ * construction. Un système qu'on agrandit dans l'éditeur doit donc la faire
+ * reconstruire — sans quoi il déborde sur ses voisins jusqu'au prochain
+ * démarrage. La page s'en sert pour savoir quand c'est nécessaire.
+ */
+export function rayonSysteme(nbJeux: number, reglage: ReglageSysteme | null): number {
+  return etendreTaille(dimensionnerSysteme(nbJeux), reglage, RAYON_PLANETE_MAX).systemR;
 }

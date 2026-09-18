@@ -33,4 +33,10 @@ export type PlanetEntry = {
   incBase: number;
   /** Anneau d'orbite, redimensionné quand la planète change de distance. */
   orbite: THREE.Mesh;
+  /**
+   * Applique un choix d'anneaux (voir `PlacementPlanete.anneau`), et met à
+   * jour `rayonVisuelBase` en conséquence. Sans effet si le choix n'a pas
+   * changé : on peut l'appeler à chaque image.
+   */
+  changerAnneau?: (choix: string | undefined) => void;
 };

@@ -49,6 +49,14 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
     resolvedAppId ? steamCdnUrl(resolvedAppId) : null,
   );
   const [launching, setLaunching] = useState(false);
+  /** Le lancement vient d'aboutir : la coche verte reste quelques secondes. */
+  const [lance, setLance] = useState(false);
+
+  useEffect(() => {
+    if (!lance) return;
+    const minuteur = setTimeout(() => setLance(false), 2500);
+    return () => clearTimeout(minuteur);
+  }, [lance]);
 
   const bannerUrl = game.customImageUrl ?? imgSrc;
   const showFallback = !bannerUrl;
@@ -99,11 +107,26 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
     setImgSrc(null);
   }
 
+  /**
+   * Lance le jeu, et le dit.
+   *
+   * Le résultat du lancement était ignoré : la date de dernière partie n'était
+   * jamais enregistrée depuis cette fiche — le jeu restait « Jamais joué »
+   * après y avoir joué — et un échec passait inaperçu. Désormais la date est
+   * notée, une coche verte confirme que le lancement est parti, et un échec
+   * s'affiche avec sa raison.
+   */
   async function handlePlay() {
     if (!canPlay || launching) return;
     setLaunching(true);
     try {
-      await launchGame(game);
+      const r = await launchGame(game);
+      if (r.ok) {
+        onUpdate({ ...game, lastPlayedAt: new Date().toISOString() });
+        setLance(true);
+      } else {
+        toast.error(r.message);
+      }
     } finally {
       setLaunching(false);
     }
@@ -235,19 +258,42 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
               <span className={css.muted}>{formaterTaille(game.sizeOnDisk, i18n.language)}</span>
             </>
           )}
+          {game.playtimeMinutes != null && game.playtimeMinutes > 0 && (
+            <>
+              <span className={css.dot}>•</span>
+              <span className={css.muted}>
+                {game.playtimeMinutes < 60
+                  ? t('gameCard.playtimeMinutes', { count: game.playtimeMinutes })
+                  : t('gameCard.playtimeHours', { count: Math.round(game.playtimeMinutes / 60) })}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Rangée pleine largeur : le titre garde toute la sienne au-dessus. */}
         <div className={css.actions}>
           <button
             type="button"
-            className={[css.play, launching ? css.playLaunching : ''].join(' ')}
+            className={[css.play, launching ? css.playLaunching : '', lance ? css.playLance : ''].join(' ')}
             onClick={handlePlay}
             disabled={!canPlay || launching}
             title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}
           >
-            {launching ? t('gameCard.opening') : t('gameCard.play')}
+            {launching ? (
+              t('gameCard.opening')
+            ) : lance ? (
+              <span className={css.playLanceContenu}>
+                <IconeHud nom="valide" />
+                {t('gameCard.launched')}
+              </span>
+            ) : (
+              t('gameCard.play')
+            )}
           </button>
+          {/* Annoncé aussi aux lecteurs d'écran, qui ne voient pas la coche. */}
+          <span className="sr-only" role="status">
+            {lance ? t('gameCard.launchedAnnounce', { name: game.title }) : ''}
+          </span>
 
           {game.installPath && (
             <button

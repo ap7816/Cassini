@@ -66,7 +66,13 @@
     "uninstallStarted": "Uninstall started by {{name}}. Refresh the library once it finishes.",
     "uninstallNone": "Cassini can’t uninstall {{name}}: Windows doesn’t know it under that name. Use Windows’ installed apps instead.",
     "uninstallFailed": "The uninstall could not be started: {{error}}",
-    "uninstallOnlyInstalled": "This game is not installed."
+    "uninstallOnlyInstalled": "This game is not installed.",
+    "launched": "Launched",
+    "launchedAnnounce": "{{name}} is launching.",
+    "playtimeMinutes_one": "{{count}} minute played",
+    "playtimeMinutes_other": "{{count}} minutes played",
+    "playtimeHours_one": "{{count}} hour played",
+    "playtimeHours_other": "{{count}} hours played"
   },
   "emptyState": {
     "title": "Your library is empty",
@@ -238,7 +244,10 @@
     "patchNotesLabel": "Release notes",
     "patchNotesHint": "View what's new and fixed in the latest update.",
     "patchNotesBtn": "View notes",
-    "sgdbKeySaved": "•••••••• (key saved)"
+    "sgdbKeySaved": "•••••••• (key saved)",
+    "solarTitle": "Solar system",
+    "planetPlaytimeLabel": "Planet size from playtime",
+    "planetPlaytimeHint": "The more you have played a game, the bigger its planet. Only Steam provides playtime: other systems keep the size on disk."
   },
   "common": {
     "close": "Close",
@@ -334,7 +343,18 @@
       "sortZa": "Z → A",
       "sortSize": "Size on disk",
       "sortRecent": "Recently played",
-      "sortNote": "Only changes orbit order. A planet you placed stays where you put it."
+      "sortNote": "Only changes orbit order. A planet you placed stays where you put it.",
+      "stars": "Stars around the system",
+      "starsNone": "None",
+      "launcherNote": "A launcher’s system: its games come from the library. Its sun, orbits and planets can be adjusted here.",
+      "reset": "Reset",
+      "rings": "Rings",
+      "ringsAuto": "Automatic",
+      "ringsNone": "None",
+      "ringsColor": "{{color}} rings",
+      "ringsOtherColor": "Other ring colour",
+      "dragNote": "Drag a planet in the scene to place it: it follows its orbit, and its distance to the sun follows the mouse.",
+      "sunAppliesOnSave": "The star colour and the stars around the system apply when you save."
     },
     "image": {
       "choose": "Choose an image…",

@@ -67,6 +67,11 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, musicParticles: enabled }));
   }
 
+  // Taille des planètes d'après le temps de jeu plutôt que l'espace disque
+  function setPlanetSizeByPlaytime(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, planetSizeByPlaytime: enabled }));
+  }
+
   // Rappelle ou masque l'entrée d'une page dans la barre des launchers
   function setPageVisible(page: PageRappelable, visible: boolean) {
     setSettings((prev) => ({ ...prev, [page]: visible }));
@@ -84,6 +89,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setAutostart,
       setRunInBackground,
       setMusicParticles,
+      setPlanetSizeByPlaytime,
       setPageVisible,
     }),
     [settings],

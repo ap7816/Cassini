@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ANNEAU_AUCUN } from '../lib/customSystems';
 import type { Game } from '../../../features/types';
 import {
   fetchCoverArt,
@@ -89,9 +90,21 @@ export function createPlanets({
     // plus en compte : elle traduit le poids du jeu sur le disque, qui n'a
     // aucun rapport avec l'idée d'un système d'anneaux — et cela réservait le
     // détail le plus reconnaissable de la scène aux seuls gros jeux.
-    if (rng() < 0.32) {
-      const anneau = createPlanetRing(pr, seed, PALETTES[atmType][1], rng);
+    //
+    // Les tirages de cet anneau sont gardés : changer sa couleur le rebâtit
+    // tirage pour tirage, et il ne change que de teinte.
+    const rayonSansAnneau = rayonVisuel;
+    const anneauAuto = rng() < 0.32;
+    const tirages: number[] = [];
+    let anneauGroupe: THREE.Group | null = null;
+    if (anneauAuto) {
+      const anneau = createPlanetRing(pr, seed, PALETTES[atmType][1], () => {
+        const v = rng();
+        tirages.push(v);
+        return v;
+      });
       mesh.add(anneau.groupe);
+      anneauGroupe = anneau.groupe;
       rayonVisuel = Math.max(rayonVisuel, anneau.rayon);
     }
 
@@ -111,6 +124,29 @@ export function createPlanets({
       orbiteBase: orbit, rayonBase: pr, rayonVisuelBase: rayonVisuel, incBase: inc, orbite,
     };
 
+    // Anneaux choisis par l'utilisateur. Une planète qui n'en avait pas en
+    // reçoit un tiré de sa propre graine : toujours le même pour elle.
+    let choixAnneau: string | undefined;
+    entry.changerAnneau = (choix) => {
+      if (choix === choixAnneau) return;
+      choixAnneau = choix;
+      if (anneauGroupe) {
+        mesh.remove(anneauGroupe);
+        libererAnneau(anneauGroupe);
+        anneauGroupe = null;
+      }
+      let rayon = 0;
+      if (choix === undefined ? anneauAuto : choix !== ANNEAU_AUCUN) {
+        let i = 0;
+        const tirage = anneauAuto ? () => tirages[i++] ?? 0.5 : seededRng(seed + 11);
+        const anneau = createPlanetRing(pr, seed, choix ?? PALETTES[atmType][1], tirage);
+        mesh.add(anneau.groupe);
+        anneauGroupe = anneau.groupe;
+        rayon = anneau.rayon;
+      }
+      entry.rayonVisuelBase = Math.max(rayonSansAnneau, rayon);
+    };
+
     planets.push(entry);
     pickMeshes.push(mesh);
     meshToEntry.set(mesh, entry);
@@ -118,6 +154,17 @@ export function createPlanets({
   });
 
   return { planets, pickMeshes, meshToEntry };
+}
+
+/** Rend au GPU ce qu'occupait un système d'anneaux retiré. */
+function libererAnneau(groupe: THREE.Group): void {
+  groupe.traverse((o) => {
+    if (!(o instanceof THREE.Mesh)) return;
+    o.geometry.dispose();
+    const m = o.material as THREE.MeshBasicMaterial;
+    m.map?.dispose();
+    m.dispose();
+  });
 }
 
 /** Pastille dégradée servant de lueur. Une seule pour toute la scène. */

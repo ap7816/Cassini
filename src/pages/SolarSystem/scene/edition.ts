@@ -44,11 +44,20 @@ export type EditionScene = {
   terminer(cle: string, recharger: boolean): void;
   /** Hors session : rebâtit un système dont les jeux enregistrés ont changé. */
   recharger(cle: string): void;
+  /**
+   * Reçoit les planètes qu'on fait glisser dans la scène pendant l'aperçu :
+   * où on les lâcherait, distance au soleil et angle en degrés. L'éditeur en
+   * fait un placement — c'est lui qui tient le brouillon. `null` se désabonne.
+   */
+  ecouterGlissement(fn: ((g: Glissement) => void) | null): void;
 };
+
+export type Glissement = { id: string; distance: number; angle: number };
 
 export const EDITION_INERTE: EditionScene = {
   lire: () => null,
   apercu: () => null,
   terminer: () => {},
   recharger: () => {},
+  ecouterGlissement: () => {},
 };

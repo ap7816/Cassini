@@ -60,7 +60,56 @@ export function orbitPos(
 }
 
 /**
- * Échelle de taille des planètes d'après l'espace disque occupé par le jeu.
+ * Inverse d'`orbitPos` : la distance et l'angle d'un point du plan orbital.
+ *
+ * Sert à poser une planète là où on la lâche. Le point est exprimé dans le
+ * repère du système — son soleil à l'origine — et supposé dans le plan de
+ * l'orbite, que définissent `inc` et `node` ; hors de ce plan, sa composante
+ * normale est ignorée.
+ *
+ * @returns l'angle en radians, dans [0, 2π[
+ */
+export function positionSurOrbite(
+  p: THREE.Vector3,
+  inc: number,
+  node: number,
+): { distance: number; angle: number } {
+  // Ry(-node)
+  const x = p.x * Math.cos(node) - p.z * Math.sin(node);
+  const z1 = p.x * Math.sin(node) + p.z * Math.cos(node);
+  // Rx(-inc) : seule la composante dans le plan compte
+  const z = -p.y * Math.sin(inc) + z1 * Math.cos(inc);
+
+  const angle = Math.atan2(z, x);
+  return { distance: Math.hypot(x, z), angle: angle < 0 ? angle + Math.PI * 2 : angle };
+}
+
+/** Normale au plan d'une orbite : l'axe Y tourné comme dans `orbitPos`. */
+export function normaleOrbite(inc: number, node: number, out: THREE.Vector3): THREE.Vector3 {
+  const y = Math.cos(inc);
+  const z = Math.sin(inc);
+  return out.set(z * Math.sin(node), y, z * Math.cos(node));
+}
+
+/** Ce qui fait la taille d'une planète. */
+export type CritereTaille = 'disque' | 'tempsDeJeu';
+
+let critereCourant: CritereTaille = 'disque';
+
+/**
+ * Choisit ce qui fait la taille des planètes pour les prochaines constructions.
+ *
+ * Un réglage de l'application, lu comme les réglages de la scène au moment de
+ * bâtir un système — la page le pose avant la scène, et la reconstruit quand
+ * il change (voir `cleScene`).
+ */
+export function definirCritereTaille(c: CritereTaille): void {
+  critereCourant = c;
+}
+
+/**
+ * Échelle de taille des planètes d'après l'espace disque occupé par le jeu,
+ * ou d'après le temps de jeu (voir `CritereTaille`).
  *
  * La normalisation se fait sur la bibliothèque courante plutôt que sur une
  * échelle absolue : le plus gros jeu occupe toujours le haut de la plage et le
@@ -73,8 +122,13 @@ export function orbitPos(
  * `tailleContraste`, dont 0,7 est le défaut.
  */
 
-export function makeRadiusScale(games: Game[]): (g: Game) => number {
-  const sizes = games.map((g) => g.sizeOnDisk ?? 0).filter((s) => s > 0);
+export function makeRadiusScale(games: Game[], critere: CritereTaille = critereCourant): (g: Game) => number {
+  // Au temps de jeu, seulement si ce système en connaît un : un système Epic
+  // n'a que l'espace disque, et le garde plutôt que de tout mettre à la même
+  // taille. Un jeu Steam jamais lancé retombe alors parmi les petits.
+  const parTemps = critere === 'tempsDeJeu' && games.some((g) => (g.playtimeMinutes ?? 0) > 0);
+  const mesure = (g: Game) => (parTemps ? g.playtimeMinutes : g.sizeOnDisk) ?? 0;
+  const sizes = games.map(mesure).filter((s) => s > 0);
 
   if (sizes.length === 0) {
     // Aucune taille connue : tout le monde au même diamètre médian
@@ -88,7 +142,7 @@ export function makeRadiusScale(games: Game[]): (g: Game) => number {
   const courbe = lireReglages().tailleContraste;
 
   return (g: Game): number => {
-    const s = g.sizeOnDisk ?? 0;
+    const s = mesure(g);
     // Taille inconnue → petit, sans être le minimum absolu
     if (s <= 0) return PLN_R_MIN * 1.15;
     const t = Math.pow((s - min) / span, courbe);

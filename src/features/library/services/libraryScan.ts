@@ -87,11 +87,30 @@ export function scannerTousLesLaunchers(): Promise<ResultatScan> {
 
 let scanEnCours: Promise<ResultatScan> | null = null;
 
+/**
+ * Ajoute aux jeux Steam leur temps de jeu, que Steam tient en local.
+ *
+ * À part du scan des manifestes : un échec ici — fichier illisible, compte
+ * jamais connecté — ne doit pas faire perdre la liste des jeux.
+ */
+async function avecTempsDeJeu(jeux: Game[]): Promise<Game[]> {
+  try {
+    const temps = await tauriInvoke<Record<string, number>>('steam_playtimes');
+    return jeux.map((g) => {
+      const m = g.steamAppId ? temps[g.steamAppId] : undefined;
+      return typeof m === 'number' ? { ...g, playtimeMinutes: m } : g;
+    });
+  } catch {
+    return jeux;
+  }
+}
+
 async function scanner(): Promise<ResultatScan> {
   const resultats = await Promise.all(
     SCANNERS.map(async (s) => {
       try {
-        return { platform: s.platform, jeux: await tauriInvoke<Game[]>(s.commande) };
+        const jeux = await tauriInvoke<Game[]>(s.commande);
+        return { platform: s.platform, jeux: s.platform === 'Steam' ? await avecTempsDeJeu(jeux) : jeux };
       } catch {
         return { platform: s.platform, jeux: null };
       }

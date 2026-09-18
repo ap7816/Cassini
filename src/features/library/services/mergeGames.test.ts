@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deduplicateGames, mergeById } from './mergeGames';
+import { deduplicateGames, mergeById, plusRecente } from './mergeGames';
 import type { Game, GamePlatform } from '../../types';
 
 /**
@@ -116,10 +116,39 @@ describe('mergeById', () => {
     expect(g.customImageUrl).toBe('a.png');
   });
 
+  it('retient la partie la plus récente, que Cassini ou le launcher la connaisse', () => {
+    const avant = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' })];
+    // Steam sait qu'on y a rejoué depuis, sans passer par Cassini.
+    const scan = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-01T00:00:00.000Z' })];
+
+    expect(mergeById(avant, scan)[0].lastPlayedAt).toBe('2026-09-01T00:00:00.000Z');
+  });
+
+  it('ne recule pas la date quand le launcher en connaît une plus ancienne', () => {
+    const avant = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-18T12:00:00.000Z' })];
+    const scan = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' })];
+
+    expect(mergeById(avant, scan)[0].lastPlayedAt).toBe('2026-09-18T12:00:00.000Z');
+  });
+
   it('ajoute un jeu inconnu sans toucher aux autres', () => {
     const avant = [jeu({ title: 'Elden Ring', platform: 'Steam' })];
     const scan = [jeu({ title: 'Sekiro', platform: 'Steam' })];
 
     expect(mergeById(avant, scan)).toHaveLength(2);
+  });
+});
+
+describe('plusRecente', () => {
+  it('rend la plus récente des deux', () => {
+    expect(plusRecente('2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
+    expect(plusRecente('2026-02-01T00:00:00Z', '2026-01-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
+  });
+
+  it('se contente de celle qui existe, et ignore une date illisible', () => {
+    expect(plusRecente(null, '2026-02-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
+    expect(plusRecente('2026-02-01T00:00:00Z', undefined)).toBe('2026-02-01T00:00:00Z');
+    expect(plusRecente('n’importe quoi', '2026-02-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
+    expect(plusRecente(null, null)).toBeNull();
   });
 });

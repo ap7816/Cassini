@@ -109,6 +109,7 @@ export function ReglagesContenu({ recherche }: Props) {
     setAutostart,
     setRunInBackground,
     setMusicParticles,
+    setPlanetSizeByPlaytime,
     setPageVisible,
   } = useAppSettings();
 
@@ -447,6 +448,28 @@ export function ReglagesContenu({ recherche }: Props) {
               type="checkbox"
               checked={settings.musicParticles}
               onChange={e => setMusicParticles(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
+      </div>
+      )}
+
+      {/* Système solaire */}
+      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
+
+        <SettingRow
+          labelKey="settings.planetPlaytimeLabel"
+          hintKey="settings.planetPlaytimeHint"
+          query={q}
+        >
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.planetSizeByPlaytime}
+              onChange={e => setPlanetSizeByPlaytime(e.target.checked)}
             />
             <span className={css.toggleSlider} />
           </label>

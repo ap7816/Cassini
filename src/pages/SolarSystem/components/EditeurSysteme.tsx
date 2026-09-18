@@ -1,21 +1,22 @@
-import { useMemo, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import { AppDialog, type DialogState } from '../../../components/AppDialog/AppDialog';
 import { useFocusRendu } from '../../../hooks/useFocus';
 import { PLATFORM_CSS } from '../constants';
 import {
+  ANNEAU_AUCUN,
   BORNES,
   COULEURS_SYSTEME,
   NOM_MAX,
+  REGLAGE_DEFAUT,
   ajouterJeu,
-  cleSysteme,
   deplacerJeu,
   jeuxDuSysteme,
   placer,
+  reglageDeSysteme,
   retirerJeu,
   trierJeux,
-  type ReglageSysteme,
   type TriSysteme,
   type SystemePerso,
 } from '../lib/customSystems';
@@ -28,6 +29,13 @@ import { ChoixImageIcone } from './ChoixImageIcone';
 import css from './EditeurSysteme.module.css';
 
 type Props = {
+  /** Clé du système dans la galaxie. */
+  cle: string;
+  /**
+   * Système d'un launcher : ni son nom, ni son icône, ni ses jeux ne se
+   * choisissent — la bibliothèque les donne. Tout le reste se règle.
+   */
+  launcher?: boolean;
   systeme: SystemePerso;
   games: Game[];
   edition: RefObject<EditionScene>;
@@ -35,14 +43,6 @@ type Props = {
   onAnnuler: () => void;
   onSupprimer: (id: string) => void;
 };
-
-const reglageDe = (s: SystemePerso): ReglageSysteme => ({
-  soleil: s.soleil,
-  vitesse: s.vitesse,
-  aPlat: s.aPlat,
-  couleurSoleil: s.couleurSoleil,
-  placements: s.placements,
-});
 
 /**
  * Personnalisation d'un système solaire, en direct.
@@ -52,7 +52,16 @@ const reglageDe = (s: SystemePerso): ReglageSysteme => ({
  * planète là où on la voit. Rien n'est enregistré avant « Enregistrer » ;
  * « Annuler » rend le système tel qu'il était.
  */
-export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnuler, onSupprimer }: Props) {
+export function EditeurSysteme({
+  cle,
+  launcher = false,
+  systeme,
+  games,
+  edition,
+  onEnregistrer,
+  onAnnuler,
+  onSupprimer,
+}: Props) {
   // Pas de piège : le panneau vit à côté de la scène, qui reste utilisable.
   useFocusRendu();
   const { t, i18n } = useTranslation();
@@ -65,16 +74,39 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
   // L'aperçu démarre à l'ouverture. L'appel est idempotent : le double rendu du
   // mode strict ne fait que réappliquer le même état.
   const [etat, setEtat] = useState<EtatEdition | null>(() =>
-    edition.current.apercu(cleSysteme(systeme), jeuxDuSysteme(systeme, parId), reglageDe(systeme)),
+    edition.current.apercu(cle, jeuxDuSysteme(systeme, parId), reglageDeSysteme(systeme)),
   );
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [recherche, setRecherche] = useState('');
   const [confirmation, setConfirmation] = useState<DialogState | null>(null);
 
   function modifier(suivant: SystemePerso) {
+    brouillonRef.current = suivant;
     setBrouillon(suivant);
-    setEtat(edition.current.apercu(cleSysteme(suivant), jeuxDuSysteme(suivant, parId), reglageDe(suivant)));
+    setEtat(edition.current.apercu(cle, jeuxDuSysteme(suivant, parId), reglageDeSysteme(suivant)));
   }
+
+  // Planètes glissées dans la scène. Relu par référence : les glissements
+  // arrivent plus vite que React ne rend, chacun doit partir du précédent.
+  const brouillonRef = useRef(brouillon);
+  const etatRef = useRef(etat);
+  const modifierRef = useRef(modifier);
+  useLayoutEffect(() => {
+    etatRef.current = etat;
+    modifierRef.current = modifier;
+  });
+  useEffect(() => {
+    const scene = edition.current;
+    scene.ecouterGlissement((g) => {
+      const e = etatRef.current?.planetes.find((p) => p.id === g.id);
+      const max = Math.max(etatRef.current?.distanceMax ?? g.distance, e?.distance ?? 0);
+      const distance = Math.min(Math.max(g.distance, e?.distanceMin ?? 0), max);
+      modifierRef.current(placer(brouillonRef.current, g.id, { distance, angle: Math.round(g.angle) % 360 }));
+      // Les réglages de la planète s'ouvrent : on voit ses curseurs suivre.
+      setOuverte(g.id);
+    });
+    return () => scene.ecouterGlissement(null);
+  }, [edition]);
 
   const jeux = jeuxDuSysteme(brouillon, parId);
   const nomPropre = brouillon.nom.trim();
@@ -114,20 +146,28 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
       style={{ '--teinte': brouillon.couleur } as CSSProperties}
     >
       <header className={css.entete}>
-        <IconeSysteme nom={brouillon.icone} image={brouillon.image} couleur={brouillon.couleur} taille={26} />
-        <input
-          className={css.nom}
-          value={brouillon.nom}
-          maxLength={NOM_MAX}
-          onChange={(e) => modifier({ ...brouillon, nom: e.target.value })}
-          aria-label={t('systems.editor.systemName')}
-        />
+        {launcher ? (
+          <h2 className={css.nom}>{systeme.nom}</h2>
+        ) : (
+          <>
+            <IconeSysteme nom={brouillon.icone} image={brouillon.image} couleur={brouillon.couleur} taille={26} />
+            <input
+              className={css.nom}
+              value={brouillon.nom}
+              maxLength={NOM_MAX}
+              onChange={(e) => modifier({ ...brouillon, nom: e.target.value })}
+              aria-label={t('systems.editor.systemName')}
+            />
+          </>
+        )}
         <button type="button" className={css.fermer} onClick={fermer} aria-label={t('common.close')}>
           ✕
         </button>
       </header>
 
       <div className={css.corps}>
+        {launcher && <p className={css.note}>{t('systems.editor.launcherNote')}</p>}
+        {!launcher && (
         <Section titre={t('systems.editor.appearance')}>
           <div className={css.icones}>
             {ICONES_SYSTEME.map((i) => (
@@ -182,6 +222,7 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
           </div>
           <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
         </Section>
+        )}
 
         <Section titre={t('systems.editor.sun')}>
           <Curseur
@@ -232,7 +273,16 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
               />
             </div>
           )}
-          <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
+          <Curseur
+            libelle={t('systems.editor.stars')}
+            min={BORNES.etoiles.min}
+            max={BORNES.etoiles.max}
+            pas={0.25}
+            valeur={brouillon.etoiles}
+            format={(v) => (v === 0 ? t('systems.editor.starsNone') : facteur(v))}
+            onChange={(v) => modifier({ ...brouillon, etoiles: v })}
+          />
+          <p className={css.note}>{t('systems.editor.sunAppliesOnSave')}</p>
         </Section>
 
         <Section titre={t('systems.editor.orbits')}>
@@ -254,10 +304,11 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
             {t('systems.editor.allFlat')}
           </label>
           <p className={css.note}>{t('systems.editor.editingNote')}</p>
+          <p className={css.note}>{t('systems.editor.dragNote')}</p>
         </Section>
 
         <Section titre={t('systems.editor.planets', { n: jeux.length })}>
-          {jeux.length > 1 && (
+          {!launcher && jeux.length > 1 && (
             <div className={css.tri}>
               <span className={css.triTitre}>{t('systems.editor.sort')}</span>
               <div className={css.triBoutons}>
@@ -298,6 +349,8 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                     <span className={css.titreJeu}>{g.title}</span>
                     {place && <span className={css.marquePlace} title={t('systems.editor.customPlacement')} />}
                   </button>
+                  {!launcher && (
+                  <>
                   <button
                     type="button"
                     className={css.petit}
@@ -327,6 +380,8 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                   >
                     ✕
                   </button>
+                  </>
+                  )}
                 </div>
 
                 {deplie && e && (
@@ -358,12 +413,23 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
                       format={facteur}
                       onChange={(v) => modifier(placer(brouillon, g.id, { taille: v }))}
                     />
+                    <ChoixAnneau
+                      valeur={brouillon.placements[g.id]?.anneau}
+                      onChange={(anneau) => modifier(placer(brouillon, g.id, { anneau }))}
+                    />
                     <button
                       type="button"
                       className={css.lien}
                       disabled={!place}
                       onClick={() =>
-                        modifier(placer(brouillon, g.id, { distance: undefined, angle: undefined, taille: undefined }))
+                        modifier(
+                          placer(brouillon, g.id, {
+                            distance: undefined,
+                            angle: undefined,
+                            taille: undefined,
+                            anneau: undefined,
+                          }),
+                        )
                       }
                     >
                       {t('systems.editor.resetPlacement')}
@@ -374,6 +440,8 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
             );
           })}
 
+          {!launcher && (
+          <>
           <input
             type="search"
             className={css.recherche}
@@ -400,23 +468,37 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
             </button>
           ))}
           {q && candidats.length === 0 && <p className={css.note}>{t('systems.editor.noOtherGame')}</p>}
+          </>
+          )}
         </Section>
       </div>
 
       <footer className={css.pied}>
-        <button
-          type="button"
-          className={css.supprimer}
-          onClick={() =>
-            confirmer(
-              t('systems.deleteConfirm', { name: systeme.nom }),
-              () => onSupprimer(systeme.id),
-              true,
-            )
-          }
-        >
-          {t('common.delete')}
-        </button>
+        {launcher ? (
+          // Rien à supprimer : on rend au système son état calculé. L'aperçu
+          // le montre aussitôt, et « Enregistrer » le confirme.
+          <button
+            type="button"
+            className={css.supprimer}
+            onClick={() => modifier({ ...brouillon, ...REGLAGE_DEFAUT })}
+          >
+            {t('systems.editor.reset')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={css.supprimer}
+            onClick={() =>
+              confirmer(
+                t('systems.deleteConfirm', { name: systeme.nom }),
+                () => onSupprimer(systeme.id),
+                true,
+              )
+            }
+          >
+            {t('common.delete')}
+          </button>
+        )}
         <span className={css.manque}>{manque}</span>
         <button type="button" className={css.secondaire} onClick={fermer}>
           {t('dialog.cancel')}
@@ -436,6 +518,60 @@ export function EditeurSysteme({ systeme, games, edition, onEnregistrer, onAnnul
         />
       )}
     </aside>
+  );
+}
+
+/**
+ * Anneaux d'une planète : ceux du tirage, aucun, ou une couleur.
+ *
+ * « Automatique » laisse la planète telle que la scène l'a tirée — un anneau
+ * sur trois environ. Une couleur en donne à une planète qui n'en avait pas.
+ */
+function ChoixAnneau({ valeur, onChange }: { valeur: string | undefined; onChange: (v: string | undefined) => void }) {
+  const { t } = useTranslation();
+  const couleur = valeur !== undefined && valeur !== ANNEAU_AUCUN ? valeur : null;
+  return (
+    <div className={css.anneau} role="group" aria-label={t('systems.editor.rings')}>
+      <span className={css.curseurTete}>{t('systems.editor.rings')}</span>
+      <div className={css.couleurs}>
+        <button
+          type="button"
+          className={valeur === undefined ? `${css.petitLarge} ${css.petitChoisi}` : css.petitLarge}
+          aria-pressed={valeur === undefined}
+          onClick={() => onChange(undefined)}
+        >
+          {t('systems.editor.ringsAuto')}
+        </button>
+        <button
+          type="button"
+          className={valeur === ANNEAU_AUCUN ? `${css.petitLarge} ${css.petitChoisi}` : css.petitLarge}
+          aria-pressed={valeur === ANNEAU_AUCUN}
+          onClick={() => onChange(ANNEAU_AUCUN)}
+        >
+          {t('systems.editor.ringsNone')}
+        </button>
+      </div>
+      <div className={css.couleurs}>
+        {COULEURS_SYSTEME.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={couleur === c ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
+            style={{ background: c }}
+            aria-label={t('systems.editor.ringsColor', { color: c })}
+            aria-pressed={couleur === c}
+            onClick={() => onChange(c)}
+          />
+        ))}
+        <input
+          type="color"
+          className={css.couleurLibre}
+          value={couleur ?? '#c8b48a'}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={t('systems.editor.ringsOtherColor')}
+        />
+      </div>
+    </div>
   );
 }
 

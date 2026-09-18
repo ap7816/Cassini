@@ -29,6 +29,10 @@ export function appliquerPlacements(
     const pl = reglage.placements[p.game.id];
     const taille = pl?.taille ?? 1;
 
+    // D'abord les anneaux : ils changent l'étendue visible de la planète, dont
+    // dépend la distance minimale au soleil.
+    p.changerAnneau?.(pl?.anneau);
+
     // Anneaux et atmosphère sont portés par la planète : ils suivent l'échelle.
     p.mesh.scale.setScalar(taille);
     p.radius = p.rayonBase * taille;

@@ -262,7 +262,8 @@ export function GameList({
             {titre}
           </h2>
           <div className={css.headActions}>
-            {perso && (
+            {/* Un launcher se règle aussi : soleil, orbites, planètes. */}
+            {(perso || games.length > 0) && (
               <button type="button" className={css.headModifier} onClick={onModifierSysteme}>
                 {t('common.edit')}
               </button>

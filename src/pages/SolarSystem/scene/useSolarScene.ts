@@ -13,13 +13,13 @@ import {
   poserCamera,
 } from '../lib/framing';
 import { densiteBrume } from '../lib/haze';
-import { orbitPos } from '../lib/orbits';
+import { normaleOrbite, orbitPos, positionSurOrbite } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { createStarfield, createSunBeacons } from './decor';
 import { createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
 import { angleEnDegres, appliquerPlacements } from './placements';
-import type { EditionScene, EtatEdition } from './edition';
+import type { EditionScene, EtatEdition, Glissement } from './edition';
 import { BORNES, estSystemePerso, type ReglageSysteme } from '../lib/customSystems';
 import { distanceMini, ETENDUE_MAX } from '../lib/etendue';
 import { LabelLayer } from './labels';
@@ -879,7 +879,7 @@ export function useSolarScene({
 
     const REGLAGE_NEUTRE: ReglageSysteme = {
       soleil: BORNES.soleil.defaut, vitesse: BORNES.vitesse.defaut, aPlat: false,
-      couleurSoleil: null, placements: {},
+      couleurSoleil: null, etoiles: BORNES.etoiles.defaut, placements: {},
     };
 
     const appliquerApercu = (sys: SystemeGalaxie, a: NonNullable<typeof apercu>) => {
@@ -902,6 +902,16 @@ export function useSolarScene({
     });
 
     const entreeDe = (cle: string) => parPlateformeRef.current.find((e) => e.platform === cle);
+
+    // Glissement d'une planète pendant l'aperçu : la scène dit où elle serait,
+    // l'éditeur en fait un placement et le renvoie comme aperçu.
+    let surGlissement: ((g: Glissement) => void) | null = null;
+    const planGlisse = new THREE.Plane();
+    const normaleGlisse = new THREE.Vector3();
+    const pointGlisse = new THREE.Vector3();
+    const centreGlisse = new THREE.Vector3();
+
+    const systemeEdite = () => (apercu ? galaxie.get(apercu.cle) ?? null : null);
 
     editionRef.current = {
       lire(cle) {
@@ -940,6 +950,10 @@ export function useSolarScene({
         sys.soleil.scale.setScalar(reglage.soleil);
         sys.hitSoleil.scale.setScalar(reglage.soleil);
       },
+
+      ecouterGlissement(fn) {
+        surGlissement = fn;
+      },
     };
 
     // Lancé ici et non au bloc caméra : `animateCam` s'appuie sur des vecteurs
@@ -956,6 +970,28 @@ export function useSolarScene({
       meshToEntry,
       soleils: galaxie.systemes.map((s) => s.hitSoleil),
       onHover: (hit) => { hoveredEntry = hit; },
+      glisser: {
+        peut: (p) => surGlissement !== null && (systemeEdite()?.planets.includes(p) ?? false),
+        debut: () => {
+          controls.enabled = false;
+        },
+        // Le curseur est projeté sur le plan de l'orbite de la planète, dans le
+        // repère de son système : la planète reste sur son orbite inclinée et
+        // suit la main, quel que soit l'angle de vue.
+        deplacer: (p, rayon) => {
+          const sys = systemeEdite();
+          if (!sys || !surGlissement) return;
+          sys.groupe.getWorldPosition(centreGlisse);
+          normaleOrbite(p.inc, p.node, normaleGlisse);
+          planGlisse.setFromNormalAndCoplanarPoint(normaleGlisse, centreGlisse);
+          if (!rayon.intersectPlane(planGlisse, pointGlisse)) return;
+          const { distance, angle } = positionSurOrbite(pointGlisse.sub(centreGlisse), p.inc, p.node);
+          surGlissement({ id: p.game.id, distance, angle: THREE.MathUtils.radToDeg(angle) });
+        },
+        fin: () => {
+          controls.enabled = !animating;
+        },
+      },
       onClick: (hit) => (hit ? selectPlanet(hit) : clearPlanet()),
       // Cliquer un soleil, c'est demander à s'y rendre — y compris celui du
       // système où l'on se trouve déjà, qui ramène alors au cadrage d'ensemble.

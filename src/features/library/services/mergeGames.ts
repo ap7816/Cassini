@@ -16,6 +16,22 @@ function normalizeName(title: string): string {
   return title.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
 }
 
+/**
+ * La plus récente de deux dates ISO, ou celle qui existe.
+ *
+ * Deux sources renseignent la dernière partie : Cassini, quand on lance depuis
+ * l'application, et le launcher — Steam la tient à jour même quand on joue
+ * sans passer par Cassini. Garder toujours la première rendait la seconde
+ * inutile dès qu'on avait lancé le jeu une fois d'ici.
+ */
+export function plusRecente(a: string | null | undefined, b: string | null | undefined): string | null {
+  const ta = a ? Date.parse(a) : NaN;
+  const tb = b ? Date.parse(b) : NaN;
+  if (Number.isNaN(ta)) return Number.isNaN(tb) ? null : (b as string);
+  if (Number.isNaN(tb)) return a as string;
+  return tb > ta ? (b as string) : (a as string);
+}
+
 // Déduplique les jeux détectés sur plusieurs plateformes par titre normalisé
 // En cas de conflit, garde la plateforme prioritaire et fusionne les données utilisateur
 export function deduplicateGames(games: Game[]): Game[] {
@@ -35,7 +51,7 @@ export function deduplicateGames(games: Game[]): Game[] {
     const winner = { ...group[0] };
     for (const g of group.slice(1)) {
       if (!winner.favorite && g.favorite) winner.favorite = true;
-      if (!winner.lastPlayedAt && g.lastPlayedAt) winner.lastPlayedAt = g.lastPlayedAt;
+      winner.lastPlayedAt = plusRecente(winner.lastPlayedAt, g.lastPlayedAt);
       if (!winner.customImageUrl && g.customImageUrl) winner.customImageUrl = g.customImageUrl;
     }
     result.push(winner);
@@ -56,7 +72,7 @@ export function mergeById(prev: Game[], incoming: Game[]): Game[] {
         ...existing,
         ...g,
         favorite: existing.favorite ?? g.favorite ?? false,
-        lastPlayedAt: existing.lastPlayedAt ?? g.lastPlayedAt ?? null,
+        lastPlayedAt: plusRecente(existing.lastPlayedAt, g.lastPlayedAt),
         customImageUrl: existing.customImageUrl ?? g.customImageUrl ?? null,
       });
     } else {

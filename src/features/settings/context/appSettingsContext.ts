@@ -12,6 +12,7 @@ export type AppSettingsContextValue = {
   setAutostart: (enabled: boolean) => void;
   setRunInBackground: (enabled: boolean) => void;
   setMusicParticles: (enabled: boolean) => void;
+  setPlanetSizeByPlaytime: (enabled: boolean) => void;
   /** Affiche ou masque l'entrée d'une page dans la barre des launchers. */
   setPageVisible: (page: PageRappelable, visible: boolean) => void;
 };

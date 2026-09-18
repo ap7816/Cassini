@@ -12,6 +12,7 @@ mod security;
 mod steam_scan;
 mod ubisoft_scan;
 mod uninstall;
+mod watcher;
 use security::MusicRoot;
 use tauri_plugin_log;
 
@@ -244,6 +245,12 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
     steam_scan::scan_steam_games()
+}
+
+// Commande Tauri : temps de jeu Steam, en minutes, par identifiant d'application
+#[tauri::command]
+fn steam_playtimes() -> std::collections::HashMap<String, u64> {
+    steam_scan::temps_de_jeu()
 }
 
 // Commande Tauri : scanne les jeux Epic Games via les fichiers .item du launcher
@@ -1363,6 +1370,18 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             migrate_autostart();
 
+            // Prévient l'interface dès qu'un jeu s'installe ou se désinstalle.
+            // Les dossiers sont cherchés hors du fil principal : trouver Steam
+            // lit le registre et un fichier, rien qui doive retarder la fenêtre.
+            {
+                let app = app.handle().clone();
+                std::thread::spawn(move || {
+                    let mut dossiers = steam_scan::dossiers_steamapps();
+                    dossiers.extend(epic_scan::find_manifests_path());
+                    watcher::demarrer(app, dossiers);
+                });
+            }
+
             #[cfg(desktop)]
             {
                 // Configure l'icône de la zone de notification avec un menu contextuel Ouvrir/Quitter
@@ -1416,7 +1435,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             greet,
-            scan_steam_games, scan_epic_games, scan_battlenet_games,
+            scan_steam_games, steam_playtimes, scan_epic_games, scan_battlenet_games,
             scan_hytale_games,
             scan_riot_games, scan_rockstar_games, scan_ubisoft_games,
             scan_launchers, get_file_icon_data_url, open_folder,

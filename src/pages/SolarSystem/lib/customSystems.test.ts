@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { normaliserSystemes, nouveauSysteme, trierJeux } from './customSystems';
+import {
+  ANNEAU_AUCUN,
+  estReglageDefaut,
+  normaliserReglagesLaunchers,
+  normaliserSystemes,
+  nouveauSysteme,
+  trierJeux,
+} from './customSystems';
 import type { Game } from '../../../features/types';
 
 const jeu = (id: string, title: string, extra: Partial<Game> = {}): Game => ({
@@ -71,7 +78,63 @@ describe('normaliserSystemes', () => {
     expect(url.image).toBeNull();
   });
 
+  it('borne la densité d’étoiles, et la laisse à zéro par défaut', () => {
+    const [defaut] = normaliserSystemes([{ id: '1', nom: 'A' }]);
+    const [trop] = normaliserSystemes([{ id: '2', nom: 'B', etoiles: 12 }]);
+    const [negatif] = normaliserSystemes([{ id: '3', nom: 'C', etoiles: -1 }]);
+
+    expect(defaut.etoiles).toBe(0);
+    expect(trop.etoiles).toBe(3);
+    expect(negatif.etoiles).toBe(0);
+  });
+
+  it('garde une couleur d’anneaux valide ou leur retrait, et rien d’autre', () => {
+    const [s] = normaliserSystemes([
+      {
+        id: '1',
+        nom: 'A',
+        jeux: ['a', 'b', 'c'],
+        placements: { a: { anneau: '#FF8800' }, b: { anneau: ANNEAU_AUCUN }, c: { anneau: 'rouge' } },
+      },
+    ]);
+
+    expect(s.placements.a).toEqual({ anneau: '#ff8800' });
+    expect(s.placements.b).toEqual({ anneau: ANNEAU_AUCUN });
+    expect(s.placements.c).toBeUndefined();
+  });
+
   it('écarte un système sans identifiant ni nom', () => {
     expect(normaliserSystemes([{ nom: 'A' }, { id: '1' }, null, 'x'])).toHaveLength(0);
+  });
+});
+
+describe('normaliserReglagesLaunchers', () => {
+  it('relit les réglages d’un launcher, placements compris', () => {
+    const r = normaliserReglagesLaunchers({
+      Steam: { soleil: 2, couleurSoleil: '#FFAA00', etoiles: 1, placements: { '620': { taille: 2 } } },
+    });
+
+    expect(r.Steam.soleil).toBe(2);
+    expect(r.Steam.couleurSoleil).toBe('#ffaa00');
+    expect(r.Steam.etoiles).toBe(1);
+    expect(r.Steam.placements['620']).toEqual({ taille: 2 });
+  });
+
+  it('borne les valeurs et ignore ce qui n’est pas un launcher', () => {
+    const r = normaliserReglagesLaunchers({ Epic: { soleil: 99 }, 'perso:x': { soleil: 2 }, Riot: 'n’importe quoi' });
+
+    expect(r.Epic.soleil).toBe(3);
+    expect(Object.keys(r)).toEqual(['Epic']);
+  });
+
+  it('rend un objet vide pour un stockage illisible', () => {
+    expect(normaliserReglagesLaunchers(null)).toEqual({});
+    expect(normaliserReglagesLaunchers([1, 2])).toEqual({});
+  });
+
+  it('reconnaît un réglage laissé par défaut', () => {
+    const [s] = normaliserSystemes([{ id: '1', nom: 'A' }]);
+    expect(estReglageDefaut(s)).toBe(true);
+    expect(estReglageDefaut({ ...s, etoiles: 1 })).toBe(false);
   });
 });

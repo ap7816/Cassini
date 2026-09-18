@@ -66,7 +66,13 @@
     "uninstallStarted": "Désinstallation lancée par {{name}}. Actualisez la bibliothèque une fois terminée.",
     "uninstallNone": "Cassini ne sait pas désinstaller {{name}} : Windows ne le connaît pas sous ce nom. Passez par les applications installées de Windows.",
     "uninstallFailed": "La désinstallation n’a pas pu être lancée : {{error}}",
-    "uninstallOnlyInstalled": "Ce jeu n’est pas installé."
+    "uninstallOnlyInstalled": "Ce jeu n’est pas installé.",
+    "launched": "Lancé",
+    "launchedAnnounce": "{{name}} est lancé.",
+    "playtimeMinutes_one": "{{count}} minute jouée",
+    "playtimeMinutes_other": "{{count}} minutes jouées",
+    "playtimeHours_one": "{{count}} heure jouée",
+    "playtimeHours_other": "{{count}} heures jouées"
   },
   "emptyState": {
     "title": "Votre bibliothèque est vide",
@@ -238,7 +244,10 @@
     "patchNotesLabel": "Notes de version",
     "patchNotesHint": "Consultez les nouveautés et corrections de la dernière mise à jour.",
     "patchNotesBtn": "Voir les notes",
-    "sgdbKeySaved": "•••••••• (clé enregistrée)"
+    "sgdbKeySaved": "•••••••• (clé enregistrée)",
+    "solarTitle": "Système solaire",
+    "planetPlaytimeLabel": "Taille des planètes selon le temps de jeu",
+    "planetPlaytimeHint": "Plus on a joué à un jeu, plus sa planète est grande. Seul Steam fournit le temps de jeu : les autres systèmes gardent la taille sur disque."
   },
   "common": {
     "close": "Fermer",
@@ -334,7 +343,18 @@
       "sortZa": "Z → A",
       "sortSize": "Taille sur disque",
       "sortRecent": "Jouées récemment",
-      "sortNote": "Ne change que l’ordre des orbites. Une planète que vous avez placée reste où vous l’avez mise."
+      "sortNote": "Ne change que l’ordre des orbites. Une planète que vous avez placée reste où vous l’avez mise.",
+      "stars": "Étoiles autour du système",
+      "starsNone": "Aucune",
+      "launcherNote": "Système d’un launcher : ses jeux viennent de la bibliothèque. Son soleil, ses orbites et ses planètes se règlent ici.",
+      "reset": "Réinitialiser",
+      "rings": "Anneaux",
+      "ringsAuto": "Automatique",
+      "ringsNone": "Aucun",
+      "ringsColor": "Anneaux {{color}}",
+      "ringsOtherColor": "Autre couleur d’anneaux",
+      "dragNote": "Faites glisser une planète dans la scène pour la placer : elle suit son orbite, et sa distance au soleil suit la souris.",
+      "sunAppliesOnSave": "La couleur de l’étoile et les étoiles autour du système s’appliquent à l’enregistrement."
     },
     "image": {
       "choose": "Choisir une image…",

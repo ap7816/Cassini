@@ -8,10 +8,14 @@ import {
   type CSSProperties,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { ICONE_PAR_DEFAUT } from './lib/iconesSysteme';
 import { nomPlateforme } from '../../i18n/plateformes';
 import logo from '../../assets/logo.svg';
 import { useCalques } from '../../features/calques/useCalques';
 import { AideRaccourcis } from './components/AideRaccourcis';
+import { rayonSysteme } from './lib/etendue';
+import { definirCritereTaille, type CritereTaille } from './lib/orbits';
 import type { Game } from '../../features/types';
 import {
   loadGamesFromStorage,
@@ -30,17 +34,27 @@ import { SystemeDialog } from './components/SystemeDialog';
 import { EditeurSysteme } from './components/EditeurSysteme';
 import { EDITION_INERTE, type EditionScene } from './scene/edition';
 import {
+  REGLAGE_DEFAUT,
   ajouterJeu,
   cleSysteme,
   couleurEntier,
+  estReglageDefaut,
   estSystemePerso,
   jeuxDuSysteme,
+  nouveauSysteme,
+  reglageDeSysteme,
   remplacerSysteme,
   retirerJeu,
   retirerSysteme,
+  type ReglageSysteme,
   type SystemePerso,
 } from './lib/customSystems';
-import { chargerSystemesPerso, enregistrerSystemesPerso } from './lib/customSystemsStorage';
+import {
+  chargerReglagesLaunchers,
+  chargerSystemesPerso,
+  enregistrerReglagesLaunchers,
+  enregistrerSystemesPerso,
+} from './lib/customSystemsStorage';
 import {
   LARGEUR_LISTE,
   LARGEUR_RAIL,
@@ -60,11 +74,20 @@ import { abonnerReglages, versionStructure } from '../../features/debug/tuning';
  * dans un titre ou une URL, deux bibliothèques différentes ne peuvent donc pas
  * produire la même signature.
  */
-function sceneSignature(games: Game[]): string {
+function sceneSignature(games: Game[], critere: CritereTaille): string {
   return games
     .map((g) =>
-      [g.id, g.title, g.platform, g.sizeOnDisk ?? 0, g.customImageUrl ?? '', g.steamAppId ?? '']
-        .join('\u0000'),
+      [
+        g.id,
+        g.title,
+        g.platform,
+        g.sizeOnDisk ?? 0,
+        g.customImageUrl ?? '',
+        g.steamAppId ?? '',
+        // Seulement quand il fait la taille : sinon, rejouer à un jeu Steam
+        // reconstruirait la galaxie au retour pour une donnée qu'elle ignore.
+        critere === 'tempsDeJeu' ? g.playtimeMinutes ?? 0 : '',
+      ].join('\u0000'),
     )
     .join('\n');
 }
@@ -78,8 +101,8 @@ function sceneSignature(games: Game[]): string {
  * réécrit le tableau sans rien changer en 3D : la scène était rebâtie et la
  * caméra revenait à son cadrage initial à chaque clic sur l'étoile.
  */
-function useSceneGames(games: Game[]): Game[] {
-  const key = useMemo(() => sceneSignature(games), [games]);
+function useSceneGames(games: Game[], critere: CritereTaille): Game[] {
+  const key = useMemo(() => sceneSignature(games, critere) + critere, [games, critere]);
 
   // Mise à jour d'état pendant le rendu : le motif que React prévoit pour une
   // valeur dérivée d'une entrée. Le rendu en cours renvoie déjà le nouveau
@@ -124,7 +147,9 @@ export function SolarSystemPage() {
   const [largeurs, setLargeurs] = useState<Largeurs>(chargerLargeurs);
   const { t } = useTranslation();
   const [systemesPerso, setSystemesPerso] = useState<SystemePerso[]>(chargerSystemesPerso);
-  // Éditeur ouvert : identifiant du système personnalisé qu'on règle.
+  // Réglages des systèmes des launchers, par plateforme.
+  const [reglagesLaunchers, setReglagesLaunchers] = useState(chargerReglagesLaunchers);
+  // Éditeur ouvert : clé, dans la galaxie, du système qu'on règle.
   const [editeur, setEditeur] = useState<string | null>(null);
   const editionRef = useRef<EditionScene>(EDITION_INERTE);
   // Système qu'on vient d'enregistrer depuis l'éditeur : la scène montre déjà
@@ -171,7 +196,8 @@ export function SolarSystemPage() {
       ? chosenPlatform
       : platforms[0]?.name ?? '';
 
-  const sceneGames = useSceneGames(games);
+  const critereTaille: CritereTaille = settings.planetSizeByPlaytime ? 'tempsDeJeu' : 'disque';
+  const sceneGames = useSceneGames(games, critereTaille);
 
   // Jeux du launcher affiché — pour la liste, pas pour la scène : celle-ci
   // les reçoit tous, puisque tous les systèmes coexistent.
@@ -194,7 +220,11 @@ export function SolarSystemPage() {
       if (liste) liste.push(g);
       else parNom.set(k, [g]);
     }
-    const launchers = [...parNom.entries()].map(([p, jeux]) => ({ platform: p, games: jeux }));
+    const launchers = [...parNom.entries()].map(([p, jeux]) => ({
+      platform: p,
+      games: jeux,
+      reglage: reglagesLaunchers[p],
+    }));
 
     // Systèmes personnalisés, tirés de la même copie figée des jeux. Un système
     // dont tous les jeux ont quitté la bibliothèque reste dans la barre, où l'on
@@ -207,27 +237,55 @@ export function SolarSystemPage() {
         games: jeuxDuSysteme(s, parId),
         nom: s.nom,
         couleur: couleurEntier(s.couleur),
-        reglage: { soleil: s.soleil, vitesse: s.vitesse, aPlat: s.aPlat, placements: s.placements },
+        // Le réglage entier : la couleur de l'étoile et son nuage manquaient,
+        // et ne s'affichaient donc jamais hors de l'aperçu de l'éditeur.
+        reglage: reglageDeSysteme(s),
       }))
       .filter((s) => s.games.length > 0);
 
     return [...launchers, ...perso];
-  }, [sceneGames, systemesPerso]);
+  }, [sceneGames, systemesPerso, reglagesLaunchers]);
 
   /**
    * Ce qui oblige à reconstruire la galaxie : les jeux affichés, et pour chaque
-   * système personnalisé son nom, sa couleur et le fait qu'il ait un soleil.
+   * système personnalisé ce que seule la construction de la galaxie applique —
+   * nom, couleur, couleur de l'étoile, nuage d'étoiles, présence d'un soleil —
+   * et son encombrement.
    *
-   * Ni ses jeux ni ses placements : les changer ne rebâtit que lui, sans
-   * relancer la caméra (voir `editionRef`).
+   * L'encombrement compte parce que la galaxie place ses systèmes d'après lui,
+   * une fois pour toutes : un système agrandi dans l'éditeur débordait sur ses
+   * voisins jusqu'au prochain démarrage. Arrondi au supérieur, il ne change
+   * qu'avec les placements qui l'élargissent vraiment.
+   *
+   * Ni ses jeux ni ses autres placements : les changer ne rebâtit que lui,
+   * sans relancer la caméra (voir `editionRef`).
    */
   const cleScene = useMemo(() => {
     const presents = new Set(parPlateforme.map((p) => p.platform));
     return [
-      sceneSignature(sceneGames),
-      ...systemesPerso.map((s) => [s.id, s.nom, s.couleur, presents.has(cleSysteme(s)) ? '1' : '0'].join('\u0000')),
+      critereTaille,
+      sceneSignature(sceneGames, critereTaille),
+      ...systemesPerso.map((s) =>
+        [
+          s.id,
+          s.nom,
+          s.couleur,
+          s.couleurSoleil ?? '',
+          String(s.etoiles),
+          String(Math.ceil(rayonSysteme(s.jeux.length, s))),
+          presents.has(cleSysteme(s)) ? '1' : '0',
+        ].join('\u0000'),
+      ),
+      ...Object.entries(reglagesLaunchers).map(([p, r]) =>
+        [
+          p,
+          r.couleurSoleil ?? '',
+          String(r.etoiles),
+          String(Math.ceil(rayonSysteme(parPlateforme.find((e) => e.platform === p)?.games.length ?? 0, r))),
+        ].join('\u0000'),
+      ),
     ].join('\u0001');
-  }, [sceneGames, systemesPerso, parPlateforme]);
+  }, [sceneGames, systemesPerso, parPlateforme, reglagesLaunchers, critereTaille]);
 
   const parPlateformeRef = useRef(parPlateforme);
   const systemesPrecedentsRef = useRef(systemesPerso);
@@ -318,8 +376,19 @@ export function SolarSystemPage() {
     setEditeur(null);
   }
 
-  function annulerEditeur(id: string) {
-    editionRef.current.terminer(cleSysteme({ id }), true);
+  function annulerEditeur(cle: string) {
+    editionRef.current.terminer(cle, true);
+    setEditeur(null);
+  }
+
+  /** Enregistre les réglages d'un launcher ; ceux par défaut ne sont pas gardés. */
+  function enregistrerLauncher(plateforme: string, s: SystemePerso) {
+    const suivants = { ...reglagesLaunchers };
+    if (estReglageDefaut(s)) delete suivants[plateforme];
+    else suivants[plateforme] = reglageDeSysteme(s);
+    setReglagesLaunchers(suivants);
+    enregistrerReglagesLaunchers(suivants);
+    editionRef.current.terminer(plateforme, false);
     setEditeur(null);
   }
 
@@ -407,6 +476,10 @@ export function SolarSystemPage() {
   // astéroïdes : la scène doit alors être reconstruite. Toujours zéro en
   // production, où rien ne modifie les réglages.
   const structure = useSyncExternalStore(abonnerReglages, versionStructure);
+
+  // Posé avant la scène, dont l'effet s'exécute après celui-ci dans le même
+  // passage : elle bâtit ses planètes avec le critère à jour.
+  useEffect(() => definirCritereTaille(critereTaille), [critereTaille]);
 
   useSolarScene({
     mountRef,
@@ -588,7 +661,7 @@ export function SolarSystemPage() {
         systemes={systemesPerso}
         onCreerSysteme={() => setEdition({ systeme: null })}
         onModifierSysteme={() => {
-          if (systemeCourant) setEditeur(systemeCourant.id);
+          setEditeur(systemeCourant ? cleSysteme(systemeCourant) : platform);
         }}
         onAjouterAuSysteme={systemeCourant ? ajouterAuSysteme : undefined}
         onRetirerDuSysteme={systemeCourant ? retirerDuSysteme : undefined}
@@ -603,18 +676,37 @@ export function SolarSystemPage() {
       {aideOuverte && <AideRaccourcis onFermer={() => setAideOuverte(false)} />}
 
       {(() => {
-        const edite = editeur ? systemesPerso.find((x) => x.id === editeur) : undefined;
-        return edite ? (
+        if (!editeur) return null;
+        const edite = systemesPerso.find((x) => cleSysteme(x) === editeur);
+        if (edite) {
+          return (
+            <EditeurSysteme
+              key={editeur}
+              cle={editeur}
+              systeme={edite}
+              games={games}
+              edition={editionRef}
+              onEnregistrer={enregistrerDepuisEditeur}
+              onAnnuler={() => annulerEditeur(editeur)}
+              onSupprimer={supprimerSysteme}
+            />
+          );
+        }
+        const entree = parPlateforme.find((p) => p.platform === editeur && !estSystemePerso(p.platform));
+        if (!entree) return null;
+        return (
           <EditeurSysteme
-            key={edite.id}
-            systeme={edite}
+            key={editeur}
+            cle={editeur}
+            launcher
+            systeme={systemeDeLauncher(editeur, entree.games, reglagesLaunchers[editeur], t)}
             games={games}
             edition={editionRef}
-            onEnregistrer={enregistrerDepuisEditeur}
-            onAnnuler={() => annulerEditeur(edite.id)}
-            onSupprimer={supprimerSysteme}
+            onEnregistrer={(s) => enregistrerLauncher(editeur, s)}
+            onAnnuler={() => annulerEditeur(editeur)}
+            onSupprimer={() => {}}
           />
-        ) : null;
+        );
       })()}
 
       {edition && (
@@ -646,4 +738,29 @@ export function SolarSystemPage() {
       </div>
     </div>
   );
+}
+
+/**
+ * Un launcher présenté à l'éditeur comme un système.
+ *
+ * Ses jeux sont ceux de la galaxie, dans l'ordre de leurs orbites ; son nom et
+ * sa couleur sont ceux du launcher. Seuls ses réglages seront gardés.
+ */
+function systemeDeLauncher(
+  plateforme: string,
+  jeux: readonly Game[],
+  reglage: ReglageSysteme | undefined,
+  t: TFunction,
+): SystemePerso {
+  return {
+    ...nouveauSysteme({
+      id: plateforme,
+      nom: nomPlateforme(plateforme, t),
+      icone: ICONE_PAR_DEFAUT,
+      couleur: PLATFORM_CSS[plateforme] ?? '#7a8a9a',
+      jeux: jeux.map((g) => g.id),
+    }),
+    ...REGLAGE_DEFAUT,
+    ...reglage,
+  };
 }

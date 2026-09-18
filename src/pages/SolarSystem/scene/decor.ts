@@ -262,3 +262,61 @@ export function createSunBeacons(
     dispose: () => { geo.dispose(); mat.dispose(); map.dispose(); },
   };
 }
+
+/** Étoiles par unité de densité : assez pour se voir, pas pour noyer le système. */
+const ETOILES_PAR_DENSITE = 450;
+
+/**
+ * Nuage d'étoiles propre à un système, posé autour de lui.
+ *
+ * Le ciel de fond est commun à toute la galaxie : il ne distingue aucun
+ * système. Celui-ci appartient au système, qu'il enveloppe d'une coquille à
+ * peine plus large que ses orbites — assez près pour qu'on le voie en
+ * arrivant, assez loin pour ne jamais passer entre les planètes.
+ *
+ * La graine rend le nuage stable d'une session à l'autre. Repéré comme les
+ * autres étoiles, il suit les réglages de taille et d'opacité.
+ */
+export function createNuageEtoiles(rayonSysteme: number, densite: number, graine: number): THREE.Points | null {
+  const n = Math.round(ETOILES_PAR_DENSITE * Math.max(0, densite));
+  if (n === 0) return null;
+
+  const reglages = lireReglages();
+  const rng = seededRng(graine);
+  const pos = new Float32Array(n * 3);
+  const col = new Float32Array(n * 3);
+  const interieur = rayonSysteme * 1.15;
+  const epaisseur = rayonSysteme * 0.9;
+
+  for (let i = 0; i < n; i++) {
+    const r = interieur + rng() * epaisseur;
+    const theta = rng() * Math.PI * 2;
+    const phi = Math.acos(2 * rng() - 1);
+    pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6;
+    pos[i * 3 + 2] = r * Math.cos(phi);
+
+    const b = 0.65 + rng() * 0.35;
+    col[i * 3] = b;
+    col[i * 3 + 1] = b;
+    col[i * 3 + 2] = b * 1.08;
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+  const points = new THREE.Points(
+    geo,
+    new THREE.PointsMaterial({
+      size: reglages.etoilesTaille,
+      vertexColors: true,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: reglages.etoilesOpacite,
+      depthWrite: false,
+    }),
+  );
+  points.userData.reglage = 'etoiles';
+  return points;
+}

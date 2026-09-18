@@ -132,7 +132,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Vue liste (alternative à la grille)                                      | ❌ À faire |
 | Notes par jeu                                                            | ❌ À faire |
 | Scan en arrière-plan automatique                                         | ✅ Done    |
-| Mise à jour du statut installé en temps réel                             | 🟡 Partiel |
+| Mise à jour du statut installé en temps réel                             | ✅ Done    |
 | Cache des jaquettes avec TTL (SteamGridDB)                               | ❌ À faire |
 | Lecteur: couleur personnalisée par dossier (clic droit)                  | ✅ Done    |
 | Lecteur: déplacer une piste via clic droit → modale de sélection         | ✅ Done    |
@@ -146,10 +146,10 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
-| Personnalisation d'une planète (taille, couleur des anneaux)              | 🟡 Partiel |
+| Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
 | Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
-| Systèmes solaires personnalisés (favoris, jeux choisis)                  | 🟡 Partiel |
-| Déplacer les planètes en glissant (mode édition)                         | 🟡 Partiel |
+| Systèmes solaires personnalisés (favoris, jeux choisis)                  | ✅ Done    |
+| Déplacer les planètes en glissant (mode édition)                         | ✅ Done    |
 | Barre des launchers : icônes agrandies, bouton de création               | ✅ Done    |
 | Système solaire d'ouverture au choix                                     | ❌ À faire |
 | Taille de police augmentée                                               | ❌ À faire |
@@ -171,7 +171,11 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 ### Fonctionnalités
 
 - **Personnalisation d'une planète**
-  **À moitié fait.** Dans un système personnalisé, la taille de chaque planète se règle (×0,3 à ×3 du rayon calculé d'après la taille sur disque), comme sa distance et sa position. **Reste à faire** : la couleur des anneaux, la personnalisation dans les systèmes des launchers, et la taille par défaut tirée du temps de jeu Steam.
+  **Fait.** Chaque planète se règle — taille (×0,3 à ×3), distance au soleil, position sur l'orbite, et anneaux : ceux du tirage, aucun, ou une couleur au choix. Une planète qui n'en avait pas en reçoit un tiré de sa propre graine ; recolorer un anneau existant le rebâtit tirage pour tirage (les tirages sont gardés à la construction), il ne change que de teinte. Le choix est appliqué par `PlanetEntry.changerAnneau`, appelé depuis `appliquerPlacements`, qui ne reconstruit rien tant qu'il ne change pas.
+
+  Les **systèmes des launchers** se personnalisent comme les autres : « Modifier » en tête de liste ouvre le même panneau, sans ce qui appartient à la bibliothèque — nom, icône, jeux. Leurs réglages sont rangés à part (`archive.solar.launcherSystems.v1`, relus par `normaliserReglagesLaunchers`) ; un réglage revenu aux valeurs par défaut n'est pas gardé.
+
+  La **taille d'après le temps de jeu** est un réglage (Paramètres → Système solaire). Steam tient le temps de jeu en local, dans `userdata/<compte>/config/localconfig.vdf` : `steam_scan::temps_de_jeu` le lit sans clé d'API, et le scan l'ajoute aux jeux Steam (`playtimeMinutes`, affiché aussi sur la fiche). Un système sans temps de jeu connu — tous sauf Steam — garde l'espace disque, et un jeu jamais lancé retombe parmi les petits.
 
 - **Anneaux d'orbite plus discrets vus de près**
   Les cercles bleus autour du soleil sont à 30 % d'opacité (`scene/planets.ts`), montés de 16 % pour rester lisibles de loin. De près, ils saturent la vue. Piste : faire décroître l'opacité quand la caméra approche, comme le fait déjà la brume avec `lib/haze.ts` — une même grandeur, la distance au système, gouvernerait les deux.
@@ -181,10 +185,12 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Ces changements ne reconstruisent que le système concerné : la galaxie et la caméra restent en place. Seuls le nom et la couleur, qui touchent l'étiquette et les teintes, rebâtissent la scène. Un système désigne ses jeux sans les posséder : un jeu rangé dans « Favoris » reste dans son launcher, avec une planète dans chacun. Logique dans `lib/customSystems.ts`, application aux planètes dans `scene/placements.ts`, toutes deux vérifiées hors navigateur.
 
-  **Reste à faire** : couleur du soleil propre au système, nombre d'étoiles, tri automatique des planètes. Et l'encombrement d'un système agrandi n'est recalculé qu'au prochain démarrage : d'ici là, il peut empiéter sur un voisin.
+  S'y ajoutent la couleur propre de l'étoile, le tri automatique des planètes (A→Z, Z→A, taille, récence) et la **densité d'étoiles** autour du système, de 0 à ×3 : un nuage de points propre au système, en coquille juste au-delà de ses orbites, qui le distingue de ses voisins sur le ciel commun (`createNuageEtoiles`).
+
+  L'**encombrement** d'un système agrandi est recalculé à l'enregistrement : `rayonSysteme` entre dans la clé de reconstruction de la galaxie, qui replace alors ses systèmes sans chevauchement. La couleur de l'étoile, elle, ne parvenait jamais à la scène hors de l'aperçu — la page ne lui transmettait qu'une partie du réglage ; elle reçoit désormais le réglage entier.
 
 - **Déplacer les planètes en glissant (mode édition)**
-  **À moitié fait.** Chaque planète d'un système personnalisé se place déjà où l'on veut — distance au soleil et position sur l'orbite — avec des curseurs, en direct, orbites figées pendant le réglage. **Reste à faire** : la saisir et la faire glisser directement dans la scène.
+  **Fait.** Pendant l'édition d'un système, une planète se saisit à la souris — le curseur devient une main — et suit le pointeur : le rayon est projeté sur le plan de sa propre orbite, inclinaison comprise (`positionSurOrbite`, inverse vérifié d'`orbitPos`), puis converti en distance et en angle. La caméra ne tourne pas pendant le geste : la saisie se fait en capture, avant les contrôles. L'éditeur reste maître du brouillon — la scène lui signale le glissement (`ecouterGlissement`), il en fait un placement borné comme ceux des curseurs, et ouvre les réglages de la planète pour qu'on les voie suivre.
 
 - **Barre des launchers : icônes agrandies et création**
   **Fait.** Le bouton **+** de création est en place, sous les launchers, avec les icônes fournies par l'application et le choix de la couleur (voir « Systèmes solaires personnalisés »). La barre et la liste des jeux s'élargissent en tirant leur bord gauche, entre un minimum et un maximum — liste de 150 à 520 px, barre de 32 à 96 px —, au clavier aussi ; un double-clic rend la largeur par défaut, et le choix est retenu d'une session à l'autre. Le contenu suit la colonne : icônes et vignettes grandissent avec elle, le texte un peu moins vite et sans descendre sous un plancher de lisibilité. Chaque colonne a sa propre échelle. Logique dans `lib/largeurs.ts`, poignée dans `components/PoigneeLargeur.tsx`.
@@ -208,7 +214,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Fait.** `sizeOnDisk` est porté par le type `Game`, renseigné par les scanners, affiché dans la liste du système solaire et sur la fiche du jeu, et il sert à dimensionner les planètes. **Reste à faire** : le tri par taille — `SortMode` de `LibraryPage` n'offre que `recent`, `az` et `za`.
 
 - **Vue Système Solaire**
-  **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les sept launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, non du temps joué — ce dernier reste une piste, voir « Personnalisation d'une planète ».
+  **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les sept launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, ou du temps de jeu si on le choisit — voir « Personnalisation d'une planète ».
 
   Une planète sur trois environ porte des anneaux, tirés parmi quatre familles calquées sur le système solaire : la nappe large et divisée de Saturne, les rubans étroits et très basculés d'Uranus, le voile de poussière de Jupiter, et les arcs de Neptune. Ce qui les distingue de loin, ce sont la largeur relative, l'opacité, l'inclinaison et le fait d'être complets ou non — la seule graine n'en changeait que le grain, et deux anneaux se ressemblaient dès qu'on les regardait de loin.
 
@@ -312,7 +318,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Fait**, autrement que prévu ici : plutôt qu'un rescan à la mise au point de la fenêtre ou toutes les trente minutes, `scannerTousLesLaunchers()` tourne une fois par lancement, dans `AppLayout`. Les sept scans partent en parallèle, la fusion est séquentielle, et le stockage n'est réécrit que si une empreinte insensible à l'ordre a changé. La liste et la scène se mettent à jour d'elles-mêmes via `subscribeGames`. Le rescan périodique reste possible si le besoin s'en fait sentir.
 
 - **Mise à jour du statut installé en temps réel**
-  **À moitié fait.** Un jeu désinstallé est bien repéré et marqué, mais au lancement suivant seulement : `appliquerScan` marque non installé tout jeu d'une plateforme que son scanner ne rapporte plus, sans jamais le supprimer. Ce qui manque est le temps réel — surveiller `steamapps/` et ses équivalents avec la crate `notify` côté Rust, émettre un événement Tauri, l'écouter côté React. La propagation vers l'interface, elle, existe déjà (`subscribeGames`).
+  **Fait.** `watcher.rs` surveille ce qui change la bibliothèque, fenêtre ouverte : les manifestes de Steam (`steamapps/appmanifest_*.acf`, toutes bibliothèques) et d'Epic (`Manifests/*.item`) avec la crate `notify`, et les clés « Uninstall » du registre (`RegNotifyChangeKeyValue`), où s'inscrivent Battle.net, Riot, Ubisoft, Rockstar et le lanceur d'Hytale. Seules l'apparition et la disparition d'un manifeste comptent — Steam réécrit le sien pendant tout un téléchargement. Les rafales sont regroupées côté Rust (1,5 s de calme), puis l'événement `bibliotheque-changee` fait relancer le scan habituel par `AppLayout`, au plus une fois toutes les dix secondes, le dernier signal n'étant jamais perdu. S'y ajoutent le scan au retour sur la fenêtre et le bouton « Actualiser ».
 
 - **Cache des jaquettes avec TTL**
   **RAWG n'est plus la source** : les jaquettes viennent du CDN Steam et de SteamGridDB (`coverArtService.ts`, qui garde son ancien nom de fichier par endroits). Le TTL, lui, n'existe toujours pas : le cache stocke `{ clé: url }` sans date. Le rendre `{ clé: { url, fetchedAt } }` et ignorer les entrées de plus de trente jours à la lecture ; ajouter un bouton « vider le cache expiré » à côté du bouton « tout vider ».

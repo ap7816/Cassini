@@ -25,6 +25,17 @@ type Options = {
   onHover: (hit: PlanetEntry | null) => void;
   onClick: (hit: PlanetEntry | null) => void;
   onSoleil: (target: THREE.Object3D) => void;
+  /**
+   * Glissement des planètes. `peut` dit si celle qu'on saisit se déplace —
+   * en pratique, pendant l'édition de son système. Tant qu'on la tient, la
+   * caméra ne tourne pas, et `deplacer` reçoit le rayon sous le curseur.
+   */
+  glisser?: {
+    peut: (p: PlanetEntry) => boolean;
+    debut: (p: PlanetEntry) => void;
+    deplacer: (p: PlanetEntry, rayon: THREE.Ray) => void;
+    fin: () => void;
+  };
 };
 
 /**
@@ -40,7 +51,7 @@ type Options = {
  *    chaque pixel parcouru, ce qui coûtait plus cher que le rendu 3D lui-même.
  */
 export function createPicker({
-  canvas, camera, planets, pickMeshes, meshToEntry, soleils, onHover, onClick, onSoleil,
+  canvas, camera, planets, pickMeshes, meshToEntry, soleils, onHover, onClick, onSoleil, glisser,
 }: Options) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -128,6 +139,42 @@ export function createPicker({
   }
 
 
+  // ── Glissement ──────────────────────────────────────────────────────────
+  let saisie: PlanetEntry | null = null;
+
+  /**
+   * En capture, avant les contrôles de caméra qui écoutent le même événement :
+   * les couper ici leur fait ignorer ce geste, qui déplace la planète au lieu
+   * de faire tourner la vue.
+   */
+  function onPointerDown(e: PointerEvent) {
+    if (!glisser || e.button !== 0) return;
+    const { planete } = designer(e.clientX, e.clientY);
+    if (!planete || !glisser.peut(planete)) return;
+    saisie = planete;
+    glisser.debut(planete);
+    canvas.style.cursor = 'grabbing';
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    if (!saisie || !glisser) return;
+    aim(e.clientX, e.clientY);
+    glisser.deplacer(saisie, raycaster.ray);
+  }
+
+  function onPointerUp() {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+    if (!saisie) return;
+    saisie = null;
+    glisser?.fin();
+    canvas.style.cursor = '';
+  }
+
   function onMouseDown(e: MouseEvent) {
     downX = e.clientX;
     downY = e.clientY;
@@ -163,6 +210,7 @@ export function createPicker({
     canvas.style.cursor = '';
   }
 
+  canvas.addEventListener('pointerdown', onPointerDown, { capture: true });
   canvas.addEventListener('mousedown', onMouseDown);
   canvas.addEventListener('mouseup', onMouseUp);
   canvas.addEventListener('mousemove', onMouseMove);
@@ -177,12 +225,17 @@ export function createPicker({
       // Même arbitrage qu'au clic, sans quoi le survol désignerait une chose
       // et le clic une autre : le nom de la planète s'afficherait sous le
       // curseur alors que cliquer partirait vers un autre launcher.
+      if (saisie) return;
       const { planete, soleil } = designer(hoverX, hoverY);
-      canvas.style.cursor = planete || soleil ? 'pointer' : '';
+      // Une main ouverte sur ce qu'on peut déplacer : sans elle, rien ne dit
+      // qu'une planète se saisit.
+      canvas.style.cursor = planete && glisser?.peut(planete) ? 'grab' : planete || soleil ? 'pointer' : '';
       setHover(planete);
     },
 
     dispose() {
+      onPointerUp();
+      canvas.removeEventListener('pointerdown', onPointerDown, { capture: true });
       canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('mousemove', onMouseMove);

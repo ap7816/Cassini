@@ -155,6 +155,16 @@ fn parse_appmanifest(content: &str, steamapps: &Path) -> Option<GameDto> {
     })
 }
 
+/// Les dossiers `steamapps` de toutes les bibliothèques Steam, pour la veille.
+pub fn dossiers_steamapps() -> Vec<PathBuf> {
+    let Some(steam) = find_steam_path() else { return Vec::new() };
+    collect_library_paths(&steam)
+        .into_iter()
+        .map(|l| l.join("steamapps"))
+        .filter(|d| d.is_dir())
+        .collect()
+}
+
 // Collecte tous les chemins de bibliothèques Steam depuis libraryfolders.vdf
 fn collect_library_paths(steam_path: &Path) -> Vec<PathBuf> {
     let mut libs: Vec<PathBuf> = Vec::new();
@@ -233,4 +243,157 @@ fn find_steam_path() -> Option<PathBuf> {
     }
 
     None
+}
+
+/// Temps de jeu Steam, en minutes, par identifiant d'application.
+///
+/// Steam le garde en local, compte par compte, dans
+/// `userdata/<compte>/config/localconfig.vdf` : aucune clé d'API n'est
+/// nécessaire. Plusieurs comptes sur un même PC sont plusieurs joueurs ; pour
+/// chaque jeu on retient le temps le plus long plutôt que la somme, qui
+/// mélangerait leurs habitudes.
+pub fn temps_de_jeu() -> std::collections::HashMap<String, u64> {
+    let mut total = std::collections::HashMap::new();
+    let Some(steam) = find_steam_path() else { return total };
+    let Ok(comptes) = fs::read_dir(steam.join("userdata")) else { return total };
+    for compte in comptes.flatten() {
+        let fichier = compte.path().join("config").join("localconfig.vdf");
+        let Ok(texte) = fs::read_to_string(&fichier) else { continue };
+        for (id, minutes) in lire_temps_de_jeu(&texte) {
+            let e = total.entry(id).or_insert(0);
+            *e = (*e).max(minutes);
+        }
+    }
+    total
+}
+
+/// Relève les `"Playtime"` rangés sous `apps/<appid>` dans un fichier VDF.
+///
+/// Un lecteur à pile plutôt qu'une recherche ligne à ligne : « Playtime »
+/// n'a de sens que sous un identifiant d'application, lui-même sous `apps`,
+/// et c'est l'imbrication seule qui le dit.
+pub fn lire_temps_de_jeu(vdf: &str) -> std::collections::HashMap<String, u64> {
+    let mut sortie = std::collections::HashMap::new();
+    let mut pile: Vec<String> = Vec::new();
+    let mut cle: Option<String> = None;
+    let mut car = vdf.chars().peekable();
+
+    while let Some(c) = car.next() {
+        match c {
+            '"' => {
+                let mut s = String::new();
+                while let Some(d) = car.next() {
+                    match d {
+                        '\\' => {
+                            if let Some(e) = car.next() {
+                                s.push(e);
+                            }
+                        }
+                        '"' => break,
+                        _ => s.push(d),
+                    }
+                }
+                match cle.take() {
+                    None => cle = Some(s),
+                    Some(k) => {
+                        let n = pile.len();
+                        if k.eq_ignore_ascii_case("Playtime")
+                            && n >= 2
+                            && pile[n - 2].eq_ignore_ascii_case("apps")
+                            && pile[n - 1].parse::<u64>().is_ok()
+                        {
+                            if let Ok(m) = s.parse::<u64>() {
+                                sortie.insert(pile[n - 1].clone(), m);
+                            }
+                        }
+                    }
+                }
+            }
+            '{' => pile.push(cle.take().unwrap_or_default()),
+            '}' => {
+                pile.pop();
+                cle = None;
+            }
+            '/' if car.peek() == Some(&'/') => {
+                for d in car.by_ref() {
+                    if d == '\n' {
+                        break;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    sortie
+}
+
+#[cfg(test)]
+mod tests_temps_de_jeu {
+    use super::lire_temps_de_jeu;
+
+    const VDF: &str = r#"
+"UserLocalConfigStore"
+{
+	"Software"
+	{
+		"Valve"
+		{
+			"Steam"
+			{
+				"apps"
+				{
+					"620"
+					{
+						"LastPlayed"		"1700000000"
+						"Playtime"		"1234"
+						"cloud"
+						{
+							"last_sync_state"		"synchronized"
+						}
+					}
+					"570"
+					{
+						"Playtime2wks"		"12"
+						"Playtime"		"98765"
+					}
+					"440"
+					{
+						"LastPlayed"		"1600000000"
+					}
+				}
+			}
+		}
+	}
+	"friends"
+	{
+		"Playtime"		"999"
+		"12345"
+		{
+			"Playtime"		"5"
+		}
+	}
+	"InstallPath"		"C:\\Program Files (x86)\\Steam"
+}
+"#;
+
+    #[test]
+    fn releve_le_temps_de_chaque_jeu() {
+        let t = lire_temps_de_jeu(VDF);
+        assert_eq!(t.get("620"), Some(&1234));
+        assert_eq!(t.get("570"), Some(&98765));
+    }
+
+    #[test]
+    fn ignore_un_jeu_sans_temps_et_ce_qui_n_est_pas_sous_apps() {
+        let t = lire_temps_de_jeu(VDF);
+        assert!(!t.contains_key("440"));
+        assert!(!t.contains_key("12345"));
+        assert_eq!(t.len(), 2);
+    }
+
+    #[test]
+    fn resiste_a_un_fichier_tronque() {
+        let t = lire_temps_de_jeu("\"apps\" { \"620\" { \"Playtime\" \"12");
+        assert!(t.is_empty() || t.get("620") == Some(&12));
+    }
 }
