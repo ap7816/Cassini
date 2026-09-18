@@ -26,7 +26,8 @@ export type NomIconeHud =
   | 'volume'
   | 'volumeBas'
   | 'volumeMuet'
-  | 'desinstaller';
+  | 'desinstaller'
+  | 'actualiser';
 
 const TRACES: Record<NomIconeHud, ReactNode> = {
   dossier: <path d="M3 7h6l2 2h10v10H3z" />,
@@ -74,6 +75,15 @@ const TRACES: Record<NomIconeHud, ReactNode> = {
     </>
   ),
   arret: <path d="M6 6l12 12M18 6L6 18" />,
+  // Deux flèches qui tournent : le symbole d'actualisation partout reconnu.
+  actualiser: (
+    <>
+      <path d="M20 12a8 8 0 0 1-14.3 4.9" />
+      <path d="M4 12a8 8 0 0 1 14.3-4.9" />
+      <path d="M18.5 3.5v4h-4" />
+      <path d="M5.5 20.5v-4h4" />
+    </>
+  ),
   // Un bac et son couvercle : ce que Windows montre pour « désinstaller ».
   desinstaller: (
     <>

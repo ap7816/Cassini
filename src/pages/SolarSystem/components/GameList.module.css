@@ -619,3 +619,56 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
+
+/* ── Actions de l'en-tête ────────────────────────────────────────────────── */
+
+.headActions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.headActualiser {
+  width: calc(22px * var(--txt-e, 1));
+  height: calc(22px * var(--txt-e, 1));
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgb(var(--hud) / 0.75);
+  font-size: calc(13px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+
+.headActualiser:hover:not(:disabled) {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-moyenne);
+  background: rgb(var(--hud) / 0.08);
+}
+
+.headActualiser:disabled {
+  cursor: progress;
+}
+
+/* Les flèches tournent tant que le scan dure : il prend quelques secondes, et
+   un bouton qui ne bouge pas laisserait croire que le clic n'a pas porté. */
+.headActualiserEnCours svg {
+  animation: tourne 0.9s linear infinite;
+}
+
+@keyframes tourne {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headActualiserEnCours svg {
+    animation: none;
+  }
+  .headActualiser {
+    transition: none;
+  }
+}

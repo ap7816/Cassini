@@ -72,7 +72,22 @@ export type ResultatScan = {
  * Un launcher absent de la machine fait échouer sa commande : c'est attendu, et
  * cela ne doit pas empêcher les six autres d'aboutir.
  */
-export async function scannerTousLesLaunchers(): Promise<ResultatScan> {
+export function scannerTousLesLaunchers(): Promise<ResultatScan> {
+  // Un seul scan à la fois : le bouton « Actualiser » peut croiser le scan du
+  // démarrage ou celui du retour sur l'application. Deux passes simultanées
+  // liraient la même bibliothèque et la réécriraient l'une après l'autre ;
+  // la seconde reçoit simplement le résultat de la première.
+  if (!scanEnCours) {
+    scanEnCours = scanner().finally(() => {
+      scanEnCours = null;
+    });
+  }
+  return scanEnCours;
+}
+
+let scanEnCours: Promise<ResultatScan> | null = null;
+
+async function scanner(): Promise<ResultatScan> {
   const resultats = await Promise.all(
     SCANNERS.map(async (s) => {
       try {

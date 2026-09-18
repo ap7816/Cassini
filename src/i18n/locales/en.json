@@ -259,7 +259,13 @@
     "removeFromSystem": "Remove from this system",
     "addToSystem": "Add to this system",
     "rowAction": "{{action}}: {{title}}",
-    "railItem": "{{name}} — {{games}}"
+    "railItem": "{{name}} — {{games}}",
+    "refresh": "Refresh the library",
+    "refreshing": "Refreshing…",
+    "refreshUpToDate": "Library already up to date.",
+    "refreshUpdated": "Library refreshed.",
+    "refreshAdded_one": "Library refreshed: {{count}} game found.",
+    "refreshAdded_other": "Library refreshed: {{count}} games found."
   },
   "systems": {
     "newTitle": "New solar system",

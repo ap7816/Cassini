@@ -15,6 +15,9 @@ import { useCalques } from '../../../features/calques/useCalques';
 import { useAppSettings } from '../../../features/settings/context/useAppSettings';
 import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
+import { IconeHud } from '../../../components/IconeHud/IconeHud';
+import { scannerTousLesLaunchers } from '../../../features/library/services/libraryScan';
+import { useToast } from '../../../features/toast/ToastContext';
 import { PoigneeLargeur } from './PoigneeLargeur';
 import { LARGEUR_LISTE, LARGEUR_RAIL, type Colonne } from '../lib/largeurs';
 import css from './GameList.module.css';
@@ -160,6 +163,21 @@ export function GameList({
   const { t, i18n } = useTranslation();
   const calques = useCalques();
   const { settings } = useAppSettings();
+  const toast = useToast();
+  const [actualisation, setActualisation] = useState(false);
+
+  /** Rescanne les launchers et dit ce qui a changé. */
+  async function actualiser() {
+    setActualisation(true);
+    try {
+      const r = await scannerTousLesLaunchers();
+      if (r.ajoutes > 0) toast.success(t('solar.refreshAdded', { count: r.ajoutes }));
+      else if (r.modifiee) toast.success(t('solar.refreshUpdated'));
+      else toast.info(t('solar.refreshUpToDate'));
+    } finally {
+      setActualisation(false);
+    }
+  }
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
@@ -243,11 +261,26 @@ export function GameList({
           <h2 className={css.headTitle} style={{ color }}>
             {titre}
           </h2>
-          {perso && (
-            <button type="button" className={css.headModifier} onClick={onModifierSysteme}>
-              {t('common.edit')}
+          <div className={css.headActions}>
+            {perso && (
+              <button type="button" className={css.headModifier} onClick={onModifierSysteme}>
+                {t('common.edit')}
+              </button>
+            )}
+            {/* Le scan tourne déjà au démarrage et au retour sur la fenêtre ;
+                ce bouton est pour qui vient d'installer ou de désinstaller
+                et ne veut pas attendre. */}
+            <button
+              type="button"
+              className={actualisation ? `${css.headActualiser} ${css.headActualiserEnCours}` : css.headActualiser}
+              onClick={() => void actualiser()}
+              disabled={actualisation}
+              title={actualisation ? t('solar.refreshing') : t('solar.refresh')}
+              aria-label={actualisation ? t('solar.refreshing') : t('solar.refresh')}
+            >
+              <IconeHud nom="actualiser" />
             </button>
-          )}
+          </div>
         </div>
 
         {/* Occupation du disque système — pas de tous les disques : un jeu

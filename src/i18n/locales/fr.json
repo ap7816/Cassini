@@ -259,7 +259,13 @@
     "removeFromSystem": "Retirer de ce système",
     "addToSystem": "Ajouter à ce système",
     "rowAction": "{{action}} : {{title}}",
-    "railItem": "{{name}} — {{games}}"
+    "railItem": "{{name}} — {{games}}",
+    "refresh": "Actualiser la bibliothèque",
+    "refreshing": "Actualisation…",
+    "refreshUpToDate": "Bibliothèque déjà à jour.",
+    "refreshUpdated": "Bibliothèque actualisée.",
+    "refreshAdded_one": "Bibliothèque actualisée : {{count}} jeu découvert.",
+    "refreshAdded_other": "Bibliothèque actualisée : {{count}} jeux découverts."
   },
   "systems": {
     "newTitle": "Nouveau système solaire",
