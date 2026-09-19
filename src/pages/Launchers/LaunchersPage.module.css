@@ -29,7 +29,7 @@
 
 .note {
   border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgba(15, 20, 26, 0.6);
+  background: rgb(var(--fond) / 0.6);
   backdrop-filter: blur(12px);
   border-radius: 2px;
   padding: 12px;
@@ -38,7 +38,7 @@
 
 .error {
   border: 1px solid rgb(var(--hud) / 0.172);
-  background: rgba(15, 20, 26, 0.6);
+  background: rgb(var(--fond) / 0.6);
   backdrop-filter: blur(12px);
   border-radius: 2px;
   padding: 12px;
@@ -47,7 +47,7 @@
 
 .empty {
   border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgba(15, 20, 26, 0.6);
+  background: rgb(var(--fond) / 0.6);
   backdrop-filter: blur(12px);
   border-radius: 2px;
   padding: 18px;
@@ -80,7 +80,7 @@
 
 .card {
   border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgba(15, 20, 26, 0.6);
+  background: rgb(var(--fond) / 0.6);
   backdrop-filter: blur(12px);
   border-radius: 2px;
   padding: 14px;
@@ -100,7 +100,7 @@
 .cardMissing {
   border-style: dashed;
   border-color: rgb(var(--hud) / 0.103);
-  background: rgba(15, 20, 26, 0.28);
+  background: rgb(var(--fond) / 0.28);
   opacity: 0.55;
 }
 
@@ -157,7 +157,7 @@
   padding: 0 12px;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.172);
-  background: rgba(15, 20, 26, 0.55);
+  background: rgb(var(--fond) / 0.55);
   backdrop-filter: blur(8px);
   color: inherit;
   cursor: pointer;
@@ -165,7 +165,7 @@
 }
 
 .button:hover {
-  background: rgba(15, 20, 26, 0.72);
+  background: rgb(var(--fond) / 0.72);
 }
 
 .button:disabled {

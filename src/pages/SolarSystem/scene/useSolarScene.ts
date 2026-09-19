@@ -16,8 +16,9 @@ import { densiteBrume } from '../lib/haze';
 import { normaleOrbite, orbitPos, positionSurOrbite } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
-import { createStarfield, createSunBeacons } from './decor';
-import { createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
+import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
+import { lumiereDe } from '../lib/couleurSoleil';
+import { changerNuage, createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
 import { angleEnDegres, appliquerPlacements } from './placements';
 import type { EditionScene, EtatEdition, Glissement } from './edition';
 import { BORNES, estSystemePerso, type ReglageSysteme } from '../lib/customSystems';
@@ -395,7 +396,10 @@ export function useSolarScene({
     // rendu même quand six systèmes sont libérés. Or on ne voit les planètes
     // que d'un système à la fois — celui qu'on éclaire.
     const lumiere = new THREE.PointLight(0xfff2d8, lireReglages().lumiereIntensite, 0, 0);
-    if (courant) lumiere.position.copy(courant.centre);
+    if (courant) {
+      lumiere.position.copy(courant.centre);
+      lumiere.color.copy(courant.lumiere);
+    }
     scene.add(lumiere);
 
     // Le champ d'étoiles enveloppe la galaxie entière, pas un système.
@@ -452,6 +456,10 @@ export function useSolarScene({
         if (role === 'etoiles' && o instanceof THREE.Points) {
           const m = o.material as THREE.PointsMaterial;
           m.size = r.etoilesTaille;
+          m.opacity = r.etoilesOpacite;
+        } else if (role === 'nuage' && o instanceof THREE.Points) {
+          const m = o.material as THREE.PointsMaterial;
+          m.size = r.etoilesTaille * NUAGE_TAILLE;
           m.opacity = r.etoilesOpacite;
         } else if (role === 'lueur' && o instanceof THREE.Points) {
           (o.material as THREE.PointsMaterial).size = r.lueurTaille;
@@ -887,6 +895,20 @@ export function useSolarScene({
       appliquerPlacements(sys.planets, sys.tailleBase.sunR, a.reglage, a.angles);
       sys.soleil.scale.setScalar(a.reglage.soleil);
       sys.hitSoleil.scale.setScalar(a.reglage.soleil);
+      apparenceEtoile(sys, a.reglage);
+    };
+
+    // Couleur de l'étoile et nuage d'étoiles, reteints en place : l'éditeur
+    // les montre avant l'enregistrement, l'annulation rend ceux enregistrés.
+    // La lumière suit d'elle-même, elle se règle sur `sys.lumiere`.
+    const apparenceEtoile = (sys: SystemeGalaxie, reglage: ReglageSysteme) => {
+      const couleur = reglage.couleurSoleil ?? null;
+      if (sys.soleil.userData.couleurAppliquee !== couleur) {
+        sys.soleil.userData.couleurAppliquee = couleur;
+        teindreSoleil(sys.soleil, couleur);
+        sys.lumiere = lumiereDe(couleur);
+      }
+      changerNuage(sys, reglage.etoiles);
     };
 
     const etatDe = (sys: SystemeGalaxie, reglage: ReglageSysteme): EtatEdition => ({
@@ -949,6 +971,7 @@ export function useSolarScene({
         galaxie.recharger(cle, entree.games);
         sys.soleil.scale.setScalar(reglage.soleil);
         sys.hitSoleil.scale.setScalar(reglage.soleil);
+        apparenceEtoile(sys, reglage);
       },
 
       ecouterGlissement(fn) {
@@ -1346,6 +1369,10 @@ export function useSolarScene({
       // et elle n'a de sens qu'auprès des planètes qu'elle éclaire.
       if (vise) {
         lumiere.position.copy(vise.centre);
+        // Et prend la couleur de son étoile : un soleil bleu éclaire en bleu.
+        // Adoucie vers la couleur d'arrivée plutôt que basculée d'un coup, le
+        // passage d'un système à l'autre se fait pendant le vol.
+        lumiere.color.lerp(vise.lumiere, Math.min(1, dt * 3));
         // La brume suit l'échelle du système regardé, sinon elle ne veut rien
         // dire : ce qui est « loin » pour un système d'un jeu se trouve à
         // l'intérieur d'une bibliothèque de cent.

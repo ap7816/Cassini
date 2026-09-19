@@ -41,14 +41,14 @@
   border-radius: 2px;
   border: 1px solid var(--accent, rgb(var(--hud)));
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 24%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   cursor: pointer;
   box-shadow: none;
   letter-spacing: 0.08em;
 }
 
 .primary:hover {
-  background: color-mix(in srgb, var(--accent, #e5e7eb) 26%, transparent);
+  background: color-mix(in srgb, var(--accent, rgb(var(--encre))) 26%, transparent);
 }
 
 .button {
@@ -119,7 +119,7 @@
 
 .slider {
   flex: 1;
-  accent-color: var(--accent, #e5e7eb);
+  accent-color: var(--accent, rgb(var(--encre)));
   cursor: pointer;
   padding: 0;
   border: none;
@@ -206,7 +206,8 @@
   padding: 8px 12px;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
-  background: #e5e7eb;
+  /* Blanc dans les deux thèmes : c'est un champ, pas une vitre. */
+  background: #fff;
   color: #1a1f2b;
   cursor: pointer;
   box-shadow: none;
@@ -214,7 +215,7 @@
 }
 
 .langSelect option {
-  background: #e5e7eb;
+  background: #fff;
   color: #1a1f2b;
 }
 
@@ -255,7 +256,7 @@
 }
 
 .link {
-  color: color-mix(in srgb, var(--accent, #e5e7eb) 90%, white);
+  color: color-mix(in srgb, var(--accent, rgb(var(--encre))) 90%, white);
   text-decoration: none;
 }
 
@@ -303,7 +304,7 @@
   width: 18px;
   height: 18px;
   border-radius: 1px;
-  background: rgb(223 246 255 / 0.6);
+  background: rgb(var(--encre) / 0.6);
   top: 2px;
   left: 2px;
   transition: transform 0.2s, background 0.2s;
@@ -317,7 +318,7 @@
 
 .toggle input:checked + .toggleSlider::before {
   transform: translateX(20px);
-  background: #fff;
+  background: rgb(var(--encre));
 }
 
 /* Onglets style header */
@@ -367,4 +368,21 @@
 
 .tabActive::after {
   transform: scaleX(1);
+}
+
+/* ── Thème clair ─────────────────────────────────────────────────────────── */
+
+/* Titres de section et onglets inactifs s'effacent par l'opacité : sur la
+   vitre sombre, cela suffit à les mettre en retrait ; sur la claire, ils
+   passaient sous le seuil de lisibilité. */
+:global(:root[data-theme='light']) .sectionTitle {
+  opacity: 0.95;
+}
+
+:global(:root[data-theme='light']) .tab {
+  opacity: 0.8;
+}
+
+:global(:root[data-theme='light']) .tabActive {
+  opacity: 1;
 }

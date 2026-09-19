@@ -258,7 +258,7 @@ export function GameList({
 
       <aside className={css.list}>
         <div className={css.head}>
-          <h2 className={css.headTitle} style={{ color }}>
+          <h2 className={css.headTitle} style={{ '--teinte': color } as CSSProperties}>
             {titre}
           </h2>
           <div className={css.headActions}>

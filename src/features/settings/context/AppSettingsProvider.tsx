@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import type { AppSettings, PageRappelable } from '../../types';
 import { loadSettings, saveSettings, migrateAndCheckKey } from '../services/settingsStorage';
 import { AppSettingsContext } from './appSettingsContext';
+import { accentPourTheme, resoudreTheme, type ModeTheme } from '../theme';
 
 // Fournit les paramètres de l'application à tous les composants enfants et persiste les changements
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
@@ -17,6 +18,28 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     });
     return () => { cancelled = true; };
   }, []);
+
+  // Thème : posé sur <html> avant la peinture, pour qu'aucune image ne sorte
+  // dans l'autre thème. En mode système, suit Windows à chaud.
+  //
+  // L'accent est posé au même endroit, ajusté au thème : les panneaux rendus
+  // hors de la coque — réglages, musique, dialogues — le reçoivent aussi.
+  const [systemeSombre, setSystemeSombre] = useState(
+    () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true,
+  );
+  useEffect(() => {
+    const requete = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!requete) return;
+    const suivre = () => setSystemeSombre(requete.matches);
+    requete.addEventListener('change', suivre);
+    return () => requete.removeEventListener('change', suivre);
+  }, []);
+  const theme = resoudreTheme(settings.themeMode, systemeSombre);
+  useLayoutEffect(() => {
+    const racine = document.documentElement;
+    racine.dataset.theme = theme;
+    racine.style.setProperty('--accent', accentPourTheme(settings.accentColor, theme));
+  }, [theme, settings.accentColor]);
 
   // Sauvegarde automatique à chaque modification des paramètres
   useEffect(() => {
@@ -72,6 +95,16 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, planetSizeByPlaytime: enabled }));
   }
 
+  // Thème de l'interface
+  function setThemeMode(mode: ModeTheme) {
+    setSettings((prev) => ({ ...prev, themeMode: mode }));
+  }
+
+  // Système devant lequel s'ouvre la vue
+  function setStartSystem(cle: string) {
+    setSettings((prev) => ({ ...prev, startSystem: cle }));
+  }
+
   // Rappelle ou masque l'entrée d'une page dans la barre des launchers
   function setPageVisible(page: PageRappelable, visible: boolean) {
     setSettings((prev) => ({ ...prev, [page]: visible }));
@@ -90,6 +123,8 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setRunInBackground,
       setMusicParticles,
       setPlanetSizeByPlaytime,
+      setStartSystem,
+      setThemeMode,
       setPageVisible,
     }),
     [settings],

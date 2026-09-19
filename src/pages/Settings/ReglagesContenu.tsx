@@ -1,4 +1,4 @@
-﻿import { useRef, useState } from 'react';
+﻿import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
@@ -16,6 +16,12 @@ import { clearCoverCache } from '../../features/library/services/coverArtService
 import { LANGUES, estLangue, getCurrentLanguage, setLanguage, type Langue } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
 import type { PageRappelable } from '../../features/types';
+import { loadGamesFromStorage } from '../../features/library/services/libraryStorage';
+import { nomPlateforme } from '../../i18n/plateformes';
+import { cleSysteme } from '../SolarSystem/lib/customSystems';
+import { chargerSystemesPerso } from '../SolarSystem/lib/customSystemsStorage';
+import { OUVERTURE_AUTO, OUVERTURE_DERNIER } from '../SolarSystem/lib/ouverture';
+import { estModeTheme } from '../../features/settings/theme';
 
 // Dimensions maximales et qualité JPEG pour la compression des images de fond
 const MAX_DIM = 1920;
@@ -110,6 +116,8 @@ export function ReglagesContenu({ recherche }: Props) {
     setRunInBackground,
     setMusicParticles,
     setPlanetSizeByPlaytime,
+    setStartSystem,
+    setThemeMode,
     setPageVisible,
   } = useAppSettings();
 
@@ -254,9 +262,23 @@ export function ReglagesContenu({ recherche }: Props) {
       {/* ── Personnalisation ─────────────────────────────────── */}
 
       {/* Apparence */}
-      {(tab === 'perso' || !!q) && matches('settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.themeLabel', 'settings.themeHint', 'settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
       <div className={css.card}>
         {/* Image de fond */}
+        <SettingRow labelKey="settings.themeLabel" hintKey="settings.themeHint" query={q}>
+          <select
+            className={css.langSelect}
+            value={settings.themeMode}
+            onChange={(e) => {
+              if (estModeTheme(e.target.value)) setThemeMode(e.target.value);
+            }}
+          >
+            <option value="dark">{t('settings.themeDark')}</option>
+            <option value="light">{t('settings.themeLight')}</option>
+            <option value="system">{t('settings.themeSystem')}</option>
+          </select>
+        </SettingRow>
+
         <SettingRow labelKey="settings.bgLabel" hintKey="settings.bgHint" query={q}><div className={css.actions}>
             <input
               ref={inputRef}
@@ -456,9 +478,13 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Système solaire */}
-      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
+
+        <SettingRow labelKey="settings.startSystemLabel" hintKey="settings.startSystemHint" query={q}>
+          <ChoixOuverture valeur={settings.startSystem} onChange={setStartSystem} />
+        </SettingRow>
 
         <SettingRow
           labelKey="settings.planetPlaytimeLabel"
@@ -614,5 +640,57 @@ export function ReglagesContenu({ recherche }: Props) {
       </div>
       )}
     </>
+  );
+}
+
+/**
+ * Système d'ouverture : automatique, dernier visité, ou l'un des systèmes.
+ *
+ * La liste est lue au rendu du panneau : ce sont les launchers qui ont des
+ * jeux, du plus fourni au moins fourni, puis les systèmes personnalisés. Un
+ * choix qui ne figure plus dans la liste — système supprimé — reste affiché
+ * comme introuvable ; la vue, elle, retombe sur l'automatique.
+ */
+function ChoixOuverture({ valeur, onChange }: { valeur: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
+  const options = useMemo(() => {
+    const compte = new Map<string, number>();
+    for (const g of loadGamesFromStorage()) {
+      const k = g.platform || 'Other';
+      compte.set(k, (compte.get(k) ?? 0) + 1);
+    }
+    const launchers = [...compte.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([cle]) => ({ cle, nom: nomPlateforme(cle, t) }));
+    const perso = chargerSystemesPerso().map((s) => ({ cle: cleSysteme(s), nom: s.nom }));
+    return { launchers, perso };
+  }, [t]);
+
+  const connue =
+    valeur === OUVERTURE_AUTO ||
+    valeur === OUVERTURE_DERNIER ||
+    options.launchers.some((o) => o.cle === valeur) ||
+    options.perso.some((o) => o.cle === valeur);
+
+  return (
+    <select className={css.langSelect} value={valeur} onChange={(e) => onChange(e.target.value)}>
+      <option value={OUVERTURE_AUTO}>{t('settings.startSystemAuto')}</option>
+      <option value={OUVERTURE_DERNIER}>{t('settings.startSystemLast')}</option>
+      {options.launchers.length > 0 && (
+        <optgroup label={t('settings.startSystemLaunchers')}>
+          {options.launchers.map((o) => (
+            <option key={o.cle} value={o.cle}>{o.nom}</option>
+          ))}
+        </optgroup>
+      )}
+      {options.perso.length > 0 && (
+        <optgroup label={t('settings.startSystemCustom')}>
+          {options.perso.map((o) => (
+            <option key={o.cle} value={o.cle}>{o.nom}</option>
+          ))}
+        </optgroup>
+      )}
+      {!connue && <option value={valeur}>{t('settings.startSystemMissing')}</option>}
+    </select>
   );
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { seededRng } from '../lib/random';
 import { lireReglages } from '../../../features/debug/tuning';
+import { couronneDe } from '../lib/couleurSoleil';
 
 /**
  * Champ d'étoiles proche, en parallaxe par-dessus la nébuleuse de fond.
@@ -99,11 +100,14 @@ export function createSun(
   core.userData.couleurPropre = couleurPropre ?? null;
   group.add(core);
 
+  // Les couches prennent la teinte de l'étoile quand elle en a une propre :
+  // un cœur vert cerné d'orange et de rouge ne se lisait pas comme un soleil.
+  const teintes = couronneDe(couleurPropre);
   const corona: [number, number, number][] = [
-    [1.35, 0xffaa22, 0.24],
-    [1.75, 0xff8800, 0.13],
-    [2.4, 0xff5500, 0.06],
-    [3.4, 0xff3300, 0.03],
+    [1.35, teintes[0], 0.24],
+    [1.75, teintes[1], 0.13],
+    [2.4, teintes[2], 0.06],
+    [3.4, teintes[3], 0.03],
   ];
 
   const intensite = lireReglages().couronneIntensite;
@@ -267,6 +271,35 @@ export function createSunBeacons(
 const ETOILES_PAR_DENSITE = 450;
 
 /**
+ * Taille des étoiles du nuage, en part de celle du ciel de fond.
+ *
+ * Le ciel est à plus de neuf cents unités : ses points y paraissent fins. Le
+ * nuage, lui, entoure le système de près — à la même taille, ses étoiles
+ * devenaient de gros carrés dès qu'on s'approchait.
+ */
+export const NUAGE_TAILLE = 0.55;
+
+let pastille: THREE.CanvasTexture | null = null;
+
+/** Point rond au bord adouci, partagé par tous les nuages. */
+function pastilleEtoile(): THREE.CanvasTexture {
+  if (pastille) return pastille;
+  const s = 32;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = s;
+  const c = cv.getContext('2d')!;
+  const g = c.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.35, 'rgba(255,255,255,0.8)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = g;
+  c.fillRect(0, 0, s, s);
+  pastille = new THREE.CanvasTexture(cv);
+  pastille.colorSpace = THREE.SRGBColorSpace;
+  return pastille;
+}
+
+/**
  * Nuage d'étoiles propre à un système, posé autour de lui.
  *
  * Le ciel de fond est commun à toute la galaxie : il ne distingue aucun
@@ -309,7 +342,8 @@ export function createNuageEtoiles(rayonSysteme: number, densite: number, graine
   const points = new THREE.Points(
     geo,
     new THREE.PointsMaterial({
-      size: reglages.etoilesTaille,
+      size: reglages.etoilesTaille * NUAGE_TAILLE,
+      map: pastilleEtoile(),
       vertexColors: true,
       sizeAttenuation: true,
       transparent: true,
@@ -317,6 +351,32 @@ export function createNuageEtoiles(rayonSysteme: number, densite: number, graine
       depthWrite: false,
     }),
   );
-  points.userData.reglage = 'etoiles';
+  // Un rôle à part : le réglage des étoiles le suit, à sa propre échelle.
+  points.userData.reglage = 'nuage';
   return points;
+}
+
+/**
+ * Reteint un soleil déjà construit : cœur et couronne.
+ *
+ * Sert à l'aperçu de l'éditeur, qui montre la couleur choisie avant
+ * l'enregistrement, puis à l'annulation, qui rend la couleur enregistrée. Les
+ * couches de la couronne sont parcourues dans l'ordre de leur construction ;
+ * celles que la borne du halo a omises le sont depuis l'extérieur, l'ordre
+ * des teintes reste donc le bon.
+ */
+export function teindreSoleil(groupe: THREE.Group, couleurPropre: string | null): void {
+  const teintes = couronneDe(couleurPropre);
+  let couche = 0;
+  for (const o of groupe.children) {
+    if (!(o instanceof THREE.Mesh)) continue;
+    const mat = o.material as THREE.MeshBasicMaterial;
+    if (o.userData.reglage === 'soleil') {
+      mat.color.set(couleurPropre ?? lireReglages().soleilCouleur);
+      o.userData.couleurPropre = couleurPropre;
+    } else if (o.userData.reglage === 'couronne') {
+      mat.color.setHex(teintes[couche] ?? teintes[teintes.length - 1]);
+      couche += 1;
+    }
+  }
 }

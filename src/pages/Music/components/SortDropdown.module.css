@@ -14,7 +14,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
   background: rgb(var(--hud) / 0.057);
-  color: rgb(223 246 255 / 0.75);
+  color: rgb(var(--encre) / 0.75);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -26,13 +26,13 @@
 .btn:hover {
   background: rgb(var(--hud) / 0.115);
   border-color: rgb(var(--hud) / 0.253);
-  color: rgb(223 246 255 / 1);
+  color: rgb(var(--encre));
 }
 
 .btnOpen {
   background: rgba(108, 142, 251, 0.14);
   border-color: rgba(108, 142, 251, 0.35);
-  color: rgb(223 246 255 / 1);
+  color: rgb(var(--encre));
 }
 
 .arrow {
@@ -46,11 +46,11 @@
   right: 0;
   z-index: 9000;
   min-width: 160px;
-  background: #161a28;
+  background: rgb(var(--fond));
   border: 1px solid rgb(var(--hud) / 0.138);
   border-radius: 2px;
   padding: 4px;
-  box-shadow: 0 8px 32px rgb(5 12 22 / 0.6), 0 2px 8px rgb(5 12 22 / 0.35);
+  box-shadow: 0 8px 32px rgb(var(--fond) / 0.6), 0 2px 8px rgb(var(--fond) / 0.35);
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -64,7 +64,7 @@
   padding: 7px 10px;
   border: none;
   background: none;
-  color: rgb(223 246 255 / 0.85);
+  color: rgb(var(--encre) / 0.85);
   font-size: 0.83rem;
   cursor: pointer;
   border-radius: 2px;
@@ -74,7 +74,7 @@
 
 .option:hover {
   background: rgb(var(--hud) / 0.081);
-  color: rgb(223 246 255 / 1);
+  color: rgb(var(--encre));
 }
 
 .check {

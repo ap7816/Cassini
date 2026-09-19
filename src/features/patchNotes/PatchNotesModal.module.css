@@ -24,7 +24,7 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.98);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.98);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
@@ -82,7 +82,7 @@
 
 .headerSub {
   font-size: 0.78rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   margin: 0;
 }
 
@@ -92,7 +92,7 @@
   border-radius: 50%;
   border: 1px solid rgb(var(--hud) / 0.115);
   background: rgb(var(--hud) / 0.057);
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
@@ -105,7 +105,7 @@
 .closeBtn:hover {
   background: rgb(var(--hud) / 0.138);
   border-color: rgb(var(--hud) / 0.23);
-  color: #e0e6f0;
+  color: rgb(var(--encre));
 }
 
 /* ─── Scrollable body ─────────────────────────────────────────── */
@@ -149,7 +149,7 @@
 
 .versionDate {
   font-size: 0.72rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   padding: 2px 8px;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.092);
@@ -163,7 +163,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #0f141a;
+  color: rgb(var(--fond));
   background: var(--accent, #6c8efb);
   padding: 2px 8px;
   border-radius: 2px;
@@ -210,7 +210,7 @@
 
 .item {
   font-size: 0.84rem;
-  color: rgb(223 246 255 / 0.82);
+  color: rgb(var(--encre) / 0.82);
   line-height: 1.5;
   padding-left: 16px;
   position: relative;
@@ -220,7 +220,7 @@
   content: '–';
   position: absolute;
   left: 0;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 /* ─── Footer ──────────────────────────────────────────────────── */
@@ -231,13 +231,13 @@
   gap: 12px;
   padding: 16px 24px 20px;
   border-top: 1px solid rgb(var(--hud) / 0.081);
-  background: rgb(5 12 22 / 0.25);
+  background: rgb(var(--fond) / 0.25);
   flex-shrink: 0;
 }
 
 .dismissBtn {
   font-size: 0.8rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   background: none;
   border: 1px solid rgb(var(--hud) / 0.092);
   border-radius: 2px;
@@ -248,7 +248,7 @@
 }
 
 .dismissBtn:hover {
-  color: rgb(223 246 255 / 0.75);
+  color: rgb(var(--encre) / 0.75);
   border-color: rgb(var(--hud) / 0.207);
   background: rgb(var(--hud) / 0.057);
 }
@@ -258,7 +258,7 @@
   border-radius: 2px;
   border: none;
   background: var(--accent, #6c8efb);
-  color: #fff;
+  color: rgb(var(--encre));
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;

@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import type { AppSettings, PageRappelable } from '../../types';
+import type { ModeTheme } from '../theme';
 
 // Forme du contexte exposé par AppSettingsProvider à tous les composants enfants
 export type AppSettingsContextValue = {
@@ -13,6 +14,8 @@ export type AppSettingsContextValue = {
   setRunInBackground: (enabled: boolean) => void;
   setMusicParticles: (enabled: boolean) => void;
   setPlanetSizeByPlaytime: (enabled: boolean) => void;
+  setStartSystem: (cle: string) => void;
+  setThemeMode: (mode: ModeTheme) => void;
   /** Affiche ou masque l'entrée d'une page dans la barre des launchers. */
   setPageVisible: (page: PageRappelable, visible: boolean) => void;
 };

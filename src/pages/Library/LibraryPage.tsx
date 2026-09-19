@@ -1,4 +1,4 @@
-import { useEffect, useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import css from './LibraryPage.module.css';
@@ -10,8 +10,8 @@ import type { Game, GamePlatform } from '../../features/types';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChips';
 import { useToast } from '../../features/toast/ToastContext';
-import { tauriInvoke } from '../../services/tauri';
 import { formaterTaille } from '../../i18n/formats';
+import { useDiskSpace } from '../../features/system/useDiskSpace';
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Other';
@@ -77,13 +77,8 @@ export function LibraryPage() {
     scanError,
   } = useLibraryGames();
 
-  const [diskInfo, setDiskInfo] = useState<{ freeBytes: number; totalBytes: number } | null>(null);
-
-  useEffect(() => {
-    tauriInvoke<{ freeBytes: number; totalBytes: number }>('get_disk_free_space')
-      .then(setDiskInfo)
-      .catch(() => {});
-  }, []);
+  // Tenu à jour : une désinstallation libère de la place après coup.
+  const disque = useDiskSpace();
 
   // Lance un rescan simultané sur toutes les plateformes
   async function handleRefresh() {
@@ -217,11 +212,11 @@ export function LibraryPage() {
         <div>
           <h1 className={css.title}>{t('library.title')}</h1>
           <p className={css.subtitle}>{subtitleText}</p>
-          {(totalSizeBytes > 0 || diskInfo) && (
+          {(totalSizeBytes > 0 || disque) && (
             <p className={css.diskLine}>
               {totalSizeBytes > 0 && t('library.diskUsed', { size: formaterTaille(totalSizeBytes, i18n.language) })}
-              {totalSizeBytes > 0 && diskInfo && ' · '}
-              {diskInfo && t('library.diskFree', { free: formaterTaille(diskInfo.freeBytes, i18n.language) })}
+              {totalSizeBytes > 0 && disque && ' · '}
+              {disque && t('library.diskFree', { free: formaterTaille(disque.libre, i18n.language) })}
             </p>
           )}
         </div>

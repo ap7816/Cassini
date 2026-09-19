@@ -13,7 +13,7 @@
 }
 
 .modal {
-  background: rgba(14, 20, 30, 0.98);
+  background: rgb(var(--fond) / 0.98);
   border: 1px solid rgb(var(--hud) / 0.115);
   border-radius: 2px;
   padding: 20px;
@@ -41,7 +41,7 @@
 .header {
   font-size: 0.9rem;
   font-weight: 700;
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -112,7 +112,7 @@
 .name {
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgb(223 246 255 / 0.88);
+  color: rgb(var(--encre) / 0.88);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -120,7 +120,7 @@
 
 .path {
   font-size: 0.7rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -129,7 +129,7 @@
 .empty {
   padding: 16px;
   text-align: center;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: 0.85rem;
 }
 
@@ -146,7 +146,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
   background: transparent;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -154,7 +154,7 @@
 
 .cancel:hover {
   background: rgb(var(--hud) / 0.069);
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
 }
 
 .confirm {

@@ -22,7 +22,7 @@
   font-family: var(--ui-font-family, var(--police-ui));
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .ligne {
@@ -55,7 +55,7 @@
   display: grid;
   place-items: center;
   height: 24px;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-variant-numeric: tabular-nums;
 }
@@ -122,17 +122,17 @@
 
 .artiste {
   font-size: calc(11px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .album {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .duree {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }

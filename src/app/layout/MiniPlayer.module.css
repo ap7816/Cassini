@@ -16,7 +16,7 @@
   gap: 8px;
   padding: 8px 10px 18px;
   overflow: hidden;
-  background: var(--hud-crochets), var(--hud-trame), rgb(4 11 21 / 0.94);
+  background: var(--hud-crochets), var(--hud-trame), rgb(var(--fond) / 0.94);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow: 0 0 24px rgb(var(--hud) / 0.12), 0 8px 26px rgb(0 0 0 / 0.5);
@@ -52,7 +52,7 @@
 .artPlaceholder {
   display: grid;
   place-items: center;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: calc(14px * var(--ui-font-scale, 1));
 }
 
@@ -74,7 +74,7 @@
 .titleText {
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-weight: 600;
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
   transition: color 0.15s;
   letter-spacing: 0.03em;
 }
@@ -85,7 +85,7 @@
 
 .artist {
   font-size: calc(10px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 /* ── Transport ────────────────────────────────────────────── */
@@ -116,7 +116,7 @@
 .btn:hover:not(:disabled),
 .stopBtn:hover {
   background: rgb(var(--hud) / 0.115);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 .btn:disabled {
@@ -152,7 +152,7 @@
 
 .playBtn {
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   width: calc(28px * var(--dbg-icones, 1.25));
   height: calc(28px * var(--dbg-icones, 1.25));
   border: 1px solid var(--accent, rgb(var(--hud)));
@@ -161,7 +161,7 @@
 
 .playBtn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 45%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   filter: brightness(1.12);
 }
 
@@ -182,7 +182,7 @@
   transition: height 0.12s;
   /* La part lue est posée en `--part` par la course elle-même: un dégradé
      recalculé chaque seconde coûte moins qu'un élément de plus à composer. */
-  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(3 8 15) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
+  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
 }
 
 /* Le contour de focus, sinon invisible sur un fil de 3 px collé au bord. */
@@ -212,7 +212,7 @@
   height: 10px;
   box-sizing: border-box;
   border: 1px solid rgb(var(--hud));
-  background: #fff;
+  background: rgb(var(--encre));
   box-shadow: 0 0 8px rgb(var(--hud) / 0.9);
   transform: translate(-50%, -50%);
   pointer-events: none;

@@ -3,7 +3,7 @@
   grid-template-rows: auto 1fr;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgba(15, 20, 26, 0.6);
+  background: rgb(var(--fond) / 0.6);
   backdrop-filter: blur(12px);
   overflow: hidden;
   transition:
@@ -13,7 +13,7 @@
 
 .cardFavorite {
   border-color: rgb(var(--hud) / 0.287);
-  background: rgba(15, 20, 26, 0.7);
+  background: rgb(var(--fond) / 0.7);
 }
 
 /* ── Bannière Steam header.jpg (460×215) ── */
@@ -42,8 +42,8 @@
   height: 26px;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.23);
-  background: rgb(5 12 22 / 0.5);
-  color: rgb(223 246 255 / 0.85);
+  background: rgb(var(--fond) / 0.5);
+  color: rgb(var(--encre) / 0.85);
   font-size: 13px;
   cursor: pointer;
   display: grid;
@@ -80,7 +80,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.23);
   background: rgb(var(--hud) / 0.069);
-  color: rgb(223 246 255 / 0.7);
+  color: rgb(var(--encre) / 0.7);
   cursor: pointer;
   box-shadow: none;
   opacity: 0;
@@ -180,7 +180,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
   background: rgb(var(--hud) / 0.034);
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
   cursor: pointer;
 
   display: grid;
@@ -216,7 +216,7 @@
 
 /* 🔥 Favori actif: gold + glow + pulse */
 .favActive {
-  color: #ffd56a;
+  color: color-mix(in srgb, #ffd56a var(--vif), #0c2233);
   border-color: rgba(255, 213, 106, 0.55);
   background: rgba(255, 213, 106, 0.1);
 

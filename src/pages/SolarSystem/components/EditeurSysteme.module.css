@@ -13,8 +13,8 @@
   width: min(310px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
-  color: rgb(223 246 255 / 0.92);
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.96);
+  color: rgb(var(--encre) / 0.92);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.96);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow: 0 0 30px rgb(var(--hud) / 0.12), 0 14px 44px rgb(0 0 0 / 0.6);
@@ -41,7 +41,7 @@
   border-radius: 2px;
   border: 1px solid transparent;
   background: transparent;
-  color: #fff;
+  color: rgb(var(--encre));
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -92,7 +92,7 @@
 .note {
   margin: 6px 0 0;
   font-size: 0.72rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 /* ── Apparence ────────────────────────────────────────────────────────── */
@@ -111,7 +111,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.092);
   background: rgb(var(--hud) / 0.034);
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .iconeChoisie {
@@ -136,7 +136,7 @@
 }
 
 .pastilleChoisie {
-  border-color: #fff;
+  border-color: rgb(var(--encre));
 }
 
 .couleurLibre {
@@ -164,7 +164,7 @@
 
 .valeur {
   font-variant-numeric: tabular-nums;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .curseur input[type='range'] {
@@ -223,7 +223,7 @@
   text-align: right;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .titreJeu {
@@ -251,7 +251,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.092);
   background: rgb(var(--hud) / 0.034);
-  color: rgb(223 246 255 / 0.7);
+  color: rgb(var(--encre) / 0.7);
   font-size: 0.72rem;
 }
 
@@ -261,7 +261,7 @@
 }
 
 .retirer:hover {
-  color: #f08a93;
+  color: color-mix(in srgb, #f08a93 var(--vif), #0c2233);
   border-color: rgba(232, 99, 111, 0.4);
 }
 
@@ -278,7 +278,7 @@
 }
 
 .lien:disabled {
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   cursor: default;
 }
 
@@ -340,7 +340,7 @@
   flex: 1;
   min-width: 0;
   font-size: 0.72rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   text-align: right;
 }
 
@@ -357,7 +357,7 @@
 .principal {
   border: 1px solid transparent;
   background: var(--teinte);
-  color: #0b1020;
+  color: rgb(var(--fond));
 }
 
 .principal:disabled {
@@ -374,7 +374,7 @@
 .supprimer {
   border: 1px solid rgba(232, 99, 111, 0.4);
   background: transparent;
-  color: #f08a93;
+  color: color-mix(in srgb, #f08a93 var(--vif), #0c2233);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -396,7 +396,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .triBoutons {
@@ -412,7 +412,7 @@
   border-radius: calc(2px * var(--dbg-arrondi, 1));
   border: 1px solid rgb(var(--hud) / 0.161);
   background: rgb(var(--hud) / 0.057);
-  color: rgb(223 246 255 / 0.78);
+  color: rgb(var(--encre) / 0.78);
   font-size: calc(11px * var(--ui-font-scale, 1));
   font-family: var(--ui-font-family, var(--police-ui));
   cursor: pointer;
@@ -421,7 +421,7 @@
 
 .petitLarge:hover {
   background: rgb(var(--hud) / 0.127);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 /* ── Anneaux d'une planète ──────────────────────────────────────────────── */

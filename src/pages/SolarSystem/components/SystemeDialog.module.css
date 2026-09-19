@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgb(3 8 15 / 0.7);
+  background: rgb(5 12 22 / 0.7);
   animation: fondIn 0.14s ease-out;
 }
 
@@ -29,7 +29,7 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: var(--hud-crochets), rgb(6 13 23);
+  background: var(--hud-crochets), rgb(var(--fond));
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
@@ -316,7 +316,7 @@
   width: 4px;
   height: 8px;
   margin-top: -2px;
-  border: solid #06101c;
+  border: solid rgb(var(--fond));
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -412,7 +412,7 @@
 .principal {
   border: 1px solid var(--teinte, rgb(var(--hud)));
   background: var(--teinte, rgb(var(--hud)));
-  color: #06101c;
+  color: rgb(var(--fond));
 }
 
 .principal:hover:not(:disabled) {

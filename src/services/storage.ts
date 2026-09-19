@@ -38,6 +38,7 @@ export const STORAGE_KEYS = {
   solarFlyKeys:        'archive.solar.flyKeys.v1',
   systemesPerso:       'archive.solar.customSystems.v1',
   reglagesLaunchers:   'archive.solar.launcherSystems.v1',
+  dernierSysteme:      'archive.solar.lastSystem.v1',
   solarLargeurs:       'archive.solar.largeurs.v1',
 } as const;
 

@@ -22,7 +22,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(4 11 21 / 0.97);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.97);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow: 0 0 30px rgb(var(--hud) / 0.12), -12px 0 40px rgb(0 0 0 / 0.6);
@@ -65,6 +65,6 @@
 
 .fermer:hover {
   background: rgb(var(--hud-danger) / 0.18);
-  color: #fff;
+  color: rgb(var(--encre));
   border-color: rgb(var(--hud-danger) / 0.7);
 }

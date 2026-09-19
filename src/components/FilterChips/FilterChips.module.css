@@ -15,7 +15,7 @@
 
 .selectLabel {
   font-size: 0.75rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -26,23 +26,22 @@
   padding: 0 28px 0 10px;
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
-  background-color: rgba(26, 29, 46, 0.85);
+  background-color: rgb(var(--fond) / 0.85);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;
-  color: rgb(223 246 255 / 0.85);
+  color: rgb(var(--encre) / 0.85);
   font-size: 0.82rem;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   outline: none;
-  color-scheme: dark;
   transition: border-color 0.15s, background-color 0.15s;
 }
 
 .select:hover {
   border-color: rgb(var(--hud) / 0.253);
-  background-color: rgba(26, 29, 46, 0.95);
+  background-color: rgb(var(--fond) / 0.95);
 }
 
 .select:focus {
@@ -51,8 +50,8 @@
 }
 
 .select option {
-  background-color: #1a1d2e;
-  color: #e0e6f0;
+  background-color: rgb(var(--fond));
+  color: rgb(var(--encre));
 }
 
 /* Le contour global d'App.css était annulé plus haut : sans lui, rien ne
@@ -60,4 +59,8 @@
 .select:focus-visible {
   outline: 2px solid rgba(108, 142, 251, 0.9);
   outline-offset: 2px;
+}
+
+:global(:root[data-theme='light']) .selectLabel {
+  color: rgb(var(--encre) / 0.75);
 }

@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 160px), rgb(4 11 21 / 0.98);
+  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 160px), rgb(var(--fond) / 0.98);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: calc(2px * var(--dbg-arrondi, 1));
   box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
@@ -52,14 +52,14 @@
   border-radius: 50%;
   border: 1px solid rgb(var(--hud) / 0.161);
   background: rgb(var(--hud) / 0.057);
-  color: rgb(223 246 255 / 0.7);
+  color: rgb(var(--encre) / 0.7);
   font-size: calc(12px * var(--ui-font-scale, 1));
   cursor: pointer;
 }
 
 .fermer:hover {
   background: rgb(var(--hud-danger) / 0.18);
-  color: #fff;
+  color: rgb(var(--encre));
   border-color: rgb(var(--hud-danger) / 0.7);
 }
 
@@ -120,7 +120,7 @@
   min-width: 0;
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-family: var(--ui-font-family, var(--police-ui));
-  color: rgb(223 246 255 / 0.7);
+  color: rgb(var(--encre) / 0.7);
 }
 
 .note {
@@ -129,5 +129,5 @@
   border-top: 1px solid var(--hud-ligne-moyenne);
   font-size: calc(11px * var(--ui-font-scale, 1));
   font-family: var(--ui-font-family, var(--police-ui));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }

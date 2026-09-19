@@ -14,7 +14,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, var(--bg-overlay-opacity, 0.55));
+  background: rgb(var(--voile) / var(--bg-overlay-opacity, 0.55));
   pointer-events: none;
 }
 
@@ -42,7 +42,7 @@
   justify-content: space-between;
   gap: 12px;
   box-sizing: border-box;
-  background: rgba(8, 12, 18, var(--dbg-entete-op, 0.6));
+  background: rgb(var(--fond) / var(--dbg-entete-op, 0.6));
   backdrop-filter: blur(calc(20px * var(--dbg-flou, 1)));
   -webkit-backdrop-filter: blur(calc(20px * var(--dbg-flou, 1)));
   flex-shrink: 0;
@@ -62,7 +62,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
 }
 
 /* Retour au système solaire. Seul chemin de retour depuis ces pages : leur
@@ -98,13 +98,13 @@
   border-radius: calc(2px * var(--dbg-arrondi, 1));
   border: 1px solid rgb(var(--hud) / 0.092);
   background: rgb(var(--hud) / 0.046);
-  color: rgb(223 246 255 / 0.85);
+  color: rgb(var(--encre) / 0.85);
   font-size: 0.875rem;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .search::placeholder {
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .search:focus {
@@ -121,16 +121,23 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  text-shadow: 0 1px 6px rgb(5 12 22 / 0.75);
+  text-shadow: 0 1px 6px rgb(var(--ombre) / 0.75);
 }
 
-/* Wrapper animé — remplacé à chaque changement de route via key */
+/* Wrapper animé — remplacé à chaque changement de route via key
+
+   `backwards` et non `both` : une animation d'opacité qui garde son état final
+   laisse l'élément en contexte d'empilement tant qu'elle s'applique, donc pour
+   toujours. Toute la page était alors empilée sous la barre de musique, quel
+   que soit le z-index de ce qu'elle ouvrait — l'éditeur de système, posé à
+   gauche, passait dessous. L'état final valant l'opacité normale, rien ne
+   change à l'œil. */
 .pageTransition {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: 20px;
-  animation: pageEnter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pageEnter 0.22s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   min-height: 0;
 }
 

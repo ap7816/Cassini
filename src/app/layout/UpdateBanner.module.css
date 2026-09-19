@@ -6,12 +6,12 @@
   right: 16px;
   z-index: 9001;
   width: 272px;
-  background: rgba(12, 16, 28, 0.97);
+  background: rgb(var(--fond) / 0.97);
   border: 1px solid color-mix(in srgb, var(--accent, #6c8efb) 40%, transparent);
   border-radius: 2px;
   padding: 14px 16px;
   box-shadow:
-    0 16px 48px rgb(5 12 22 / 0.7),
+    0 16px 48px rgb(var(--fond) / 0.7),
     0 0 0 1px rgba(108, 142, 251, 0.06),
     inset 0 1px 0 rgb(var(--hud) / 0.069);
   backdrop-filter: blur(20px);
@@ -30,20 +30,20 @@
 .title {
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgb(223 246 255 / 0.95);
+  color: rgb(var(--encre) / 0.95);
 }
 
 .dismiss {
   background: none;
   border: none;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: 0.7rem;
   cursor: pointer;
   padding: 0;
   line-height: 1;
   transition: color 0.12s;
 }
-.dismiss:hover { color: rgb(223 246 255 / 0.7); }
+.dismiss:hover { color: rgb(var(--encre) / 0.7); }
 
 .version {
   font-size: 0.75rem;
@@ -53,7 +53,7 @@
 
 .body {
   font-size: 0.74rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   margin: 0;
   line-height: 1.5;
   max-height: 56px;
@@ -78,7 +78,7 @@
 }
 .btn:hover {
   background: var(--accent, #6c8efb);
-  color: #0b0f16;
+  color: rgb(var(--fond));
 }
 
 .progressBar {
@@ -96,7 +96,7 @@
 }
 .pct {
   font-size: 0.7rem;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   text-align: right;
 }
 

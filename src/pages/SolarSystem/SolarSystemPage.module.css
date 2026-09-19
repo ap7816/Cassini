@@ -5,6 +5,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  /* L'espace reste noir dans les deux thèmes : c'est le ciel, pas l'interface. */
   background: #070b12;
 
   /* Largeur de la colonne de droite, partagée par la liste et la zone de
@@ -190,7 +191,7 @@
   text-overflow: ellipsis;
   background:
     var(--hud-crochets),
-    rgb(4 11 21 / 0.82);
+    rgb(var(--fond) / 0.82);
   padding: 4px 9px 4px 10px;
   border-radius: 1px;
   border: none;
@@ -240,7 +241,7 @@
   width: 12px;
   height: 12px;
   /* Opaque, comme le fond de la carte qu'il prolonge (voir GamePanel). */
-  background: rgb(5 12 22 / var(--dbg-fiche-op, 1));
+  background: rgb(var(--fond) / var(--dbg-fiche-op, 1));
   border-right: 1px solid var(--hud-ligne-moyenne);
   border-bottom: 1px solid var(--hud-ligne-moyenne);
   border-radius: 0;
@@ -282,7 +283,7 @@
   border: none;
   background:
     var(--hud-crochets),
-    rgb(4 11 21 / 0.7);
+    rgb(var(--fond) / 0.7);
   color: rgb(var(--hud));
   font: 400 12px/1 var(--police-donnee);
   /* Chiffres à chasse fixe : sans cela la pastille change de largeur à chaque

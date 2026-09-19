@@ -1,6 +1,7 @@
 import type { AppSettings } from '../../types';
 import { readSettingsRaw, writeSettingsRaw, STORAGE_KEYS } from '../../../services/storage';
 import { invoke } from '@tauri-apps/api/core';
+import { estModeTheme } from '../theme';
 
 // Valeurs par défaut utilisées si le stockage est vide ou corrompu
 const DEFAULT_SETTINGS: AppSettings = {
@@ -16,6 +17,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   showLibrary: false,
   showLaunchers: false,
   planetSizeByPlaytime: false,
+  startSystem: 'auto',
+  themeMode: 'dark',
 };
 
 // Vérifie qu'une valeur est un objet non-null (guard de type pour le parsing JSON)
@@ -61,6 +64,11 @@ export function loadSettings(): AppSettings {
       showLibrary: parsed.showLibrary === true,
       showLaunchers: parsed.showLaunchers === true,
       planetSizeByPlaytime: parsed.planetSizeByPlaytime === true,
+      startSystem:
+        typeof parsed.startSystem === 'string' && parsed.startSystem.length > 0 && parsed.startSystem.length <= 128
+          ? parsed.startSystem
+          : 'auto',
+      themeMode: estModeTheme(parsed.themeMode) ? parsed.themeMode : 'dark',
     };
   } catch {
     return DEFAULT_SETTINGS;

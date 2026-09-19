@@ -30,7 +30,7 @@
   background:
     var(--hud-crochets),
     var(--hud-trame),
-    rgb(5 12 22 / var(--dbg-fiche-op, 1));
+    rgb(var(--fond) / var(--dbg-fiche-op, 1));
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow:
@@ -55,7 +55,7 @@
   width: 100%;
   aspect-ratio: 460 / 215;
   overflow: hidden;
-  background: #030810;
+  background: rgb(var(--fond));
   flex-shrink: 0;
   border-bottom: 1px solid var(--hud-ligne-forte);
 }
@@ -99,7 +99,7 @@
   height: calc(28px * var(--dbg-icones, 1.25));
   border-radius: 2px;
   border: 1px solid var(--hud-ligne-forte);
-  background: rgb(3 8 16 / 0.72);
+  background: rgb(var(--fond) / 0.72);
   color: rgb(var(--hud));
   font-size: calc(13px * var(--ui-font-scale, 1));
   cursor: pointer;
@@ -135,7 +135,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, transparent 45%, rgb(5 12 22 / 0.85) 100%),
+    linear-gradient(to bottom, transparent 45%, rgb(var(--fond) / 0.85) 100%),
     var(--hud-trame);
   pointer-events: none;
 }
@@ -149,7 +149,7 @@
   height: calc(28px * var(--dbg-icones, 1.25));
   border-radius: 2px;
   border: 1px solid var(--hud-ligne-moyenne);
-  background: rgb(3 8 16 / 0.72);
+  background: rgb(var(--fond) / 0.72);
   color: rgb(var(--hud) / 0.85);
   font-size: 0.7rem;
   cursor: pointer;
@@ -162,7 +162,7 @@
 .close:hover {
   background: rgb(var(--hud-danger) / 0.18);
   border-color: rgb(var(--hud-danger) / 0.7);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 /* ── Corps ──────────────────────────────────────────────────────────────── */
@@ -303,7 +303,7 @@
   border: 1px solid var(--accent, rgb(var(--hud)));
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent), color-mix(in srgb, var(--accent, rgb(var(--hud))) 12%, transparent));
-  color: #fff;
+  color: rgb(var(--encre));
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -448,12 +448,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #eafff2;
+  color: rgb(var(--encre));
   animation: lanceApparait 0.25s ease-out;
 }
 
 .playLanceContenu svg {
-  color: #3ddc84;
+  color: color-mix(in srgb, #3ddc84 var(--vif), #0c2233);
 }
 
 @keyframes lanceApparait {

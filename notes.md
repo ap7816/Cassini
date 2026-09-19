@@ -122,8 +122,8 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Filtres par plateforme et statut installé / non installé                 | ✅ Done    |
 | Tri avancé (par taille disque, temps joué total)                         | ❌ À faire |
 | Notifications (jeu prêt à jouer)                                         | ❌ À faire |
-| Mode sombre / clair                                                      | ❌ À faire |
-| Support GOG Galaxy                                                       | ❌ À faire |
+| Mode sombre / clair                                                      | ✅ Done    |
+| Support _GOG_ Galaxy                                                       | ❌ À faire |
 | Support Ubisoft Connect                                                  | ✅ Done    |
 | Support Riot Games                                                       | ✅ Done    |
 | Support Rockstar Games Launcher                                          | ✅ Done    |
@@ -151,7 +151,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Systèmes solaires personnalisés (favoris, jeux choisis)                  | ✅ Done    |
 | Déplacer les planètes en glissant (mode édition)                         | ✅ Done    |
 | Barre des launchers : icônes agrandies, bouton de création               | ✅ Done    |
-| Système solaire d'ouverture au choix                                     | ❌ À faire |
+| Système solaire d'ouverture au choix                                     | ✅ Done    |
 | Taille de police augmentée                                               | ❌ À faire |
 | Musique en calque sur la scène + lecteur compact                         | ✅ Done    |
 | Réglages en calque sur la scène, barre latérale supprimée                | ✅ Done    |
@@ -196,7 +196,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Fait.** Le bouton **+** de création est en place, sous les launchers, avec les icônes fournies par l'application et le choix de la couleur (voir « Systèmes solaires personnalisés »). La barre et la liste des jeux s'élargissent en tirant leur bord gauche, entre un minimum et un maximum — liste de 150 à 520 px, barre de 32 à 96 px —, au clavier aussi ; un double-clic rend la largeur par défaut, et le choix est retenu d'une session à l'autre. Le contenu suit la colonne : icônes et vignettes grandissent avec elle, le texte un peu moins vite et sans descendre sous un plancher de lisibilité. Chaque colonne a sa propre échelle. Logique dans `lib/largeurs.ts`, poignée dans `components/PoigneeLargeur.tsx`.
 
 - **Système solaire d'ouverture au choix**
-  La vue s'ouvre aujourd'hui sur un système décidé par le code. Le rendre configurable — y compris sur un système personnalisé, une fois ceux-ci possibles.
+  **Fait.** Paramètres → Système solaire → « Système à l'ouverture » : automatique (le launcher le plus fourni, comme avant), dernier système visité, ou n'importe quel système — launcher ou système personnalisé. Le choix est résolu par `systemeOuverture` (`lib/ouverture.ts`) : un système qui n'existe plus — supprimé, ou launcher sans jeu — retombe sur l'automatique plutôt que d'ouvrir une vue vide. Le dernier système visité est retenu à chaque changement (`archive.solar.lastSystem.v1`).
 
 - **Ajouter ses propres jeux et programmes**
   **Rien n'est accessible, mais le code est écrit.** Le tableau le porte en « à faire » et non en « partiel » : il décrit ce qu'on peut faire, pas ce qui dort dans le dépôt. `createGameFromPath` fabrique un `Game` depuis un chemin d'exécutable ou de raccourci — titre déduit du nom de fichier, identifiant stable dérivé du chemin, plateforme `'Other'` — et `addGameFromPicker` dans `useLibraryGames` ouvre le sélecteur de fichier et l'ajoute à la bibliothèque. **Aucun composant ne l'appelle** : il ne manque que le bouton, et de quoi choisir titre et icône. Le risque que je redoutais n'existe pas : `appliquerScan` ne touche qu'aux jeux de la plateforme scannée, et `'Other'` n'est le domaine d'aucun scanner — une entrée manuelle ne sera donc jamais marquée désinstallée.
@@ -235,7 +235,9 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Via `tauri-plugin-notification`. Cas d'usage principal : détecter quand un téléchargement Steam est terminé (surveiller la création d'un nouveau fichier `.acf`). Côté Rust : watcher sur le dossier `steamapps/` avec `notify` crate. Quand un nouveau manifest apparaît → notif "Jeu prêt à jouer". Nécessite la permission `notification` dans `tauri.conf.json`.
 
 - **Mode sombre / clair**
-  Ajouter un `themeMode: 'dark' | 'light' | 'system'` dans `AppSettings`. Basculer via une classe CSS sur `<body>` (ex : `data-theme="light"`). Les variables CSS actuelles (toutes dark-hardcodées dans `AppLayout.module.css`) devront être extraites en custom properties dans `:root[data-theme="light"]`. Beaucoup de variables à migrer — prévoir du temps.
+  **Fait.** Paramètres → Personnalisation → « Thème » : sombre, clair, ou système (suit Windows à chaud). Le thème se pose en `data-theme` sur `<html>`, avant la peinture ; `App.css` y redéfinit les jetons. Quatre jetons s'ajoutent à la famille `--hud` : `--encre` (textes et reflets), `--fond` (vitres et panneaux), `--ombre` (halo derrière un texte) et `--voile` (sur l'image de fond), plus `--vif`, la part d'une couleur vive dans un texte coloré. Les quelque 230 couleurs écrites en dur dans les feuilles de style ont été converties vers ces jetons par un script, puis relues à la main.
+
+  L'espace reste noir dans les deux thèmes : c'est le ciel, pas l'interface. Ce qui s'y pose sans vitre — le logo, les étiquettes des planètes — porte la classe `theme-espace`, qui rétablit les couleurs du sombre, et les voiles sous les panneaux restent sombres. En clair, l'accent par défaut, un blanc cassé, prend le bleu de la structure, et un accent trop clair est assombri en gardant sa teinte jusqu'au seuil AA (`accentPourTheme`, `features/settings/theme.ts`). Contrastes mesurés écran par écran — système solaire, éditeur, fiche, paramètres, musique, bibliothèque : tout le texte actif passe 4,5 en clair.
 
 - **Support GOG Galaxy**
   Côté Rust : nouvelle commande `scan_gog_games`. GOG stocke ses jeux dans le registre Windows (`HKLM\SOFTWARE\GOG.com\Games`) et dans `C:\ProgramData\GOG.com\Galaxy\`. Chaque entrée de registre contient `path`, `gameID`, `gameName`. La `launchUrl` serait `goggalaxy://openGame/{id}`. Ajouter `'GOG'` dans `GamePlatform` et dans le filtre plateforme.

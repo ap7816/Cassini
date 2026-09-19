@@ -1,3 +1,4 @@
+import type { ModeTheme } from './settings/theme';
 // Plateformes de jeu supportées par Cassini
 export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'GOG' | 'Other';
 
@@ -45,6 +46,13 @@ export type AppSettings = {
    * Seul Steam le connaît : les autres systèmes gardent l'espace disque.
    */
   planetSizeByPlaytime: boolean;
+  /**
+   * Système devant lequel s'ouvre la vue : `auto` (le launcher le plus
+   * fourni), `dernier` (le dernier visité), ou la clé d'un système.
+   */
+  startSystem: string;
+  /** Thème de l'interface : sombre, clair, ou celui de Windows. */
+  themeMode: ModeTheme;
 };
 
 /** Les pages qu'on peut rappeler dans la barre. */

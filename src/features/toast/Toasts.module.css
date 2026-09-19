@@ -17,10 +17,10 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 2px;
-  background: rgba(18, 22, 36, 0.97);
+  background: rgb(var(--fond) / 0.97);
   border: 1px solid rgb(var(--hud) / 0.103);
   border-left-width: 3px;
-  box-shadow: 0 8px 28px rgb(5 12 22 / 0.55), 0 2px 8px rgb(5 12 22 / 0.35);
+  box-shadow: 0 8px 28px rgb(var(--fond) / 0.55), 0 2px 8px rgb(var(--fond) / 0.35);
   backdrop-filter: blur(14px);
   pointer-events: auto;
   animation: slideIn 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -45,14 +45,14 @@
 .msg {
   flex: 1;
   font-size: 0.83rem;
-  color: rgb(223 246 255 / 0.9);
+  color: rgb(var(--encre) / 0.9);
   line-height: 1.45;
 }
 
 .close {
   background: none;
   border: none;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: 0.68rem;
   cursor: pointer;
   padding: 0 0 0 6px;
@@ -61,7 +61,7 @@
   margin-top: 1px;
   transition: color 0.12s;
 }
-.close:hover { color: rgb(223 246 255 / 0.75); }
+.close:hover { color: rgb(var(--encre) / 0.75); }
 
 @keyframes slideIn {
   from { transform: translateX(24px); opacity: 0; }

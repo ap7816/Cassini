@@ -8,6 +8,7 @@ import { placerSystemes, rayonGalaxie, type Astre } from '../lib/galaxyLayout';
 import { hashStr, seededRng } from '../lib/random';
 import { dimensionnerSysteme, type TailleSysteme } from '../lib/systemSize';
 import { createBelt, createNuageEtoiles, createSun } from './decor';
+import { lumiereDe } from '../lib/couleurSoleil';
 import { createPlanetGlow, createPlanets } from './planets';
 import { lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
@@ -45,6 +46,8 @@ export type SystemeGalaxie = {
   soleil: THREE.Group;
   /** Position du soleil dans la galaxie. */
   centre: THREE.Vector3;
+  /** Couleur de la lumière que l'étoile projette sur ses planètes. */
+  lumiere: THREE.Color;
   taille: TailleSysteme;
   /** Porte le soleil, la ceinture et — quand il est construit — les planètes. */
   groupe: THREE.Group;
@@ -62,6 +65,9 @@ export type SystemeGalaxie = {
   hitSoleil: THREE.Mesh;
   /** Ceinture d'astéroïdes, absente sur les tout petits systèmes. */
   ceinture: THREE.InstancedMesh | null;
+  /** Étoiles propres au système, et la densité dont elles sont faites. */
+  nuage: THREE.Points | null;
+  densiteNuage: number;
 };
 
 /** Une entrée par système. */
@@ -161,11 +167,8 @@ export function createGalaxy({
     if (ceinture) groupe.add(ceinture);
 
     // Étoiles propres au système, si l'utilisateur en a demandé.
-    const nuage = createNuageEtoiles(
-      taille.systemR,
-      reglageDe?.(p.platform)?.etoiles ?? 0,
-      hashStr(p.platform),
-    );
+    const densiteNuage = reglageDe?.(p.platform)?.etoiles ?? 0;
+    const nuage = createNuageEtoiles(taille.systemR, densiteNuage, hashStr(p.platform));
     if (nuage) groupe.add(nuage);
 
     const hitSoleil = new THREE.Mesh(
@@ -183,12 +186,15 @@ export function createGalaxy({
       soleil: soleil.group,
       couleur: p.couleur ?? PLATFORM_COLOR[p.platform] ?? 0x7a8a9a,
       centre,
+      lumiere: lumiereDe(reglageDe?.(p.platform)?.couleurSoleil),
       taille,
       groupe,
       charge: false,
       planets: [],
       hitSoleil,
       ceinture,
+      nuage,
+      densiteNuage,
     };
   });
 
@@ -386,4 +392,21 @@ function libererMateriau(mat: THREE.Material | THREE.Material[]): void {
     if (std.emissiveMap && std.emissiveMap !== std.map) std.emissiveMap.dispose();
     m.dispose();
   }
+}
+
+/**
+ * Remplace le nuage d'étoiles d'un système par un nuage d'une autre densité.
+ * Sans effet si la densité n'a pas changé : on peut l'appeler à chaque image.
+ */
+export function changerNuage(s: SystemeGalaxie, densite: number): void {
+  if (densite === s.densiteNuage) return;
+  if (s.nuage) {
+    s.groupe.remove(s.nuage);
+    s.nuage.geometry.dispose();
+    // Le matériau seul : sa texture est partagée par tous les nuages.
+    (s.nuage.material as THREE.Material).dispose();
+  }
+  s.nuage = createNuageEtoiles(s.taille.systemR, densite, hashStr(s.platform));
+  if (s.nuage) s.groupe.add(s.nuage);
+  s.densiteNuage = densite;
 }

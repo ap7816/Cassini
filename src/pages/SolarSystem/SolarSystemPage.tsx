@@ -15,6 +15,7 @@ import logo from '../../assets/logo.svg';
 import { useCalques } from '../../features/calques/useCalques';
 import { AideRaccourcis } from './components/AideRaccourcis';
 import { rayonSysteme } from './lib/etendue';
+import { enregistrerDernierSysteme, lireDernierSysteme, systemeOuverture } from './lib/ouverture';
 import { definirCritereTaille, type CritereTaille } from './lib/orbits';
 import type { Game } from '../../features/types';
 import {
@@ -140,13 +141,22 @@ export function SolarSystemPage() {
   const [aideOuverte, setAideOuverte] = useState(false);
   /** Champ de recherche de la liste, que `Ctrl+F` ramène sous la main. */
   const rechercheRef = useRef<HTMLInputElement>(null);
-  // null = aucun choix explicite, on retombe sur la plateforme la plus fournie
-  const [chosenPlatform, setChosenPlatform] = useState<string | null>(null);
   // `null` tant que rien n'a été choisi : la feuille de style garde alors sa
   // largeur par défaut, et son plafond en pourcentage.
   const [largeurs, setLargeurs] = useState<Largeurs>(chargerLargeurs);
   const { t } = useTranslation();
   const [systemesPerso, setSystemesPerso] = useState<SystemePerso[]>(chargerSystemesPerso);
+  const { settings } = useAppSettings();
+  // null = aucun choix explicite, on retombe sur la plateforme la plus fournie.
+  // Au départ, le système d'ouverture réglé dans les paramètres.
+  const [chosenPlatform, setChosenPlatform] = useState<string | null>(() =>
+    systemeOuverture(
+      settings.startSystem,
+      lireDernierSysteme(),
+      [...new Set(games.map((g) => g.platform || 'Other'))],
+      systemesPerso,
+    ),
+  );
   // Réglages des systèmes des launchers, par plateforme.
   const [reglagesLaunchers, setReglagesLaunchers] = useState(chargerReglagesLaunchers);
   // Éditeur ouvert : clé, dans la galaxie, du système qu'on règle.
@@ -167,7 +177,6 @@ export function SolarSystemPage() {
   useEffect(() => {
     pauseScene.current = calques.ouvert !== null || edition !== null;
   }, [calques.ouvert, edition]);
-  const { settings } = useAppSettings();
 
   // Plateformes présentes dans la bibliothèque, la plus fournie en premier
   const platforms = useMemo(() => {
@@ -320,7 +329,11 @@ export function SolarSystemPage() {
   // la caméra. Le passer en valeur la ferait se reconstruire à chaque voyage,
   // puisque arriver quelque part met cet état à jour.
   const platformRef = useRef(platform);
-  useEffect(() => { platformRef.current = platform; }, [platform]);
+  useEffect(() => {
+    platformRef.current = platform;
+    // Retenu pour le réglage « dernier système visité ».
+    if (platform) enregistrerDernierSysteme(platform);
+  }, [platform]);
 
   // Suit les changements de bibliothèque venus d'ailleurs — le scan de
   // démarrage, ou la page Bibliothèque. Sans cela, un jeu détecté pendant que
@@ -618,7 +631,7 @@ export function SolarSystemPage() {
       {/* Marque de l'application, dans le coin haut gauche de la scène — là où
           le panneau de navigation la portait. Décorative : le nom est déjà
           annoncé par le titre ci-dessus, et rien ne se clique ici. */}
-      <div className={css.marque} aria-hidden="true">
+      <div className={`${css.marque} theme-espace`} aria-hidden="true">
         <img src={logo} className={css.marqueLogo} alt="" draggable={false} />
         <span className={css.marqueNom}>{t('nav.brandName')}</span>
       </div>
@@ -629,7 +642,7 @@ export function SolarSystemPage() {
       <div ref={mountRef} className={css.canvas} aria-hidden="true" />
 
       {/* Labels HTML, positionnés par projection caméra depuis la scène */}
-      <div ref={labelsRef} className={css.labels} aria-hidden="true" />
+      <div ref={labelsRef} className={`${css.labels} theme-espace`} aria-hidden="true" />
 
       {/* Témoin de la largeur animée de la colonne : la scène le mesure pour
           décaler sa projection en suivant la transition CSS (voir applyView). */}

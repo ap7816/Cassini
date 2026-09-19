@@ -26,7 +26,7 @@
   background:
     var(--hud-trame),
     linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 140px),
-    rgb(4 11 21 / var(--liste-fond-opacite, 0.82));
+    rgb(var(--fond) / var(--liste-fond-opacite, 0.82));
   border-left: 1px solid var(--hud-ligne-moyenne);
   box-shadow:
     inset 1px 0 0 rgb(var(--hud) / 0.07),
@@ -53,7 +53,7 @@
   font-family: var(--ui-font-family, var(--police-ui));
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgb(var(--hud));
+  color: var(--teinte, rgb(var(--hud)));
   text-shadow: 0 0 10px rgb(var(--hud) / 0.45);
   white-space: nowrap;
   overflow: hidden;
@@ -258,7 +258,7 @@
      vitre qu'on consulte. */
   background:
     var(--hud-trame),
-    rgb(3 8 16 / calc(var(--dbg-rail-op, 0.42) + 0.45));
+    rgb(var(--fond) / calc(var(--dbg-rail-op, 0.42) + 0.45));
   border-left: 1px solid var(--hud-ligne-moyenne);
   backdrop-filter: blur(calc(12px * var(--dbg-flou, 1)));
 }
@@ -315,7 +315,7 @@
   font: 700 11px/1 var(--police-ui);
   font-size: calc(12px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
   font-family: var(--ui-font-family, var(--police-ui));
-  color: var(--teinte, #fff);
+  color: var(--teinte, rgb(var(--encre)));
   text-shadow: 0 0 8px color-mix(in srgb, var(--teinte, #fff) 60%, transparent);
 }
 
@@ -409,7 +409,7 @@
   border-radius: 0;
   overflow: hidden;
   background:
-    repeating-linear-gradient(90deg, transparent 0 5px, rgb(3 8 15) 5px 7px),
+    repeating-linear-gradient(90deg, transparent 0 5px, rgb(var(--fond)) 5px 7px),
     linear-gradient(90deg, #45c8f5 0%, #5fe0b0 45%, #ffb454 78%, #ff6b6b 100%);
 }
 
@@ -425,7 +425,7 @@
      segments vides restent dessinés en creux. */
   background:
     repeating-linear-gradient(90deg, rgb(var(--hud) / 0.14) 0 5px, transparent 5px 7px),
-    rgb(3 8 15 / 0.95);
+    rgb(var(--fond) / 0.95);
 }
 
 /* ── Systèmes personnalisés ───────────────────────────────────────────── */
@@ -551,7 +551,7 @@
 }
 
 .headModifier:hover {
-  color: #fff;
+  color: rgb(var(--encre));
   border-color: var(--hud-ligne-forte);
   background: rgb(var(--hud) / 0.14);
   box-shadow: var(--hud-lueur);
@@ -580,7 +580,7 @@
   place-items: center;
   border-radius: 2px;
   border: 1px solid var(--hud-ligne-forte);
-  background: rgb(4 12 22 / 0.96);
+  background: rgb(var(--fond) / 0.96);
   color: rgb(var(--hud));
   font: 700 13px/1 var(--police-ui);
   cursor: pointer;
@@ -596,7 +596,7 @@
 
 .ligneAction:hover {
   background: rgb(var(--hud) / 0.2);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 /* Losange de repère, décoratif : pas de contenu textuel, rien n'est lu. */
@@ -671,4 +671,14 @@
   .headActualiser {
     transition: none;
   }
+}
+
+/* ── Thème clair ─────────────────────────────────────────────────────────── */
+
+/* Couleurs de plateforme mêlées d'encre : leur teinte reste, et elles se
+   lisent sur la vitre claire. */
+:global(:root[data-theme='light']) .headTitle,
+:global(:root[data-theme='light']) .railInitiale {
+  color: color-mix(in srgb, var(--teinte, rgb(var(--hud))) var(--melange-clair), #0c2233);
+  text-shadow: none;
 }

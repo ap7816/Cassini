@@ -32,7 +32,7 @@
   display: grid;
   place-items: center;
   font-size: 22px;
-  color: rgb(223 246 255 / 0.62);
+  color: rgb(var(--encre) / 0.62);
 }
 
 .enCoursTextes {
@@ -59,7 +59,7 @@
 
 .enCoursArtiste {
   font-size: calc(12px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 /* ── Progression et volume ───────────────────────────────── */
@@ -85,7 +85,7 @@
   height: 5px;
   border-radius: 0;
   cursor: pointer;
-  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(3 8 15) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
+  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
 }
 
 .barre {
@@ -128,7 +128,7 @@
   height: 13px;
   margin-left: -2px;
   border-radius: 0;
-  background: #fff;
+  background: rgb(var(--encre));
   transform: translateY(-50%);
   pointer-events: none;
   box-shadow: 0 0 8px rgb(var(--hud));
@@ -159,7 +159,7 @@
 
 .bouton:hover:not(:disabled) {
   background: rgb(var(--hud) / 0.115);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 .bouton:disabled {
@@ -174,7 +174,7 @@
 
 .boutonLecture {
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   width: calc(36px * var(--dbg-icones, 1.25));
   height: calc(36px * var(--dbg-icones, 1.25));
   font-size: calc(15px * var(--ui-font-scale, 1));
@@ -184,7 +184,7 @@
 
 .boutonLecture:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 46%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   filter: brightness(1.12);
 }
 
@@ -281,7 +281,7 @@
   height: 100%;
   display: grid;
   place-items: center;
-  color: rgb(223 246 255 / 0.62);
+  color: rgb(var(--encre) / 0.62);
   font-size: calc(13px * var(--ui-font-scale, 1));
 }
 
@@ -290,7 +290,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgb(5 12 22 / 0.58);
+  background: rgb(var(--fond) / 0.58);
   color: var(--accent, #6c8efb);
   font-size: calc(11px * var(--ui-font-scale, 1));
 }
@@ -317,11 +317,11 @@
 
 .ligneDossier {
   font-size: calc(10px * var(--ui-font-scale, 1));
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
 }
 
 .ligneActive .ligneTitre {
-  color: #fff;
+  color: rgb(var(--encre));
   font-weight: 600;
 }
 
@@ -329,7 +329,7 @@
 .vide {
   padding: 18px 6px;
   text-align: center;
-  color: rgb(223 246 255 / 0.6);
+  color: rgb(var(--encre) / 0.6);
   font-size: calc(12px * var(--ui-font-scale, 1));
 }
 
@@ -365,11 +365,17 @@
 }
 
 .lien:hover {
-  color: rgb(223 246 255 / 0.8);
+  color: rgb(var(--encre) / 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bouton {
     transition: none;
   }
+}
+
+/* Thème clair : sur un fond teinté d'accent, le texte hérité, atténué, ne se
+   lisait plus. */
+:global(:root[data-theme='light']) .principal {
+  color: var(--hud-texte);
 }

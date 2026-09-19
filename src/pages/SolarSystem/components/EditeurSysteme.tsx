@@ -282,7 +282,6 @@ export function EditeurSysteme({
             format={(v) => (v === 0 ? t('systems.editor.starsNone') : facteur(v))}
             onChange={(v) => modifier({ ...brouillon, etoiles: v })}
           />
-          <p className={css.note}>{t('systems.editor.sunAppliesOnSave')}</p>
         </Section>
 
         <Section titre={t('systems.editor.orbits')}>

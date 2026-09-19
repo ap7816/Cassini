@@ -64,6 +64,21 @@ html, body, #root {
     transparent 1px 3px
   );
 
+  /* Jetons de thème. En composantes, comme `--hud`.
+     - `--encre` : textes et reflets posés sur les vitres ;
+     - `--fond`  : le fond des vitres et des panneaux ;
+     - `--ombre` : le halo derrière un texte, qui le détache de la scène ;
+     - `--voile` : ce qui atténue l'image de fond choisie par l'utilisateur.
+     L'espace, lui, reste noir dans les deux thèmes : c'est le ciel. */
+  --encre: 255 255 255;
+  --fond: 5 12 22;
+  --ombre: 5 12 22;
+  --voile: 0 0 0;
+  /* Part de la couleur vive dans un texte coloré (vert « installé », rouge
+     « supprimer »…) : entière sur le sombre, mêlée d'encre sur le clair. */
+  --vif: 100%;
+  color-scheme: dark;
+
   --police-ui: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
   /* Chiffres à chasse fixe : un compteur qui change de largeur à chaque
      mise à jour tressaute dans son cadre. */
@@ -79,6 +94,64 @@ html, body, #root {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Thème clair ──────────────────────────────────────────────
+
+   Un cockpit de jour : les instruments passent sur des vitres claires, la
+   structure prend un bleu profond qui se lit sur le blanc, le texte devient
+   encre. Seules les valeurs changent — chaque composant écrit ses couleurs
+   avec les mêmes jetons dans les deux thèmes. */
+:root[data-theme='light'] {
+  --hud: 0 60 94;
+  --hud-alerte: 176 98 0;
+  --hud-danger: 196 44 44;
+
+  --hud-texte: #0c2233;
+  --hud-texte-doux: rgb(18 46 66 / 0.84);
+  --hud-texte-faible: rgb(26 56 78 / 0.8);
+
+  --hud-vitre: rgb(244 248 251 / 0.88);
+  --hud-vitre-forte: rgb(248 251 253 / 0.97);
+  --hud-lueur: 0 0 10px rgb(var(--hud) / 0.16);
+
+  --encre: 12 30 45;
+  --fond: 240 245 249;
+  --ombre: 255 255 255;
+  --voile: 236 242 247;
+  --vif: 55%;
+  color-scheme: light;
+  background: #e6edf2;
+}
+
+/* `index.html` peint la page en sombre avant que l'application charge, pour
+   qu'aucun éclair blanc ne passe au démarrage. En thème clair, la page prend
+   le fond clair dès que le thème est posé. */
+:root[data-theme='light'] body {
+  background: #e6edf2;
+}
+
+/* Ce qui est posé à même l'espace, sans vitre — le logo, les étiquettes des
+   planètes : l'espace reste noir dans les deux thèmes, ces éléments gardent
+   donc les couleurs du sombre. Une encre sombre sur le ciel ne se lirait pas. */
+:root[data-theme='light'] .theme-espace {
+  --hud: 111 220 255;
+  --hud-texte: #dff6ff;
+  --hud-texte-doux: rgb(190 225 240 / 0.7);
+  --hud-texte-faible: rgb(170 205 222 / 0.6);
+  --hud-vitre: rgb(6 16 28 / 0.74);
+  --hud-vitre-forte: rgb(5 12 22 / 0.95);
+  --encre: 255 255 255;
+  --fond: 5 12 22;
+  --ombre: 5 12 22;
+  --vif: 100%;
+  color-scheme: dark;
+}
+
+/* Couleurs de plateforme en thème clair : vives, elles sont faites pour le
+   noir. Mêlées d'encre, elles gardent leur teinte et se lisent sur le clair. */
+:root[data-theme='light'] {
+  --melange-clair: 58%;
 }
 
 /* ── Barres de défilement, en fil d'instrument ────────────── */
@@ -108,7 +181,7 @@ html, body, #root {
 /* ── Sélection de texte ───────────────────────────────────── */
 ::selection {
   background: rgb(var(--hud) / 0.3);
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 /* ── Focus visible (navigation clavier) ──────────────────── */

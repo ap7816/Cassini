@@ -252,7 +252,6 @@ export function AppLayout() {
     '--app-bg-image': settings.backgroundImageDataUrl
       ? `url("${settings.backgroundImageDataUrl}")`
       : 'none',
-    '--accent': settings.accentColor,
     '--bg-overlay-opacity': settings.bgOverlayOpacity,
   };
 

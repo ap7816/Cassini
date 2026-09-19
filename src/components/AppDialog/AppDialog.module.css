@@ -12,7 +12,7 @@
 }
 
 .dialog {
-  background: var(--hud-crochets), var(--hud-trame), rgb(4 11 21 / 0.98);
+  background: var(--hud-crochets), var(--hud-trame), rgb(var(--fond) / 0.98);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   padding: 26px 24px 22px;
@@ -38,7 +38,7 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.161);
   background: rgb(var(--hud) / 0.069);
-  color: rgb(223 246 255 / 0.95);
+  color: rgb(var(--encre) / 0.95);
   font-size: 0.88rem;
   outline: none;
   margin-bottom: 18px;
@@ -52,7 +52,7 @@
 /* ─── Confirm variant ─────────────────────────────────────── */
 .message {
   font-size: 0.9rem;
-  color: rgb(223 246 255 / 0.88);
+  color: rgb(var(--encre) / 0.88);
   margin: 0 0 22px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -70,14 +70,14 @@
   border-radius: 2px;
   border: 1px solid rgb(var(--hud) / 0.138);
   background: rgb(var(--hud) / 0.057);
-  color: rgb(223 246 255 / 0.65);
+  color: rgb(var(--encre) / 0.65);
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
 .btnCancel:hover {
   background: rgb(var(--hud) / 0.115);
-  color: rgb(223 246 255 / 1);
+  color: rgb(var(--encre));
 }
 
 .btnOk {
@@ -85,7 +85,7 @@
   border-radius: 2px;
   border: 1px solid var(--accent, rgb(var(--hud)));
   background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 26%, transparent);
-  color: #fff;
+  color: rgb(var(--encre));
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -95,20 +95,20 @@
 }
 .btnOk:hover {
   background: var(--accent, #6c8efb);
-  color: #0f141a;
+  color: rgb(var(--fond));
 }
 
 .btnDanger {
   border-color: #f87171;
   background: rgb(var(--hud-danger) / 0.2);
-  color: #fff;
+  color: rgb(var(--encre));
   border: 1px solid rgb(var(--hud-danger) / 0.8);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .btnDanger:hover {
   background: #f87171;
-  color: #fff;
+  color: rgb(var(--encre));
 }
 
 /* ─── Animations ──────────────────────────────────────────── */
