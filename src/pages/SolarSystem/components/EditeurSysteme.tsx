@@ -11,7 +11,6 @@ import {
   NOM_MAX,
   REGLAGE_DEFAUT,
   ajouterJeu,
-  deplacerJeu,
   jeuxDuSysteme,
   placer,
   reglageDeSysteme,
@@ -350,26 +349,6 @@ export function EditeurSysteme({
                   </button>
                   {!launcher && (
                   <>
-                  <button
-                    type="button"
-                    className={css.petit}
-                    disabled={i === 0}
-                    onClick={() => modifier(deplacerJeu(brouillon, g.id, -1))}
-                    aria-label={t('systems.editor.moveCloser', { title: g.title })}
-                    title={t('systems.editor.previousOrbit')}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className={css.petit}
-                    disabled={i === jeux.length - 1}
-                    onClick={() => modifier(deplacerJeu(brouillon, g.id, 1))}
-                    aria-label={t('systems.editor.moveAway', { title: g.title })}
-                    title={t('systems.editor.nextOrbit')}
-                  >
-                    ↓
-                  </button>
                   <button
                     type="button"
                     className={`${css.petit} ${css.retirer}`}

@@ -288,16 +288,6 @@ export function retirerJeu(s: SystemePerso, id: string): SystemePerso {
   return { ...s, jeux: s.jeux.filter((x) => x !== id), placements };
 }
 
-/** Déplace un jeu d'un cran vers le soleil (−1) ou vers l'extérieur (+1). */
-export function deplacerJeu(s: SystemePerso, id: string, sens: -1 | 1): SystemePerso {
-  const i = s.jeux.indexOf(id);
-  const j = i + sens;
-  if (i < 0 || j < 0 || j >= s.jeux.length) return s;
-  const jeux = [...s.jeux];
-  [jeux[i], jeux[j]] = [jeux[j], jeux[i]];
-  return { ...s, jeux };
-}
-
 /** Fusionne un placement ; un champ `undefined` le rend au calcul. */
 export function placer(s: SystemePerso, id: string, modif: PlacementPlanete): SystemePerso {
   const fusion: PlacementPlanete = { ...s.placements[id], ...modif };

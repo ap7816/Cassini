@@ -119,11 +119,11 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
 | Catégories / tags par genre ou état                                      | ❌ À faire |
 | Tri des jeux (A-Z, Z-A, joué récemment)                                  | ✅ Done    |
-| Filtres par plateforme et statut installé / non installé                 | ✅ Done    |
+| Filtres par plateforme et statut installé / non installé*                | ✅ Done    |
 | Tri avancé (par taille disque, temps joué total)                         | ❌ À faire |
 | Notifications (jeu prêt à jouer)                                         | ❌ À faire |
 | Mode sombre / clair                                                      | ✅ Done    |
-| Support _GOG_ Galaxy                                                       | ❌ À faire |
+| Support _GOG_ Galaxy                                                     | ❌ À faire |
 | Support Ubisoft Connect                                                  | ✅ Done    |
 | Support Riot Games                                                       | ✅ Done    |
 | Support Rockstar Games Launcher                                          | ✅ Done    |
@@ -181,7 +181,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Les cercles bleus autour du soleil sont à 30 % d'opacité (`scene/planets.ts`), montés de 16 % pour rester lisibles de loin. De près, ils saturent la vue. Piste : faire décroître l'opacité quand la caméra approche, comme le fait déjà la brume avec `lib/haze.ts` — une même grandeur, la distance au système, gouvernerait les deux.
 
 - **Systèmes solaires personnalisés**
-  **Largement fait.** Le bouton **+** de la barre crée un système : nom, icône parmi douze, couleur, jeux choisis dans toute la bibliothèque. « Modifier », en tête de liste, ouvre un panneau de personnalisation posé sur la scène, qui agit en direct : taille du soleil, vitesse des planètes (jusqu'à les figer), orbites à plat, et pour chaque planète sa distance au soleil, sa position sur l'orbite et sa taille. On y ajoute, retire et réordonne les jeux, et on y supprime le système. Rien n'est enregistré avant « Enregistrer » ; « Annuler » rend le système tel qu'il était. Dans la liste d'un système, un **+** ou un **−** au survol ajoute ou retire un jeu sans ouvrir le panneau.
+  **Largement fait.** Le bouton **+** de la barre crée un système : nom, icône parmi douze, couleur, jeux choisis dans toute la bibliothèque. « Modifier », en tête de liste, ouvre un panneau de personnalisation posé sur la scène, qui agit en direct : taille du soleil, vitesse des planètes (jusqu'à les figer), orbites à plat, et pour chaque planète sa distance au soleil, sa position sur l'orbite et sa taille. On y ajoute et retire les jeux, on les trie d'un coup (A→Z, Z→A, taille, récence), et on y supprime le système. Les flèches qui montaient ou descendaient une planète d'une orbite ont disparu : on la fait glisser dans la scène, ce qui la place où l'on veut plutôt que d'un cran. Rien n'est enregistré avant « Enregistrer » ; « Annuler » rend le système tel qu'il était. Dans la liste d'un système, un **+** ou un **−** au survol ajoute ou retire un jeu sans ouvrir le panneau.
 
   Ces changements ne reconstruisent que le système concerné : la galaxie et la caméra restent en place. Seuls le nom et la couleur, qui touchent l'étiquette et les teintes, rebâtissent la scène. Un système désigne ses jeux sans les posséder : un jeu rangé dans « Favoris » reste dans son launcher, avec une planète dans chacun. Logique dans `lib/customSystems.ts`, application aux planètes dans `scene/placements.ts`, toutes deux vérifiées hors navigateur.
 
