@@ -13,9 +13,10 @@
 //     d'où le repli si l'appel échoue.
 //   - DETACHED_PROCESS : pas de console héritée, aucun lien d'entrée/sortie.
 //
-// Pour les URL de protocole (steam://, battlenet://…), on délègue à
-// explorer.exe : il transmet la cible au shell puis se termine, si bien que le
-// vrai processus est rattaché à la session Explorer et non à la nôtre.
+// Le lancement final passe par un relais court, qui transmet la cible au shell
+// puis se termine : le vrai processus est rattaché à ce relais, et non à nous.
+// Un chemin passe par explorer.exe, une URL de protocole par
+// `url.dll,FileProtocolHandler` (voir `open_via_shell`).
 
 #[cfg(target_os = "windows")]
 mod flags {
@@ -170,14 +171,43 @@ pub fn spawn_avec_elevation(program: &str, args: &[&str]) -> Result<(), String> 
     spawn_detached(program, args)
 }
 
+/// Vrai pour une cible de protocole — `steam://…` — et non un chemin de fichier.
+///
+/// `C:\jeu.exe` n'en est pas une : le deux-points y suit une seule lettre, et
+/// aucun `//` ne le suit.
+pub fn est_url(target: &str) -> bool {
+    let Some(i) = target.find("://") else { return false };
+    i > 0
+        && target[..i]
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+}
+
 /// Ouvre une URL de protocole ou un chemin via le shell, détaché.
 ///
-/// Passer par explorer.exe plutôt que par ShellExecuteW est délibéré : le
-/// processus finalement lancé devient un enfant de la session Explorer, donc
-/// hors de portée du job de Cassini quelles que soient ses limitations.
+/// Deux relais, jamais un interpréteur de commandes : `cmd /c start` traitait
+/// `&` et `|` comme des séparateurs, ce qui rendait la cible injectable.
+///
+/// - Un chemin passe par explorer.exe : le processus lancé devient un enfant
+///   de la session Explorer, donc hors de portée du job de Cassini, quelles
+///   que soient ses limitations.
+/// - Une URL passe par `url.dll,FileProtocolHandler`. Explorer, lui, ouvre le
+///   dossier Documents dès que l'URL porte une requête — mesuré avec
+///   `https://example.com/?a=1&b=2`, et c'est ce qui arrivait en lançant un
+///   jeu Epic, dont l'URL finit par `?action=launch&silent=true`. Le relais
+///   `rundll32` est lui aussi lancé détaché : ce qu'il démarre sort du job
+///   avec lui.
 pub fn open_via_shell(target: &str) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
+        if est_url(target) {
+            // Rust cite un argument qui contient une espace ; un guillemet
+            // dans la cible ressortirait tel quel côté gestionnaire.
+            if target.contains('"') {
+                return Err("Cible de lancement invalide".to_string());
+            }
+            return spawn_detached("rundll32.exe", &["url.dll,FileProtocolHandler", target]);
+        }
         spawn_detached("explorer.exe", &[target])
     }
     #[cfg(target_os = "macos")]
@@ -190,3 +220,23 @@ pub fn open_via_shell(target: &str) -> Result<(), String> {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::est_url;
+
+    #[test]
+    fn reconnait_les_url_de_protocole() {
+        assert!(est_url("steam://rungameid/440"));
+        assert!(est_url("com.epicgames.launcher://apps/Brill?action=launch&silent=true"));
+        assert!(est_url("uplay://launch/123/0"));
+    }
+
+    #[test]
+    fn un_chemin_windows_n_est_pas_une_url() {
+        assert!(!est_url(r"C:\Program Files\Jeu\jeu.exe"));
+        assert!(!est_url(r"\serveur\partage\jeu.exe"));
+        assert!(!est_url("jeu.exe"));
+        assert!(!est_url("://sans-schema"));
+    }
+}
