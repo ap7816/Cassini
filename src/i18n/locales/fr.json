@@ -112,7 +112,8 @@
     "byFolder": "Par dossier",
     "battlenet": "Battle.net",
     "other": "Autre",
-    "collapseAll": "Tout réduire"
+    "collapseAll": "Tout réduire",
+    "tag": "Tag"
   },
   "music": {
     "chooseFolder": "Choisir un dossier",
@@ -361,7 +362,8 @@
       "ringsNone": "Aucun",
       "ringsColor": "Anneaux {{color}}",
       "ringsOtherColor": "Autre couleur d’anneaux",
-      "dragNote": "Faites glisser une planète dans la scène pour la placer : elle suit son orbite, et sa distance au soleil suit la souris."
+      "dragNote": "Faites glisser une planète dans la scène pour la placer : elle suit son orbite, et sa distance au soleil suit la souris.",
+      "tagNote": "Système du tag « {{tag}} » : ses jeux sont ceux qui portent ce tag. Taguer un jeu l’y ajoute."
     },
     "image": {
       "choose": "Choisir une image…",
@@ -377,7 +379,12 @@
         "petite": "Image trop petite : il faut au moins 16 px de côté.",
         "illisible": "Cette image n’a pas pu être lue."
       }
-    }
+    },
+    "source": "Source des jeux",
+    "sourceChosen": "Jeux choisis",
+    "tagSource": "Ce système reprend tous les jeux du tag « {{tag}} », et se met à jour quand on tague un jeu.",
+    "noGameWithTag": "Aucun jeu ne porte ce tag.",
+    "missingTagGames": "Aucun jeu ne porte ce tag"
   },
   "flyKeys": {
     "open": "Commandes",
@@ -592,5 +599,20 @@
     "help": "Cette liste",
     "playPause": "Lecture ou pause",
     "flyNote": "Les touches de déplacement se règlent dans « Commandes », en bas à droite de la vue."
+  },
+  "tags": {
+    "enCours": "En cours",
+    "termine": "Terminé",
+    "aEssayer": "À essayer",
+    "abandonne": "Abandonné",
+    "multijoueur": "Multijoueur",
+    "solo": "Solo",
+    "add": "+ tag",
+    "addOwn": "Ajouter",
+    "own": "Tag libre",
+    "placeholder": "Écrire un tag…",
+    "remove": "Retirer le tag {{tag}}",
+    "filterNone": "Tous les tags",
+    "none": "Sans tag"
   }
 }

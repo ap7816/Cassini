@@ -3,6 +3,7 @@ import {
   ANNEAU_AUCUN,
   estReglageDefaut,
   normaliserReglagesLaunchers,
+  jeuxDuSysteme,
   normaliserSystemes,
   nouveauSysteme,
   trierJeux,
@@ -136,5 +137,39 @@ describe('normaliserReglagesLaunchers', () => {
     const [s] = normaliserSystemes([{ id: '1', nom: 'A' }]);
     expect(estReglageDefaut(s)).toBe(true);
     expect(estReglageDefaut({ ...s, etoiles: 1 })).toBe(false);
+  });
+});
+
+describe('système alimenté par un tag', () => {
+  const tagues = new Map<string, Game>([
+    ['a', jeu('a', 'Zelda', { tags: ['En cours'] })],
+    ['b', jeu('b', 'apex', { tags: ['coop', 'en cours'] })],
+    ['c', jeu('c', 'Minecraft', { tags: ['Terminé'] })],
+  ]);
+
+  it('reprend les jeux du tag, dans l’ordre de la bibliothèque, casse ignorée', () => {
+    const s = { ...systeme([]), tag: 'En cours' };
+
+    expect(jeuxDuSysteme(s, tagues).map((g) => g.id)).toEqual(['a', 'b']);
+  });
+
+  it('ignore sa propre liste de jeux tant qu’il suit un tag', () => {
+    const s = { ...systeme(['c']), tag: 'coop' };
+
+    expect(jeuxDuSysteme(s, tagues).map((g) => g.id)).toEqual(['b']);
+  });
+
+  it('rend la liste choisie dès qu’on retire le tag', () => {
+    const s = { ...systeme(['c']), tag: null };
+
+    expect(jeuxDuSysteme(s, tagues).map((g) => g.id)).toEqual(['c']);
+  });
+
+  it('relit un tag depuis le stockage, et écarte ce qui n’en est pas un', () => {
+    const [propre] = normaliserSystemes([{ id: '1', nom: 'A', tag: '  Coop  ' }]);
+    const [sansTag] = normaliserSystemes([{ id: '2', nom: 'B', tag: 42 }]);
+
+    expect(propre.tag).toBe('Coop');
+    expect(sansTag.tag).toBeNull();
   });
 });

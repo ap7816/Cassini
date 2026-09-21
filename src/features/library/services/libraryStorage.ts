@@ -1,5 +1,6 @@
 import type { Game } from '../../types';
 import { readGamesRaw, writeGamesRaw } from '../../../services/storage';
+import { normaliserTags } from './tags';
 
 // Retourne la valeur si c'est une string, sinon null
 function asString(v: unknown): string | null {
@@ -123,6 +124,7 @@ export function normalizeGames(input: unknown): Game[] {
       installPath:     sanitizeInstallPath(r.installPath),
       steamAppId:      asString(r.steamAppId),
       sizeOnDisk:      typeof r.sizeOnDisk === 'number' && r.sizeOnDisk >= 0 ? r.sizeOnDisk : null,
+      tags: normaliserTags(r.tags),
       playtimeMinutes:
         typeof r.playtimeMinutes === 'number' && Number.isFinite(r.playtimeMinutes) && r.playtimeMinutes >= 0
           ? r.playtimeMinutes

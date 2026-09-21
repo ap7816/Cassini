@@ -682,3 +682,48 @@
   color: color-mix(in srgb, var(--teinte, rgb(var(--hud))) var(--melange-clair), #0c2233);
   text-shadow: none;
 }
+
+/* ── Filtre par tag ──────────────────────────────────────────────────────── */
+
+/* Sous la recherche : deux façons de réduire la liste, au même endroit. */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 calc(10px * var(--liste-e, 1)) 6px;
+}
+
+.tagFiltre {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--hud-ligne);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.06);
+  color: var(--hud-texte-faible);
+  font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--liste-e, 1)));
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+
+.tagFiltre:hover {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-moyenne);
+}
+
+.tagFiltreActif {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.14);
+}
+
+.tagNombre {
+  color: var(--hud-texte-faible);
+  font-family: var(--police-donnee);
+  font-size: 0.9em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagFiltre { transition: none; }
+}

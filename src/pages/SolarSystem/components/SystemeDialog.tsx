@@ -8,6 +8,8 @@ import { PLATFORM_CSS } from '../constants';
 import { COULEURS_SYSTEME, NOM_MAX, nouveauSysteme, nouvelId, type SystemePerso } from '../lib/customSystems';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from '../lib/iconesSysteme';
 import { IconeSysteme } from './IconeSysteme';
+import { libelleTag } from '../../../components/Tags/Tags';
+import { aLeTag, tagsDeLaBibliotheque } from '../../../features/library/services/tags';
 import { ChoixImageIcone } from './ChoixImageIcone';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './SystemeDialog.module.css';
@@ -54,6 +56,13 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   // Les jeux retirés de la bibliothèque depuis sont écartés d'emblée : on ne
   // pourrait ni les voir ni les décocher.
   const [jeux, setJeux] = useState<string[]>(() => (systeme?.jeux ?? []).filter((id) => parId.has(id)));
+  // Source des jeux : une liste choisie, ou tous ceux d'un tag.
+  const [tag, setTag] = useState<string | null>(systeme?.tag ?? null);
+  const tagsConnus = useMemo(() => tagsDeLaBibliotheque(games), [games]);
+  const jeuxDuTag = useMemo(
+    () => (tag ? games.filter((g) => aLeTag(g, tag)) : []),
+    [games, tag],
+  );
   const [recherche, setRecherche] = useState('');
   const [confirmation, setConfirmation] = useState<DialogState | null>(null);
 
@@ -90,12 +99,19 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   }
 
   const nomPropre = nom.trim();
-  const manque = !nomPropre ? t('systems.missingName') : jeux.length === 0 ? t('systems.missingGames') : null;
+  const nombreJeux = tag ? jeuxDuTag.length : jeux.length;
+  const manque = !nomPropre
+    ? t('systems.missingName')
+    : nombreJeux === 0
+      ? tag
+        ? t('systems.missingTagGames')
+        : t('systems.missingGames')
+      : null;
 
   function valider(e: FormEvent) {
     e.preventDefault();
     if (manque) return;
-    const champs = { nom: nomPropre.slice(0, NOM_MAX), icone, image: imageRetenue, couleur, jeux };
+    const champs = { nom: nomPropre.slice(0, NOM_MAX), icone, image: imageRetenue, couleur, jeux, tag };
     onEnregistrer(
       systeme ? { ...systeme, ...champs } : nouveauSysteme({ id: nouvelId(existants), ...champs }),
     );
@@ -148,7 +164,7 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                 {nomPropre || t('systems.untitled')}
               </span>
               <span aria-hidden="true">·</span>
-              <span>{t('library.gameCount', { count: jeux.length })}</span>
+              <span>{t('library.gameCount', { count: nombreJeux })}</span>
             </p>
           </div>
           <button type="button" className={css.fermer} onClick={onFermer} aria-label={t('common.close')}>
@@ -235,8 +251,47 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
           <div className={`${css.champ} ${css.champJeux}`}>
             <span className={css.etiquette}>
               {t('systems.games')}
-              <span className={css.compte}>{jeux.length}</span>
+              <span className={css.compte}>{nombreJeux}</span>
             </span>
+
+            {/* Deux façons de garnir un système : cocher les jeux un à un, ou
+                suivre un tag — le système se remplit alors tout seul. */}
+            {tagsConnus.length > 0 && (
+              <div className={css.source} role="group" aria-label={t('systems.source')}>
+                <button
+                  type="button"
+                  className={tag === null ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix}
+                  onClick={() => setTag(null)}
+                  aria-pressed={tag === null}
+                >
+                  {t('systems.sourceChosen')}
+                </button>
+                {tagsConnus.map(({ tag: nom, nombre }) => (
+                  <button
+                    key={nom}
+                    type="button"
+                    className={tag === nom ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix}
+                    onClick={() => setTag(nom)}
+                    aria-pressed={tag === nom}
+                  >
+                    {libelleTag(nom, t)} <span className={css.compte}>{nombre}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {tag !== null ? (
+              <>
+                <p className={css.aide}>{t('systems.tagSource', { tag: libelleTag(tag, t) })}</p>
+                <ul className={css.jeux}>
+                  {jeuxDuTag.map((g, i) => (
+                    <LigneJeu key={g.id} game={g} rang={i + 1} choisi onBasculer={() => {}} fige />
+                  ))}
+                  {jeuxDuTag.length === 0 && <li className={css.vide}>{t('systems.noGameWithTag')}</li>}
+                </ul>
+              </>
+            ) : (
+            <>
             <input
               className={css.saisie}
               type="search"
@@ -257,6 +312,8 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                 <li className={css.vide}>{t('systems.noGameMatches')}</li>
               )}
             </ul>
+            </>
+            )}
           </div>
         </div>
 
@@ -295,18 +352,26 @@ function LigneJeu({
   rang,
   choisi,
   onBasculer,
+  fige = false,
 }: {
   game: Game;
   rang: number | null;
   choisi: boolean;
   onBasculer: (id: string) => void;
+  /** Système de tag : la case montre l'appartenance, elle ne la décide pas. */
+  fige?: boolean;
 }) {
   const { t } = useTranslation();
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
   return (
     <li>
       <label className={choisi ? `${css.jeu} ${css.jeuChoisi}` : css.jeu}>
-        <input type="checkbox" checked={choisi} onChange={() => onBasculer(game.id)} />
+        <input
+          type="checkbox"
+          checked={choisi}
+          disabled={fige}
+          onChange={() => onBasculer(game.id)}
+        />
         {/* Le rang annonce l'orbite : le premier jeu coché tourne au plus près du soleil. */}
         <span className={css.jeuRang}>{rang ?? ''}</span>
         <span className={css.jeuTitre}>{game.title}</span>

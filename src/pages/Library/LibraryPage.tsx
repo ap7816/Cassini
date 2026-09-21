@@ -12,6 +12,8 @@ import { FilterBar, FilterSelect } from '../../components/FilterChips/FilterChip
 import { useToast } from '../../features/toast/ToastContext';
 import { formaterTaille } from '../../i18n/formats';
 import { useDiskSpace } from '../../features/system/useDiskSpace';
+import { aLeTag, tagsDeLaBibliotheque } from '../../features/library/services/tags';
+import { libelleTag } from '../../components/Tags/Tags';
 
 type ViewMode = 'games' | 'favorites';
 type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Other';
@@ -45,6 +47,7 @@ export function LibraryPage() {
   const platformFilter = (searchParams.get('platform') ?? 'all') as PlatformFilter;
   const installedFilter = (searchParams.get('installed') ?? 'all') as InstalledFilter;
   const sortMode = (searchParams.get('sort') ?? 'recent') as SortMode;
+  const tagFilter = searchParams.get('tag') ?? 'all';
 
   // Met à jour un paramètre d'URL sans créer d'entrée dans l'historique
   function setParam(key: string, value: string, defaultValue: string) {
@@ -64,6 +67,7 @@ export function LibraryPage() {
     removeGame,
     toggleFavorite,
     setGameImageUrl,
+    setGameTags,
     markPlayed,
     scanPcSteam,
     scanPcEpic,
@@ -120,6 +124,11 @@ export function LibraryPage() {
         .map(([value, label]) => ({ value, label })),
     ];
   }, [games, t]);
+
+  // Tags posés dans toute la bibliothèque, du plus porté au moins porté :
+  // ils alimentent le filtre et les suggestions des cartes.
+  const tagsPresents = useMemo(() => tagsDeLaBibliotheque(games), [games]);
+  const tagsConnus = useMemo(() => tagsPresents.map((x) => x.tag), [tagsPresents]);
 
   // Bascule entre l'onglet "Tous les jeux" et "Favoris"
   function setView(next: ViewMode) {
@@ -178,6 +187,7 @@ export function LibraryPage() {
     let list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
     if (platformFilter !== 'all')
       list = list.filter((g) => g.game.platform === platformFilter);
+    if (tagFilter !== 'all') list = list.filter((g) => aLeTag(g.game, tagFilter));
     if (installedFilter === 'yes')
       list = list.filter((g) => g.game.installed !== false);
     if (installedFilter === 'no')
@@ -191,7 +201,7 @@ export function LibraryPage() {
         return titleCollator.compare(a.game.title, b.game.title);
       })
       .map((g) => g.game);
-  }, [baseList, deferredQ, platformFilter, installedFilter, sortMode]);
+  }, [baseList, deferredQ, platformFilter, installedFilter, sortMode, tagFilter]);
 
   const showNoResults = baseList.length > 0 && deferredQ.length > 0 && filteredGames.length === 0;
   const isFavoritesEmpty = view === 'favorites' && favoritesCount === 0 && !q;
@@ -271,6 +281,18 @@ export function LibraryPage() {
           value={installedFilter}
           onChange={(v) => setParam('installed', v, 'all')}
         />
+        <FilterSelect<string>
+          label={t('filters.tag')}
+          options={[
+            { value: 'all', label: t('filters.all') },
+            ...tagsPresents.map((x) => ({
+              value: x.tag,
+              label: `${libelleTag(x.tag, t)} (${x.nombre})`,
+            })),
+          ]}
+          value={tagFilter}
+          onChange={(v) => setParam('tag', v, 'all')}
+        />
         <FilterSelect<SortMode>
           label={t('filters.sort')}
           options={[
@@ -313,6 +335,8 @@ export function LibraryPage() {
               onPlay={handlePlay}
               onToggleFavorite={toggleFavorite}
               onSetImageUrl={setGameImageUrl}
+              onSetTags={setGameTags}
+              tagsConnus={tagsConnus}
               sgdbKeySet={settings.sgdbKeySet}
               isLaunching={launchingId === g.id}
             />

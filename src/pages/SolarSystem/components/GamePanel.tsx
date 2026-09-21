@@ -18,6 +18,7 @@ import { formaterDate, formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import css from './GamePanel.module.css';
 import { IconeHud } from '../../../components/IconeHud/IconeHud';
+import { EditeurTags } from '../../../components/Tags/Tags';
 
 type Props = {
   game: Game;
@@ -25,6 +26,8 @@ type Props = {
   sgdbKeySet: boolean;
   onClose: () => void;
   onUpdate: (updated: Game) => void;
+  /** Tags déjà posés ailleurs dans la bibliothèque, proposés en premier. */
+  tagsConnus?: readonly string[];
   onRemove: (id: string) => void;
 };
 
@@ -34,7 +37,7 @@ type Props = {
  * l'affaire de la scène 3D (updatePopupAnchor dans useSolarScene) : elle-même
  * ne connaît que son contenu.
  */
-export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Props) {
+export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsConnus = [] }: Props) {
   const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
   const toast = useToast();
@@ -269,6 +272,14 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove }: Pro
             </>
           )}
         </div>
+
+        {/* Posés à la main : état d'avancement, genre, envie. Ils suivent le
+            jeu partout — filtre de la bibliothèque, liste, systèmes. */}
+        <EditeurTags
+          tags={game.tags ?? []}
+          connus={tagsConnus}
+          onChange={(tags) => onUpdate({ ...game, tags })}
+        />
 
         {/* Rangée pleine largeur : le titre garde toute la sienne au-dessus. */}
         <div className={css.actions}>

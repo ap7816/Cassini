@@ -460,3 +460,48 @@
     transition: none;
   }
 }
+
+/* ── Source des jeux : liste choisie, ou tag ─────────────────────────────── */
+
+.source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.sourceChoix {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--hud-ligne);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.06);
+  color: var(--hud-texte-doux);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+
+.sourceChoix:hover {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-moyenne);
+}
+
+.sourceActif {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-forte);
+  background: rgb(var(--hud) / 0.14);
+}
+
+.aide {
+  margin: 0 0 6px;
+  color: var(--hud-texte-faible);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sourceChoix { transition: none; }
+}

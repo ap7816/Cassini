@@ -1,4 +1,5 @@
 import type { Game } from '../../../features/types';
+import { aLeTag, nettoyerTag } from '../../../features/library/services/tags';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from './iconesSysteme';
 import { estImageIconeValide } from './imageIcone';
 
@@ -46,6 +47,15 @@ export type SystemePerso = {
   couleur: string;
   /** Identifiants des jeux, dans l'ordre des orbites. */
   jeux: string[];
+  /**
+   * Tag dont le système reprend tous les jeux, ou `null` pour une liste
+   * choisie à la main.
+   *
+   * Un système de tag n'a pas de liste à tenir : taguer un jeu l'y fait
+   * entrer, le détaguer l'en sort. `jeux` n'est alors plus consulté, mais
+   * reste enregistré — repasser en liste choisie rend ce qu'on avait.
+   */
+  tag: string | null;
   /** Facteur appliqué au rayon du soleil. */
   soleil: number;
   /** Facteur appliqué à la vitesse des planètes ; 0 les fige. */
@@ -181,6 +191,7 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
       image: estImageIconeValide(o.image) ? o.image : null,
       couleur,
       jeux,
+      tag: nettoyerTag(o.tag),
       soleil: borne(o.soleil, BORNES.soleil),
       vitesse: borne(o.vitesse, BORNES.vitesse),
       aPlat: o.aPlat === true,
@@ -246,11 +257,15 @@ export function normaliserReglagesLaunchers(brut: unknown): Record<string, Regla
 
 /** Un système neuf, avec ses réglages par défaut. */
 export function nouveauSysteme(
-  champs: Pick<SystemePerso, 'id' | 'nom' | 'icone' | 'couleur' | 'jeux'> & { image?: string | null },
+  champs: Pick<SystemePerso, 'id' | 'nom' | 'icone' | 'couleur' | 'jeux'> & {
+    image?: string | null;
+    tag?: string | null;
+  },
 ): SystemePerso {
   return {
     ...champs,
     image: champs.image ?? null,
+    tag: champs.tag ?? null,
     soleil: BORNES.soleil.defaut,
     vitesse: BORNES.vitesse.defaut,
     aPlat: false,
@@ -266,7 +281,14 @@ export function nouveauSysteme(
  * Un jeu retiré de la bibliothèque disparaît simplement du système : garder
  * une planète pour un jeu qui n'existe plus ne désignerait rien.
  */
-export function jeuxDuSysteme(s: Pick<SystemePerso, 'jeux'>, parId: ReadonlyMap<string, Game>): Game[] {
+export function jeuxDuSysteme(
+  s: Pick<SystemePerso, 'jeux'> & Partial<Pick<SystemePerso, 'tag'>>,
+  parId: ReadonlyMap<string, Game>,
+): Game[] {
+  // Système de tag : ses jeux sont ceux qui le portent, dans l'ordre de la
+  // bibliothèque. Rien à réordonner, rien à tenir à jour.
+  if (s.tag) return [...parId.values()].filter((g) => aLeTag(g, s.tag as string));
+
   const jeux: Game[] = [];
   for (const id of s.jeux) {
     const g = parId.get(id);

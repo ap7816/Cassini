@@ -1,0 +1,117 @@
+/* Tags d'un jeu : de petites étiquettes d'instrument, lisibles sans peser.
+   Elles reprennent la structure du cockpit — trait fin, fond de vitre — et
+   restent en retrait de l'accent, réservé à ce qui est actif. */
+
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--hud-ligne);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.08);
+  color: var(--hud-texte-doux);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.tagRetirable {
+  padding-right: 2px;
+}
+
+.retirer,
+.ajouter,
+.suggestion,
+.valider {
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0 4px;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+
+.retirer:hover {
+  color: rgb(var(--hud-danger));
+}
+
+.ajouter,
+.suggestion {
+  padding: 1px 6px;
+  border-color: var(--hud-ligne);
+  color: var(--hud-texte-faible);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+
+.ajouter:hover,
+.suggestion:hover {
+  color: rgb(var(--hud));
+  border-color: var(--hud-ligne-moyenne);
+  background: rgb(var(--hud) / 0.1);
+}
+
+/* Le choix s'ouvre dans le flux : une surcouche serait rognée par les bords
+   de la carte comme par ceux de la fiche. */
+.choix {
+  margin-top: 6px;
+  padding: 6px;
+  border: 1px solid var(--hud-ligne);
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saisie {
+  display: flex;
+  gap: 4px;
+}
+
+.champ {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--hud-ligne);
+  border-radius: 2px;
+  background: rgb(var(--fond) / 0.5);
+  color: var(--hud-texte);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+
+.champ::placeholder {
+  color: var(--hud-texte-faible);
+}
+
+.valider {
+  border-color: var(--hud-ligne-moyenne);
+  color: rgb(var(--hud));
+  font-size: calc(11px * var(--ui-font-scale, 1));
+}
+
+.valider:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .retirer,
+  .ajouter,
+  .suggestion,
+  .valider {
+    transition: none;
+  }
+}

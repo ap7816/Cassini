@@ -117,7 +117,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Taille des jeux sur disque                                               | ✅ Done    |
 | Vue Système Solaire                                                      | ✅ Done    |
 | Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
-| Catégories / tags par genre ou état                                      | ❌ À faire |
+| Catégories / tags par genre ou état                                      | ✅ Done    |
 | Tri des jeux (A-Z, Z-A, joué récemment)                                  | ✅ Done    |
 | Filtres par plateforme et statut installé / non installé*                | ✅ Done    |
 | Tri avancé (par taille disque, temps joué total)                         | ❌ À faire |
@@ -226,7 +226,11 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.
 
 - **Catégories / tags**
-  Ajouter un champ `tags: string[]` dans le type `Game`. UI : bouton "+ tag" sur chaque carte, sélection depuis une liste prédéfinie ("En cours", "Terminé", "Abandonné", "Multijoueur"…) + tags libres. Filtre par tag dans la barre de filtres existante (à côté du filtre plateforme). Stockage en `localStorage` comme les autres champs utilisateur.
+  **Fait.** Chaque jeu porte des `tags` posés à la main, depuis la fiche du système solaire comme depuis sa carte dans la bibliothèque : six tags proposés (En cours, Terminé, À essayer, Abandonné, Multijoueur, Solo) et autant de tags libres qu'on veut, douze au plus par jeu, vingt-quatre caractères chacun. Les tags proposés sont rangés sous un identifiant et affichés traduits — changer la langue ne fige pas un « En cours » dans une interface anglaise ; les tags libres restent tels qu'on les a écrits. Les doublons ne tiennent pas compte de la casse.
+
+  Ce sont des données de l'utilisateur : un scan ne les touche jamais, et deux copies d'un même jeu sur deux launchers réunissent leurs tags à la déduplication (`services/tags.ts`, vérifié hors navigateur).
+
+  **Trois usages.** Un filtre par tag dans la barre de la bibliothèque, avec le nombre de jeux par tag et le choix gardé dans l'URL. Des puces de filtre sous la recherche du système solaire, qui ne proposent que les tags portés par les jeux du système affiché. Et surtout : un **système solaire alimenté par un tag** — il reprend tous les jeux qui le portent et se met à jour tout seul quand on en tague un, sans liste à tenir. Sa liste de planètes n'est alors ni modifiable ni triable, comme celle d'un launcher. La scène ne se reconstruit sur un changement de tag que si un système en dépend.
 
 - **Tri avancé**
   Ajouter dans `SortMode` (actuellement `'recent' | 'az' | 'za'`) : `'size'` (taille disque, nécessite la fonctionnalité taille) et `'playtime'` (temps joué total, nécessite les stats). Le composant `<Select>` de tri dans `LibraryPage` est déjà en place, il suffit d'ajouter les nouvelles options et le cas dans le `.sort()`.

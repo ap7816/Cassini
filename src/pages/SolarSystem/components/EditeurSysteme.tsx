@@ -20,6 +20,7 @@ import {
   type SystemePerso,
 } from '../lib/customSystems';
 import { ICONES_SYSTEME } from '../lib/iconesSysteme';
+import { libelleTag } from '../../../components/Tags/Tags';
 import { formaterNombre } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import type { EditionScene, EtatEdition } from '../scene/edition';
@@ -108,6 +109,8 @@ export function EditeurSysteme({
   }, [edition]);
 
   const jeux = jeuxDuSysteme(brouillon, parId);
+  // Ni ajout, ni retrait, ni tri : c'est le tag qui décide (comme un launcher).
+  const listeFigee = launcher || brouillon.tag !== null;
   const nomPropre = brouillon.nom.trim();
   const modifie = JSON.stringify(brouillon) !== JSON.stringify(systeme);
   const manque = !nomPropre ? t('systems.missingName') : jeux.length === 0 ? t('systems.missingGames') : null;
@@ -166,6 +169,9 @@ export function EditeurSysteme({
 
       <div className={css.corps}>
         {launcher && <p className={css.note}>{t('systems.editor.launcherNote')}</p>}
+        {!launcher && brouillon.tag !== null && (
+          <p className={css.note}>{t('systems.editor.tagNote', { tag: libelleTag(brouillon.tag, t) })}</p>
+        )}
         {!launcher && (
         <Section titre={t('systems.editor.appearance')}>
           <div className={css.icones}>
@@ -306,7 +312,7 @@ export function EditeurSysteme({
         </Section>
 
         <Section titre={t('systems.editor.planets', { n: jeux.length })}>
-          {!launcher && jeux.length > 1 && (
+          {!listeFigee && jeux.length > 1 && (
             <div className={css.tri}>
               <span className={css.triTitre}>{t('systems.editor.sort')}</span>
               <div className={css.triBoutons}>
@@ -347,7 +353,7 @@ export function EditeurSysteme({
                     <span className={css.titreJeu}>{g.title}</span>
                     {place && <span className={css.marquePlace} title={t('systems.editor.customPlacement')} />}
                   </button>
-                  {!launcher && (
+                  {!listeFigee && (
                   <>
                   <button
                     type="button"
@@ -418,7 +424,7 @@ export function EditeurSysteme({
             );
           })}
 
-          {!launcher && (
+          {!listeFigee && (
           <>
           <input
             type="search"

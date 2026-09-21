@@ -49,6 +49,15 @@ describe('appliquerScan', () => {
     expect(g.customImageUrl).toBe('p.png');
   });
 
+  it('garde les tags posés à la main, même quand le jeu disparaît du scanner', () => {
+    const avant = [jeu({ id: 'steam-1', platform: 'Steam', tags: ['En cours', 'Coop'] })];
+
+    const apres = appliquerScan(avant, [], 'Steam');
+
+    expect(apres[0].tags).toEqual(['En cours', 'Coop']);
+    expect(apres[0].installed).toBe(false);
+  });
+
   it("ne touche pas aux jeux d'une autre plateforme", () => {
     const avant = [
       jeu({ id: 'steam-1', title: 'Portal', platform: 'Steam' }),

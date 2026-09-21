@@ -17,6 +17,11 @@ export type Game = {
   installPath?: string | null;
   /** Temps de jeu en minutes, quand le launcher le tient (Steam seulement). */
   playtimeMinutes?: number | null;
+  /**
+   * Tags posés à la main : état d'avancement, genre, envie. Données de
+   * l'utilisateur — un scan ne les touche jamais (voir `services/tags.ts`).
+   */
+  tags?: string[];
 };
 
 // Paramètres de personnalisation et de comportement de l'application

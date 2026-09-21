@@ -15,6 +15,7 @@ import logo from '../../assets/logo.svg';
 import { useCalques } from '../../features/calques/useCalques';
 import { AideRaccourcis } from './components/AideRaccourcis';
 import { rayonSysteme } from './lib/etendue';
+import { tagsDeLaBibliotheque } from '../../features/library/services/tags';
 import { enregistrerDernierSysteme, lireDernierSysteme, systemeOuverture } from './lib/ouverture';
 import { definirCritereTaille, type CritereTaille } from './lib/orbits';
 import type { Game } from '../../features/types';
@@ -75,7 +76,7 @@ import { abonnerReglages, versionStructure } from '../../features/debug/tuning';
  * dans un titre ou une URL, deux bibliothèques différentes ne peuvent donc pas
  * produire la même signature.
  */
-function sceneSignature(games: Game[], critere: CritereTaille): string {
+function sceneSignature(games: Game[], critere: CritereTaille, avecTags: boolean): string {
   return games
     .map((g) =>
       [
@@ -88,6 +89,9 @@ function sceneSignature(games: Game[], critere: CritereTaille): string {
         // Seulement quand il fait la taille : sinon, rejouer à un jeu Steam
         // reconstruirait la galaxie au retour pour une donnée qu'elle ignore.
         critere === 'tempsDeJeu' ? g.playtimeMinutes ?? 0 : '',
+        // Seulement quand un système suit un tag : sinon, taguer un jeu
+        // reconstruirait la galaxie pour une donnée qu'elle n'affiche pas.
+        avecTags ? (g.tags ?? []).join(',') : '',
       ].join('\u0000'),
     )
     .join('\n');
@@ -102,8 +106,11 @@ function sceneSignature(games: Game[], critere: CritereTaille): string {
  * réécrit le tableau sans rien changer en 3D : la scène était rebâtie et la
  * caméra revenait à son cadrage initial à chaque clic sur l'étoile.
  */
-function useSceneGames(games: Game[], critere: CritereTaille): Game[] {
-  const key = useMemo(() => sceneSignature(games, critere) + critere, [games, critere]);
+function useSceneGames(games: Game[], critere: CritereTaille, avecTags: boolean): Game[] {
+  const key = useMemo(
+    () => sceneSignature(games, critere, avecTags) + critere,
+    [games, critere, avecTags],
+  );
 
   // Mise à jour d'état pendant le rendu : le motif que React prévoit pour une
   // valeur dérivée d'une entrée. Le rendu en cours renvoie déjà le nouveau
@@ -206,7 +213,10 @@ export function SolarSystemPage() {
       : platforms[0]?.name ?? '';
 
   const critereTaille: CritereTaille = settings.planetSizeByPlaytime ? 'tempsDeJeu' : 'disque';
-  const sceneGames = useSceneGames(games, critereTaille);
+  // Un système au moins suit un tag : la scène doit alors se refaire quand on
+  // tague un jeu, puisque cela change la liste de ses planètes.
+  const systemesSuivantUnTag = useMemo(() => systemesPerso.some((s) => s.tag), [systemesPerso]);
+  const sceneGames = useSceneGames(games, critereTaille, systemesSuivantUnTag);
 
   // Jeux du launcher affiché — pour la liste, pas pour la scène : celle-ci
   // les reçoit tous, puisque tous les systèmes coexistent.
@@ -273,7 +283,7 @@ export function SolarSystemPage() {
     const presents = new Set(parPlateforme.map((p) => p.platform));
     return [
       critereTaille,
-      sceneSignature(sceneGames, critereTaille),
+      sceneSignature(sceneGames, critereTaille, systemesSuivantUnTag),
       ...systemesPerso.map((s) =>
         [
           s.id,
@@ -294,7 +304,7 @@ export function SolarSystemPage() {
         ].join('\u0000'),
       ),
     ].join('\u0001');
-  }, [sceneGames, systemesPerso, parPlateforme, reglagesLaunchers, critereTaille]);
+  }, [sceneGames, systemesPerso, parPlateforme, reglagesLaunchers, critereTaille, systemesSuivantUnTag]);
 
   const parPlateformeRef = useRef(parPlateforme);
   const systemesPrecedentsRef = useRef(systemesPerso);
@@ -320,6 +330,9 @@ export function SolarSystemPage() {
     () => games.find((g) => g.id === selectedId) ?? null,
     [games, selectedId],
   );
+
+  // Tags déjà posés dans la bibliothèque : proposés en premier sur la fiche.
+  const tagsConnus = useMemo(() => tagsDeLaBibliotheque(games).map((x) => x.tag), [games]);
 
   const launcherIcons = useLauncherIcons();
 
@@ -405,6 +418,8 @@ export function SolarSystemPage() {
     setEditeur(null);
   }
 
+  // Un système de tag n'a pas de liste à tenir : ses jeux sont ceux qui
+  // portent le tag, et ces deux fonctions ne lui sont pas proposées.
   function ajouterAuSysteme(game: Game) {
     if (systemeCourant) majSysteme(ajouterJeu(systemeCourant, game.id));
   }
@@ -676,8 +691,8 @@ export function SolarSystemPage() {
         onModifierSysteme={() => {
           setEditeur(systemeCourant ? cleSysteme(systemeCourant) : platform);
         }}
-        onAjouterAuSysteme={systemeCourant ? ajouterAuSysteme : undefined}
-        onRetirerDuSysteme={systemeCourant ? retirerDuSysteme : undefined}
+        onAjouterAuSysteme={systemeCourant && !systemeCourant.tag ? ajouterAuSysteme : undefined}
+        onRetirerDuSysteme={systemeCourant && !systemeCourant.tag ? retirerDuSysteme : undefined}
         largeurListe={largeurs.liste ?? LARGEUR_LISTE.defaut}
         largeurRail={largeurs.rail ?? LARGEUR_RAIL.defaut}
         onLargeurListe={(v, e) => poserLargeur('liste', v, e)}
@@ -743,6 +758,7 @@ export function SolarSystemPage() {
             key={selectedGame.id}
             game={selectedGame}
             sgdbKeySet={settings.sgdbKeySet}
+            tagsConnus={tagsConnus}
             onClose={() => clearPlanetRef.current()}
             onUpdate={handleGameUpdate}
             onRemove={handleGameRemove}

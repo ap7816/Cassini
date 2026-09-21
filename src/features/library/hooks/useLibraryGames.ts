@@ -90,6 +90,11 @@ export function useLibraryGames() {
     setGames((prev) => prev.map((g) => (g.id === id ? { ...g, customImageUrl: url } : g)));
   }
 
+  // Remplace les tags d'un jeu (voir services/tags.ts)
+  function setGameTags(id: string, tags: string[]) {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, tags } : g)));
+  }
+
   // Exporte la bibliothèque vers un fichier JSON via le dialogue natif
   async function exportToFile() {
     await exportLibraryToFile(games);
@@ -446,6 +451,7 @@ export function useLibraryGames() {
     markPlayed,
     toggleFavorite,
     setGameImageUrl,
+    setGameTags,
 
     exportToFile,
     importFromFile,

@@ -8,6 +8,7 @@ import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } fr
 import { tauriInvoke } from '../../../services/tauri';
 import { formaterDate, formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
+import { EditeurTags } from '../../../components/Tags/Tags';
 
 type Props = {
   game: Game;
@@ -15,13 +16,19 @@ type Props = {
   onPlay: (game: Game) => void;
   onToggleFavorite: (id: string) => void;
   onSetImageUrl: (id: string, url: string | null) => void;
+  onSetTags: (id: string, tags: string[]) => void;
+  /** Tags déjà posés ailleurs, proposés en premier. */
+  tagsConnus: readonly string[];
   // Indique si une clé SteamGridDB est configurée — la clé elle-même reste
   // dans le coffre système et n'est jamais transmise au frontend
   sgdbKeySet: boolean;
   isLaunching?: boolean;
 };
 
-export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, sgdbKeySet, isLaunching = false }: Props) {
+export function GameCard({
+  game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, onSetTags, tagsConnus,
+  sgdbKeySet, isLaunching = false,
+}: Props) {
   const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
 
@@ -179,6 +186,12 @@ export function GameCard({ game, onRemove, onPlay, onToggleFavorite, onSetImageU
                 </>
               )}
             </div>
+
+            <EditeurTags
+              tags={game.tags ?? []}
+              connus={tagsConnus}
+              onChange={(tags) => onSetTags(game.id, tags)}
+            />
           </div>
 
           <div className={css.actions}>

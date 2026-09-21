@@ -13,9 +13,11 @@ import { formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import { useCalques } from '../../../features/calques/useCalques';
 import { useAppSettings } from '../../../features/settings/context/useAppSettings';
-import { cleSysteme, estSystemePerso, type SystemePerso } from '../lib/customSystems';
+import { cleSysteme, estSystemePerso, jeuxDuSysteme, type SystemePerso } from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
 import { IconeHud } from '../../../components/IconeHud/IconeHud';
+import { libelleTag } from '../../../components/Tags/Tags';
+import { aLeTag, tagsDeLaBibliotheque } from '../../../features/library/services/tags';
 import { scannerTousLesLaunchers } from '../../../features/library/services/libraryScan';
 import { useToast } from '../../../features/toast/ToastContext';
 import { PoigneeLargeur } from './PoigneeLargeur';
@@ -192,11 +194,33 @@ export function GameList({
   const disque = useDiskSpace();
 
   // Même ordre que les orbites : la n-ième entrée est la n-ième planète.
+  /**
+   * Tags portés par les jeux de ce système. Le filtre ne propose que ceux-là :
+   * un tag qui ne désigne aucun jeu d'ici ne donnerait qu'une liste vide.
+   */
+  const tagsDuSysteme = useMemo(() => tagsDeLaBibliotheque(games), [games]);
+
+  /**
+   * Nombre de jeux de chaque système personnalisé, résolu sur la bibliothèque.
+   *
+   * Compter les identifiants enregistrés annonçait des jeux qui n'existent
+   * plus — et zéro pour un système de tag, qui n'en garde aucun.
+   */
+  const comptesSystemes = useMemo(() => {
+    const parId = new Map(allGames.map((g) => [g.id, g]));
+    return new Map(systemes.map((s) => [cleSysteme(s), jeuxDuSysteme(s, parId).length]));
+  }, [allGames, systemes]);
+  const [tagChoisi, setTagChoisi] = useState<string | null>(null);
+  // Un tag qui disparaît — dernier jeu retiré, ou changement de système —
+  // ne doit pas laisser la liste filtrée sur rien.
+  const tagActif = tagChoisi && tagsDuSysteme.some((x) => x.tag === tagChoisi) ? tagChoisi : null;
+
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return games;
-    return games.filter((g) => g.title.toLowerCase().includes(q));
-  }, [games, query]);
+    let liste = tagActif ? games.filter((g) => aLeTag(g, tagActif)) : games;
+    if (q) liste = liste.filter((g) => g.title.toLowerCase().includes(q));
+    return liste;
+  }, [games, query, tagActif]);
 
   /**
    * Les deux groupes de la liste : ce qui est installé, et ce qui ne l'est plus.
@@ -311,6 +335,30 @@ export function GameList({
           onChange={(e) => setQuery(e.target.value)}
         />
 
+        {tagsDuSysteme.length > 0 && (
+          <div className={css.tags} role="group" aria-label={t('filters.tag')}>
+            <button
+              type="button"
+              className={tagActif === null ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre}
+              onClick={() => setTagChoisi(null)}
+              aria-pressed={tagActif === null}
+            >
+              {t('tags.filterNone')}
+            </button>
+            {tagsDuSysteme.map(({ tag, nombre }) => (
+              <button
+                key={tag}
+                type="button"
+                className={tagActif === tag ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre}
+                onClick={() => setTagChoisi(tagActif === tag ? null : tag)}
+                aria-pressed={tagActif === tag}
+              >
+                {libelleTag(tag, t)} <span className={css.tagNombre}>{nombre}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <ul className={css.items}>
           {installes.map((g) => (
             <Ligne
@@ -411,7 +459,10 @@ export function GameList({
               style={{ '--teinte': s.couleur } as CSSProperties}
               onClick={() => onPickPlatform(cle)}
               aria-current={cle === platform}
-              title={t('solar.railItem', { name: s.nom, games: t('library.gameCount', { count: s.jeux.length }) })}
+              title={t('solar.railItem', {
+                name: s.nom,
+                games: t('library.gameCount', { count: comptesSystemes.get(cle) ?? 0 }),
+              })}
             >
               <IconeSysteme nom={s.icone} image={s.image} couleur={s.couleur} className={css.railIcon} />
             </button>

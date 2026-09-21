@@ -1,4 +1,5 @@
 import type { Game } from '../../types';
+import { fusionnerTags } from './tags';
 
 /**
  * Fusion et déduplication de la bibliothèque.
@@ -53,6 +54,8 @@ export function deduplicateGames(games: Game[]): Game[] {
       if (!winner.favorite && g.favorite) winner.favorite = true;
       winner.lastPlayedAt = plusRecente(winner.lastPlayedAt, g.lastPlayedAt);
       if (!winner.customImageUrl && g.customImageUrl) winner.customImageUrl = g.customImageUrl;
+      // Deux copies d'un même jeu ont pu être taguées chacune de leur côté.
+      winner.tags = fusionnerTags(winner.tags, g.tags);
     }
     result.push(winner);
   }
@@ -74,6 +77,8 @@ export function mergeById(prev: Game[], incoming: Game[]): Game[] {
         favorite: existing.favorite ?? g.favorite ?? false,
         lastPlayedAt: plusRecente(existing.lastPlayedAt, g.lastPlayedAt),
         customImageUrl: existing.customImageUrl ?? g.customImageUrl ?? null,
+        // Posés à la main : un scan ne les rapporte pas et ne doit pas les perdre.
+        tags: fusionnerTags(existing.tags, g.tags),
       });
     } else {
       map.set(g.id, { ...g, favorite: g.favorite ?? false });

@@ -112,7 +112,8 @@
     "byFolder": "By folder",
     "battlenet": "Battle.net",
     "other": "Other",
-    "collapseAll": "Collapse all"
+    "collapseAll": "Collapse all",
+    "tag": "Tag"
   },
   "music": {
     "chooseFolder": "Choose folder",
@@ -361,7 +362,8 @@
       "ringsNone": "None",
       "ringsColor": "{{color}} rings",
       "ringsOtherColor": "Other ring colour",
-      "dragNote": "Drag a planet in the scene to place it: it follows its orbit, and its distance to the sun follows the mouse."
+      "dragNote": "Drag a planet in the scene to place it: it follows its orbit, and its distance to the sun follows the mouse.",
+      "tagNote": "System of the tag “{{tag}}”: its games are those carrying that tag. Tagging a game adds it."
     },
     "image": {
       "choose": "Choose an image…",
@@ -377,7 +379,12 @@
         "petite": "Image too small: it needs at least 16 px per side.",
         "illisible": "This image couldn’t be read."
       }
-    }
+    },
+    "source": "Game source",
+    "sourceChosen": "Chosen games",
+    "tagSource": "This system takes every game with the tag “{{tag}}”, and updates itself when you tag a game.",
+    "noGameWithTag": "No game carries this tag.",
+    "missingTagGames": "No game carries this tag"
   },
   "flyKeys": {
     "open": "Controls",
@@ -592,5 +599,20 @@
     "help": "This list",
     "playPause": "Play or pause",
     "flyNote": "Movement keys are set in “Controls”, at the bottom right of the view."
+  },
+  "tags": {
+    "enCours": "In progress",
+    "termine": "Finished",
+    "aEssayer": "To try",
+    "abandonne": "Dropped",
+    "multijoueur": "Multiplayer",
+    "solo": "Single-player",
+    "add": "+ tag",
+    "addOwn": "Add",
+    "own": "Custom tag",
+    "placeholder": "Type a tag…",
+    "remove": "Remove the tag {{tag}}",
+    "filterNone": "All tags",
+    "none": "Untagged"
   }
 }
