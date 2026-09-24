@@ -127,7 +127,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Support Ubisoft Connect                                                  | ✅ Done    |
 | Support Riot Games                                                       | ✅ Done    |
 | Support Rockstar Games Launcher                                          | ✅ Done    |
-| Support Xbox / Microsoft Store (Game Pass)                               | ❌ À faire |
+| Support Xbox / Microsoft Store (Game Pass)                               | ✅ Done    |
 | Raccourcis clavier                                                       | ✅ Done    |
 | Vue liste (alternative à la grille)                                      | ❌ À faire |
 | Notes par jeu                                                            | ❌ À faire |
@@ -247,7 +247,13 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Côté Rust : nouvelle commande `scan_gog_games`. GOG stocke ses jeux dans le registre Windows (`HKLM\SOFTWARE\GOG.com\Games`) et dans `C:\ProgramData\GOG.com\Galaxy\`. Chaque entrée de registre contient `path`, `gameID`, `gameName`. La `launchUrl` serait `goggalaxy://openGame/{id}`. Ajouter `'GOG'` dans `GamePlatform` et dans le filtre plateforme.
 
 - **Support Xbox / Microsoft Store (Game Pass)**
-  Côté Rust : les jeux Xbox sont dans `C:\XboxGames\` ou dans les packages UWP (`Get-AppxPackage` PowerShell). La détection est complexe car Microsoft ne fournit pas de manifest standard. Piste : lire `C:\Program Files\WindowsApps\` (nécessite des droits admin) ou utiliser la base de registre `HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\`. `launchUrl` : `ms-xbl-{titleId}://` ou `shell:AppsFolder\{packageFamilyName}!App`.
+  **Fait**, et sans élévation — `WindowsApps` reste illisible, c'était la difficulté annoncée. `xbox_scan.rs` croise deux sources : les dossiers `XboxGames` de chaque disque, où chaque jeu porte un `MicrosoftGame.Config` (identité du paquet, titre affiché, logos) et un `appxmanifest.xml` (application à lancer) ; et l'inventaire des paquets du registre utilisateur, qui donne le nom complet du paquet. De ce nom se déduit la famille, d'où la cible `shell:AppsFolder\<famille>!<application>` — vérifiée auprès du shell, elle correspond exactement à ce que Windows attend.
+
+  Cette forme de cible n'est ni une URL ni un chemin : elle est validée caractère par caractère, côté Rust avant lancement **et** à la relecture de la bibliothèque. Ce second contrôle manquait d'abord, et effaçait la cible à chaque démarrage : le bouton « Jouer » n'avait plus rien à lancer.
+
+  Ces jeux n'existent dans aucun catalogue de jaquettes : Cassini affiche **le logo que le jeu porte lui-même**, lu dans son dossier (`cover_xbox`, limité aux dossiers `XboxGames`). Et comme aucun exécutable ne peut donner une icône de launcher, `store_icons.rs` demande au shell celle de l'application Xbox — la même que dans le menu Démarrer, prise sur la machine ; un dessin livré avec l'application sert de secours. La veille reconnaît l'arrivée d'un jeu, qui apparaît sous la forme d'un dossier.
+
+  **Reste à faire** : la désinstallation, que Windows réserve à ses propres Paramètres.
 
 - **Raccourcis clavier**
   **Fait.** Le déplacement dans la scène reste à la scène (WASD/ZQSD, touches et sensibilité configurables, `lib/flyKeys.ts`) : il se règle, et il ne vaut que lorsque la vue a le focus. Tout le reste passe par une écoute unique, dans `SolarSystemPage` — répartis entre plusieurs composants, les raccourcis finissaient par se marcher dessus, et personne ne pouvait dire lesquels existaient.

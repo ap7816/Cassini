@@ -51,7 +51,7 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
   useEffect(() => {
     if (game.customImageUrl || appId || !sgdbKeySet) return;
     let cancelled = false;
-    fetchCoverArt(game.title).then((url) => {
+    fetchCoverArt(game).then((url) => {
       if (!cancelled && url) setSrc(url);
     });
     return () => { cancelled = true; };
@@ -64,7 +64,7 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
       return;
     }
     if (sgdbKeySet) {
-      fetchCoverArt(game.title).then((url) => setSrc(url ?? null));
+      fetchCoverArt(game).then((url) => setSrc(url ?? null));
       return;
     }
     setSrc(null);

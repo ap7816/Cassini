@@ -525,7 +525,7 @@ function loadCoverArt(
       if (await apply(steamCdnUrl(appId))) return;
       if (await apply(steamPortraitUrl(appId))) return;
     }
-    const sgdb = await fetchCoverArt(g.title, null);
+    const sgdb = await fetchCoverArt(g);
     if (sgdb && (await apply(sgdb))) return;
     if (!isDisposed()) setTexture(makeProcTexture(seed));
   })();

@@ -11,7 +11,9 @@
 //! - les clés « Uninstall » du registre, où s'inscrivent les jeux de
 //!   Battle.net, Riot, Ubisoft, Rockstar, HoYoPlay, et le lanceur d'Hytale ;
 //! - les dossiers des jeux HoYoPlay, dont l'exécutable n'apparaît qu'à la fin
-//!   du téléchargement, sans que le registre change.
+//!   du téléchargement, sans que le registre change ;
+//! - les dossiers `XboxGames`, où un jeu du Store apparaît comme un dossier —
+//!   il ne laisse ni manifeste ni clé « Uninstall ».
 //!
 //! La veille ne scanne rien elle-même : elle prévient l'interface, qui relance
 //! le scan habituel. Les rafales — une installation touche plusieurs fichiers
@@ -86,7 +88,16 @@ fn pertinent(ev: &Event) -> bool {
     matches!(
         ev.kind,
         EventKind::Create(_) | EventKind::Remove(_) | EventKind::Modify(ModifyKind::Name(_))
-    ) && ev.paths.iter().any(|p| est_manifeste(p))
+    ) && ev.paths.iter().any(|p| est_manifeste(p) || est_jeu_xbox(p))
+}
+
+/// Vrai pour ce qui est posé directement dans un dossier `XboxGames` : un jeu
+/// du Store y arrive et en repart comme un dossier, pas comme un fichier.
+fn est_jeu_xbox(p: &Path) -> bool {
+    p.parent()
+        .and_then(|d| d.file_name())
+        .and_then(|n| n.to_str())
+        .is_some_and(|n| n.eq_ignore_ascii_case("XboxGames"))
 }
 
 fn est_manifeste(p: &Path) -> bool {
@@ -173,6 +184,18 @@ mod tests {
     fn ignore_la_reecriture_d_un_manifeste_pendant_un_telechargement() {
         let acf = r"D:\SteamLibrary\steamapps\appmanifest_620.acf";
         assert!(!pertinent(&ev(EventKind::Modify(ModifyKind::Data(DataChange::Content)), acf)));
+    }
+
+    #[test]
+    fn reagit_a_un_jeu_xbox_qui_apparait_ou_disparait() {
+        let jeu = r"C:\XboxGames\Minecraft for Windows";
+        assert!(pertinent(&ev(EventKind::Create(CreateKind::Folder), jeu)));
+        assert!(pertinent(&ev(EventKind::Remove(RemoveKind::Folder), jeu)));
+        // Deux crans plus bas, c'est le contenu du jeu : rien à en dire.
+        assert!(!pertinent(&ev(
+            EventKind::Create(CreateKind::File),
+            r"C:\XboxGames\Minecraft for Windows\Content\data.pak"
+        )));
     }
 
     #[test]

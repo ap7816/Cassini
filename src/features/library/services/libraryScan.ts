@@ -23,6 +23,7 @@ const SCANNERS: Array<{ commande: string; platform: GamePlatform }> = [
   { commande: 'scan_ubisoft_games', platform: 'Ubisoft' },
   { commande: 'scan_hytale_games', platform: 'Hytale' },
   { commande: 'scan_hoyoplay_games', platform: 'HoYoPlay' },
+  { commande: 'scan_xbox_games', platform: 'Xbox' },
 ];
 
 /**

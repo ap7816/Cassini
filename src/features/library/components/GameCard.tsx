@@ -76,7 +76,7 @@ export function GameCard({
     if (isSteam && resolvedSteamAppId) return;
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
-      fetchCoverArt(game.title).then((url) => {
+      fetchCoverArt(game).then((url) => {
         if (!cancelled) setResolved({ id: game.id, src: url ?? null });
       });
       return () => { cancelled = true; };
@@ -94,7 +94,7 @@ export function GameCard({
       } else {
         // Les deux URLs Steam ont échoué → tenter SteamGridDB en dernier recours
         if (sgdbKeySet) {
-          fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
+          fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
         } else {
           setImgSrc(null);
         }
@@ -105,7 +105,7 @@ export function GameCard({
     // Non-Steam : vider le cache et retenter via SteamGridDB
     clearCoverCacheEntry(game.title.toLowerCase());
     if (sgdbKeySet) {
-      fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
+      fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
     } else {
       setImgSrc(null);
     }

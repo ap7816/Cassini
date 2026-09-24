@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import type { GamePlatform } from '../../../features/types';
+import iconeXbox from '../../../assets/xbox.svg';
 import {
   getCachedLauncherIconsById,
   storeLauncherIcons,
@@ -47,12 +48,55 @@ type LauncherDto = {
  * alors sur sa pastille de couleur : l'icône est un agrément de repérage, pas
  * une condition d'affichage.
  */
+/**
+ * Icônes fournies avec l'application, pour les plateformes dont aucun
+ * exécutable ne peut en donner une.
+ *
+ * Un jeu du Microsoft Store n'a pas de launcher à scanner : son application
+ * vit dans un dossier que l'utilisateur n'a pas le droit de lire. Sans cette
+ * image, la barre n'aurait qu'une initiale.
+ */
+const ICONES_FOURNIES: Partial<Record<GamePlatform, string>> = { Xbox: iconeXbox };
+
+/**
+ * Applications du Store dont le shell sait donner l'icône, par plateforme.
+ *
+ * C'est la même image que dans le menu Démarrer, prise sur la machine : rien
+ * de la marque n'est embarqué ici, et le dessin livré ne sert que si
+ * l'application n'est pas installée.
+ */
+const APPLICATIONS_STORE: Partial<Record<GamePlatform, string>> = { Xbox: 'Microsoft.GamingApp_' };
+
+/** Clé de cache d'une icône demandée au shell plutôt qu'à un exécutable. */
+const cleStore = (prefixe: string) => `store:${prefixe}`;
+
 export function useLauncherIcons(): Record<string, string> {
-  const [icons, setIcons] = useState<Record<string, string>>({});
+  const [icons, setIcons] = useState<Record<string, string>>(ICONES_FOURNIES as Record<string, string>);
 
   useEffect(() => {
     if (!isTauri()) return;
     let annule = false;
+
+    // Icônes des applications du Store, demandées au shell.
+    void (async () => {
+      const attendues = Object.entries(APPLICATIONS_STORE) as Array<[GamePlatform, string]>;
+      const { byId, missing } = getCachedLauncherIconsById(
+        attendues.map(([id, prefixe]) => ({ id, iconPath: cleStore(prefixe) })),
+      );
+      if (!annule && Object.keys(byId).length > 0) setIcons((prev) => ({ ...prev, ...byId }));
+
+      for (const m of missing) {
+        const prefixe = m.iconPath.slice('store:'.length);
+        try {
+          const dataUrl = await invoke<string | null>('store_app_icon', { prefix: prefixe });
+          if (!dataUrl || annule) continue;
+          storeLauncherIcons([{ iconPath: m.iconPath, dataUrl }]);
+          setIcons((prev) => ({ ...prev, [m.id]: dataUrl }));
+        } catch {
+          /* application absente : le dessin livré reste affiché */
+        }
+      }
+    })();
 
     void (async () => {
       let launchers: LauncherDto[];
@@ -71,7 +115,7 @@ export function useLauncherIcons(): Record<string, string> {
         .filter((e): e is { id: GamePlatform; iconPath: string } => Boolean(e.id));
 
       const { byId, missing } = getCachedLauncherIconsById(entrees);
-      if (!annule && Object.keys(byId).length > 0) setIcons(byId);
+      if (!annule && Object.keys(byId).length > 0) setIcons((prev) => ({ ...prev, ...byId }));
       if (missing.length === 0) return;
 
       const obtenues: Array<{ id: string; iconPath: string; dataUrl: string }> = [];

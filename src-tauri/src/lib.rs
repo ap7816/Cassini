@@ -11,9 +11,11 @@ mod rockstar_scan;
 mod secret_store;
 mod security;
 mod steam_scan;
+mod store_icons;
 mod ubisoft_scan;
 mod uninstall;
 mod watcher;
+mod xbox_scan;
 use security::MusicRoot;
 use tauri_plugin_log;
 
@@ -282,6 +284,34 @@ fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
 #[tauri::command]
 fn scan_hoyoplay_games() -> Result<Vec<steam_scan::GameDto>, String> {
     hoyoplay_scan::scan_hoyoplay_games()
+}
+
+// Commande Tauri : jeux Xbox / Microsoft Store installés (Game Pass PC)
+#[tauri::command]
+fn scan_xbox_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    xbox_scan::scan_xbox_games()
+}
+
+// Commande Tauri : icône d'une application du Store, demandée au shell.
+//
+// Sert à la barre des systèmes : un jeu Xbox n'a pas de launcher dont extraire
+// une icône, et son application vit dans un dossier illisible.
+#[tauri::command]
+fn store_app_icon(prefix: String) -> Option<String> {
+    if prefix.is_empty()
+        || prefix.len() > 128
+        || !prefix.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+    {
+        return None;
+    }
+    let cible = store_icons::cible_application(&prefix)?;
+    store_icons::icone_application(&cible, 64).ok()
+}
+
+// Commande Tauri : jaquette d'un jeu du Store, tirée de son propre logo
+#[tauri::command]
+fn xbox_cover(path: String) -> Option<String> {
+    xbox_scan::cover_xbox(&path)
 }
 
 // Commande Tauri : scanne les jeux Rockstar Games via le registre Windows
@@ -602,6 +632,12 @@ fn launch_target(target: String) -> Result<(), String> {
 
     let lower = t.to_ascii_lowercase();
     let is_scheme = LAUNCH_SCHEMES.iter().any(|s| lower.starts_with(s));
+
+    // Application de paquet (Xbox, Microsoft Store) : ni URL ni chemin, mais
+    // une adresse du shell. Sa forme est vérifiée caractère par caractère.
+    if xbox_scan::est_cible_appsfolder(t) {
+        return detached::open_via_shell(t);
+    }
 
     if !is_scheme {
         // Chemin local uniquement : on refuse les chemins UNC (\\serveur\...),
@@ -1386,6 +1422,7 @@ pub fn run() {
                     let mut dossiers = steam_scan::dossiers_steamapps();
                     dossiers.extend(epic_scan::find_manifests_path());
                     dossiers.extend(hoyoplay_scan::dossiers_jeux());
+                    dossiers.extend(xbox_scan::dossiers_xbox());
                     watcher::demarrer(app, dossiers);
                 });
             }
@@ -1446,6 +1483,7 @@ pub fn run() {
             scan_steam_games, steam_playtimes, scan_epic_games, scan_battlenet_games,
             scan_hytale_games,
             scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_hoyoplay_games,
+            scan_xbox_games, xbox_cover, store_app_icon,
             scan_launchers, get_file_icon_data_url, open_folder,
             launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
             launch_target,

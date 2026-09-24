@@ -16,7 +16,7 @@ import { aLeTag, tagsDeLaBibliotheque } from '../../features/library/services/ta
 import { libelleTag } from '../../components/Tags/Tags';
 
 type ViewMode = 'games' | 'favorites';
-type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Other';
+type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Xbox' | 'Other';
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
@@ -77,6 +77,7 @@ export function LibraryPage() {
     scanPcUbisoft,
     scanPcHytale,
     scanPcHoYoPlay,
+    scanPcXbox,
     isScanning,
     scanError,
   } = useLibraryGames();
@@ -95,6 +96,7 @@ export function LibraryPage() {
       scanPcUbisoft(),
       scanPcHytale(),
       scanPcHoYoPlay(),
+      scanPcXbox(),
     ]);
   }
 
@@ -115,6 +117,7 @@ export function LibraryPage() {
       ['Ubisoft', 'Ubisoft Connect'],
       ['Hytale', 'Hytale'],
       ['HoYoPlay', 'HoYoPlay'],
+      ['Xbox', 'Xbox'],
       ['Other', t('filters.other')],
     ];
     return [

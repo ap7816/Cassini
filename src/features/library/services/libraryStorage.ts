@@ -38,6 +38,15 @@ const ALLOWED_SCHEMES = [
 // distante.
 const LOCAL_PATH_RE = /^[a-zA-Z]:[\\/](?![\\/])/;
 
+// Application de paquet (Xbox, Microsoft Store) : `shell:AppsFolder\famille!app`.
+//
+// Ces jeux n'ont ni URL de protocole ni exécutable atteignable : le shell les
+// lance par cette adresse-là, et rien d'autre ne l'accepte. Sans cette ligne,
+// la cible était effacée à la relecture de la bibliothèque et le bouton
+// « Jouer » n'avait plus rien à lancer. La forme est donc vérifiée en entier :
+// un nom de paquet ne porte que lettres, chiffres, point, tiret ou souligné.
+const APPSFOLDER_RE = /^shell:AppsFolder\\[A-Za-z0-9._-]{1,128}![A-Za-z0-9._-]{1,128}$/i;
+
 function sanitizeLaunchUrl(v: unknown): string | null {
   const s = asString(v);
   if (!s) return null;
@@ -49,6 +58,7 @@ function sanitizeLaunchUrl(v: unknown): string | null {
   if (/[\u0000-\u001f]/.test(t)) return null;
 
   if (ALLOWED_SCHEMES.some((p) => t.toLowerCase().startsWith(p))) return t;
+  if (APPSFOLDER_RE.test(t)) return t;
 
   // Chemin local : on refuse les chemins UNC (\\serveur\partage\charge.exe),
   // qui permettraient d'exécuter un binaire hébergé à distance.

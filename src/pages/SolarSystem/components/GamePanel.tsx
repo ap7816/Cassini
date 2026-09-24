@@ -74,7 +74,7 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
     }
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
-      fetchCoverArt(game.title).then((url) => {
+      fetchCoverArt(game).then((url) => {
         if (!cancelled) setImgSrc(url ?? null);
       });
       return () => {
@@ -94,12 +94,12 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
         setImgSrc(portrait);
         return;
       }
-      if (sgdbKeySet) fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
+      if (sgdbKeySet) fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
       else setImgSrc(null);
       return;
     }
     clearCoverCacheEntry(game.title.toLowerCase());
-    if (sgdbKeySet) fetchCoverArt(game.title).then((url) => setImgSrc(url ?? null));
+    if (sgdbKeySet) fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
     else setImgSrc(null);
   }
 

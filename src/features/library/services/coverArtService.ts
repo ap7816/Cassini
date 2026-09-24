@@ -1,3 +1,4 @@
+import type { Game } from '../../types';
 // Résolution des jaquettes de jeux.
 //
 // Nommé d'après son rôle et non d'après son fournisseur : ce service s'est
@@ -86,8 +87,25 @@ export function steamPortraitUrl(appId: string): string {
 // simultanément.
 const inFlight = new Map<string, Promise<string | null>>();
 
-export function fetchCoverArt(title: string, steamAppId?: string | null): Promise<string | null> {
-  const cacheKey = steamAppId ? `steam:${steamAppId}` : title.toLowerCase();
+/**
+ * Jaquette d'un jeu.
+ *
+ * Trois sources, dans cet ordre : le CDN de Steam quand on connaît son
+ * identifiant, le logo que le jeu porte lui-même s'il vient du Store — seule
+ * image qu'un jeu Xbox possède, aucun catalogue ne le connaissant —, puis
+ * SteamGridDB.
+ */
+export function fetchCoverArt(
+  jeu: Pick<Game, 'title' | 'steamAppId' | 'platform' | 'installPath'>,
+): Promise<string | null> {
+  const { title } = jeu;
+  const steamAppId = jeu.steamAppId ?? null;
+  const dossierXbox = jeu.platform === 'Xbox' ? jeu.installPath ?? null : null;
+  const cacheKey = steamAppId
+    ? `steam:${steamAppId}`
+    : dossierXbox
+      ? `xbox:${dossierXbox.toLowerCase()}`
+      : title.toLowerCase();
 
   if (persistentCache.has(cacheKey)) return Promise.resolve(persistentCache.get(cacheKey)!);
   if (notFoundCache.has(cacheKey)) return Promise.resolve(null);
@@ -97,6 +115,27 @@ export function fetchCoverArt(title: string, steamAppId?: string | null): Promis
     persistentCache.set(cacheKey, steamUrl);
     saveCache();
     return Promise.resolve(steamUrl);
+  }
+
+  if (dossierXbox) {
+    const enCours = inFlight.get(cacheKey);
+    if (enCours) return enCours;
+    const lecture = (async () => {
+      try {
+        const url = await tauriInvoke<string | null>('xbox_cover', { path: dossierXbox });
+        if (url) {
+          persistentCache.set(cacheKey, url);
+          saveCache();
+          return url;
+        }
+      } catch (e) {
+        console.error('[xbox] lecture du logo impossible pour', title, e);
+      }
+      notFoundCache.add(cacheKey);
+      return null;
+    })().finally(() => inFlight.delete(cacheKey));
+    inFlight.set(cacheKey, lecture);
+    return lecture;
   }
 
   const running = inFlight.get(cacheKey);
