@@ -64,7 +64,12 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
       return;
     }
     if (sgdbKeySet) {
-      fetchCoverArt(game).then((url) => setSrc(url ?? null));
+      // `sansSteam` quand l'identifiant est en cause : sans lui, le service
+      // rendait l'adresse morte de Valve à qui venait de la voir échouer, et
+      // la vignette se rechargeait en boucle.
+      fetchCoverArt(game, { sansSteam: Boolean(appId) }).then((url) =>
+        setSrc(url && url !== src ? url : null),
+      );
       return;
     }
     setSrc(null);

@@ -97,6 +97,7 @@ const inFlight = new Map<string, Promise<string | null>>();
  */
 export function fetchCoverArt(
   jeu: Pick<Game, 'title' | 'steamAppId' | 'platform' | 'installPath'>,
+  options?: { sansSteam?: boolean },
 ): Promise<string | null> {
   const { title } = jeu;
   const steamAppId = jeu.steamAppId ?? null;
@@ -107,10 +108,31 @@ export function fetchCoverArt(
       ? `xbox:${dossierXbox.toLowerCase()}`
       : title.toLowerCase();
 
-  if (persistentCache.has(cacheKey)) return Promise.resolve(persistentCache.get(cacheKey)!);
+  // `sansSteam` : l'appelant a essayé les images de Valve et aucune n'existe.
+  //
+  // Le CDN n'a pas de jaquette pour tout ce qui porte un identifiant Steam —
+  // les outils et les sorties récentes n'en ont souvent aucune, et l'adresse
+  // calculée répond 404. Sans cette porte de sortie, on rendait l'URL morte
+  // depuis le cache à celui-là même qui venait de la voir échouer : l'image se
+  // rechargeait en boucle et la fiche gardait un cadre vide, sans même la
+  // lettre de repli.
+  const sansSteam = options?.sansSteam === true;
+
+  if (!sansSteam && persistentCache.has(cacheKey)) {
+    return Promise.resolve(persistentCache.get(cacheKey)!);
+  }
   if (notFoundCache.has(cacheKey)) return Promise.resolve(null);
 
-  if (steamAppId) {
+  if (sansSteam && persistentCache.has(cacheKey)) {
+    const connue = persistentCache.get(cacheKey)!;
+    // Une jaquette trouvée ailleurs reste valable ; seule l'adresse calculée
+    // de Valve est à oublier — y compris pour les prochaines sessions.
+    if (steamAppId && connue !== steamCdnUrl(steamAppId)) return Promise.resolve(connue);
+    persistentCache.delete(cacheKey);
+    saveCache();
+  }
+
+  if (steamAppId && !sansSteam) {
     const steamUrl = steamCdnUrl(steamAppId);
     persistentCache.set(cacheKey, steamUrl);
     saveCache();

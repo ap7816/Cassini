@@ -61,7 +61,15 @@ export function GameCard({
   const [resolved, setResolved] = useState<{ id: string; src: string | null } | null>(null);
   const imgSrc = resolved?.id === game.id ? resolved.src : steamDirectUrl;
 
-  const bannerUrl = game.customImageUrl ?? imgSrc;
+  // Image personnalisée qui ne se charge pas : retenue par son adresse, pour
+  // qu'on cesse de la réclamer. Sans cela le cadre restait vide — la bannière
+  // s'obstinait sur une URL morte et la lettre de repli n'apparaissait jamais.
+  const [imageKo, setImageKo] = useState<string | null>(null);
+  const imagePerso = game.customImageUrl && game.customImageUrl !== imageKo
+    ? game.customImageUrl
+    : null;
+
+  const bannerUrl = imagePerso ?? imgSrc;
   const showFallback = !bannerUrl;
 
   const setImgSrc = useCallback(
@@ -84,7 +92,7 @@ export function GameCard({
   }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbKeySet]);
 
   function handleImgError() {
-    if (game.customImageUrl) { setImgSrc(null); return; }
+    if (imagePerso) { setImageKo(imagePerso); return; }
 
     if (isSteam && resolvedSteamAppId) {
       // header.jpg a échoué → essayer library_600x900.jpg en fallback
@@ -92,9 +100,13 @@ export function GameCard({
       if (imgSrc !== portrait) {
         setImgSrc(portrait);
       } else {
-        // Les deux URLs Steam ont échoué → tenter SteamGridDB en dernier recours
+        // Les deux images de Valve ont échoué : il n'y en a pas pour ce jeu.
+        // `sansSteam` le dit au service, qui rendait sinon l'adresse morte
+        // qu'on vient d'essayer — l'image se rechargeait alors sans fin.
         if (sgdbKeySet) {
-          fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
+          fetchCoverArt(game, { sansSteam: true }).then((url) =>
+            setImgSrc(url && url !== steamDirectUrl && url !== portrait ? url : null),
+          );
         } else {
           setImgSrc(null);
         }

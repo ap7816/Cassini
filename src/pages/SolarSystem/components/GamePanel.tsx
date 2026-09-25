@@ -61,7 +61,14 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
     return () => clearTimeout(minuteur);
   }, [lance]);
 
-  const bannerUrl = game.customImageUrl ?? imgSrc;
+  // Image personnalisée qui ne se charge pas : retenue par son adresse, pour
+  // qu'on cesse de la réclamer (voir `GameCard`, même repli).
+  const [imageKo, setImageKo] = useState<string | null>(null);
+  const imagePerso = game.customImageUrl && game.customImageUrl !== imageKo
+    ? game.customImageUrl
+    : null;
+
+  const bannerUrl = imagePerso ?? imgSrc;
   const showFallback = !bannerUrl;
   const col = PLATFORM_CSS[game.platform] ?? '#7a8a9a';
   const canPlay = Boolean(game.installed && game.launchUrl);
@@ -84,8 +91,8 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
   }, [game.id, game.title, game.customImageUrl, resolvedAppId, isSteam, sgdbKeySet]);
 
   function handleImgError() {
-    if (game.customImageUrl) {
-      setImgSrc(null);
+    if (imagePerso) {
+      setImageKo(imagePerso);
       return;
     }
     if (isSteam && resolvedAppId) {
@@ -94,8 +101,15 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
         setImgSrc(portrait);
         return;
       }
-      if (sgdbKeySet) fetchCoverArt(game).then((url) => setImgSrc(url ?? null));
-      else setImgSrc(null);
+      // Aucune image chez Valve pour cet identifiant : on le dit au service,
+      // qui rendait sinon l'adresse morte qu'on vient d'essayer.
+      if (sgdbKeySet) {
+        fetchCoverArt(game, { sansSteam: true }).then((url) =>
+          setImgSrc(url && url !== steamCdnUrl(resolvedAppId) && url !== portrait ? url : null),
+        );
+      } else {
+        setImgSrc(null);
+      }
       return;
     }
     clearCoverCacheEntry(game.title.toLowerCase());
