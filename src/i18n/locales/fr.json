@@ -451,6 +451,26 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v5_0_0": {
+      "new_0": "[Bibliothèque] Jeux Xbox et Microsoft Store (Game Pass) : détectés, lancés, et illustrés par leur propre logo",
+      "new_1": "[Bibliothèque] Launcher HoYoPlay pris en charge : Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd",
+      "new_2": "[Bibliothèque] Des tags à poser sur les jeux, et un filtre pour s’y retrouver",
+      "new_3": "[Systèmes] Un système solaire alimenté par un tag : il se remplit tout seul quand on tague un jeu",
+      "new_4": "[Interface] Thème clair, sombre, ou celui de Windows",
+      "new_5": "[Systèmes] Système solaire d’ouverture au choix : automatique, dernier visité, ou un système précis",
+      "new_6": "[Systèmes] Couleur de l’étoile : sa couronne et la lumière sur les planètes la suivent, avec aperçu avant d’enregistrer",
+      "new_7": "[Bibliothèque] Statut des jeux en temps réel : une installation ou une désinstallation se voit sans rien relancer",
+      "new_8": "[Systèmes] Planètes : anneaux au choix, taille d’après le temps de jeu Steam, et placement en glissant dans la scène",
+      "new_9": "[Musique] Le lecteur se commande depuis la zone de notification et par les touches multimédia du clavier",
+      "fix_0": "[Bibliothèque] Lancer un jeu Epic n’ouvre plus des fenêtres de dossiers",
+      "fix_1": "[Bibliothèque] Un jeu sans jaquette chez Steam affiche son repli au lieu d’un cadre vide",
+      "fix_2": "[Musique] La musique d’ambiance se tait quand la fenêtre quitte l’écran, et revient avec elle",
+      "fix_3": "[Interface] La barre de musique ne passe plus au-dessus des panneaux",
+      "fix_4": "[Bibliothèque] La jauge du disque se met à jour après une désinstallation",
+      "fix_5": "[Systèmes] La barre des launchers compte les jeux présents, et non les identifiants enregistrés",
+      "change_0": "[Systèmes] Les planètes se placent en glissant : les flèches de la liste disparaissent",
+      "change_1": "[Réglages] Textes des réglages réécrits en style de réglage"
+    },
     "v4_0_0": {
       "new_0": "[Interface] Nouvelle interface façon cockpit de vaisseau : cadres, télémétrie et polices d’instrument",
       "new_1": "[Réglages] Les réglages s’ouvrent en panneau sur le système solaire, sans quitter la vue",

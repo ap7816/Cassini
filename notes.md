@@ -2,7 +2,7 @@
 
 ## C'est quoi Cassini ?
 
-Cassini est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic, Battle.net, Ubisoft Connect, Riot, Rockstar et Hytale séparément pour trouver tes jeux, Cassini les scanne automatiquement et les affiche dans une interface unifiée — sous forme de liste, ou d'une galaxie où chaque launcher est un système solaire et chaque jeu une planète.
+Cassini est une application de bureau Windows (Tauri + React) qui centralise tous tes jeux installés en une seule bibliothèque. Plutôt que d'ouvrir Steam, Epic, Battle.net, Ubisoft Connect, Riot, Rockstar, Hytale, HoYoPlay et l'application Xbox séparément pour trouver tes jeux, Cassini les scanne automatiquement et les affiche dans une interface unifiée — sous forme de liste, ou d'une galaxie où chaque launcher est un système solaire et chaque jeu une planète.
 
 ---
 
@@ -10,7 +10,7 @@ Cassini est une application de bureau Windows (Tauri + React) qui centralise tou
 
 ### Démarrage
 
-À **chaque** lancement, l'app scanne les sept launchers en parallèle (`scannerTousLesLaunchers`). Les scans partent ensemble, mais la fusion est séquentielle : chaque plateforme s'applique sur le résultat de la précédente, sinon la dernière écraserait les autres. Le stockage n'est réécrit que si le contenu a réellement changé — la comparaison passe par une empreinte insensible à l'ordre, sans quoi la galaxie se reconstruirait à chaque démarrage. Les changements se propagent en direct à la liste et à la scène 3D via `subscribeGames`. La bibliothèque elle-même vit dans le store Tauri (`archive.json`), avec `localStorage` en repli hors Tauri.
+À **chaque** lancement, l'app scanne les neuf launchers en parallèle (`scannerTousLesLaunchers`). Les scans partent ensemble, mais la fusion est séquentielle : chaque plateforme s'applique sur le résultat de la précédente, sinon la dernière écraserait les autres. Le stockage n'est réécrit que si le contenu a réellement changé — la comparaison passe par une empreinte insensible à l'ordre, sans quoi la galaxie se reconstruirait à chaque démarrage. Les changements se propagent en direct à la liste et à la scène 3D via `subscribeGames`. La bibliothèque elle-même vit dans le store Tauri (`archive.json`), avec `localStorage` en repli hors Tauri.
 
 ### Scan des launchers (côté Rust)
 
@@ -216,7 +216,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Fait.** `sizeOnDisk` est porté par le type `Game`, renseigné par les scanners, affiché dans la liste du système solaire et sur la fiche du jeu, et il sert à dimensionner les planètes. **Reste à faire** : le tri par taille — `SortMode` de `LibraryPage` n'offre que `recent`, `az` et `za`.
 
 - **Vue Système Solaire**
-  **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les sept launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, ou du temps de jeu si on le choisit — voir « Personnalisation d'une planète ».
+  **Fait**, et bien au-delà de ce que cette note prévoyait : ce n'est pas une vue alternative de la bibliothèque mais la page d'accueil de l'application, et pas du CSS/SVG mais une scène three.js. Les neuf launchers coexistent dans une seule galaxie ; chaque système est construit à l'approche et libéré à l'éloignement. La taille d'une planète vient de la taille sur disque, ou du temps de jeu si on le choisit — voir « Personnalisation d'une planète ».
 
   Une planète sur trois environ porte des anneaux, tirés parmi quatre familles calquées sur le système solaire : la nappe large et divisée de Saturne, les rubans étroits et très basculés d'Uranus, le voile de poussière de Jupiter, et les arcs de Neptune. Ce qui les distingue de loin, ce sont la largeur relative, l'opacité, l'inclinaison et le fait d'être complets ou non — la seule graine n'en changeait que le grain, et deux anneaux se ressemblaient dès qu'on les regardait de loin.
 
@@ -329,7 +329,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Absent de la version publiée** : le panneau est monté derrière `import.meta.env.DEV`, que Vite remplace par `false` à la compilation. Vérifié sur le build de production — ni le composant ni ses libellés n'y figurent, alors qu'un build de développement les émet. Le module des valeurs par défaut, lui, est livré : la scène y lit ce qu'elle lisait auparavant dans ses constantes.
 
 - **Scan en arrière-plan automatique**
-  **Fait**, autrement que prévu ici : plutôt qu'un rescan à la mise au point de la fenêtre ou toutes les trente minutes, `scannerTousLesLaunchers()` tourne une fois par lancement, dans `AppLayout`. Les sept scans partent en parallèle, la fusion est séquentielle, et le stockage n'est réécrit que si une empreinte insensible à l'ordre a changé. La liste et la scène se mettent à jour d'elles-mêmes via `subscribeGames`. Le rescan périodique reste possible si le besoin s'en fait sentir.
+  **Fait**, autrement que prévu ici : plutôt qu'un rescan à la mise au point de la fenêtre ou toutes les trente minutes, `scannerTousLesLaunchers()` tourne une fois par lancement, dans `AppLayout`. Les neuf scans partent en parallèle, la fusion est séquentielle, et le stockage n'est réécrit que si une empreinte insensible à l'ordre a changé. La liste et la scène se mettent à jour d'elles-mêmes via `subscribeGames`. Le rescan périodique reste possible si le besoin s'en fait sentir.
 
 - **Mise à jour du statut installé en temps réel**
   **Fait.** `watcher.rs` surveille ce qui change la bibliothèque, fenêtre ouverte : les manifestes de Steam (`steamapps/appmanifest_*.acf`, toutes bibliothèques) et d'Epic (`Manifests/*.item`) avec la crate `notify`, et les clés « Uninstall » du registre (`RegNotifyChangeKeyValue`), où s'inscrivent Battle.net, Riot, Ubisoft, Rockstar et le lanceur d'Hytale. Seules l'apparition et la disparition d'un manifeste comptent — Steam réécrit le sien pendant tout un téléchargement. Les rafales sont regroupées côté Rust (1,5 s de calme), puis l'événement `bibliotheque-changee` fait relancer le scan habituel par `AppLayout`, au plus une fois toutes les dix secondes, le dernier signal n'étant jamais perdu. S'y ajoutent le scan au retour sur la fenêtre et le bouton « Actualiser ».

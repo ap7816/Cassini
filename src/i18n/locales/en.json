@@ -451,6 +451,26 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v5_0_0": {
+      "new_0": "[Library] Xbox and Microsoft Store games (Game Pass): detected, launched, and shown with their own logo",
+      "new_1": "[Library] HoYoPlay launcher supported: Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd",
+      "new_2": "[Library] Tags to put on games, and a filter to find your way around",
+      "new_3": "[Systems] A solar system fed by a tag: it fills itself as you tag games",
+      "new_4": "[Interface] Light theme, dark theme, or the one Windows uses",
+      "new_5": "[Systems] Choose the solar system that opens: automatic, last visited, or a specific one",
+      "new_6": "[Systems] Star colour: its corona and the light on the planets follow it, with a preview before saving",
+      "new_7": "[Library] Live game status: installing or uninstalling shows up without restarting anything",
+      "new_8": "[Systems] Planets: rings of your choosing, size from Steam playtime, and drag them into place in the scene",
+      "new_9": "[Music] The player answers to the notification area and to the keyboard media keys",
+      "fix_0": "[Library] Launching an Epic game no longer opens folder windows",
+      "fix_1": "[Library] A game with no Steam artwork now shows its placeholder instead of an empty frame",
+      "fix_2": "[Music] Ambient music goes quiet when the window leaves the screen, and comes back with it",
+      "fix_3": "[Interface] The music bar no longer covers the panels",
+      "fix_4": "[Library] The disk gauge updates after an uninstall",
+      "fix_5": "[Systems] The launcher bar counts the games present, not the stored identifiers",
+      "change_0": "[Systems] Planets are placed by dragging: the arrows in the list are gone",
+      "change_1": "[Settings] Settings wording rewritten as settings"
+    },
     "v4_0_0": {
       "new_0": "[Interface] New spaceship-cockpit interface: frames, telemetry and instrument fonts",
       "new_1": "[Settings] Settings open as a panel over the solar system, without leaving the view",
