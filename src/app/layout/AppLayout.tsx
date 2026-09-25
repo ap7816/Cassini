@@ -7,6 +7,8 @@ import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useUpdater } from '../../features/updater/useUpdater';
 import { useMusicPlayer } from '../../features/music/MusicContext';
 import { initAmbient, suspendAmbient, resumeAmbient } from '../../features/ambient/ambientPlayer';
+import { noterEtat, surEtatFenetre } from '../../features/system/etatFenetre';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
@@ -70,6 +72,9 @@ export function AppLayout() {
           if (runInBgRef.current) {
             event.preventDefault();
             await getCurrentWindow().hide();
+            // Personne d'autre ne le dira : masquer une fenêtre par programme
+            // n'émet ni redimensionnement ni changement de focus.
+            noterEtat('natif', true);
           }
         })
         .then((fn) => {
@@ -186,62 +191,60 @@ export function AppLayout() {
     }
   }, [music.isPlaying]);
 
-  // Coupe l'ambiance quand la fenêtre quitte l'écran.
+  // Commandes du lecteur depuis la zone de notification.
   //
-  // `visibilitychange` couvre les deux façons de la faire disparaître : réduite
-  // dans la barre des tâches, ou repliée dans la zone de notification quand
-  // « continuer en arrière-plan » est actif.
-  useEffect(() => {
-    const appliquer = () => {
-      if (document.visibilityState === 'hidden') suspendAmbient('window');
-      else resumeAmbient('window');
-    };
-    document.addEventListener('visibilitychange', appliquer);
-    // Au montage : la fenêtre peut déjà être masquée, si l'application a été
-    // lancée réduite ou démarrée avec la session.
-    appliquer();
-    return () => document.removeEventListener('visibilitychange', appliquer);
-  }, []);
-
-  // Filet côté fenêtre native.
+  // Fenêtre réduite, la musique continue — c'est voulu — mais il n'y avait plus
+  // aucun moyen de l'arrêter sans tout rouvrir. Le menu de la zone de
+  // notification, lui, reste à portée de clic : il envoie la demande ici, où vit
+  // le lecteur.
   //
-  // WebView2 ne signale pas toujours la réduction par `visibilitychange` : cela
-  // dépend de sa version et de la façon dont Windows occulte la fenêtre. On
-  // interroge donc aussi l'état réel de la fenêtre, à la fin de chaque salve de
-  // redimensionnement — pas à chaque événement, qui en émet des dizaines
-  // pendant un glissement de bordure et coûterait autant d'allers-retours.
-  useEffect(() => {
-    if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
-    let unlisten: (() => void) | undefined;
-    let mounted = true;
-    let differe: ReturnType<typeof setTimeout> | undefined;
+  // Le lecteur est lu dans une référence : l'écouteur natif n'est posé qu'une
+  // fois, et le rattacher à chaque changement de piste multiplierait les
+  // abonnements.
+  const musicRef = useRef(music);
+  useEffect(() => { musicRef.current = music; }, [music]);
 
-    import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-      if (!mounted) return;
-      const fenetre = getCurrentWindow();
-      fenetre
-        .onResized(() => {
-          if (differe) clearTimeout(differe);
-          differe = setTimeout(() => {
-            void fenetre.isMinimized().then((reduite) => {
-              if (!mounted) return;
-              if (reduite) suspendAmbient('window');
-              else resumeAmbient('window');
-            });
-          }, 150);
-        })
-        .then((fn) => {
-          if (!mounted) { fn(); return; }
-          unlisten = fn;
-        });
+  useEffect(() => {
+    if (!isTauri()) return;
+    let stop: (() => void) | undefined;
+    let fini = false;
+    void listen<string>('commande-musique', (e) => {
+      if (e.payload === 'basculer') musicRef.current.togglePlayPause();
+      else if (e.payload === 'arreter') musicRef.current.stop();
+    }).then((fn) => {
+      if (fini) fn();
+      else stop = fn;
     });
-
-    return () => {
-      mounted = false;
-      if (differe) clearTimeout(differe);
-      unlisten?.();
-    };
+    return () => { fini = true; stop?.(); };
   }, []);
+
+  // Tient ces entrées à jour : libellé de la bascule selon ce que fait le
+  // lecteur, et grisées tant qu'aucune piste n'est chargée.
+  const aUnePiste = music.currentIndex >= 0 || music.tracks.length > 0;
+  useEffect(() => {
+    if (!isTauri()) return;
+    void invoke('set_tray_music', {
+      active: aUnePiste,
+      bascule: music.isPlaying ? t('tray.musicPause') : t('tray.musicResume'),
+      arret: t('tray.musicStop'),
+    }).catch(() => {});
+  }, [aUnePiste, music.isPlaying, t]);
+
+  // Coupe l'ambiance quand la fenêtre quitte l'écran, la reprend à son retour.
+  //
+  // Réduite dans la barre des tâches ou repliée dans la zone de notification :
+  // dans les deux cas, plus personne ne la regarde. L'état vient de
+  // `etatFenetre`, qui recoupe l'avis du moteur web et celui de la fenêtre
+  // native — l'un des deux seul se trompe.
+  //
+  // La musique du lecteur, elle, n'est pas touchée : on la laisse tourner, et le
+  // menu de la zone de notification permet de l'arrêter sans rouvrir la fenêtre.
+  useEffect(() =>
+    surEtatFenetre((masquee) => {
+      if (masquee) suspendAmbient('window');
+      else resumeAmbient('window');
+    }),
+  []);
   type CSSVarStyle = React.CSSProperties & {
     ['--app-bg-image']?: string;
     ['--accent']?: string;

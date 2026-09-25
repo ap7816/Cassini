@@ -434,7 +434,10 @@
   },
   "tray": {
     "open": "Open Cassini",
-    "quit": "Quit"
+    "quit": "Quit",
+    "musicPause": "Pause music",
+    "musicResume": "Resume music",
+    "musicStop": "Stop music"
   },
   "patchNotes": {
     "title": "Release Notes",

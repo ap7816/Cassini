@@ -432,6 +432,49 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     writeMusicRepeat(next);
   }
 
+  // Touches multimédia du clavier et volet « Lecture en cours » de Windows.
+  //
+  // C'est ce qui permet d'arrêter la musique sans revenir dans l'application :
+  // le système affiche la piste en cours et renvoie ici les commandes. Fenêtre
+  // réduite, la musique continue — c'est ce qu'on attend d'un lecteur — mais
+  // elle n'était plus atteignable qu'en rouvrant tout.
+  useEffect(() => {
+    const session = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+    if (!session) return;
+
+    const piste = currentIndex >= 0 ? tracks[currentIndex] : undefined;
+    if (piste && typeof MediaMetadata !== 'undefined') {
+      // Le dossier tient lieu d'artiste : c'est la seule autre indication que
+      // le scan rapporte, et le volet système en attend deux lignes.
+      session.metadata = new MediaMetadata({
+        title: piste.title,
+        artist: piste.folder,
+        album: 'Cassini',
+      });
+    }
+    session.playbackState = isPlaying ? 'playing' : piste ? 'paused' : 'none';
+
+    const commandes: [MediaSessionAction, MediaSessionActionHandler][] = [
+      ['play', () => togglePlayPause()],
+      ['pause', () => togglePlayPause()],
+      ['stop', () => stop()],
+      ['previoustrack', () => prevTrack()],
+      ['nexttrack', () => nextTrack()],
+    ];
+    for (const [commande, action] of commandes) {
+      // Une commande que le moteur ne connaît pas lève : on passe à la suivante
+      // plutôt que de renoncer à toutes les autres.
+      try { session.setActionHandler(commande, action); } catch { /* non prise en charge */ }
+    }
+
+    return () => {
+      for (const [commande] of commandes) {
+        try { session.setActionHandler(commande, null); } catch { /* non prise en charge */ }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, isPlaying, tracks]);
+
   return (
     <MusicContext.Provider value={{
       tracks, folderPath, currentIndex, isPlaying, progress, duration, volume, loading, error,

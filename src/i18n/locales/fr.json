@@ -434,7 +434,10 @@
   },
   "tray": {
     "open": "Ouvrir Cassini",
-    "quit": "Quitter"
+    "quit": "Quitter",
+    "musicPause": "Mettre la musique en pause",
+    "musicResume": "Reprendre la musique",
+    "musicStop": "Arrêter la musique"
   },
   "patchNotes": {
     "title": "Notes de mise à jour",

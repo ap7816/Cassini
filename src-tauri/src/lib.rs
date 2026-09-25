@@ -1366,6 +1366,8 @@ fn get_disk_free_space() -> Result<DiskInfo, String> {
 struct TrayLabels {
     open: tauri::menu::MenuItem<tauri::Wry>,
     quit: tauri::menu::MenuItem<tauri::Wry>,
+    musique: tauri::menu::MenuItem<tauri::Wry>,
+    arret: tauri::menu::MenuItem<tauri::Wry>,
 }
 
 /// Renomme les entrées du menu de la zone de notification dans la langue de
@@ -1378,6 +1380,87 @@ fn set_tray_labels(
 ) -> Result<(), String> {
     tray.open.set_text(open).map_err(|e| e.to_string())?;
     tray.quit.set_text(quit).map_err(|e| e.to_string())
+}
+
+/// Met à jour les entrées « musique » du menu de la zone de notification.
+///
+/// Quand la fenêtre est réduite, ce menu est le seul endroit où l'on peut
+/// encore mettre le lecteur en pause : la musique continue, elle, puisque
+/// c'est ce qu'on attend d'un lecteur qu'on laisse tourner en fond.
+///
+/// L'état du lecteur ne vit que dans l'interface : les entrées sont grisées
+/// tant qu'aucune piste n'est chargée, et le libellé de la bascule — mettre en
+/// pause, ou reprendre — vient de là aussi, traduit.
+#[tauri::command]
+fn set_tray_music(
+    tray: tauri::State<'_, TrayLabels>,
+    active: bool,
+    bascule: String,
+    arret: String,
+) -> Result<(), String> {
+    tray.musique.set_text(bascule).map_err(|e| e.to_string())?;
+    tray.musique.set_enabled(active).map_err(|e| e.to_string())?;
+    tray.arret.set_text(arret).map_err(|e| e.to_string())?;
+    tray.arret.set_enabled(active).map_err(|e| e.to_string())
+}
+
+/// État de la fenêtre annoncé à l'interface.
+#[derive(Clone, serde::Serialize)]
+struct Plan {
+    masquee: bool,
+}
+
+/// Le verdict a-t-il changé depuis la dernière annonce ?
+///
+/// Deux appelants pour un seul état : la surveillance périodique et, si elle
+/// arrive la première, la réaction aux événements de fenêtre.
+fn plan_a_change(masquee: bool) -> bool {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static DERNIER: AtomicBool = AtomicBool::new(false);
+    DERNIER.swap(masquee, Ordering::Relaxed) != masquee
+}
+
+/// Annonce que la fenêtre vient de quitter l'écran, ou d'y revenir.
+///
+/// Rien n'est envoyé tant que le verdict ne change pas : redimensionner une
+/// fenêtre à la souris émet des dizaines d'événements par seconde, qui diraient
+/// tous la même chose.
+fn annoncer_plan<R: tauri::Runtime, E: tauri::Emitter<R>>(emetteur: &E, masquee: bool) {
+    if !plan_a_change(masquee) {
+        return;
+    }
+    // Tracé dans le journal : c'est par lui qu'on saura, sur une machine qui
+    // n'est pas la nôtre, si la fenêtre a bien été vue partir.
+    tauri_plugin_log::log::info!(
+        "fenêtre {}",
+        if masquee { "hors de vue" } else { "à l'écran" }
+    );
+    let _ = emetteur.emit("fenetre-plan", Plan { masquee });
+}
+
+/// Surveille l'état de la fenêtre et le fait savoir à l'interface.
+///
+/// Une boucle, et non les événements de fenêtre : ceux-ci signalent bien la
+/// réduction, mais pas le retour — mesuré, une fenêtre restaurée n'émet ni
+/// redimensionnement ni changement de focus que l'on puisse attendre, et
+/// l'interface resterait persuadée que personne ne la regarde. Le moteur web,
+/// lui, ne signale pas toujours la réduction.
+///
+/// Deux appels Win32 deux fois par seconde : le prix est négligeable, et il
+/// achète la seule réponse qui ne se trompe pas. C'est ce qui coupe la musique
+/// d'ambiance quand on réduit la fenêtre, et la ramène quand on revient.
+fn surveiller_plan(app: tauri::AppHandle) {
+    use tauri::Manager;
+
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let Some(fenetre) = app.get_webview_window("main") else { continue };
+        let (Ok(reduite), Ok(visible)) = (fenetre.is_minimized(), fenetre.is_visible()) else {
+            // La fenêtre ne répond plus : l'application se ferme.
+            return;
+        };
+        annoncer_plan(&fenetre, reduite || !visible);
+    });
 }
 
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
@@ -1427,17 +1510,37 @@ pub fn run() {
                 });
             }
 
+            // Dit à l'interface quand la fenêtre quitte l'écran, et quand elle
+            // revient — de quoi taire la musique d'ambiance entre les deux.
+            surveiller_plan(app.handle().clone());
+
             #[cfg(desktop)]
             {
                 // Configure l'icône de la zone de notification avec un menu contextuel Ouvrir/Quitter
-                use tauri::menu::{Menu, MenuItem};
+                use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-                use tauri::Manager;
+                use tauri::{Emitter, Manager};
                 let show_i = MenuItem::with_id(app, "show", "Ouvrir Cassini", true, None::<&str>)?;
                 let quit_i = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?;
-                let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+                // Commandes du lecteur, la fenêtre fût-elle réduite. Grisées
+                // tant que l'interface n'a pas dit qu'une piste est chargée.
+                let music_i =
+                    MenuItem::with_id(app, "music_toggle", "Musique en pause", false, None::<&str>)?;
+                let stop_i =
+                    MenuItem::with_id(app, "music_stop", "Arrêter la musique", false, None::<&str>)?;
+                // Deux séparateurs distincts : un même élément de menu ne peut
+                // pas figurer deux fois dans le même menu.
+                let haut = PredefinedMenuItem::separator(app)?;
+                let bas = PredefinedMenuItem::separator(app)?;
+                let menu =
+                    Menu::with_items(app, &[&show_i, &haut, &music_i, &stop_i, &bas, &quit_i])?;
                 // Gardées pour être traduites dès que l'interface connaît sa langue.
-                app.manage(TrayLabels { open: show_i.clone(), quit: quit_i.clone() });
+                app.manage(TrayLabels {
+                    open: show_i.clone(),
+                    quit: quit_i.clone(),
+                    musique: music_i.clone(),
+                    arret: stop_i.clone(),
+                });
                 TrayIconBuilder::new()
                     .menu(&menu)
                     .icon(app.default_window_icon().unwrap().clone())
@@ -1446,8 +1549,17 @@ pub fn run() {
                         "show" => {
                             if let Some(w) = app.get_webview_window("main") {
                                 let _ = w.show();
+                                let _ = w.unminimize();
                                 let _ = w.set_focus();
                             }
+                        }
+                        // Le lecteur vit dans l'interface : on lui transmet la
+                        // demande plutôt que de toucher au son d'ici.
+                        "music_toggle" => {
+                            let _ = app.emit("commande-musique", "basculer");
+                        }
+                        "music_stop" => {
+                            let _ = app.emit("commande-musique", "arreter");
                         }
                         _ => {}
                     })
@@ -1460,6 +1572,7 @@ pub fn run() {
                             let app = tray.app_handle();
                             if let Some(w) = app.get_webview_window("main") {
                                 let _ = w.show();
+                                let _ = w.unminimize();
                                 let _ = w.set_focus();
                             }
                         }
@@ -1467,6 +1580,17 @@ pub fn run() {
                     .build(app)?;
             }
             Ok(())
+        })
+        // Réduire est un redimensionnement : autant le dire tout de suite,
+        // sans attendre le prochain tour de `surveiller_plan`. Le retour de la
+        // fenêtre, lui, n'émet rien de fiable — c'est la surveillance qui le
+        // voit.
+        .on_window_event(|fenetre, evenement| {
+            if let tauri::WindowEvent::Resized(_) = evenement {
+                let masquee = fenetre.is_minimized().unwrap_or(false)
+                    || !fenetre.is_visible().unwrap_or(true);
+                annoncer_plan(fenetre, masquee);
+            }
         })
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -1496,7 +1620,7 @@ pub fn run() {
             search_itunes, write_audio_tags, write_audio_cover_from_file,
             get_disk_free_space,
             fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64,
-            set_tray_labels
+            set_tray_labels, set_tray_music
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
