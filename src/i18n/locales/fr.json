@@ -452,6 +452,8 @@
   },
   "changelog": {
     "v5_0_0": {
+      "perf_0": "[Performance] Plus de gel de quelques secondes au retour d’une fenêtre réduite : la détection des jeux ne bloque plus la fenêtre",
+      "perf_1": "[Performance] Le démarrage, les icônes et la lecture des pistes ne retiennent plus l’application pendant leur travail",
       "new_0": "[Bibliothèque] Jeux Xbox et Microsoft Store (Game Pass) : détectés, lancés, et illustrés par leur propre logo",
       "new_1": "[Bibliothèque] Launcher HoYoPlay pris en charge : Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd",
       "new_2": "[Bibliothèque] Des tags à poser sur les jeux, et un filtre pour s’y retrouver",

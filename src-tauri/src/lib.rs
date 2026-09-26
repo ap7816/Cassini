@@ -95,31 +95,73 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
     TrackMetadata { path: path.to_string(), title, artist, album, cover_data_url, duration_secs }
 }
 
+/// Exécute un travail bloquant hors du fil de la fenêtre.
+///
+/// Une commande Tauri qui n'est pas `async` s'exécute sur le fil principal —
+/// celui qui pompe les messages de la fenêtre. Mesuré au retour d'une fenêtre
+/// réduite : les neuf scans de launchers y tenaient ce fil quatre secondes et
+/// demie, pendant lesquelles la fenêtre ne répondait plus. C'est le gel que
+/// l'on voyait ; le moteur web, lui, affichait sa première image sept
+/// millisecondes après le retour.
+///
+/// Le travail part donc sur la réserve de fils prévue pour ce qui bloque. Les
+/// scans s'exécutent enfin vraiment en parallèle, et le fil principal ne fait
+/// plus qu'attendre leurs réponses.
+async fn hors_fil_principal<T, F>(travail: F) -> Result<T, String>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(travail)
+        .await
+        .map_err(|e| format!("tâche interrompue : {e}"))
+}
+
 // Commande Tauri : retourne les métadonnées complètes d'une piste (avec pochette) pour le mini-lecteur
 #[tauri::command]
-fn get_track_metadata(root: tauri::State<'_, MusicRoot>, path: String) -> TrackMetadata {
-    let music_root = security::current_root(&root);
-    match security::readable_path_with(&path, music_root) {
-        Ok(p) => read_track_metadata(&p.to_string_lossy(), true),
+async fn get_track_metadata(app: tauri::AppHandle, path: String) -> TrackMetadata {
+    // La racine est lue ici, avant de partir : elle vit derrière un verrou que
+    // l'on ne peut pas emporter ailleurs. Le reste — ouvrir le fichier, décoder
+    // ses tags, encoder la pochette — se fait hors du fil de la fenêtre.
+    //
+    // La poignée de l'application plutôt que l'état lui-même : une commande
+    // asynchrone ne peut pas recevoir de référence empruntée sans rendre un
+    // Result, et cette fiche-ci n'échoue jamais — elle revient vide.
+    use tauri::Manager;
+    let music_root = security::current_root(&app.state::<MusicRoot>());
+    let chemin = path.clone();
+    let lecture = hors_fil_principal(move || match security::readable_path_with(&chemin, music_root) {
+        Ok(p) => Some(read_track_metadata(&p.to_string_lossy(), true)),
         // Chemin hors périmètre : on renvoie une fiche vide plutôt qu'une
         // erreur, pour ne pas révéler l'existence ou non du fichier.
-        Err(_) => TrackMetadata {
-            path,
-            title: None, artist: None, album: None,
-            cover_data_url: None, duration_secs: None,
-        },
-    }
+        Err(_) => None,
+    })
+    .await
+    .ok()
+    .flatten();
+
+    lecture.unwrap_or(TrackMetadata {
+        path,
+        title: None, artist: None, album: None,
+        cover_data_url: None, duration_secs: None,
+    })
 }
 
 // Commande Tauri : retourne titre/artiste/album/durée pour toutes les pistes sans pochette
 // Traitement en parallèle via rayon pour ne pas bloquer le thread UI
 #[tauri::command]
-fn get_tracks_basic_batch(
-    root: tauri::State<'_, MusicRoot>,
-    paths: Vec<String>,
-) -> Vec<TrackMetadata> {
+async fn get_tracks_basic_batch(app: tauri::AppHandle, paths: Vec<String>) -> Vec<TrackMetadata> {
+    use tauri::Manager;
+    let music_root = security::current_root(&app.state::<MusicRoot>());
+    hors_fil_principal(move || lire_pistes(paths, music_root)).await.unwrap_or_default()
+}
+
+/// Titre, artiste, album et durée de chaque piste — sans pochette.
+///
+/// Rayon répartit le décodage sur tous les cœurs ; encore faut-il que cette
+/// répartition n'ait pas lieu sur le fil de la fenêtre, qui attendait la fin.
+fn lire_pistes(paths: Vec<String>, music_root: Option<std::path::PathBuf>) -> Vec<TrackMetadata> {
     use rayon::prelude::*;
-    let music_root = security::current_root(&root);
     paths.par_iter()
         .map(|p| match security::readable_path_with(p, music_root.clone()) {
             Ok(safe) => read_track_metadata(&safe.to_string_lossy(), false),
@@ -141,7 +183,12 @@ pub struct TrackDto {
 
 // Commande Tauri : parcourt récursivement un dossier et retourne toutes les pistes audio trouvées
 #[tauri::command]
-fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
+async fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
+    hors_fil_principal(move || parcourir_dossier_musique(path)).await?
+}
+
+/// Parcourt un dossier et rend ses pistes, triées par dossier puis par titre.
+fn parcourir_dossier_musique(path: String) -> Result<Vec<TrackDto>, String> {
     let audio_exts = ["mp3", "flac", "wav", "ogg", "m4a", "opus"];
     let mut tracks: Vec<TrackDto> = Vec::new();
 
@@ -194,9 +241,12 @@ fn scan_music_folder(path: String) -> Result<Vec<TrackDto>, String> {
 
 // Commande Tauri : extrait l'icône d'un fichier .exe et la retourne en data-URL PNG 64×64
 #[tauri::command]
-fn get_file_icon_data_url(path: String) -> Result<String, String> {
-    let safe = security::icon_source_path(&path)?;
-    icon_extract::file_icon_png_data_url(&safe.to_string_lossy(), 64)
+async fn get_file_icon_data_url(path: String) -> Result<String, String> {
+    hors_fil_principal(move || {
+        let safe = security::icon_source_path(&path)?;
+        icon_extract::file_icon_png_data_url(&safe.to_string_lossy(), 64)
+    })
+    .await?
 }
 
 // Commande Tauri : ouvre un dossier dans l'explorateur de fichiers natif (cross-platform)
@@ -246,50 +296,50 @@ fn greet(name: &str) -> String {
 
 // Commande Tauri : scanne les jeux Steam installés via les manifestes ACF
 #[tauri::command]
-fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    steam_scan::scan_steam_games()
+async fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(steam_scan::scan_steam_games).await?
 }
 
 // Commande Tauri : temps de jeu Steam, en minutes, par identifiant d'application
 #[tauri::command]
-fn steam_playtimes() -> std::collections::HashMap<String, u64> {
-    steam_scan::temps_de_jeu()
+async fn steam_playtimes() -> std::collections::HashMap<String, u64> {
+    hors_fil_principal(steam_scan::temps_de_jeu).await.unwrap_or_default()
 }
 
 // Commande Tauri : scanne les jeux Epic Games via les fichiers .item du launcher
 #[tauri::command]
-fn scan_epic_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    epic_scan::scan_epic_games()
+async fn scan_epic_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(epic_scan::scan_epic_games).await?
 }
 
 // Commande Tauri : scanne les jeux Battle.net via le registre Windows
 #[tauri::command]
-fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    battlenet_scan::scan_battlenet_games()
+async fn scan_battlenet_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(battlenet_scan::scan_battlenet_games).await?
 }
 
 // Commande Tauri : scanne les jeux Riot Games via le registre Windows
 /// Commande Tauri : détecte Hytale via son dossier de données
 #[tauri::command]
-fn scan_hytale_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    hytale_scan::scan_hytale_games()
+async fn scan_hytale_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(hytale_scan::scan_hytale_games).await?
 }
 
 #[tauri::command]
-fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    riot_scan::scan_riot_games()
+async fn scan_riot_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(riot_scan::scan_riot_games).await?
 }
 
 // Commande Tauri : jeux HoYoverse installés par HoYoPlay (inventaire du registre)
 #[tauri::command]
-fn scan_hoyoplay_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    hoyoplay_scan::scan_hoyoplay_games()
+async fn scan_hoyoplay_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(hoyoplay_scan::scan_hoyoplay_games).await?
 }
 
 // Commande Tauri : jeux Xbox / Microsoft Store installés (Game Pass PC)
 #[tauri::command]
-fn scan_xbox_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    xbox_scan::scan_xbox_games()
+async fn scan_xbox_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(xbox_scan::scan_xbox_games).await?
 }
 
 // Commande Tauri : icône d'une application du Store, demandée au shell.
@@ -297,44 +347,56 @@ fn scan_xbox_games() -> Result<Vec<steam_scan::GameDto>, String> {
 // Sert à la barre des systèmes : un jeu Xbox n'a pas de launcher dont extraire
 // une icône, et son application vit dans un dossier illisible.
 #[tauri::command]
-fn store_app_icon(prefix: String) -> Option<String> {
+async fn store_app_icon(prefix: String) -> Option<String> {
     if prefix.is_empty()
         || prefix.len() > 128
         || !prefix.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
     {
         return None;
     }
-    let cible = store_icons::cible_application(&prefix)?;
-    store_icons::icone_application(&cible, 64).ok()
+    // Le shell est parcouru entrée par entrée jusqu'à trouver l'application :
+    // long, et sans rapport avec ce que la fenêtre a à faire pendant ce temps.
+    hors_fil_principal(move || {
+        let cible = store_icons::cible_application(&prefix)?;
+        store_icons::icone_application(&cible, 64).ok()
+    })
+    .await
+    .ok()
+    .flatten()
 }
 
 // Commande Tauri : jaquette d'un jeu du Store, tirée de son propre logo
 #[tauri::command]
-fn xbox_cover(path: String) -> Option<String> {
-    xbox_scan::cover_xbox(&path)
+async fn xbox_cover(path: String) -> Option<String> {
+    hors_fil_principal(move || xbox_scan::cover_xbox(&path)).await.ok().flatten()
 }
 
 // Commande Tauri : scanne les jeux Rockstar Games via le registre Windows
 #[tauri::command]
-fn scan_rockstar_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    rockstar_scan::scan_rockstar_games()
+async fn scan_rockstar_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(rockstar_scan::scan_rockstar_games).await?
 }
 
 // Commande Tauri : scanne les jeux Ubisoft Connect via le registre Windows
 #[tauri::command]
-fn scan_ubisoft_games() -> Result<Vec<steam_scan::GameDto>, String> {
-    ubisoft_scan::scan_ubisoft_games()
+async fn scan_ubisoft_games() -> Result<Vec<steam_scan::GameDto>, String> {
+    hors_fil_principal(ubisoft_scan::scan_ubisoft_games).await?
 }
 
 // Commande Tauri : détecte les launchers installés (Steam, Epic, Battle.net, Riot, Rockstar, Ubisoft)
 #[tauri::command]
-fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
-    launcher_scan::scan_launchers()
+async fn scan_launchers() -> Result<Vec<launcher_scan::LauncherDto>, String> {
+    hors_fil_principal(launcher_scan::scan_launchers).await?
 }
 
 // Commande Tauri : liste tous les sous-dossiers d'un dossier racine (chemins relatifs)
 #[tauri::command]
-fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
+async fn list_music_dirs(root: String) -> Result<Vec<String>, String> {
+    hors_fil_principal(move || lister_dossiers_musique(root)).await?
+}
+
+/// Sous-dossiers d'un dossier racine, en chemins relatifs.
+fn lister_dossiers_musique(root: String) -> Result<Vec<String>, String> {
     let root_path = std::path::Path::new(&root);
     if !root_path.is_dir() {
         return Err(format!("Not a directory: {root}"));
@@ -663,8 +725,11 @@ fn launch_target(target: String) -> Result<(), String> {
 // Sert à décider ce qu'on propose et ce qu'on annonce avant d'agir : sans
 // désinstalleur trouvé, l'interface ne montre pas de bouton qui échouerait.
 #[tauri::command]
-fn find_uninstaller(title: String, path: Option<String>) -> Option<uninstall::Desinstalleur> {
-    uninstall::trouver(&title, path.as_deref())
+async fn find_uninstaller(title: String, path: Option<String>) -> Option<uninstall::Desinstalleur> {
+    hors_fil_principal(move || uninstall::trouver(&title, path.as_deref()))
+        .await
+        .ok()
+        .flatten()
 }
 
 // Commande Tauri : lance la désinstallation d'un jeu.
@@ -1320,7 +1385,12 @@ pub struct DiskInfo {
 
 // Commande Tauri : retourne l'espace libre et total du lecteur système (ex: C:\)
 #[tauri::command]
-fn get_disk_free_space() -> Result<DiskInfo, String> {
+async fn get_disk_free_space() -> Result<DiskInfo, String> {
+    hors_fil_principal(espace_disque).await?
+}
+
+/// Espace libre et total du disque système.
+fn espace_disque() -> Result<DiskInfo, String> {
     #[cfg(target_os = "windows")]
     {
         use std::ffi::OsStr;
@@ -1455,12 +1525,38 @@ fn surveiller_plan(app: tauri::AppHandle) {
     std::thread::spawn(move || loop {
         std::thread::sleep(std::time::Duration::from_millis(500));
         let Some(fenetre) = app.get_webview_window("main") else { continue };
-        let (Ok(reduite), Ok(visible)) = (fenetre.is_minimized(), fenetre.is_visible()) else {
+        let Some(masquee) = etat_de_la_fenetre(&fenetre) else {
             // La fenêtre ne répond plus : l'application se ferme.
             return;
         };
-        annoncer_plan(&fenetre, reduite || !visible);
+        annoncer_plan(&fenetre, masquee);
     });
+}
+
+/// La fenêtre est-elle hors de vue ? Réduite, ou simplement plus affichée.
+///
+/// Sous Windows, la question est posée à Windows directement, par le descripteur
+/// de la fenêtre. `is_minimized()` et `is_visible()` de Tauri, eux, font la
+/// navette avec le fil principal et attendent leur tour : deux allers-retours
+/// deux fois par seconde sur le fil que l'on cherche justement à ne pas
+/// encombrer — et une réponse qui n'arrive plus dès qu'il est occupé.
+fn etat_de_la_fenetre(fenetre: &tauri::WebviewWindow) -> Option<bool> {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::UI::WindowsAndMessaging::{IsIconic, IsWindowVisible};
+
+        // Le descripteur passe par son entier : Tauri et cette caisse peuvent
+        // suivre deux versions différentes de la bibliothèque Windows, dont les
+        // types ne se mélangent pas.
+        let brut = fenetre.hwnd().ok()?.0 as isize;
+        let handle = HWND(brut as *mut std::ffi::c_void);
+        Some(unsafe { IsIconic(handle).as_bool() || !IsWindowVisible(handle).as_bool() })
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Some(fenetre.is_minimized().ok()? || !fenetre.is_visible().ok()?)
+    }
 }
 
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
