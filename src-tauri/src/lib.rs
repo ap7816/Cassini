@@ -288,12 +288,6 @@ fn open_folder(path: String) -> Result<(), String> {
     detached::open_via_shell(&final_path.to_string_lossy())
 }
 
-// Commande Tauri de test (non utilisée en prod) — conservée pour compatibilité
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 // Commande Tauri : scanne les jeux Steam installés via les manifestes ACF
 #[tauri::command]
 async fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
@@ -1699,7 +1693,6 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
-            greet,
             scan_steam_games, steam_playtimes, scan_epic_games, scan_battlenet_games,
             scan_hytale_games,
             scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_hoyoplay_games,

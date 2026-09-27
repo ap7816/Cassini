@@ -19,6 +19,25 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
+  // Au démarrage : demande à Windows ce qu'il en est vraiment du démarrage
+  // automatique.
+  //
+  // L'interrupteur affichait ce que les réglages avaient enregistré, et rien
+  // d'autre. Or l'entrée de démarrage vit dans le registre, où le Gestionnaire
+  // des tâches et Windows lui-même peuvent la désactiver : Cassini annonçait
+  // alors « activé » pour quelque chose qui ne se produisait plus.
+  useEffect(() => {
+    let annule = false;
+    void invoke<boolean>('get_autostart')
+      .then((reel) => {
+        if (annule) return;
+        setSettings((prev) => (prev.autostart === reel ? prev : { ...prev, autostart: reel }));
+      })
+      // Hors Tauri : il n'y a pas de démarrage automatique à refléter.
+      .catch(() => {});
+    return () => { annule = true; };
+  }, []);
+
   // Thème : posé sur <html> avant la peinture, pour qu'aucune image ne sorte
   // dans l'autre thème. En mode système, suit Windows à chaud.
   //

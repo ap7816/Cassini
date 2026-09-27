@@ -120,10 +120,18 @@ export function AppLayout() {
     // lance sans jamais savoir quand il a fini. Le moment où l'utilisateur
     // revient est justement celui où il s'attend à voir l'état à jour.
     //
-    // Un délai de garde évite de relancer sept scans à chaque aller-retour
+    // Un délai de garde évite de relancer neuf scans à chaque aller-retour
     // entre deux fenêtres ; le scan n'écrit de toute façon rien si la
     // bibliothèque n'a pas changé.
-    const GARDE = 20_000;
+    //
+    // Cinq minutes, et non vingt secondes : depuis que le côté Rust surveille
+    // les manifestes, les clés du registre et les dossiers de jeux (voir
+    // `watcher.rs`), une installation ou une désinstallation est vue à la
+    // seconde où elle se produit — y compris fenêtre réduite, la veille ne
+    // s'arrête pas. Rescanner à chaque retour refaisait donc un travail déjà
+    // fait ; ce scan-ci ne sert plus qu'à rattraper ce que la veille aurait pu
+    // manquer, ce qui ne demande pas d'y revenir toutes les vingt secondes.
+    const GARDE = 5 * 60_000;
     let dernier = Date.now();
     const auRetour = () => {
       if (Date.now() - dernier < GARDE) return;
