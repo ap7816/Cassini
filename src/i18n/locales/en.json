@@ -451,9 +451,14 @@
     "sectionChange": "Changes"
   },
   "changelog": {
-    "v5_0_0": {
+    "v5_1_0": {
+      "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",
       "perf_0": "[Performance] No more freeze of a few seconds when restoring a minimised window: game detection no longer blocks the window",
       "perf_1": "[Performance] Startup, icons and track reading no longer hold the app while they work",
+      "perf_2": "[Performance] Coming back to the solar system from another page is almost instant: the scene no longer starts from scratch",
+      "perf_3": "[Performance] Fewer pointless detections when returning to the app: live watching already covered it"
+    },
+    "v5_0_0": {
       "new_0": "[Library] Xbox and Microsoft Store games (Game Pass): detected, launched, and shown with their own logo",
       "new_1": "[Library] HoYoPlay launcher supported: Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd",
       "new_2": "[Library] Tags to put on games, and a filter to find your way around",
