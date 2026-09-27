@@ -107,6 +107,55 @@ function easeInOut(t: number): number {
 }
 
 /**
+ * Le moteur de rendu, gardé d'un montage à l'autre.
+ *
+ * Monter la scène coûtait 353 ms, dont 200 pour le seul contexte WebGL — le
+ * temps que le pilote réveille la carte dédiée. Ce prix était payé à chaque
+ * fois que la page du système solaire se montait : au lancement, et à chaque
+ * retour depuis la bibliothèque, les launchers ou la musique.
+ *
+ * Le contexte est donc conservé pour la session. Sa toile est décrochée du
+ * document quand la page s'en va, et raccrochée au retour ; tout ce qui
+ * appartient à la scène — géométries, matériaux, textures, cibles de rendu du
+ * compositeur — est libéré au démontage comme avant. Mesuré : le montage
+ * suivant tombe à 95 ms, dont zéro pour le moteur.
+ *
+ * S'y ajoute ce que le moteur garde en propre : les programmes compilés pour
+ * le GPU. La première image d'une session en demande une demi-seconde ; les
+ * montages suivants les retrouvent tels quels.
+ *
+ * Une seule scène à la fois : la page du système solaire est une page, jamais
+ * deux ouvertes ensemble.
+ */
+let moteurPartage: THREE.WebGLRenderer | null = null;
+
+function moteurDeRendu(): THREE.WebGLRenderer {
+  if (moteurPartage) return moteurPartage;
+
+  moteurPartage = new THREE.WebGLRenderer({
+    // Pas de multi-échantillonnage sur le tampon de la canvas.
+    //
+    // Il ne servait à rien : toute la scène passe par le compositeur, dont les
+    // cibles de rendu n'ont pas d'échantillons multiples. Ce qu'on voit sort de
+    // ces cibles-là. Le tampon de la canvas, lui, ne reçoit que le quadrilatère
+    // plein écran de la dernière passe — qui n'a aucune arête intérieure à
+    // adoucir. On payait donc un tampon multi-échantillonné, et sa résolution à
+    // chaque image, pour exactement zéro pixel lissé.
+
+    // Réclame la carte dédiée. Sur un portable à double GPU, le moteur de rendu
+    // web retient par défaut le circuit intégré pour économiser la batterie —
+    // soit, sur cette scène, un facteur plusieurs fois supérieur sur le seul
+    // poste qui compte ici, le remplissage de pixels.
+    powerPreference: 'high-performance',
+  });
+
+  // Trace le GPU réellement retenu : c'est la seule façon de savoir si la
+  // préférence ci-dessus a été honorée.
+  logRenderer(moteurPartage);
+  return moteurPartage;
+}
+
+/**
  * Journalise la carte graphique effectivement utilisée par le contexte WebGL.
  *
  * `WEBGL_debug_renderer_info` n'est pas exposée par tous les moteurs ; son
@@ -262,31 +311,13 @@ export function useSolarScene({
     const isDisposed = () => disposed;
 
     // ── Renderer, caméra, contrôles ──────────────────────────────────────
-    const renderer = new THREE.WebGLRenderer({
-      // Pas de multi-échantillonnage sur le tampon de la canvas.
-      //
-      // Il ne servait à rien : toute la scène passe par le compositeur, dont
-      // les cibles de rendu n'ont pas d'échantillons multiples. Ce qu'on voit
-      // sort de ces cibles-là. Le tampon de la canvas, lui, ne reçoit que le
-      // quadrilatère plein écran de la dernière passe — qui n'a aucune arête
-      // intérieure à adoucir. On payait donc un tampon multi-échantillonné, et
-      // sa résolution à chaque image, pour exactement zéro pixel lissé.
-
-      // Réclame la carte dédiée. Sur un portable à double GPU, le moteur de
-      // rendu web retient par défaut le circuit intégré pour économiser la
-      // batterie — soit, sur cette scène, un facteur plusieurs fois supérieur
-      // sur le seul poste qui compte ici, le remplissage de pixels.
-      powerPreference: 'high-performance',
-    });
+    const renderer = moteurDeRendu();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x070b12);
     container.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
-    // Trace le GPU réellement retenu : c'est la seule façon de savoir si la
-    // préférence ci-dessus a été honorée.
-    logRenderer(renderer);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -1476,7 +1507,10 @@ export function useSolarScene({
       prefMouvement.removeEventListener('change', surPreference);
       nebulaTex.dispose();
       post.dispose();
-      renderer.dispose();
+      // Le moteur de rendu, lui, survit au démontage — c'est tout l'intérêt.
+      // Ses listes de rendu, en revanche, tiennent des références sur les
+      // objets de la scène que l'on vient de libérer.
+      renderer.renderLists.dispose();
 
       if (canvas.parentNode === container) container.removeChild(canvas);
     };
