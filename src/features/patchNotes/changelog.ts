@@ -26,6 +26,13 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v5_2_0.new_2',
         ],
       },
+      {
+        type: 'perf',
+        itemKeys: [
+          'changelog.v5_2_0.perf_0',
+          'changelog.v5_2_0.perf_1',
+        ],
+      },
     ],
   },
   {

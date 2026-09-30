@@ -95,7 +95,13 @@ const FRAGMENT = /* glsl */ `
     // dans un ciel n'a de bord droit.
     float bords = smoothstep(0.0, 0.18, vUv.x) * (1.0 - smoothstep(0.82, 1.0, vUv.x));
 
-    float a = pied * sommet * bords * smoothstep(0.5, 0.95, masse) * (0.25 + 0.75 * stries);
+    // Les plis portent la lumière, la nappe s'efface.
+    //
+    // C'est aux stries qu'on reconnaît une aurore ; une nappe uniforme n'est
+    // qu'un voile. Les élever à une puissance ferme les creux et détache les
+    // plis, sans ajouter de lumière au total.
+    float plis = pow(stries, 1.6);
+    float a = pied * sommet * bords * smoothstep(0.46, 0.92, masse) * (0.12 + 0.98 * plis);
     a *= uForce;
 
     gl_FragColor = vec4(mix(uBas, uHaut, vUv.y) * a, a);
@@ -238,7 +244,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
 
   // Tempête : au repos le rideau respire à peine ; elle le porte au comble en
   // une vingtaine de secondes, le tient, puis le laisse retomber.
-  const FORCE_REPOS = 0.35;
+  const FORCE_REPOS = 0.45;
   let tempete = 0;
   let prochaineTempete = 95 + Math.random() * 130;
 

@@ -15,7 +15,7 @@ import {
 import { densiteBrume } from '../lib/haze';
 import { normaleOrbite, orbitPos, positionSurOrbite } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
-import { makeNebulaTexture } from '../textures/nebula';
+import { createFondCiel } from './cielFond';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
 import { createCiel } from './ciel';
 import { lumiereDe } from '../lib/couleurSoleil';
@@ -423,8 +423,11 @@ export function useSolarScene({
 
     // ── Décor, commun à toute la galaxie ─────────────────────────────────
     const tint = courant?.couleur ?? 0x7a8a9a;
-    const nebulaTex = makeNebulaTexture(tint);
-    scene.background = nebulaTex;
+
+    // Le ciel de fond, calculé par pixel plutôt que peint dans une image : il
+    // reste net quel que soit le zoom (voir `cielFond.ts`).
+    const fond = createFondCiel(new THREE.Color(tint));
+    scene.add(fond.objet);
 
     const ambiante = new THREE.AmbientLight(0x2a3a60, lireReglages().lumiereAmbiante);
     scene.add(ambiante);
@@ -1402,6 +1405,9 @@ export function useSolarScene({
       // Sans condition : `paused` ne reflète que l'état de la première planète,
       // et recopier quelques centaines de flottants coûte moins cher que le
       // risque de laisser les lueurs derrière les planètes encore en mouvement.
+      // Le fond est à l'infini : sa sphère se déplace avec l'œil.
+      fond.objet.position.copy(camera.position);
+
       galaxie.updateLueurs();
 
       ciel.update(dt, cielRef.current, mouvementReduit, camera);
@@ -1523,7 +1529,7 @@ export function useSolarScene({
       desabonnerReglages();
       i18n.off('languageChanged', renommerSystemes);
       prefMouvement.removeEventListener('change', surPreference);
-      nebulaTex.dispose();
+      fond.dispose();
       post.dispose();
       // Le moteur de rendu, lui, survit au démontage — c'est tout l'intérêt.
       // Ses listes de rendu, en revanche, tiennent des références sur les

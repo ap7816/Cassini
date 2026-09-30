@@ -172,12 +172,23 @@ export function createBelt(outerR: number, planetCount: number): THREE.Instanced
   const scale = THREE.MathUtils.clamp(outerR * 0.018, 0.22, 1.25);
 
   const belt = new THREE.InstancedMesh(
-    new THREE.IcosahedronGeometry(1, 0),
+    // Un cran de subdivision de plus : vingt faces, cela se voit dès qu'on
+    // passe à côté d'un rocher — on lui compte ses arêtes. Quatre-vingts
+    // suffisent à le rendre rond, et la ceinture reste un seul appel de rendu.
+    new THREE.IcosahedronGeometry(1, 1),
     new THREE.MeshStandardMaterial({
       color: 0xa89880,
       roughness: 0.9,
       metalness: 0.08,
       flatShading: true,
+      // Une lueur propre, très faible, à la couleur du ciel.
+      //
+      // La seule lumière d'un système est à son soleil : un rocher survolé de
+      // près présente sa face d'ombre, et se découpait en noir absolu sur le
+      // fond — une silhouette anguleuse qu'on prend pour un défaut d'affichage
+      // plutôt que pour une pierre. Cette lueur le pose au niveau du ciel au
+      // lieu du vide, sans rien éclairer d'autre.
+      emissive: 0x0b111c,
     }),
     count,
   );

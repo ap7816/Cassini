@@ -454,8 +454,10 @@
   },
   "changelog": {
     "v5_2_0": {
+      "perf_0": "[Performance] La carte graphique dédiée est enfin réclamée au bon moment : sur un portable à deux cartes, la scène tournait sur le circuit intégré. Cinq à six fois plus rapide, mesuré",
+      "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins",
       "new_0": "[Système solaire] Le ciel s’anime : rideaux de gaz ionisé qui dérivent, tempêtes magnétiques de loin en loin, étoiles filantes, et de rares passages en ligne droite",
-      "new_1": "[Système solaire] Fond refait : la voie lactée et ses couloirs de poussière, les nébuleuses en émission rouges et vert bleuté, et des étoiles qui ont enfin la couleur de leur température",
+      "new_1": "[Système solaire] Ciel entièrement recalculé : la voie lactée est une vraie concentration d’étoiles, avec ses couloirs de poussière et ses nébuleuses en émission. Il reste net à n’importe quel zoom, et de nouvelles étoiles y apparaissent à mesure qu’on s’approche",
       "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes"
     },
     "v5_1_0": {

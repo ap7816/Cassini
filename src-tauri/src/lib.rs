@@ -1556,6 +1556,19 @@ fn etat_de_la_fenetre(fenetre: &tauri::WebviewWindow) -> Option<bool> {
 // Point d'entrée de l'application Tauri : configure les plugins, la tray icon et les commandes disponibles
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Réclame la carte graphique dédiée, avant que le moteur web ne démarre.
+    //
+    // Mesuré sur un portable à deux cartes : la scène tournait sur le circuit
+    // intégré, et le ciel calculé y coûtait trois millisecondes par image —
+    // plus que tout le reste réuni. La préférence posée côté WebGL
+    // (`powerPreference: 'high-performance'`) n'y changeait rien : c'est le
+    // moteur qui choisit la carte, avant même que la page existe, et il ne la
+    // consulte pas. Cet indicateur-là, lui, est lu à son démarrage.
+    //
+    // Sans seconde carte, l'indicateur est sans effet.
+    #[cfg(target_os = "windows")]
+    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--force_high_performance_gpu");
+
     tauri::Builder::default()
         // Instance unique — enregistré en premier, avant tout autre plugin.
         //
