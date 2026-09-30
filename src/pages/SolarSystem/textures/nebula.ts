@@ -99,7 +99,7 @@ export function makeNebulaTexture(tint: number): THREE.CanvasTexture {
   for (let i = 0; i < 70; i++) {
     const x = rng() * w;
     const y = bande(x) + (rng() - 0.5) * epaisseur * 1.3;
-    blob(x, y, 80 + rng() * 190, '#9fb4d8', 0.16);
+    blob(x, y, 80 + rng() * 190, '#9fb4d8', 0.24);
   }
 
   // Les nébuleuses en émission, posées près de la bande : hydrogène rouge,
@@ -111,12 +111,22 @@ export function makeNebulaTexture(tint: number): THREE.CanvasTexture {
   }
 
   // Les couloirs de poussière, par-dessus : ils masquent, donc ils s'écrivent
-  // en noir après tout ce qu'ils doivent cacher.
-  for (let i = 0; i < 26; i++) {
+  // après tout ce qu'ils doivent cacher.
+  //
+  // De la couleur du ciel vide, et non d'un noir plus noir. Un nuage de
+  // poussière froide ne creuse pas un trou dans l'espace : il arrête la lumière
+  // qui vient de derrière, et ce qu'on voit à sa place est le fond, rien de
+  // plus. Peints en plus sombre que le vide, ils dessinaient une rivière noire
+  // en travers du ciel — l'inverse exact de ce qu'ils doivent faire, qui est de
+  // donner du relief à la voie lactée sans jamais se remarquer eux-mêmes.
+  //
+  // Plus étroits aussi : un couloir plus large que la bande qu'il coupe déborde
+  // dans le vide, où il n'y a plus rien à masquer.
+  for (let i = 0; i < 22; i++) {
     const x = rng() * w;
-    const y = bande(x) + (rng() - 0.5) * epaisseur * 0.9;
-    const rx = 90 + rng() * 260;
-    const ry = (12 + rng() * 40) * (rng() < 0.5 ? 1 : 1.8);
+    const y = bande(x) + (rng() - 0.5) * epaisseur * 0.7;
+    const rx = 70 + rng() * 150;
+    const ry = (10 + rng() * 26) * (rng() < 0.5 ? 1 : 1.7);
     // L'inclinaison est tirée ici, et non dans la boucle des trois copies.
     //
     // Tirée dedans, chaque copie prenait la sienne : le couloir qui traverse la
@@ -130,9 +140,9 @@ export function makeNebulaTexture(tint: number): THREE.CanvasTexture {
       c.translate(cx, y);
       c.rotate(inclinaisonCouloir);
       const g = c.createRadialGradient(0, 0, 0, 0, 0, rx);
-      g.addColorStop(0, '#020308dd');
-      g.addColorStop(0.55, '#02030888');
-      g.addColorStop(1, '#02030800');
+      g.addColorStop(0, NOIR + 'cc');
+      g.addColorStop(0.5, NOIR + '66');
+      g.addColorStop(1, NOIR + '00');
       c.fillStyle = g;
       c.scale(1, ry / rx);
       c.fillRect(-rx, -rx, rx * 2, rx * 2);
