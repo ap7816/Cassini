@@ -88,7 +88,14 @@ const FRAGMENT = /* glsl */ `
     float pied = smoothstep(0.0, 0.42, vUv.y);
     float sommet = 1.0 - smoothstep(0.5, 1.0, vUv.y);
 
-    float a = pied * sommet * smoothstep(0.5, 0.95, masse) * (0.25 + 0.75 * stries);
+    // Les deux bouts de l'arc s'éteignent eux aussi.
+    //
+    // Sans cela, le rideau s'arrêtait net là où le cylindre s'ouvre : une arête
+    // verticale parfaitement droite traversait le ciel de haut en bas, et rien
+    // dans un ciel n'a de bord droit.
+    float bords = smoothstep(0.0, 0.18, vUv.x) * (1.0 - smoothstep(0.82, 1.0, vUv.x));
+
+    float a = pied * sommet * bords * smoothstep(0.5, 0.95, masse) * (0.25 + 0.75 * stries);
     a *= uForce;
 
     gl_FragColor = vec4(mix(uBas, uHaut, vUv.y) * a, a);
@@ -231,7 +238,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
 
   // Tempête : au repos le rideau respire à peine ; elle le porte au comble en
   // une vingtaine de secondes, le tient, puis le laisse retomber.
-  const FORCE_REPOS = 0.22;
+  const FORCE_REPOS = 0.35;
   let tempete = 0;
   let prochaineTempete = 95 + Math.random() * 130;
 
@@ -344,7 +351,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       tempete -= dt;
       // Montée et descente en cloche, sans marche d'escalier.
       const avancement = 1 - Math.abs(tempete / 15 - 1);
-      matRideau.uniforms.uForce.value = FORCE_REPOS + Math.max(0, avancement) * 0.75;
+      matRideau.uniforms.uForce.value = FORCE_REPOS + Math.max(0, avancement) * 0.55;
     } else {
       // Au repos, une respiration lente, à peine perceptible.
       matRideau.uniforms.uForce.value = FORCE_REPOS * (0.85 + 0.15 * Math.sin(temps * 0.18));

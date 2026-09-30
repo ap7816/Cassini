@@ -117,12 +117,18 @@ export function makeNebulaTexture(tint: number): THREE.CanvasTexture {
     const y = bande(x) + (rng() - 0.5) * epaisseur * 0.9;
     const rx = 90 + rng() * 260;
     const ry = (12 + rng() * 40) * (rng() < 0.5 ? 1 : 1.8);
+    // L'inclinaison est tirée ici, et non dans la boucle des trois copies.
+    //
+    // Tirée dedans, chaque copie prenait la sienne : le couloir qui traverse la
+    // couture de la texture ne retombait pas sur lui-même, et cela se voyait
+    // comme une arête verticale nette en travers du ciel.
+    const inclinaisonCouloir = (rng() - 0.5) * 0.5;
     for (const ox of [-w, 0, w]) {
       const cx = x + ox;
       if (cx + rx < 0 || cx - rx > w) continue;
       c.save();
       c.translate(cx, y);
-      c.rotate((rng() - 0.5) * 0.5);
+      c.rotate(inclinaisonCouloir);
       const g = c.createRadialGradient(0, 0, 0, 0, 0, rx);
       g.addColorStop(0, '#020308dd');
       g.addColorStop(0.55, '#02030888');
