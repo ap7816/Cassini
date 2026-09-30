@@ -13,6 +13,7 @@ export type AppSettingsContextValue = {
   setAutostart: (enabled: boolean) => void;
   setRunInBackground: (enabled: boolean) => void;
   setMusicParticles: (enabled: boolean) => void;
+  setCielVivant: (enabled: boolean) => void;
   setPlanetSizeByPlaytime: (enabled: boolean) => void;
   setStartSystem: (cle: string) => void;
   setThemeMode: (mode: ModeTheme) => void;

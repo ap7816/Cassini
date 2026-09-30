@@ -105,6 +105,11 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   }
 
   // Active ou désactive les particules de neige sur la page musique
+  // Aurores, tempêtes et passages dans le ciel du système solaire
+  function setCielVivant(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, cielVivant: enabled }));
+  }
+
   function setMusicParticles(enabled: boolean) {
     setSettings((prev) => ({ ...prev, musicParticles: enabled }));
   }
@@ -141,6 +146,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setAutostart,
       setRunInBackground,
       setMusicParticles,
+      setCielVivant,
       setPlanetSizeByPlaytime,
       setStartSystem,
       setThemeMode,

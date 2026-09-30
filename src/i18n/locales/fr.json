@@ -247,6 +247,8 @@
     "patchNotesBtn": "Voir les notes",
     "sgdbKeySaved": "•••••••• (clé enregistrée)",
     "solarTitle": "Système solaire",
+    "cielVivantLabel": "Ciel vivant",
+    "cielVivantHint": "Rideaux de gaz ionisé, tempêtes magnétiques, étoiles filantes et rares passages. À couper sur une machine modeste.",
     "planetPlaytimeLabel": "Taille des planètes selon le temps de jeu",
     "planetPlaytimeHint": "Temps de jeu Steam au lieu de l’espace disque. Les autres launchers utilisent l’espace disque.",
     "startSystemLabel": "Système à l’ouverture",
@@ -451,6 +453,11 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v5_2_0": {
+      "new_0": "[Système solaire] Le ciel s’anime : rideaux de gaz ionisé qui dérivent, tempêtes magnétiques de loin en loin, étoiles filantes, et de rares passages en ligne droite",
+      "new_1": "[Système solaire] Fond refait : la voie lactée et ses couloirs de poussière, les nébuleuses en émission rouges et vert bleuté, et des étoiles qui ont enfin la couleur de leur température",
+      "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes"
+    },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",
       "perf_0": "[Performance] Plus de gel de quelques secondes au retour d’une fenêtre réduite : la détection des jeux ne bloque plus la fenêtre",

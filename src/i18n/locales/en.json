@@ -247,6 +247,8 @@
     "patchNotesBtn": "View notes",
     "sgdbKeySaved": "•••••••• (key saved)",
     "solarTitle": "Solar system",
+    "cielVivantLabel": "Living sky",
+    "cielVivantHint": "Curtains of ionised gas, magnetic storms, shooting stars and rare passers-by. Turn off on a modest machine.",
     "planetPlaytimeLabel": "Planet size from playtime",
     "planetPlaytimeHint": "Steam playtime instead of disk space. Other launchers use disk space.",
     "startSystemLabel": "Opening system",
@@ -451,6 +453,11 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v5_2_0": {
+      "new_0": "[Solar system] The sky comes alive: drifting curtains of ionised gas, occasional magnetic storms, shooting stars, and rare travellers crossing in a straight line",
+      "new_1": "[Solar system] Rebuilt background: the Milky Way and its dust lanes, red and teal emission nebulae, and stars that finally have the colour of their temperature",
+      "new_2": "[Settings] “Living sky” turns off with one switch, for modest machines"
+    },
     "v5_1_0": {
       "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",
       "perf_0": "[Performance] No more freeze of a few seconds when restoring a minimised window: game detection no longer blocks the window",

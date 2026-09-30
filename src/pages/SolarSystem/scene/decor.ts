@@ -26,10 +26,24 @@ export function createStarfield(outerR: number): THREE.Points {
     pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
     pos[i * 3 + 2] = r * Math.cos(phi);
 
+    // La couleur d'une étoile est celle de sa température, et le ciel n'est
+    // pas blanc : les naines orangées font le gros de la population, les
+    // bleues se comptent — mais ce sont elles qu'on remarque, parce qu'elles
+    // brillent le plus. La proportion suit celle du voisinage solaire ; l'éclat
+    // moyen reste celui d'avant, pour ne pas éclaircir le ciel.
+    const type = Math.random();
+    const [tr, tv, tb] = type < 0.74
+      ? [0.62, 0.5, 0.39]   // naines orangées : nombreuses, et sombres
+      : type < 0.9
+        ? [0.88, 0.84, 0.74]
+        : type < 0.97
+          ? [1, 1, 1]
+          : [0.82, 0.9, 1.05];
+
     const b = 0.7 + Math.random() * 0.3;
-    col[i * 3] = b;
-    col[i * 3 + 1] = b;
-    col[i * 3 + 2] = b * 1.08;
+    col[i * 3] = b * tr;
+    col[i * 3 + 1] = b * tv;
+    col[i * 3 + 2] = b * tb;
   }
 
   const geo = new THREE.BufferGeometry();

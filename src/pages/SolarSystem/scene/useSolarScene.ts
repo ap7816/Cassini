@@ -17,6 +17,7 @@ import { normaleOrbite, orbitPos, positionSurOrbite } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { makeNebulaTexture } from '../textures/nebula';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
+import { createCiel } from './ciel';
 import { lumiereDe } from '../lib/couleurSoleil';
 import { changerNuage, createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
 import { angleEnDegres, appliquerPlacements } from './placements';
@@ -206,6 +207,13 @@ type Options = {
    * fait savoir par `onSysteme`.
    */
   platformRef: RefObject<string>;
+  /**
+   * Réglage « ciel vivant » : aurores, tempêtes et passages.
+   *
+   * Une référence, lue à chaque image : le couper ou le rallumer ne doit
+   * pas reconstruire la scène, seulement cesser de dessiner le ciel.
+   */
+  cielRef: RefObject<boolean>;
   labelClass: string;
   orbitLabelClass: string;
   onSelect: (game: Game | null) => void;
@@ -284,6 +292,7 @@ export function useSolarScene({
   mountRef,
   labelsRef,
   platformRef,
+  cielRef,
   labelClass,
   orbitLabelClass,
   onSelect,
@@ -435,6 +444,12 @@ export function useSolarScene({
 
     // Le champ d'étoiles enveloppe la galaxie entière, pas un système.
     scene.add(createStarfield(galaxie.rayon));
+
+    // Ce qui vit dans le ciel : rideau de gaz ionisé, tempêtes, et les rares
+    // passages. Réglable, et sans effet sur le reste de la scène quand il est
+    // coupé (voir `ciel.ts`).
+    const ciel = createCiel(galaxie.rayon, new THREE.Color(tint));
+    scene.add(ciel.objet);
 
     // Brume, qui noie les planètes à mesure qu'on quitte un système.
     //
@@ -1389,6 +1404,8 @@ export function useSolarScene({
       // risque de laisser les lueurs derrière les planètes encore en mouvement.
       galaxie.updateLueurs();
 
+      ciel.update(dt, cielRef.current, mouvementReduit, camera);
+
       // Construit ce dont on s'approche, libère ce qu'on laisse derrière.
       // Pendant l'édition, le système ne doit pas être libéré si la caméra
       // s'éloigne : on perdrait l'aperçu. La fin d'un voyage lève l'épingle,
@@ -1485,6 +1502,7 @@ export function useSolarScene({
       window.removeEventListener('blur', onBlur);
       picker.dispose();
       balises.dispose();
+      ciel.dispose();
       galaxie.dispose();
       controls.dispose();
       labelLayer.dispose();
@@ -1519,7 +1537,7 @@ export function useSolarScene({
     // change sans que la scène doive être reconstruite — et la reconstruire à
     // chaque voyage était précisément le défaut.
     cleScene, parPlateformeRef, editionRef, labelClass, orbitLabelClass,
-    mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef,
+    mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef, cielRef,
     sideProbeRef, navProbeRef, fpsRef, pauseRef, onSysteme, flySettingsRef, platformRef,
     structure,
   ]);

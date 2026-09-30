@@ -213,6 +213,11 @@ export function SolarSystemPage() {
       : platforms[0]?.name ?? '';
 
   const critereTaille: CritereTaille = settings.planetSizeByPlaytime ? 'tempsDeJeu' : 'disque';
+
+  // Le ciel vivant se coupe et se rallume sans reconstruire la scène : elle lit
+  // la référence à chaque image.
+  const cielRef = useRef(settings.cielVivant);
+  useEffect(() => { cielRef.current = settings.cielVivant; }, [settings.cielVivant]);
   // Un système au moins suit un tag : la scène doit alors se refaire quand on
   // tague un jeu, puisque cela change la liste de ses planètes.
   const systemesSuivantUnTag = useMemo(() => systemesPerso.some((s) => s.tag), [systemesPerso]);
@@ -511,6 +516,7 @@ export function SolarSystemPage() {
 
   useSolarScene({
     mountRef,
+    cielRef,
     labelsRef,
     parPlateformeRef,
     cleScene,

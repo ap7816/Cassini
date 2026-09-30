@@ -144,7 +144,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
 | Tests unitaires (déduplication, tri, scans)                              | ✅ Done    |
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
-| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ❌ À faire |
+| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
 | Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |

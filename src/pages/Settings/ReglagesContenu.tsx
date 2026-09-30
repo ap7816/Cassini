@@ -116,6 +116,7 @@ export function ReglagesContenu({ recherche }: Props) {
     setRunInBackground,
     setMusicParticles,
     setPlanetSizeByPlaytime,
+    setCielVivant,
     setStartSystem,
     setThemeMode,
     setPageVisible,
@@ -478,7 +479,7 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Système solaire */}
-      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint', 'settings.cielVivantLabel', 'settings.cielVivantHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
 
@@ -496,6 +497,21 @@ export function ReglagesContenu({ recherche }: Props) {
               type="checkbox"
               checked={settings.planetSizeByPlaytime}
               onChange={e => setPlanetSizeByPlaytime(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
+
+        <SettingRow
+          labelKey="settings.cielVivantLabel"
+          hintKey="settings.cielVivantHint"
+          query={q}
+        >
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.cielVivant}
+              onChange={e => setCielVivant(e.target.checked)}
             />
             <span className={css.toggleSlider} />
           </label>

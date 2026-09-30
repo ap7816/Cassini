@@ -36,6 +36,8 @@ export type AppSettings = {
   autostart: boolean;
   runInBackground: boolean;
   musicParticles: boolean;
+  /** Aurores, tempêtes et passages dans le ciel du système solaire. */
+  cielVivant: boolean;
   /**
    * Pages encore atteignables depuis la barre des launchers.
    *

@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autostart: false,
   runInBackground: false,
   musicParticles: true,
+  cielVivant: true,
   // Masquées : la galaxie est la bibliothèque et la barre est la liste des
   // launchers. Ces réglages rappellent les pages une à une.
   showLibrary: false,
@@ -49,6 +50,8 @@ export function loadSettings(): AppSettings {
       typeof parsed.runInBackground === 'boolean' ? parsed.runInBackground : false;
     const musicParticles =
       typeof parsed.musicParticles === 'boolean' ? parsed.musicParticles : true;
+    const cielVivant =
+      typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
 
     return {
       backgroundImageDataUrl: bg,
@@ -59,6 +62,7 @@ export function loadSettings(): AppSettings {
       autostart,
       runInBackground,
       musicParticles,
+      cielVivant,
       // Absentes d'une entrée écrite avant ces réglages : masquées, comme pour
       // une installation neuve.
       showLibrary: parsed.showLibrary === true,
