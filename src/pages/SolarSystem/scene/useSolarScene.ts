@@ -18,6 +18,7 @@ import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { createFondCiel } from './cielFond';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
 import { createCiel } from './ciel';
+import { enregistrerCiel } from '../../../features/debug/evenementsCiel';
 import { lumiereDe } from '../lib/couleurSoleil';
 import { changerNuage, createGalaxy, type EntreeGalaxie, type SystemeGalaxie } from './galaxy';
 import { angleEnDegres, appliquerPlacements } from './placements';
@@ -453,6 +454,25 @@ export function useSolarScene({
     // coupé (voir `ciel.ts`).
     const ciel = createCiel(galaxie.rayon, new THREE.Color(tint));
     scene.add(ciel.objet);
+
+    // Le panneau de débogage peut provoquer ces événements sans attendre leur
+    // heure. En production, personne ne s'adresse à ce registre.
+    const retirerCiel = enregistrerCiel((evenement) => {
+      const endroit = ciel.declencher(evenement);
+      if (!endroit) return;
+
+      // On tourne la tête, on ne se déplace pas : la caméra reste où elle est,
+      // seule sa cible part sur l'événement. Sans quoi un simple bouton
+      // d'essai expédierait l'observateur à l'autre bout de la galaxie.
+      //
+      // La cible est posée à la distance où elle était : l'orbite garde son
+      // rayon, et la molette continue de se comporter comme avant.
+      const rayon = Math.max(1, camera.position.distanceTo(controls.target));
+      const vise = endroit.clone().sub(camera.position).normalize()
+        .multiplyScalar(rayon)
+        .add(camera.position);
+      animateCam(camera.position.clone(), vise, 0.7);
+    });
 
     // Brume, qui noie les planètes à mesure qu'on quitte un système.
     //
@@ -1405,12 +1425,12 @@ export function useSolarScene({
       // Sans condition : `paused` ne reflète que l'état de la première planète,
       // et recopier quelques centaines de flottants coûte moins cher que le
       // risque de laisser les lueurs derrière les planètes encore en mouvement.
-      // Le fond est à l'infini : sa sphère se déplace avec l'œil.
-      fond.objet.position.copy(camera.position);
+      // Le fond suit l'œil, et la lumière zodiacale suit l'étoile regardée.
+      fond.update(camera, lumiere.position, lumiere.color, renderer.domElement.height);
 
       galaxie.updateLueurs();
 
-      ciel.update(dt, cielRef.current, mouvementReduit, camera);
+      ciel.update(dt, cielRef.current, mouvementReduit, camera, lumiere.position);
 
       // Construit ce dont on s'approche, libère ce qu'on laisse derrière.
       // Pendant l'édition, le système ne doit pas être libéré si la caméra
@@ -1508,6 +1528,7 @@ export function useSolarScene({
       window.removeEventListener('blur', onBlur);
       picker.dispose();
       balises.dispose();
+      retirerCiel();
       ciel.dispose();
       galaxie.dispose();
       controls.dispose();

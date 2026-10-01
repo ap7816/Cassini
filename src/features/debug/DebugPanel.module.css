@@ -342,3 +342,32 @@
     transition: none;
   }
 }
+
+/* Les boutons qui provoquent un événement du ciel : une grille serrée, pour
+   qu'ils tiennent sans repousser les réglages plus bas que l'écran. */
+.evenements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 8px 10px 12px;
+}
+
+.evenement {
+  padding: 7px 8px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.05);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.evenement:hover {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.3);
+}
+
+.evenement:active {
+  transform: translateY(1px);
+}

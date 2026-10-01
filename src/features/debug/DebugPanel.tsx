@@ -11,6 +11,7 @@ import {
   revisionReglages,
   type Reglages,
 } from './tuning';
+import { declencherCiel, EVENEMENTS_CIEL } from './evenementsCiel';
 
 type Valeur = Reglages[keyof Reglages];
 
@@ -154,6 +155,28 @@ export function DebugPanel() {
           </div>
 
           <div className={css.corps}>
+            {/* Les événements du ciel ne s'attendent pas : ils se provoquent.
+                Hors recherche, pour ne pas s'intercaler entre deux résultats. */}
+            {q === '' && (
+              <section className={css.groupe}>
+                <div className={css.groupeTete}>
+                  <span className={css.groupeTitre}>Événements du ciel</span>
+                </div>
+                <div className={css.evenements}>
+                  {EVENEMENTS_CIEL.map(({ cle, libelle }) => (
+                    <button
+                      key={cle}
+                      type="button"
+                      className={css.evenement}
+                      onClick={() => declencherCiel(cle)}
+                    >
+                      {libelle}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {groupes.map(({ groupe, defs, modifies }) => {
               // Une recherche déplie tout ce qu'elle trouve : replié, un résultat
               // resterait invisible alors qu'il est le seul affiché.

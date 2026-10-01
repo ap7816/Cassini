@@ -24,6 +24,7 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v5_2_0.new_0',
           'changelog.v5_2_0.new_1',
           'changelog.v5_2_0.new_2',
+          'changelog.v5_2_0.new_3',
         ],
       },
       {

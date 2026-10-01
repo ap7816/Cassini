@@ -46,12 +46,17 @@ const OIII = new THREE.Color(0x2bbf9a);
 const NORMALE_GALACTIQUE = new THREE.Vector3(0.24, 0.95, -0.2).normalize();
 
 const VERTEX = /* glsl */ `
-  varying vec3 vDirection;
+  varying vec2 vNdc;
   void main() {
-    // La direction depuis le centre de la sphère suffit : le fond est à
-    // l'infini, seule l'orientation du regard compte.
-    vDirection = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    // Un rectangle qui couvre l'écran, posé tel quel : ni caméra, ni
+    // projection. Le ciel n'a pas de géométrie — il n'a qu'une direction par
+    // pixel, et c'est le fragment qui la reconstruira.
+    //
+    // C'était une sphère, et ses quadrilatères se voyaient : la direction,
+    // interpolée à plat sur chaque triangle, laissait des marches le long de la
+    // triangulation. Un rectangle n'a pas d'arêtes intérieures.
+    vNdc = position.xy;
+    gl_Position = vec4(position.xy, 0.999, 1.0);
   }
 `;
 
@@ -62,7 +67,12 @@ const FRAGMENT = /* glsl */ `
   uniform vec3 uHAlpha;
   uniform vec3 uOIII;
   uniform vec3 uNormale;
-  varying vec3 vDirection;
+  uniform vec3 uSoleil;
+  uniform float uPixel;
+  uniform vec3 uCouleurSoleil;
+  uniform mat4 uProjectionInverse;
+  uniform mat4 uCameraMonde;
+  varying vec2 vNdc;
 
   // ── Aléas ────────────────────────────────────────────────────────────────
   // Haché sans sinus.
@@ -124,10 +134,18 @@ const FRAGMENT = /* glsl */ `
     vec3 cellule = floor(p);
     vec3 dans = fract(p);
 
-    // La dérivée se calcule avant tout branchement : elle compare des pixels
-    // voisins, et n'a plus de sens si certains d'entre eux ont pris une autre
-    // route que celui-ci.
-    float pixel = max(fwidth(p.x), fwidth(p.y));
+    // Combien de cellules tient un pixel ?
+    //
+    // La question se posait à fwidth, qui compare deux pixels voisins. Mais
+    // la direction est interpolée à plat sur chaque triangle de la sphère :
+    // sa dérivée saute à chaque arête, et ces sauts se voyaient comme des
+    // marches d'escalier en travers du ciel, exactement le long de la
+    // triangulation.
+    //
+    // L'angle que couvre un pixel ne dépend pourtant ni de la sphère ni du
+    // triangle : il se déduit de l'ouverture de l'objectif et de la hauteur de
+    // l'image. Calculé une fois par image, il est juste partout.
+    float pixel = densite * uPixel;
 
     // Une couche dont les cellules deviennent plus petites qu'un pixel ne peut
     // plus être dessinée : chaque pixel en contiendrait plusieurs, et leurs
@@ -147,13 +165,32 @@ const FRAGMENT = /* glsl */ `
     // Taille apparente : environ un pixel, quelle que soit la distance.
     float rayon = clamp(pixel * 0.8, 0.02, 0.45);
 
-    float dist = length(dans - h);
+    vec3 ecart = dans - h;
+    float dist = length(ecart);
     float forme = smoothstep(rayon, 0.0, dist);
+
+    // Les aigrettes.
+    //
+    // Les quatre branches qu'on voit autour des étoiles vives sur toutes les
+    // photographies du ciel. Elles ne sont pas dans le ciel : elles naissent
+    // dans l'instrument, sur les bras qui tiennent le miroir secondaire. Mais
+    // l'œil les a tant vues qu'il lit « étoile brillante » avant même d'y
+    // penser — et sans elles, une étoile vive n'est qu'un point un peu plus
+    // gros.
+    float croix = max(
+      smoothstep(rayon * 5.0, 0.0, abs(ecart.x)) * smoothstep(rayon * 0.9, 0.0, abs(ecart.y)),
+      smoothstep(rayon * 0.9, 0.0, abs(ecart.x)) * smoothstep(rayon * 5.0, 0.0, abs(ecart.y))
+    );
+    forme += croix * 0.14;
+
     if (forme <= 0.0) return vec3(0.0);
 
     // Magnitude : beaucoup de faibles, très peu de vives. La puissance
     // reproduit grossièrement la distribution réelle des éclats.
     float magnitude = pow(fract(h.y * 71.37 + h.z * 17.11), 3.0) * eclatMax;
+    // Seules les plus vives portent des aigrettes : sur une étoile faible,
+    // l'instrument n'en tire rien.
+    forme = mix(smoothstep(rayon, 0.0, dist), forme, smoothstep(0.78, 0.97, magnitude / max(eclatMax, 0.001)));
 
     // Couleur : la température de l'étoile. Les rouges dominent en nombre, les
     // bleues en éclat.
@@ -172,8 +209,28 @@ const FRAGMENT = /* glsl */ `
     return couleur * forme * magnitude * visibilite;
   }
 
+  /**
+   * Les amas.
+   *
+   * Les étoiles ne sont pas semées au hasard : elles naissent par groupes, dans
+   * le même nuage, et restent ensemble quelques centaines de millions d'années
+   * — les Pléiades en sont. Une grille large désigne ces régions, et la densité
+   * des couches y monte. Sans elles, le semis est d'une régularité qu'aucun
+   * ciel n'a.
+   */
+  float amas(vec3 d) {
+    vec3 p = d * 9.0;
+    vec3 cellule = floor(p);
+    vec3 h = alea3(cellule);
+    if (fract(h.x * 57.31 + h.z * 13.7) > 0.09) return 0.0;
+    return smoothstep(0.42, 0.0, length(fract(p) - h));
+  }
+
   void main() {
-    vec3 d = normalize(vDirection);
+    // Du pixel vers le monde : on remonte la projection, puis l'orientation de
+    // la caméra. Exact à chaque pixel, sans surface intermédiaire.
+    vec4 vue = uProjectionInverse * vec4(vNdc, -1.0, 1.0);
+    vec3 d = normalize((uCameraMonde * vec4(normalize(vue.xyz / vue.w), 0.0)).xyz);
 
     // Distance angulaire au plan galactique : 0 sur le plan, 1 aux pôles.
     float horsPlan = abs(dot(d, uNormale));
@@ -188,10 +245,12 @@ const FRAGMENT = /* glsl */ `
     // Trois couches : les rares et vives, les moyennes, et la poussière
     // d'étoiles qui ne se sépare qu'en s'approchant — celle-là se concentre
     // dans le disque, comme dans le ciel.
+    float groupe = amas(d);
+
     vec3 lumiere = vec3(0.0);
-    lumiere += couche(d, 140.0, 0.16, 1.7, proximite * 0.6);
-    lumiere += couche(d, 380.0, 0.1 + 0.18 * proximite, 0.9, proximite * 0.6);
-    lumiere += couche(d, 900.0, 0.04 + 0.55 * proximite, 0.55, proximite * 0.8);
+    lumiere += couche(d, 140.0, 0.16 + 0.1 * groupe, 1.7, proximite * 0.6);
+    lumiere += couche(d, 380.0, 0.1 + 0.18 * proximite + 0.3 * groupe, 0.9, proximite * 0.6);
+    lumiere += couche(d, 900.0, 0.04 + 0.55 * proximite + 0.4 * groupe, 0.55, proximite * 0.8);
 
     // Et la foule du disque : celle qu'on ne sépare qu'en s'approchant. C'est
     // elle qui fait la voie lactée — une bande qui brille sans grouiller n'est
@@ -252,6 +311,22 @@ const FRAGMENT = /* glsl */ `
     lumiere *= 1.0 - poussiere * 0.85;
     }
 
+    // ── La lumière zodiacale ───────────────────────────────────────────────
+    //
+    // La poussière du système, celle qui traîne dans le plan des orbites,
+    // renvoie la lumière de l'étoile. Cela fait un cône pâle le long de ce
+    // plan, plus large et plus clair près du soleil, qui s'efface à mesure
+    // qu'on s'en éloigne — la première chose qu'on remarque depuis l'espace,
+    // et celle qu'aucune image de galaxie ne montre jamais.
+    //
+    // Rien à voir avec la voie lactée : ce plan-ci est celui des orbites, à
+    // quinze degrés de l'autre, et c'est ce décalage qui rend les deux lisibles
+    // en même temps.
+    float dansLePlan = 1.0 - smoothstep(0.0, 0.30, abs(d.y));
+    float versLeSoleil = max(0.0, dot(d, uSoleil));
+    float zodiacale = dansLePlan * pow(versLeSoleil, 2.2);
+    lumiere += mix(vec3(1.0, 0.94, 0.84), uCouleurSoleil, 0.35) * zodiacale * 0.06;
+
     // ── La teinte de la plateforme ─────────────────────────────────────────
     //
     // Discrète : elle distingue un launcher d'un autre au premier regard, sans
@@ -271,6 +346,19 @@ const FRAGMENT = /* glsl */ `
 
 export type FondCiel = {
   objet: THREE.Mesh;
+  /**
+   * Suit l'œil et l'étoile regardée.
+   *
+   * La sphère se recentre sur la caméra — le fond est à l'infini, il ne doit
+   * jamais se refermer devant nous — et la lumière zodiacale a besoin de savoir
+   * d'où vient la lumière.
+   */
+  update: (
+    camera: THREE.PerspectiveCamera,
+    soleil: THREE.Vector3,
+    couleur: THREE.Color,
+    hauteurPixels: number,
+  ) => void;
   dispose: () => void;
 };
 
@@ -282,15 +370,12 @@ export type FondCiel = {
  * devant elle.
  */
 export function createFondCiel(teinte: THREE.Color): FondCiel {
-  // Un rayon modeste, et sans rapport avec la taille de la galaxie.
+  // Deux triangles, et rien d'autre.
   //
-  // Il valait neuf fois celle-ci : sur une grande bibliothèque, la sphère
-  // passait derrière le plan lointain de la caméra et se faisait découper en
-  // entier — il ne restait que la couleur d'effacement du moteur, ce bleu-gris
-  // uniforme qu'on prenait pour le ciel. Comme elle ne se compare à aucune
-  // profondeur et se dessine avant tout le reste, sa taille n'a aucune
-  // importance : elle doit seulement tenir dans le tronc de vue.
-  const geometrie = new THREE.SphereGeometry(800, 48, 32);
+  // Le ciel ne se compare à aucune profondeur et se dessine avant tout le
+  // reste : il n'a besoin d'aucune forme dans l'espace. Une sphère coûtait
+  // trois mille triangles et laissait voir ses arêtes.
+  const geometrie = new THREE.PlaneGeometry(2, 2);
 
   const materiau = new THREE.ShaderMaterial({
     uniforms: {
@@ -298,10 +383,18 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
       uHAlpha: { value: H_ALPHA.clone() },
       uOIII: { value: OIII.clone() },
       uNormale: { value: NORMALE_GALACTIQUE.clone() },
+      uSoleil: { value: new THREE.Vector3(0, 0, 1) },
+      uPixel: { value: 0.001 },
+      uProjectionInverse: { value: new THREE.Matrix4() },
+      uCameraMonde: { value: new THREE.Matrix4() },
+      uCouleurSoleil: { value: new THREE.Color(0xfff2d8) },
     },
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
-    side: THREE.BackSide,
+    // Le rectangle est posé face à nous : il n'a pas d'envers à montrer.
+    // Hérité de la sphère, qu'on regardait de l'intérieur, ce réglage le
+    // faisait disparaître entièrement.
+    side: THREE.DoubleSide,
     depthWrite: false,
     // Le fond ne se compare à rien : il est derrière tout, par construction.
     depthTest: false,
@@ -311,12 +404,28 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
   const ciel = new THREE.Mesh(geometrie, materiau);
   // Avant tout le reste, y compris le rideau d'aurore.
   ciel.renderOrder = -10;
-  // La sphère suit la caméra : sans cela, s'éloigner du centre de la galaxie
-  // finirait par en sortir, et le ciel se refermerait devant nous.
+  // Posé hors de l'espace : aucun tronc de vue ne le contient, et il ne doit
+  // jamais être écarté pour cette raison.
   ciel.frustumCulled = false;
+
+  const versSoleil = new THREE.Vector3();
 
   return {
     objet: ciel,
+    update(camera, soleil, couleur, hauteurPixels) {
+      materiau.uniforms.uProjectionInverse.value.copy(camera.projectionMatrixInverse);
+      materiau.uniforms.uCameraMonde.value.copy(camera.matrixWorld);
+      // Angle couvert par un pixel, au centre de l'image.
+      materiau.uniforms.uPixel.value =
+        (2 * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, hauteurPixels);
+      versSoleil.subVectors(soleil, camera.position);
+      // Caméra posée sur l'étoile : la direction n'a plus de sens, on garde la
+      // précédente plutôt que de renvoyer un vecteur nul.
+      if (versSoleil.lengthSq() > 1e-6) {
+        materiau.uniforms.uSoleil.value.copy(versSoleil.normalize());
+      }
+      materiau.uniforms.uCouleurSoleil.value.copy(couleur);
+    },
     dispose() {
       geometrie.dispose();
       materiau.dispose();
