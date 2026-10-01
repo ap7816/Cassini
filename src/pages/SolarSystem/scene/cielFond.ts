@@ -72,6 +72,9 @@ const FRAGMENT = /* glsl */ `
   uniform vec3 uCouleurSoleil;
   uniform mat4 uProjectionInverse;
   uniform mat4 uCameraMonde;
+  uniform vec3 uTrou;
+  uniform float uTrouOmbre;
+  uniform float uTrouForce;
   varying vec2 vNdc;
 
   // ── Aléas ────────────────────────────────────────────────────────────────
@@ -232,6 +235,31 @@ const FRAGMENT = /* glsl */ `
     vec4 vue = uProjectionInverse * vec4(vNdc, -1.0, 1.0);
     vec3 d = normalize((uCameraMonde * vec4(normalize(vue.xyz / vue.w), 0.0)).xyz);
 
+    // ── La masse courbe le chemin de la lumière ────────────────────────────
+    //
+    // Un trou noir n'émet rien : on ne le voit que par ce qu'il fait au reste.
+    // La lumière des étoiles situées derrière lui ne va plus droit — elle
+    // contourne la masse et nous parvient quand même, par un côté ou par
+    // l'autre. Chaque étoile cachée réapparaît donc étalée en anneau autour de
+    // l'ombre : c'est l'anneau d'Einstein.
+    //
+    // On ne simule pas la relativité : on retranche à la direction du regard
+    // une déviation inversement proportionnelle à l'angle qui l'en sépare —
+    // ce qui est la bonne loi au premier ordre, et suffit à faire apparaître
+    // l'anneau. Au-dessous d'un certain angle, plus rien ne ressort : c'est
+    // l'ombre.
+    float ombre = 0.0;
+    if (uTrouForce > 0.001) {
+      float cosTheta = dot(d, uTrou);
+      float theta = acos(clamp(cosTheta, -1.0, 1.0));
+      // Direction perpendiculaire, dans le plan qui contient le regard et
+      // l'objet : c'est le long d'elle que la lumière est ramenée.
+      vec3 vers = normalize(uTrou - d * cosTheta);
+      float deviation = uTrouForce * (uTrouOmbre * uTrouOmbre * 2.6) / max(theta, 1e-3);
+      d = normalize(d - vers * min(deviation, theta * 0.98));
+      ombre = 1.0 - smoothstep(uTrouOmbre * 0.92, uTrouOmbre * 1.04, theta);
+    }
+
     // Distance angulaire au plan galactique : 0 sur le plan, 1 aux pôles.
     float horsPlan = abs(dot(d, uNormale));
 
@@ -340,7 +368,8 @@ const FRAGMENT = /* glsl */ `
     // ressortir. Entre deux étoiles, il n'y a pas de lumière.
     vec3 fond = vec3(0.004, 0.006, 0.012) + uTeinte * 0.004;
 
-    gl_FragColor = vec4(fond + lumiere, 1.0);
+    // L'ombre mange tout ce qui serait sorti de cette direction.
+    gl_FragColor = vec4((fond + lumiere) * (1.0 - ombre), 1.0);
   }
 `;
 
@@ -359,6 +388,8 @@ export type FondCiel = {
     couleur: THREE.Color,
     hauteurPixels: number,
   ) => void;
+  /** Place l'objet qui courbe la lumière, ou l'efface avec une force nulle. */
+  courber: (position: THREE.Vector3, ombre: number, force: number) => void;
   dispose: () => void;
 };
 
@@ -387,6 +418,9 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
       uPixel: { value: 0.001 },
       uProjectionInverse: { value: new THREE.Matrix4() },
       uCameraMonde: { value: new THREE.Matrix4() },
+      uTrou: { value: new THREE.Vector3(0, 0, 1) },
+      uTrouOmbre: { value: 0 },
+      uTrouForce: { value: 0 },
       uCouleurSoleil: { value: new THREE.Color(0xfff2d8) },
     },
     vertexShader: VERTEX,
@@ -409,10 +443,13 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
   ciel.frustumCulled = false;
 
   const versSoleil = new THREE.Vector3();
+  /** Dernière position de l'œil : la courbure se mesure depuis lui. */
+  const positionCamera = new THREE.Vector3();
 
   return {
     objet: ciel,
     update(camera, soleil, couleur, hauteurPixels) {
+      positionCamera.copy(camera.position);
       materiau.uniforms.uProjectionInverse.value.copy(camera.projectionMatrixInverse);
       materiau.uniforms.uCameraMonde.value.copy(camera.matrixWorld);
       // Angle couvert par un pixel, au centre de l'image.
@@ -425,6 +462,13 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
         materiau.uniforms.uSoleil.value.copy(versSoleil.normalize());
       }
       materiau.uniforms.uCouleurSoleil.value.copy(couleur);
+    },
+    courber(positionTrou, ombre, force) {
+      materiau.uniforms.uTrouOmbre.value = ombre;
+      materiau.uniforms.uTrouForce.value = force;
+      if (force > 0) {
+        materiau.uniforms.uTrou.value.subVectors(positionTrou, positionCamera).normalize();
+      }
     },
     dispose() {
       geometrie.dispose();

@@ -15,7 +15,14 @@
  * sait les déclencher.
  */
 
-export type EvenementCiel = 'trainee' | 'tempete' | 'comete' | 'vaisseau' | 'supernova';
+export type EvenementCiel =
+  | 'trainee'
+  | 'tempete'
+  | 'comete'
+  | 'vaisseau'
+  | 'supernova'
+  | 'cometeBleue'
+  | 'trouNoir';
 
 export const EVENEMENTS_CIEL: Array<{ cle: EvenementCiel; libelle: string }> = [
   { cle: 'trainee', libelle: 'Étoile filante' },
@@ -23,6 +30,8 @@ export const EVENEMENTS_CIEL: Array<{ cle: EvenementCiel; libelle: string }> = [
   { cle: 'comete', libelle: 'Comète' },
   { cle: 'vaisseau', libelle: 'Passage' },
   { cle: 'supernova', libelle: 'Supernova' },
+  { cle: 'cometeBleue', libelle: 'Comète bleue' },
+  { cle: 'trouNoir', libelle: 'Trou noir' },
 ];
 
 type Declencheur = (evenement: EvenementCiel) => void;

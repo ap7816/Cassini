@@ -245,7 +245,12 @@ function makeBeaconTexture(): THREE.CanvasTexture {
  */
 export function createSunBeacons(
   soleils: Array<{ centre: THREE.Vector3; couleur: THREE.Color }>,
-): { points: THREE.Points; dispose: () => void } {
+): {
+  points: THREE.Points;
+  /** Déplace une balise et règle son éclat — voir plus bas. */
+  suivre: (i: number, position: THREE.Vector3, eclat: number) => void;
+  dispose: () => void;
+} {
   const n = soleils.length;
   const positions = new Float32Array(n * 3);
   const colors = new Float32Array(n * 3);
@@ -286,8 +291,32 @@ export function createSunBeacons(
   // écarterait tout l'objet dès qu'un seul soleil quitte le champ.
   points.frustumCulled = false;
 
+  // Les couleurs d'origine : une balise éteinte doit pouvoir se rallumer.
+  const couleursOrigine = colors.slice();
+
   return {
     points,
+    /**
+     * Déplace une balise et règle son éclat.
+     *
+     * Elle vit hors des systèmes, pour rester visible quand leurs planètes sont
+     * libérées — ce qui veut dire qu'elle ne suit rien toute seule. Quand un
+     * trou noir avale une étoile, sa balise restait donc allumée dans le vide,
+     * à l'endroit où l'étoile n'était plus.
+     *
+     * L'éclat passe par la couleur : la taille d'un point est commune à tous,
+     * mais sa couleur ne l'est pas, et le mélange additif fait disparaître ce
+     * qui est noir.
+     */
+    suivre(i: number, position: THREE.Vector3, eclat: number) {
+      if (i < 0 || i >= n) return;
+      positions[i * 3] = position.x;
+      positions[i * 3 + 1] = position.y;
+      positions[i * 3 + 2] = position.z;
+      for (let c = 0; c < 3; c++) colors[i * 3 + c] = couleursOrigine[i * 3 + c] * eclat;
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.color.needsUpdate = true;
+    },
     dispose: () => { geo.dispose(); mat.dispose(); map.dispose(); },
   };
 }

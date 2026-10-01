@@ -134,6 +134,13 @@ export type Ciel = {
    * Rend l'endroit du ciel où il se produit, pour qu'on puisse l'y regarder.
    */
   declencher: (evenement: EvenementCiel) => THREE.Vector3 | null;
+  /**
+   * Où se trouve la tête de la comète bleue, si elle passe.
+   *
+   * La scène en a besoin : c'est elle qui tient le pointeur, et c'est le survol
+   * de cette tête qui fait monter le chant.
+   */
+  teteCometeBleue: () => THREE.Vector3 | null;
   dispose: () => void;
 };
 
@@ -475,6 +482,137 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   comete.visible = false;
   groupe.add(comete);
 
+  // ── La comète bleue ──────────────────────────────────────────────────────
+  //
+  // La même chose en grand, en bleu, et en lent : un objet qu'on voit venir de
+  // loin et qui met plus d'une minute à traverser. Elle n'a pas d'autre raison
+  // d'être que d'être belle, et de se faire attendre.
+  const cometeBleue = new THREE.Group();
+  const geoNoyauBleu = new THREE.BufferGeometry();
+  geoNoyauBleu.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+  // Son propre matériau, et non celui de l'autre repeint : ce qui la distingue
+  // n'est pas une teinte, c'est une matière. Un cœur blanc qui déborde, une
+  // enveloppe de glace cyan, et une couronne bleue qui s'étale loin.
+  const matNoyauBleu = new THREE.ShaderMaterial({
+    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 } },
+    vertexShader: /* glsl */ `
+      uniform float uEclat;
+      void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = 95.0 * clamp(uEclat, 0.35, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uEclat;
+      uniform float uTemps;
+      void main() {
+        vec2 p = gl_PointCoord - 0.5;
+        float r = length(p);
+
+        float coeur = smoothstep(0.045, 0.0, r) * 2.2;
+        float glace = smoothstep(0.16, 0.02, r) * 0.9;
+        float couronne = 0.5 / (1.0 + 90.0 * r * r);
+
+        // Quatre branches lentes, qui respirent : de la glace qui s'évapore,
+        // pas une ampoule.
+        float souffle = 0.85 + 0.15 * sin(uTemps * 1.7);
+        float branches = max(
+          exp(-abs(p.x) * 7.0) * exp(-pow(abs(p.y) * 60.0, 1.3)),
+          exp(-abs(p.y) * 7.0) * exp(-pow(abs(p.x) * 60.0, 1.3))
+        ) * 0.8 * souffle;
+
+        float a = (coeur + glace + couronne * 0.8 + branches) * uEclat;
+        // Blanche au centre, cyan autour, bleue aux confins : c'est le dégradé
+        // d'une glace éclairée par-derrière.
+        vec3 couleur = mix(vec3(0.35, 0.72, 1.0), vec3(0.88, 0.97, 1.0), smoothstep(0.12, 0.0, r));
+        gl_FragColor = vec4(couleur * a, a);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
+    fog: false,
+  });
+  const noyauBleu = new THREE.Points(geoNoyauBleu, matNoyauBleu);
+  noyauBleu.frustumCulled = false;
+  const geoQueueBleue = new THREE.PlaneGeometry(1, 1);
+  geoQueueBleue.translate(0.5, 0, 0);
+  const matQueueBleue = new THREE.ShaderMaterial({
+    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 }, uRatio: { value: 2 } },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uEclat;
+      uniform float uTemps;
+      varying vec2 vUv;
+
+      float alea(vec2 p) {
+        return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453);
+      }
+
+      /** Bruit continu : des bandes à seuil feraient des rectangles. */
+      float bruit(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(alea(i), alea(i + vec2(1.0, 0.0)), f.x),
+          mix(alea(i + vec2(0.0, 1.0)), alea(i + vec2(1.0, 1.0)), f.x),
+          f.y
+        );
+      }
+
+      void main() {
+        float along = vUv.x;
+        float across = abs(vUv.y - 0.5) * 2.0;
+
+        // La densité décroît en cloche en travers : aucun bord, nulle part.
+        float largeur = 0.08 + 0.92 * pow(along, 0.6);
+        float profil = exp(-pow(across / largeur, 2.0) * 3.0);
+
+        // Les filaments modulent cette densité au lieu de s'y ajouter.
+        //
+        // En bandes à seuil, ils dessinaient des rectangles à bord franc —
+        // exactement ce qu'une queue de comète n'a pas. Ici ils ne font que
+        // creuser et renforcer, de quelques dizaines de pour cent.
+        float strie = bruit(vec2((vUv.y - 0.5) * 16.0, along * 2.6 - uTemps * 0.12));
+        float module = 0.7 + 0.5 * strie;
+
+        // Le jet central, dense et clair, qui donne son axe à l'ensemble.
+        float axe = exp(-pow(across / (largeur * 0.3), 2.0) * 3.0) * pow(1.0 - along, 2.4);
+
+        float extinction = pow(1.0 - along, 1.7);
+        float a = (profil * module * 0.5 + axe * 0.85) * extinction * uEclat;
+
+        // Garde-fou : rien n'atteint jamais le bord du rectangle, quelles que
+        // soient les valeurs ci-dessus.
+        a *= smoothstep(1.0, 0.8, across);
+
+        vec3 couleur = mix(vec3(0.22, 0.58, 1.0), vec3(0.8, 0.95, 1.0), axe + strie * 0.12);
+        gl_FragColor = vec4(couleur * a, a);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
+    side: THREE.DoubleSide,
+    fog: false,
+  });
+  const queueBleue = new THREE.Mesh(geoQueueBleue, matQueueBleue);
+  queueBleue.frustumCulled = false;
+  cometeBleue.add(noyauBleu);
+  cometeBleue.add(queueBleue);
+  cometeBleue.renderOrder = -1;
+  cometeBleue.visible = false;
+  groupe.add(cometeBleue);
+
   // ── L'horloge des événements ─────────────────────────────────────────────
   let temps = 0;
 
@@ -511,6 +649,28 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   let prochaineComete = 150 + Math.random() * 400;
   const departComete = new THREE.Vector3();
   const finComete = new THREE.Vector3();
+
+  /** La bleue : rare, lente, et beaucoup plus grande. */
+  const DUREE_BLEUE = 150;
+  /**
+   * Distance à laquelle on la dessine.
+   *
+   * Sans rapport avec sa place réelle, dont on ne garde que la direction. Assez
+   * courte pour que sa queue tienne devant le plan lointain de la caméra, et
+   * c'est la seule contrainte : sur une sphère autour de l'œil, ce qui compte
+   * n'est pas la distance mais la taille qu'on lui donne.
+   */
+  const RAYON_BLEUE = 2200;
+  let bleueRestante = 0;
+  let prochaineBleue = 900 + Math.random() * 1500;
+  const departBleue = new THREE.Vector3();
+  const finBleue = new THREE.Vector3();
+  const arriereBleue = new THREE.Vector3();
+  /** Position de sa tête, pour que la scène sache où l'on peut la survoler. */
+  const teteBleue = new THREE.Vector3();
+  /** Sa place réelle dans la galaxie, dont on ne garde que la direction. */
+  const vraieBleue = new THREE.Vector3();
+  const tmpDirection = new THREE.Vector3();
   /** Sens de la course, fixé au départ : la queue s'adosse à lui. */
   const arriereComete = new THREE.Vector3();
   const departVaisseau = new THREE.Vector3();
@@ -633,6 +793,43 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     cometeRestante = DUREE_COMETE;
   }
 
+  /**
+   * Lance la comète bleue : une traversée lente, loin et en grand.
+   *
+   * Elle passe plus loin que l'autre et dure deux minutes et demie : on doit
+   * avoir le temps de la voir arriver, d'aller chercher quelqu'un, et de la
+   * regarder partir.
+   */
+  function lancerCometeBleue(camera: THREE.Camera, soleil: THREE.Vector3): void {
+    // Au-dessus de tout, et en travers.
+    //
+    // Les systèmes sont posés à plat : une comète qui passerait dans leur plan
+    // se perdrait entre eux. Celle-ci survole la galaxie et la traverse de part
+    // en part — c'est de là qu'elle se voit, et c'est là qu'on la cherche des
+    // yeux quand on a entendu dire qu'elle passait.
+    const cap = Math.random() * Math.PI * 2;
+    const altitude = distance * 0.42;
+    departBleue.set(Math.cos(cap) * distance * 0.9, altitude, Math.sin(cap) * distance * 0.9);
+    finBleue.set(-departBleue.x, altitude * 0.75, -departBleue.z);
+
+    // Un peu de hauteur en plus au milieu du trajet : elle doit passer
+    // au-dessus du système regardé, pas à travers.
+    departBleue.y += camera.position.y;
+    finBleue.y += camera.position.y;
+
+    const course = new THREE.Vector3().subVectors(finBleue, departBleue).normalize();
+    arriereBleue.copy(course).multiplyScalar(-1);
+    // Le soleil ne sert plus qu'à rappeler que la glace fond en s'approchant.
+    void soleil;
+
+    const p = geoNoyauBleu.attributes.position as THREE.BufferAttribute;
+    p.setXYZ(0, 0, 0, 0);
+    p.needsUpdate = true;
+    noyauBleu.position.copy(departBleue);
+    cometeBleue.visible = true;
+    bleueRestante = DUREE_BLEUE;
+  }
+
   function lancerVaisseau(camera: THREE.Camera): void {
     devantLaCamera(departVaisseau, camera, distance * 0.7, 0.75);
     devantLaCamera(finVaisseau, camera, distance * 0.7, 0.75);
@@ -660,6 +857,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         vaisseau.visible = false;
         nova.visible = false;
         comete.visible = false;
+        cometeBleue.visible = false;
       }
       return;
     }
@@ -715,6 +913,57 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       if (prochaineTrainee <= 0) {
         lancerTrainee(camera);
         prochaineTrainee = 25 + Math.random() * 70;
+      }
+    }
+
+    // ── Comète bleue ───────────────────────────────────────────────────────
+    if (bleueRestante > 0) {
+      bleueRestante -= dt;
+      const t = 1 - bleueRestante / DUREE_BLEUE;
+
+      // Sa vraie place dans la galaxie — celle qui décide de la direction où on
+      // la voit, donc de son passage au-dessus des systèmes.
+      vraieBleue.lerpVectors(departBleue, finBleue, t);
+
+      // Mais elle se dessine à distance fixe de l'œil, dans cette direction-là.
+      //
+      // Posée à sa vraie place, elle sortait du tronc de vue dès qu'on s'en
+      // éloignait de plus de vingt mille unités : le plan lointain de la caméra
+      // la découpait, et elle disparaissait purement et simplement. Or c'est
+      // justement de loin qu'on doit la voir passer. Rapportée sur une sphère
+      // autour de l'observateur, elle garde sa direction, sa taille apparente,
+      // et ne peut plus être coupée.
+      // Posée près de l'œil, et non à la distance du ciel.
+      //
+      // Comme elle se dessine sur une sphère autour de nous, sa distance n'a
+      // aucune conséquence sur ce qu'on voit : seule compte sa taille rapportée
+      // à cette distance. Autant la prendre petite — à dix mille unités, sa
+      // queue de vingt-huit mille dépassait le plan lointain de la caméra et se
+      // faisait trancher net, ce qui lui taillait un biseau à bord droit.
+      const direction = tmpDirection.subVectors(vraieBleue, camera.position).normalize();
+      noyauBleu.position.copy(camera.position).addScaledVector(direction, RAYON_BLEUE);
+      queueBleue.position.copy(noyauBleu.position);
+      teteBleue.copy(noyauBleu.position);
+
+      const versCamera = RAYON_BLEUE;
+      // Démesurée, et c'est le propos : elle doit barrer le ciel.
+      // Et sa queue tient tout entière devant le plan lointain.
+      const longueur = versCamera * 1.5;
+      queueBleue.scale.set(longueur, longueur * 0.42, 1);
+      matQueueBleue.uniforms.uRatio.value = 1 / 0.42;
+      orienter(queueBleue, arriereBleue, camera);
+
+      const bords = Math.sin(Math.min(1, t) * Math.PI) ** 0.3;
+      matNoyauBleu.uniforms.uEclat.value = bords * 1.05;
+      matQueueBleue.uniforms.uEclat.value = bords * 1.5;
+      matNoyauBleu.uniforms.uTemps.value = temps;
+      matQueueBleue.uniforms.uTemps.value = temps;
+      if (bleueRestante <= 0) cometeBleue.visible = false;
+    } else {
+      prochaineBleue -= dt;
+      if (prochaineBleue <= 0) {
+        lancerCometeBleue(camera, soleil);
+        prochaineBleue = 1800 + Math.random() * 2400;
       }
     }
 
@@ -850,6 +1099,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         Math.sin(milieu) * distance,
       ).add(camera.position);
     }
+    if (evenement === 'cometeBleue') {
+      lancerCometeBleue(camera, dernierSoleil);
+      return departBleue.clone().lerp(finBleue, 0.25);
+    }
     if (evenement === 'supernova') {
       devantLaCamera(positionNova, camera, distance * 0.9, 0.35);
       positionNovaDansObjet();
@@ -864,11 +1117,16 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     objet: groupe,
     update,
     declencher,
+    teteCometeBleue: () => (bleueRestante > 0 ? teteBleue : null),
     dispose() {
       geoRideau.dispose();
       matRideau.dispose();
       geoTrainee.dispose();
       matTrainee.dispose();
+      geoNoyauBleu.dispose();
+      matNoyauBleu.dispose();
+      geoQueueBleue.dispose();
+      matQueueBleue.dispose();
       geoNova.dispose();
       matNova.dispose();
       geoNoyau.dispose();
