@@ -455,6 +455,7 @@
   },
   "changelog": {
     "v5_2_0": {
+      "new_5": "[Controls] Free-flight speed is now adjustable, from 0.25× to 5×, and starts out brisker",
       "new_4": "[Solar system] Two more rare events: a vast blue comet sailing over the galaxy — hover it to hear it — and a black hole that swallows everything piece by piece, then gives it all back",
       "new_3": "[Solar system] Comets cross the systems, and now and then a star explodes — at most once per session, and it leaves its mark",
       "perf_0": "[Performance] The dedicated graphics card is now claimed at the right moment: on a dual-GPU laptop the scene ran on the integrated chip. Five to six times faster, measured",
