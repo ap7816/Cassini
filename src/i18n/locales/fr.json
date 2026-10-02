@@ -455,6 +455,7 @@
   },
   "changelog": {
     "v5_2_0": {
+      "fix_0": "[Notes de version] « Ne plus afficher » tient pour de bon : la décision ne se perdait plus à chaque mise à jour",
       "new_5": "[Commandes] La vitesse de déplacement libre se règle, de 0,25 à 5 fois, et part désormais plus vive",
       "new_4": "[Système solaire] Deux événements rares de plus : une comète bleue immense qui survole la galaxie — pose le curseur dessus pour l’entendre — et un trou noir qui avale tout, morceau par morceau, avant de tout rendre",
       "new_3": "[Système solaire] Des comètes traversent les systèmes, et il arrive qu’une étoile explose — au plus une fois par session, et elle laisse sa trace",

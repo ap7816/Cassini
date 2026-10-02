@@ -35,6 +35,7 @@ export const STORAGE_KEYS = {
   ambientVolume:       'archive.ambient.volume',
   language:            'archive.language',
   patchNotesSeen:      'archive.patchNotes.seen',
+  patchNotesAuto:      'archive.patchNotes.auto',
   solarFlyKeys:        'archive.solar.flyKeys.v1',
   systemesPerso:       'archive.solar.customSystems.v1',
   reglagesLaunchers:   'archive.solar.launcherSystems.v1',
@@ -197,10 +198,12 @@ function rawWrite(key: string, value: string): void {
 // Supprime une valeur du cache mémoire et du store
 function rawRemove(key: string): void {
   delete mem[key];
+  // Des deux côtés, toujours : `rawWrite` écrit dans les deux, et n'effacer que
+  // le store laissait une valeur périmée dans le navigateur — que le
+  // préchargeur lit avant lui.
+  try { window.localStorage?.removeItem(key); } catch { /* ignorer */ }
   if (store) {
     store.delete(key).catch(err => console.error('[storage] delete error', err));
-  } else {
-    try { window.localStorage?.removeItem(key); } catch { /* ignorer */ }
   }
 }
 
@@ -333,6 +336,21 @@ export function writePatchNotesSeen(version: string): void { rawWrite(STORAGE_KE
 
 // Réactive l'affichage au démarrage pour la version courante
 export function removePatchNotesSeen(): void { rawRemove(STORAGE_KEYS.patchNotesSeen); }
+
+/**
+ * Les notes doivent-elles s'ouvrir d'elles-mêmes au démarrage ?
+ *
+ * Distincte de la version déjà vue, et c'est tout l'objet : celle-ci ne dit
+ * que « ces notes-là, je les ai lues », si bien qu'un changement de version
+ * les ramenait. Ce choix-ci est définitif jusqu'à ce qu'on le défasse — les
+ * notes restent consultables depuis les réglages.
+ */
+export function readPatchNotesAuto(): boolean { return rawRead(STORAGE_KEYS.patchNotesAuto) !== 'off'; }
+
+export function writePatchNotesAuto(auto: boolean): void {
+  if (auto) rawRemove(STORAGE_KEYS.patchNotesAuto);
+  else rawWrite(STORAGE_KEYS.patchNotesAuto, 'off');
+}
 
 // Supprime toutes les données persistées (en mémoire + store/localStorage)
 export async function clearAllStorage(): Promise<void> {

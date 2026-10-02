@@ -30,6 +30,12 @@ export const CHANGELOG: ChangeEntry[] = [
         ],
       },
       {
+        type: 'fix',
+        itemKeys: [
+          'changelog.v5_2_0.fix_0',
+        ],
+      },
+      {
         type: 'perf',
         itemKeys: [
           'changelog.v5_2_0.perf_0',

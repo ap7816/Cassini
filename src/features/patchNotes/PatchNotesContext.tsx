@@ -2,8 +2,10 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import {
   readPatchNotesSeen,
   writePatchNotesSeen,
-  removePatchNotesSeen,
+  readPatchNotesAuto,
+  writePatchNotesAuto,
 } from '../../services/storage';
+import { doitOuvrirAuDemarrage } from './ouverture';
 import { PatchNotesModal } from './PatchNotesModal';
 
 interface PatchNotesCtxType {
@@ -17,28 +19,31 @@ export function PatchNotesProvider({ children }: { children: ReactNode }) {
   // Visibilité calculée dès l'initialisation plutôt que via un effet : écrire
   // l'état depuis un effet imposait un second rendu au démarrage, et faisait
   // apparaître le modal après coup au lieu d'être présent d'emblée.
-  const [visible, setVisible] = useState(() => readPatchNotesSeen() !== __APP_VERSION__);
-  // true = l'utilisateur a coché « ne plus afficher au démarrage » pour cette version
-  const [dismissed, setDismissed] = useState(
-    () => readPatchNotesSeen() === __APP_VERSION__,
+  const [visible, setVisible] = useState(() =>
+    doitOuvrirAuDemarrage(readPatchNotesSeen(), __APP_VERSION__, readPatchNotesAuto()),
   );
+  // true = l'utilisateur a demandé qu'on ne les lui ouvre plus. Durable : ce
+  // n'était auparavant vrai que pour la version en cours, et la mise à jour
+  // suivante les rouvrait comme si de rien n'était.
+  const [dismissed, setDismissed] = useState(() => !readPatchNotesAuto());
 
   // Cache le modal sans modifier la préférence "ne plus afficher"
   function handleClose() {
+    // Fermer vaut pour « lues » : sans cela, les mêmes notes rouvraient au
+    // démarrage suivant alors qu'on venait de les parcourir.
+    writePatchNotesSeen(__APP_VERSION__);
     setVisible(false);
   }
 
   // Bascule la préférence "ne plus afficher au démarrage" et la persiste dans le stockage
   function handleToggleDismiss() {
-    if (dismissed) {
-      // Réactiver l'affichage au démarrage pour cette version
-      removePatchNotesSeen();
-      setDismissed(false);
-    } else {
-      // Marquer cette version comme "déjà vue" pour ne plus l'afficher automatiquement
-      writePatchNotesSeen(__APP_VERSION__);
-      setDismissed(true);
-    }
+    const refuse = !dismissed;
+    writePatchNotesAuto(!refuse);
+    // La version lue est notée dans les deux cas : en réactivant l'ouverture
+    // automatique, on ne veut pas revoir aussitôt les notes qu'on a sous les
+    // yeux — seulement celles de la prochaine version.
+    writePatchNotesSeen(__APP_VERSION__);
+    setDismissed(refuse);
   }
 
   return (
