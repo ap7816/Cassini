@@ -393,6 +393,7 @@
     "title": "Movement",
     "waiting": "Press a key…",
     "sensitivity": "Sensitivity",
+      "speed": "Movement speed",
     "reset": "Reset",
     "note": "Keys are matched by their position on the keyboard, whatever its layout: WASD on QWERTY, ZQSD on AZERTY.",
     "actions": {

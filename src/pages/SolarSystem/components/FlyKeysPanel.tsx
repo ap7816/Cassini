@@ -9,6 +9,9 @@ import {
   SENSIBILITE_DEFAUT,
   SENSIBILITE_MAX,
   SENSIBILITE_MIN,
+  VITESSE_DEFAUT,
+  VITESSE_MAX,
+  VITESSE_MIN,
   type DispositionClavier,
   type FlyAction,
   type FlySettings,
@@ -141,12 +144,32 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
         />
       </div>
 
+      <div className={css.sensRow}>
+        <span className={css.label}>
+          {t('flyKeys.speed')}
+          <span className={css.sensValue}>{formaterNombre(settings.vitesse, i18n.language, 2)}×</span>
+        </span>
+        <input
+          type="range"
+          className={css.slider}
+          min={VITESSE_MIN}
+          max={VITESSE_MAX}
+          step={0.05}
+          value={settings.vitesse}
+          onChange={(e) => onChange({ ...settings, vitesse: Number(e.target.value) })}
+        />
+      </div>
+
       <button
         type="button"
         className={css.reset}
         onClick={() => {
           setEnAttente(null);
-          onChange({ keys: { ...DEFAULT_FLY_KEYS }, sensibilite: SENSIBILITE_DEFAUT });
+          onChange({
+            keys: { ...DEFAULT_FLY_KEYS },
+            sensibilite: SENSIBILITE_DEFAUT,
+            vitesse: VITESSE_DEFAUT,
+          });
         }}
       >
         {t('flyKeys.reset')}

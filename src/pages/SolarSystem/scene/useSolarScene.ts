@@ -1415,7 +1415,11 @@ export function useSolarScene({
         // vite qu'une seule.
         .normalize()
         .multiplyScalar(
-          frameR * FLY_SPEED * dt * (enfoncees.has(k.accelerer) ? FLY_BOOST : 1),
+          frameR
+            * FLY_SPEED
+            * flySettingsRef.current.vitesse
+            * dt
+            * (enfoncees.has(k.accelerer) ? FLY_BOOST : 1),
         );
 
       // Distance du pivot **avant** de bouger : on ne le repousse jamais, on
@@ -1532,11 +1536,6 @@ export function useSolarScene({
       // et recopier quelques centaines de flottants coûte moins cher que le
       // risque de laisser les lueurs derrière les planètes encore en mouvement.
       // Le fond suit l'œil, et la lumière zodiacale suit l'étoile regardée.
-      fond.update(camera, lumiere.position, lumiere.color, renderer.domElement.height);
-
-      galaxie.updateLueurs();
-
-      ciel.update(dt, cielRef.current, mouvementReduit, camera, lumiere.position);
 
       // ── Le chant de la comète bleue ───────────────────────────────────────
       //
@@ -1673,6 +1672,19 @@ export function useSolarScene({
       updateFly(dt);
 
       camera.updateMatrixWorld();
+      // Le ciel, une fois la caméra posée.
+      //
+      // Il se mesure depuis l'œil : le fond reconstruit sa direction par pixel,
+      // le rideau d'aurore se recentre sur l'observateur, et les événements
+      // naissent dans son champ. Mis à jour avant le déplacement au clavier, ils
+      // prenaient la position de l'image précédente — et le rideau, qui est le
+      // seul à occuper une place dans l'espace, courait d'une image derrière la
+      // caméra. Cela se voyait comme un tressautement dès qu'on avançait.
+      fond.update(camera, lumiere.position, lumiere.color, renderer.domElement.height);
+
+      galaxie.updateLueurs();
+
+      ciel.update(dt, cielRef.current, mouvementReduit, camera, lumiere.position);
       // Et les matrices de la scène : les planètes viennent de bouger sur leur
       // orbite, et tout ce qui suit lit leur position **monde**. Sans ce
       // recalcul, elle daterait de la frame précédente — le rendu la met bien à

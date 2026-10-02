@@ -28,11 +28,24 @@ export type FlySettings = {
   keys: FlyKeys;
   /** Multiplicateur de la vitesse de rotation. 1 = réglage d'origine. */
   sensibilite: number;
+  /**
+   * Multiplicateur de la vitesse de déplacement.
+   *
+   * Rapportée à la taille du système regardé, comme la vitesse elle-même :
+   * traverser une bibliothèque de deux jeux et une de cent cinquante doit
+   * demander le même temps, faute de quoi le réglage ne voudrait rien dire.
+   */
+  vitesse: number;
 };
 
 export const SENSIBILITE_MIN = 0.25;
 export const SENSIBILITE_MAX = 2.5;
 export const SENSIBILITE_DEFAUT = 1;
+
+export const VITESSE_MIN = 0.25;
+export const VITESSE_MAX = 5;
+/** Plus rapide que l'origine : le déplacement libre traînait. */
+export const VITESSE_DEFAUT = 1.8;
 
 /**
  * Ordre d'affichage dans le panneau de configuration. Le libellé de chaque
@@ -145,6 +158,7 @@ export function loadFlySettings(): FlySettings {
   const defaut: FlySettings = {
     keys: { ...DEFAULT_FLY_KEYS },
     sensibilite: SENSIBILITE_DEFAUT,
+    vitesse: VITESSE_DEFAUT,
   };
 
   const raw = readSolarFlyKeys();
@@ -158,6 +172,10 @@ export function loadFlySettings(): FlySettings {
     const s = lu.sensibilite;
     if (typeof s === 'number' && Number.isFinite(s)) {
       defaut.sensibilite = Math.min(SENSIBILITE_MAX, Math.max(SENSIBILITE_MIN, s));
+    }
+    const v = lu.vitesse;
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      defaut.vitesse = Math.min(VITESSE_MAX, Math.max(VITESSE_MIN, v));
     }
     return defaut;
   } catch {

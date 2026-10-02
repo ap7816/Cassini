@@ -146,6 +146,12 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
+| Événements visibles partout, quelle que soit la distance de rendu        | ❌ À faire |
+| Une musique paramétrable par événement du ciel                           | ❌ À faire |
+| Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ❌ À faire |
+| Trou noir : aspirer l'écran entier, interface comprise, en la déformant  | ❌ À faire |
+| Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
+| Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
 | Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
 | Systèmes solaires personnalisés (favoris, jeux choisis)                  | ✅ Done    |

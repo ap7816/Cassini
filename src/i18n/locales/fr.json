@@ -393,6 +393,7 @@
     "title": "Déplacement",
     "waiting": "Appuie…",
     "sensitivity": "Sensibilité",
+      "speed": "Vitesse de déplacement",
     "reset": "Réinitialiser",
     "note": "Les touches sont repérées par leur emplacement sur le clavier, quelle que soit sa disposition : WASD en QWERTY, ZQSD en AZERTY.",
     "actions": {
