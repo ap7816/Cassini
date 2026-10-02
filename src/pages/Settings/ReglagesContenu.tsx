@@ -117,6 +117,9 @@ export function ReglagesContenu({ recherche }: Props) {
     setMusicParticles,
     setPlanetSizeByPlaytime,
     setCielVivant,
+    setFinesse,
+    setDebordement,
+    setDensiteCiel,
     setStartSystem,
     setThemeMode,
     setPageVisible,
@@ -134,7 +137,7 @@ export function ReglagesContenu({ recherche }: Props) {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
-  const [tab, setTab] = useState<'perso' | 'params'>('perso');
+  const [tab, setTab] = useState<'perso' | 'graphisme' | 'params'>('perso');
 
   // Vérifie les mises à jour disponibles et propose de télécharger+installer si une existe
   async function handleCheckUpdate() {
@@ -249,6 +252,13 @@ export function ReglagesContenu({ recherche }: Props) {
             onClick={() => setTab('perso')}
           >
             {t('settings.tabPerso')}
+          </button>
+          <button
+            type="button"
+            className={[css.tab, tab === 'graphisme' ? css.tabActive : ''].filter(Boolean).join(' ')}
+            onClick={() => setTab('graphisme')}
+          >
+            {t('settings.tabGraphisme')}
           </button>
           <button
             type="button"
@@ -479,7 +489,7 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Système solaire */}
-      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint', 'settings.cielVivantLabel', 'settings.cielVivantHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
 
@@ -500,6 +510,48 @@ export function ReglagesContenu({ recherche }: Props) {
             />
             <span className={css.toggleSlider} />
           </label>
+        </SettingRow>
+
+      </div>
+      )}
+
+      {/* ── Graphisme ────────────────────────────────────────── */}
+
+      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.finesseLabel', 'settings.finesseHint', 'settings.debordementLabel', 'settings.debordementHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.cielVivantLabel', 'settings.cielVivantHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.graphismeTitle')}</div>
+
+        <SettingRow labelKey="settings.finesseLabel" hintKey="settings.finesseHint" query={q}>
+          <input
+            type="range"
+            min={1}
+            max={2}
+            step={0.25}
+            value={settings.finesse}
+            onChange={(e) => setFinesse(Number(e.target.value))}
+          />
+        </SettingRow>
+
+        <SettingRow labelKey="settings.debordementLabel" hintKey="settings.debordementHint" query={q}>
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.debordement}
+              onChange={(e) => setDebordement(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
+
+        <SettingRow labelKey="settings.densiteCielLabel" hintKey="settings.densiteCielHint" query={q}>
+          <input
+            type="range"
+            min={0.3}
+            max={1.6}
+            step={0.1}
+            value={settings.densiteCiel}
+            onChange={(e) => setDensiteCiel(Number(e.target.value))}
+          />
         </SettingRow>
 
         <SettingRow

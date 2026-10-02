@@ -69,6 +69,7 @@ const FRAGMENT = /* glsl */ `
   uniform vec3 uNormale;
   uniform vec3 uSoleil;
   uniform float uPixel;
+  uniform float uDensite;
   uniform vec3 uCouleurSoleil;
   uniform mat4 uProjectionInverse;
   uniform mat4 uCameraMonde;
@@ -274,10 +275,13 @@ const FRAGMENT = /* glsl */ `
     // d'étoiles qui ne se sépare qu'en s'approchant — celle-là se concentre
     // dans le disque, comme dans le ciel.
     float groupe = amas(d);
+    // La densité voulue par l'utilisateur : moins d'étoiles, c'est moins de
+    // cellules allumées, donc moins de travail — et un ciel plus sobre.
+    float densite = uDensite;
 
     vec3 lumiere = vec3(0.0);
-    lumiere += couche(d, 140.0, 0.16 + 0.1 * groupe, 1.7, proximite * 0.6);
-    lumiere += couche(d, 380.0, 0.1 + 0.18 * proximite + 0.3 * groupe, 0.9, proximite * 0.6);
+    lumiere += couche(d, 140.0, (0.16 + 0.1 * groupe) * densite, 1.7, proximite * 0.6);
+    lumiere += couche(d, 380.0, (0.1 + 0.18 * proximite + 0.3 * groupe) * densite, 0.9, proximite * 0.6);
     lumiere += couche(d, 900.0, 0.04 + 0.55 * proximite + 0.4 * groupe, 0.55, proximite * 0.8);
 
     // Et la foule du disque : celle qu'on ne sépare qu'en s'approchant. C'est
@@ -288,7 +292,7 @@ const FRAGMENT = /* glsl */ `
     // Hors du disque, elle ne sèmerait que deux étoiles pour cent cellules : le
     // ciel profond n'y perd rien, et la couche entière est sautée.
     if (proximite > 0.02) {
-      lumiere += couche(d, 2100.0, 0.6 * proximite, 0.4, proximite);
+      lumiere += couche(d, 2100.0, 0.6 * proximite * densite, 0.4, proximite);
     }
 
     // ── Le halo du disque ──────────────────────────────────────────────────
@@ -388,6 +392,8 @@ export type FondCiel = {
     couleur: THREE.Color,
     hauteurPixels: number,
   ) => void;
+  /** Densité du semis d'étoiles, réglée par l'utilisateur. */
+  densite: (v: number) => void;
   /** Place l'objet qui courbe la lumière, ou l'efface avec une force nulle. */
   courber: (position: THREE.Vector3, ombre: number, force: number) => void;
   dispose: () => void;
@@ -416,6 +422,7 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
       uNormale: { value: NORMALE_GALACTIQUE.clone() },
       uSoleil: { value: new THREE.Vector3(0, 0, 1) },
       uPixel: { value: 0.001 },
+      uDensite: { value: 1 },
       uProjectionInverse: { value: new THREE.Matrix4() },
       uCameraMonde: { value: new THREE.Matrix4() },
       uTrou: { value: new THREE.Vector3(0, 0, 1) },
@@ -462,6 +469,9 @@ export function createFondCiel(teinte: THREE.Color): FondCiel {
         materiau.uniforms.uSoleil.value.copy(versSoleil.normalize());
       }
       materiau.uniforms.uCouleurSoleil.value.copy(couleur);
+    },
+    densite(v) {
+      materiau.uniforms.uDensite.value = v;
     },
     courber(positionTrou, ombre, force) {
       materiau.uniforms.uTrouOmbre.value = ombre;

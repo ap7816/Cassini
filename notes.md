@@ -148,8 +148,8 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
 | Événements visibles partout, quelle que soit la distance de rendu        | ❌ À faire |
 | Une musique paramétrable par événement du ciel                           | ❌ À faire |
-| Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ❌ À faire |
-| Trou noir : aspirer l'écran entier, interface comprise, en la déformant  | ❌ À faire |
+| Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
+| Trou noir : aspirer l'écran entier, interface comprise, en la déformant  | ✅ Done    |
 | Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
 | Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |

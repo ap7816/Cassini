@@ -110,6 +110,19 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, cielVivant: enabled }));
   }
 
+  // Finesse de l'image, débordement lumineux, densité du ciel
+  function setFinesse(v: number) {
+    setSettings((prev) => ({ ...prev, finesse: v }));
+  }
+
+  function setDebordement(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, debordement: enabled }));
+  }
+
+  function setDensiteCiel(v: number) {
+    setSettings((prev) => ({ ...prev, densiteCiel: v }));
+  }
+
   function setMusicParticles(enabled: boolean) {
     setSettings((prev) => ({ ...prev, musicParticles: enabled }));
   }
@@ -147,6 +160,9 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setRunInBackground,
       setMusicParticles,
       setCielVivant,
+      setFinesse,
+      setDebordement,
+      setDensiteCiel,
       setPlanetSizeByPlaytime,
       setStartSystem,
       setThemeMode,

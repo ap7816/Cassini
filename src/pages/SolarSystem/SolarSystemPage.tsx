@@ -218,6 +218,21 @@ export function SolarSystemPage() {
   // la référence à chaque image.
   const cielRef = useRef(settings.cielVivant);
   useEffect(() => { cielRef.current = settings.cielVivant; }, [settings.cielVivant]);
+
+  // Les réglages de graphisme suivent le même chemin : une référence que la
+  // scène relit, pour que les changer ne la reconstruise pas.
+  const graphismeRef = useRef({
+    finesse: settings.finesse,
+    debordement: settings.debordement,
+    densiteCiel: settings.densiteCiel,
+  });
+  useEffect(() => {
+    graphismeRef.current = {
+      finesse: settings.finesse,
+      debordement: settings.debordement,
+      densiteCiel: settings.densiteCiel,
+    };
+  }, [settings.finesse, settings.debordement, settings.densiteCiel]);
   // Un système au moins suit un tag : la scène doit alors se refaire quand on
   // tague un jeu, puisque cela change la liste de ses planètes.
   const systemesSuivantUnTag = useMemo(() => systemesPerso.some((s) => s.tag), [systemesPerso]);
@@ -517,6 +532,7 @@ export function SolarSystemPage() {
   useSolarScene({
     mountRef,
     cielRef,
+    graphismeRef,
     labelsRef,
     parPlateformeRef,
     cleScene,

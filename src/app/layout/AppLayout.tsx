@@ -9,6 +9,7 @@ import { useMusicPlayer } from '../../features/music/MusicContext';
 import { initAmbient, suspendAmbient, resumeAmbient } from '../../features/ambient/ambientPlayer';
 import { noterEtat, surEtatFenetre } from '../../features/system/etatFenetre';
 import { invoke, isTauri } from '@tauri-apps/api/core';
+import { abonnerAspiration } from '../../features/evenements/aspirationEcran';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
@@ -268,8 +269,37 @@ export function AppLayout() {
 
   const updater = useUpdater();
 
+  // Le trou noir avale aussi l'écran.
+  //
+  // La déformation est posée en direct sur le nœud, et non par un état React :
+  // elle change à chaque image pendant cinq secondes, et re-rendre toute
+  // l'application soixante fois par seconde pour une farce serait un comble.
+  //
+  // Tout y passe, la scène comprise — c'est la blague. L'origine de la
+  // transformation est le point où se tient l'objet : l'image se replie donc
+  // vers lui, où qu'il soit à l'écran.
+  const coque = useRef<HTMLDivElement>(null);
+  useEffect(() =>
+    abonnerAspiration((a) => {
+      const noeud = coque.current;
+      if (!noeud) return;
+      if (!a) {
+        noeud.style.transform = '';
+        noeud.style.transformOrigin = '';
+        noeud.style.filter = '';
+        return;
+      }
+      noeud.style.transformOrigin = `${a.x}px ${a.y}px`;
+      noeud.style.transform =
+        `scale(${Math.max(0.001, 1 - a.force)}) rotate(${a.force * 220}deg)`;
+      // Le flou croît moins vite que la chute : net au départ, il laisse
+      // reconnaître ce qui part.
+      noeud.style.filter = `blur(${(a.force ** 2) * 6}px)`;
+    }),
+  []);
+
   return (
-    <div className={css.shell} style={bgStyle}>
+    <div ref={coque} className={css.shell} style={bgStyle}>
       <main className={css.main}>
         {/* Pas d'en-tête sur le système solaire : il n'y portait qu'un titre
             que la page dit déjà, et une recherche que la liste des jeux fait

@@ -19,6 +19,7 @@ import { createFondCiel } from './cielFond';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
 import { createCiel } from './ciel';
 import { createTrouNoir } from './trouNoir';
+import { definirAspiration } from '../../../features/evenements/aspirationEcran';
 import { createChantComete } from '../../../features/ambient/chantComete';
 import { enregistrerCiel } from '../../../features/debug/evenementsCiel';
 import { lumiereDe } from '../lib/couleurSoleil';
@@ -217,6 +218,13 @@ type Options = {
    * pas reconstruire la scène, seulement cesser de dessiner le ciel.
    */
   cielRef: RefObject<boolean>;
+  /**
+   * Réglages de graphisme, lus à chaque image.
+   *
+   * Par référence, comme le ciel vivant : les changer ne doit pas reconstruire
+   * la scène, seulement changer ce qu'elle dessine.
+   */
+  graphismeRef: RefObject<{ finesse: number; debordement: boolean; densiteCiel: number }>;
   labelClass: string;
   orbitLabelClass: string;
   onSelect: (game: Game | null) => void;
@@ -296,6 +304,7 @@ export function useSolarScene({
   labelsRef,
   platformRef,
   cielRef,
+  graphismeRef,
   labelClass,
   orbitLabelClass,
   onSelect,
@@ -324,7 +333,7 @@ export function useSolarScene({
 
     // ── Renderer, caméra, contrôles ──────────────────────────────────────
     const renderer = moteurDeRendu();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, graphismeRef.current.finesse));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x070b12);
     container.appendChild(renderer.domElement);
@@ -1566,6 +1575,21 @@ export function useSolarScene({
       const etatTrou = trouNoir.etat();
       fond.courber(etatTrou.position, etatTrou.ombre, etatTrou.force);
 
+      // Et l'écran lui-même, pour finir. La coque de l'application s'abonne à
+      // cette annonce : la scène ne touche pas au HTML, elle dit seulement d'où
+      // ça aspire et combien.
+      if (etatTrou.ecran > 0.001) {
+        projection.copy(etatTrou.position).project(camera);
+        const r = canvas.getBoundingClientRect();
+        definirAspiration({
+          x: r.left + ((projection.x + 1) / 2) * r.width,
+          y: r.top + ((1 - projection.y) / 2) * r.height,
+          force: etatTrou.ecran,
+        });
+      } else {
+        definirAspiration(null);
+      }
+
       if (morceaux.length > 0) {
         if (!etatTrou.actif) {
           rendreLesMorceaux();
@@ -1672,6 +1696,24 @@ export function useSolarScene({
       updateFly(dt);
 
       camera.updateMatrixWorld();
+      // ── Réglages de graphisme ─────────────────────────────────────────────
+      //
+      // Relus à chaque image et appliqués seulement s'ils ont bougé : écrire
+      // ces valeurs coûte peu, mais changer la finesse réalloue toutes les
+      // cibles de rendu du compositeur.
+      {
+        const g = graphismeRef.current;
+        const voulue = Math.min(window.devicePixelRatio, g.finesse);
+        if (renderer.getPixelRatio() !== voulue) {
+          renderer.setPixelRatio(voulue);
+          const r = container.getBoundingClientRect();
+          renderer.setSize(r.width, r.height);
+          post.setSize(r.width, r.height);
+        }
+        post.debordement(g.debordement);
+        fond.densite(g.densiteCiel);
+      }
+
       // Le ciel, une fois la caméra posée.
       //
       // Il se mesure depuis l'œil : le fond reconstruit sa direction par pixel,
@@ -1713,6 +1755,7 @@ export function useSolarScene({
       canvas.removeEventListener('pointermove', surPointeur);
       canvas.removeEventListener('pointerleave', surSortie);
       chant.arreter();
+      definirAspiration(null);
       retirerCiel();
       ciel.dispose();
       galaxie.dispose();
@@ -1750,6 +1793,7 @@ export function useSolarScene({
     // chaque voyage était précisément le défaut.
     cleScene, parPlateformeRef, editionRef, labelClass, orbitLabelClass,
     mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef, cielRef,
+    graphismeRef,
     sideProbeRef, navProbeRef, fpsRef, pauseRef, onSysteme, flySettingsRef, platformRef,
     structure,
   ]);

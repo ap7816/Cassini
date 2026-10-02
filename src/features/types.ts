@@ -39,6 +39,19 @@ export type AppSettings = {
   /** Aurores, tempêtes et passages dans le ciel du système solaire. */
   cielVivant: boolean;
   /**
+   * Finesse de l'image : 1 ne dessine qu'un pixel par point d'écran, 2 en
+   * dessine quatre sur un écran dense.
+   *
+   * C'est le réglage qui pèse le plus lourd sur une machine modeste — le coût
+   * d'une scène en trois dimensions suit la surface, donc le carré de ce
+   * nombre.
+   */
+  finesse: number;
+  /** Débordement lumineux autour des étoiles et des soleils. */
+  debordement: boolean;
+  /** Densité du ciel : étoiles du fond et nuages des systèmes. */
+  densiteCiel: number;
+  /**
    * Pages encore atteignables depuis la barre des launchers.
    *
    * Le système solaire absorbe peu à peu ce que ces pages faisaient — la

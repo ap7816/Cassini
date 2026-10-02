@@ -41,6 +41,14 @@ export type EtatTrouNoir = {
   ombre: number;
   /** Force de la déviation : monte à l'apparition, retombe à l'évaporation. */
   force: number;
+  /**
+   * Et pour finir, l'écran lui-même.
+   *
+   * De 0 à 1 pendant que l'objet s'évapore : la galaxie étant avalée, il ne
+   * reste plus que l'image — alors il la prend aussi, interface comprise, avant
+   * de tout rendre. Ce n'est évidemment pas sérieux.
+   */
+  ecran: number;
 };
 
 export type TrouNoir = {
@@ -113,7 +121,7 @@ export function createTrouNoir(distance: number): TrouNoir {
   }
 
   function etat(): EtatTrouNoir {
-    if (!actif) return { actif: false, position, ombre: 0, force: 0 };
+    if (!actif) return { actif: false, position, ombre: 0, force: 0, ecran: 0 };
 
     const finAspiration = APPARITION + ASPIRATION + CHUTE;
     let force: number;
@@ -127,7 +135,19 @@ export function createTrouNoir(distance: number): TrouNoir {
       force = Math.max(0, 1 - (temps - finAspiration - EVAPORATION) / (EVAPORATION * 0.8));
     }
 
-    return { actif: true, position, ombre: 0.085 * force, force };
+    // L'aspiration de l'image : après la galaxie, pendant l'évaporation.
+    const debutEcran = finAspiration + EVAPORATION * 0.25;
+    const finEcran = finAspiration + EVAPORATION;
+    let ecran = 0;
+    if (temps > debutEcran && temps < finEcran + RETOUR * 0.5) {
+      // Elle plonge, puis revient d'un coup — c'est la détente qui fait la
+      // blague, pas la chute.
+      ecran = temps < finEcran
+        ? ((temps - debutEcran) / (finEcran - debutEcran)) ** 2.2
+        : Math.max(0, 1 - (temps - finEcran) / (RETOUR * 0.5)) ** 0.6;
+    }
+
+    return { actif: true, position, ombre: 0.085 * force, force, ecran };
   }
 
   function peutSurvenir(dt: number): boolean {

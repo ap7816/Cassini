@@ -13,6 +13,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   runInBackground: false,
   musicParticles: true,
   cielVivant: true,
+  finesse: 2,
+  debordement: true,
+  densiteCiel: 1,
   // Masquées : la galaxie est la bibliothèque et la barre est la liste des
   // launchers. Ces réglages rappellent les pages une à une.
   showLibrary: false,
@@ -52,6 +55,18 @@ export function loadSettings(): AppSettings {
       typeof parsed.musicParticles === 'boolean' ? parsed.musicParticles : true;
     const cielVivant =
       typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
+    // Bornés à la relecture : ces trois-là viennent d'un fichier qu'on peut
+    // éditer à la main, et une finesse de mille mettrait la carte à genoux.
+    const finesse =
+      typeof parsed.finesse === 'number' && Number.isFinite(parsed.finesse)
+        ? Math.min(2, Math.max(1, parsed.finesse))
+        : 2;
+    const debordement =
+      typeof parsed.debordement === 'boolean' ? parsed.debordement : true;
+    const densiteCiel =
+      typeof parsed.densiteCiel === 'number' && Number.isFinite(parsed.densiteCiel)
+        ? Math.min(1.6, Math.max(0.3, parsed.densiteCiel))
+        : 1;
 
     return {
       backgroundImageDataUrl: bg,
@@ -63,6 +78,9 @@ export function loadSettings(): AppSettings {
       runInBackground,
       musicParticles,
       cielVivant,
+      finesse,
+      debordement,
+      densiteCiel,
       // Absentes d'une entrée écrite avant ces réglages : masquées, comme pour
       // une installation neuve.
       showLibrary: parsed.showLibrary === true,

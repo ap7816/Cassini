@@ -23,6 +23,14 @@ export type Postprocess = {
   setSize: (w: number, h: number) => void;
   /** Reprend les réglages de lumière du moment : débordement et exposition. */
   regler: () => void;
+  /**
+   * Allume ou éteint le débordement lumineux.
+   *
+   * La passe reste dans la chaîne, désactivée : la retirer et la remettre
+   * demanderait de reconstruire le compositeur, pour une passe qui ne coûte
+   * plus rien une fois endormie.
+   */
+  debordement: (actif: boolean) => void;
   dispose: () => void;
 };
 
@@ -82,6 +90,9 @@ export function createPostprocess(
     render: () => composer.render(),
     setSize,
     regler,
+    debordement(actif) {
+      if (bloom.enabled !== actif) bloom.enabled = actif;
+    },
     dispose() {
       bloom.dispose();
       composer.dispose();

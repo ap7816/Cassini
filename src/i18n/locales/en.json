@@ -176,6 +176,14 @@
     "searchPlaceholder": "Search a setting…",
     "subtitle": "Appearance, library and app behaviour.",
     "tabPerso": "Customization",
+    "tabGraphisme": "Graphics",
+    "graphismeTitle": "Graphics",
+    "finesseLabel": "Image sharpness",
+    "finesseHint": "How many pixels are drawn per screen point. The heaviest setting of all: cost follows the square of this value. Lower it if the scene struggles.",
+    "debordementLabel": "Light bloom",
+    "debordementHint": "The halo spilling out of stars and suns. Turned off, the scene saves a whole render pass.",
+    "densiteCielLabel": "Sky density",
+    "densiteCielHint": "How many stars the background sows. Fewer stars, less work — and a plainer sky.",
     "tabParams": "Application",
     "bgLabel": "Background image",
     "bgHint": "Image shown in the background.",
@@ -455,6 +463,8 @@
   },
   "changelog": {
     "v5_2_0": {
+      "new_6": "[Graphics] A tab of its own in the settings: image sharpness, light bloom, sky density — enough to lighten the scene on a modest machine",
+      "new_7": "[Solar system] And once the black hole has finished the galaxy, it takes the screen itself — buttons included — before giving it all back",
       "fix_0": "[Release notes] “Don’t show again” now sticks: the choice was lost at every update",
       "new_5": "[Controls] Free-flight speed is now adjustable, from 0.25× to 5×, and starts out brisker",
       "new_4": "[Solar system] Two more rare events: a vast blue comet sailing over the galaxy — hover it to hear it — and a black hole that swallows everything piece by piece, then gives it all back",

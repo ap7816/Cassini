@@ -176,6 +176,14 @@
     "searchPlaceholder": "Rechercher un réglage…",
     "subtitle": "Apparence, bibliothèque et comportement de l’application.",
     "tabPerso": "Personnalisation",
+    "tabGraphisme": "Graphisme",
+    "graphismeTitle": "Graphisme",
+    "finesseLabel": "Finesse de l’image",
+    "finesseHint": "Nombre de pixels dessinés pour un point d’écran. C’est le réglage qui pèse le plus lourd : le coût suit le carré de cette valeur. À baisser si la scène peine.",
+    "debordementLabel": "Débordement lumineux",
+    "debordementHint": "Le halo qui déborde des étoiles et des soleils. Coupé, la scène gagne une passe de rendu entière.",
+    "densiteCielLabel": "Densité du ciel",
+    "densiteCielHint": "Combien d’étoiles le fond sème. Moins d’étoiles, moins de calcul — et un ciel plus sobre.",
     "tabParams": "Application",
     "bgLabel": "Image de fond",
     "bgHint": "Image affichée en arrière-plan.",
@@ -455,6 +463,8 @@
   },
   "changelog": {
     "v5_2_0": {
+      "new_6": "[Graphisme] Un onglet à part dans les paramètres : finesse de l’image, débordement lumineux, densité du ciel — de quoi alléger la scène sur une machine modeste",
+      "new_7": "[Système solaire] Et quand le trou noir a fini d’avaler la galaxie, il prend l’écran lui-même — boutons compris — avant de tout rendre",
       "fix_0": "[Notes de version] « Ne plus afficher » tient pour de bon : la décision ne se perdait plus à chaque mise à jour",
       "new_5": "[Commandes] La vitesse de déplacement libre se règle, de 0,25 à 5 fois, et part désormais plus vive",
       "new_4": "[Système solaire] Deux événements rares de plus : une comète bleue immense qui survole la galaxie — pose le curseur dessus pour l’entendre — et un trou noir qui avale tout, morceau par morceau, avant de tout rendre",
