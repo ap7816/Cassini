@@ -464,10 +464,11 @@
   "changelog": {
     "v5_2_0": {
       "new_6": "[Graphisme] Un onglet à part dans les paramètres : finesse de l’image, débordement lumineux, densité du ciel — de quoi alléger la scène sur une machine modeste",
-      "new_7": "[Système solaire] Et quand le trou noir a fini d’avaler la galaxie, il prend l’écran lui-même — boutons compris — avant de tout rendre",
+      "new_7": "[Système solaire] Et le trou noir prend l’écran lui-même : l’interface se tord autour de lui comme le ciel, se visse, et s’efface — boutons compris — avant que tout revienne d’un coup",
+      "new_8": "[Système solaire] Les événements du ciel se voient maintenant de n’importe où : supernova, étoile filante, comète et passage ne disparaissaient plus loin que la distance de rendu",
       "fix_0": "[Notes de version] « Ne plus afficher » tient pour de bon : la décision ne se perdait plus à chaque mise à jour",
       "new_5": "[Commandes] La vitesse de déplacement libre se règle, de 0,25 à 5 fois, et part désormais plus vive",
-      "new_4": "[Système solaire] Deux événements rares de plus : une comète bleue immense qui survole la galaxie — pose le curseur dessus pour l’entendre — et un trou noir qui avale tout, morceau par morceau, avant de tout rendre",
+      "new_4": "[Système solaire] Deux événements rares de plus : une comète bleue immense qui survole la galaxie — pose le curseur dessus pour l’entendre — et un trou noir qui se forme devant soi et tord le ciel autour de lui",
       "new_3": "[Système solaire] Des comètes traversent les systèmes, et il arrive qu’une étoile explose — au plus une fois par session, et elle laisse sa trace",
       "perf_0": "[Performance] La carte graphique dédiée est enfin réclamée au bon moment : sur un portable à deux cartes, la scène tournait sur le circuit intégré. Cinq à six fois plus rapide, mesuré",
       "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins",

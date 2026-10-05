@@ -466,9 +466,9 @@ export function useSolarScene({
     const ciel = createCiel(galaxie.rayon, new THREE.Color(tint));
     scene.add(ciel.objet);
 
-    // L'événement qui défait la galaxie, puis la rend. Il ne dessine rien : la
-    // courbure est appliquée par le ciel de fond, et les systèmes sont déplacés
-    // ici, par celui qui les tient.
+    // Il ne dessine rien et ne touche à rien : il tient une horloge et une
+    // place. La courbure du ciel est appliquée par le fond, la déformation de
+    // l'image par la coque de l'application — ici, on ne fait que relayer.
     const trouNoir = createTrouNoir(Math.max(1400, galaxie.rayon * 3.2));
 
     // Le chant de la comète bleue : quelques notes que le navigateur synthétise
@@ -483,96 +483,17 @@ export function useSolarScene({
     const surSortie = () => { pointeurX = -1; pointeurY = -1; };
     canvas.addEventListener('pointermove', surPointeur);
     canvas.addEventListener('pointerleave', surSortie);
-    /**
-     * Ce que le trou noir avale, pièce par pièce.
-     *
-     * Non pas les systèmes, mais leurs morceaux : une étoile, une ceinture, un
-     * nuage, chaque planète. Un système entier qui s'évanouirait d'un bloc ne
-     * ressemblerait à rien — sa planète extérieure est cent fois plus loin de
-     * l'objet que son étoile, et elle doit tomber bien après.
-     *
-     * Chaque morceau garde sa place d'origine : c'est elle qu'on lui rend à la
-     * fin, et c'est tout ce qu'il faut pour que l'événement soit sans
-     * conséquence.
-     */
-    type MorceauAvale = {
-      objet: THREE.Object3D;
-      place: THREE.Vector3;
-      echelle: number;
-      /** Vers le trou noir, depuis la place d'origine, en coordonnées locales. */
-      vers: THREE.Vector3;
-      rang: number;
-      /**
-       * Système dont ce morceau est l'étoile, s'il l'est.
-       *
-       * La balise et l'étiquette d'un système vivent hors de lui, pour rester
-       * visibles quand ses planètes sont libérées : elles ne suivent donc rien
-       * toute seules, et il faut les emmener avec l'étoile.
-       */
-      systeme?: number;
-    };
-    let morceaux: MorceauAvale[] = [];
-    const tmpTangente = new THREE.Vector3();
-    const tmpMonde = new THREE.Vector3();
+    /** Pour projeter un point du monde sur l'écran. */
     const projection = new THREE.Vector3();
-
-    /** Remet tout en place, et vide la liste. */
-    function rendreLesMorceaux() {
-      for (const m of morceaux) {
-        m.objet.position.copy(m.place);
-        m.objet.scale.setScalar(m.echelle);
-        if (m.systeme !== undefined) {
-          const systeme = galaxie.systemes[m.systeme];
-          m.objet.getWorldPosition(tmpMonde);
-          balises.suivre(m.systeme, tmpMonde, 1);
-          labelLayer.deplacerMonde(systeme.platform, tmpMonde, true);
-        }
-      }
-      morceaux = [];
-    }
-
-    /**
-     * Déclenche l'événement et recense ce qu'il va avaler.
-     *
-     * Le recensement a lieu au déclenchement : un système construit pendant
-     * l'événement gardera sa place, ce qui vaut mieux que de le voir surgir
-     * déjà aspiré.
-     */
-    function demarrerTrouNoir(): THREE.Vector3 | null {
-      const endroit = trouNoir.declencher(camera);
-      if (!endroit) return null;
-
-      const monde = new THREE.Vector3();
-      const liste: Array<{ m: Omit<MorceauAvale, 'rang'>; d: number }> = [];
-      galaxie.systemes.forEach((systeme, index) => {
-        for (const enfant of systeme.groupe.children) {
-          enfant.getWorldPosition(monde);
-          liste.push({
-            m: {
-              objet: enfant,
-              place: enfant.position.clone(),
-              echelle: enfant.scale.x,
-              vers: new THREE.Vector3().subVectors(endroit, monde),
-              systeme: enfant === systeme.soleil ? index : undefined,
-            },
-            d: monde.distanceToSquared(endroit),
-          });
-        }
-      });
-
-      // Le plus proche tombe le premier.
-      liste.sort((a, b) => a.d - b.d);
-      morceaux = liste.map((e, rang) => ({ ...e.m, rang }));
-      return endroit;
-    }
 
     // Le panneau de débogage peut provoquer ces événements sans attendre leur
     // heure. En production, personne ne s'adresse à ce registre.
     const retirerCiel = enregistrerCiel((evenement) => {
       // Le trou noir ne vit pas dans le module des événements du ciel : il
-      // déplace des systèmes entiers, ce qui regarde la scène.
+      // courbe le fond et emporte l'écran, deux choses que la scène seule
+      // sait atteindre.
       const endroit = evenement === 'trouNoir'
-        ? demarrerTrouNoir()
+        ? trouNoir.declencher(camera)
         : ciel.declencher(evenement);
       if (!endroit) return;
 
@@ -1570,7 +1491,7 @@ export function useSolarScene({
       }
 
       // ── Le trou noir ──────────────────────────────────────────────────────
-      if (cielRef.current && trouNoir.peutSurvenir(dt)) demarrerTrouNoir();
+      if (cielRef.current && trouNoir.peutSurvenir(dt)) trouNoir.declencher(camera);
       trouNoir.update(dt);
       const etatTrou = trouNoir.etat();
       fond.courber(etatTrou.position, etatTrou.ombre, etatTrou.force);
@@ -1588,41 +1509,6 @@ export function useSolarScene({
         });
       } else {
         definirAspiration(null);
-      }
-
-      if (morceaux.length > 0) {
-        if (!etatTrou.actif) {
-          rendreLesMorceaux();
-        } else {
-          for (const m of morceaux) {
-            const part = trouNoir.partDe(m.rang, morceaux.length);
-            if (part <= 0) {
-              m.objet.position.copy(m.place);
-              m.objet.scale.setScalar(m.echelle);
-              continue;
-            }
-
-            // Il tombe en spirale : rien ne tombe droit sur une masse, tout ce
-            // qui l'approche s'enroule. Et il s'amenuise, faute de quoi on ne
-            // distinguerait pas ce qui a été avalé de ce qui est parti au loin.
-            const chute = part * part;
-            const angle = part * 9;
-            const tangente = tmpTangente.set(-m.vers.z, 0, m.vers.x).normalize();
-            m.objet.position
-              .copy(m.place)
-              .addScaledVector(m.vers, chute)
-              .addScaledVector(tangente, Math.sin(angle) * m.vers.length() * 0.2 * (1 - chute));
-            m.objet.scale.setScalar(Math.max(0.0001, m.echelle * (1 - part)));
-
-            // L'étoile emmène ce qui la signale de loin.
-            if (m.systeme !== undefined) {
-              const systeme = galaxie.systemes[m.systeme];
-              m.objet.getWorldPosition(tmpMonde);
-              balises.suivre(m.systeme, tmpMonde, 1 - part);
-              labelLayer.deplacerMonde(systeme.platform, tmpMonde, part < 0.6);
-            }
-          }
-        }
       }
 
       // Construit ce dont on s'approche, libère ce qu'on laisse derrière.

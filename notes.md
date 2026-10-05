@@ -146,7 +146,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
-| Événements visibles partout, quelle que soit la distance de rendu        | ❌ À faire |
+| Événements visibles partout, quelle que soit la distance de rendu        | ✅ Done    |
 | Une musique paramétrable par événement du ciel                           | ❌ À faire |
 | Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
 | Trou noir : aspirer l'écran entier, interface comprise, en la déformant  | ✅ Done    |
@@ -227,6 +227,28 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Une planète sur trois environ porte des anneaux, tirés parmi quatre familles calquées sur le système solaire : la nappe large et divisée de Saturne, les rubans étroits et très basculés d'Uranus, le voile de poussière de Jupiter, et les arcs de Neptune. Ce qui les distingue de loin, ce sont la largeur relative, l'opacité, l'inclinaison et le fait d'être complets ou non — la seule graine n'en changeait que le grain, et deux anneaux se ressemblaient dès qu'on les regardait de loin.
 
   Les arcs ont dû être repris : ils tiraient deux à quatre secteurs isolés, découpés net, sans rien pour dire qu'ils appartenaient au même cercle — on voyait des éclats flotter autour de la planète. Un voile continu les porte désormais, leurs extrémités s'éteignent en fondu (canal alpha des sommets, la bande de texture reste à une dimension), et le tirage est passé à trois à cinq. La texture d'anneau est aussi passée en mipmaps : ses 1024 texels tiennent parfois dans dix pixels — un anneau étroit vu de loin, ou n'importe lequel vu par la tranche — et sans niveaux réduits le rubanage se changeait en pointillés qui grouillaient dès que la planète tournait.
+
+- **Les événements du ciel, visibles de partout**
+  **Fait.** L'étoile filante, le passage, la supernova et la comète vivaient à leur place dans la galaxie. Elles y étaient condamnées deux fois : le plan lointain de la caméra les tranchait dès qu'on s'en éloignait de plus de vingt mille unités, et elles rapetissaient à mesure qu'on s'en allait — une supernova à l'autre bout de la galaxie n'existait plus pour personne.
+
+  Chacune garde sa vraie trajectoire, dont on ne retient que la direction, et se dessine sur une sphère autour de l'œil, à `RAYON_CIEL` (2200) — le remède écrit pour la comète bleue, étendu aux quatre autres. Même coin de ciel, même taille apparente, et plus rien à couper. Ce qui a une étendue en suit la règle : la traînée est bâtie en angle plutôt qu'en distance, la queue de la comète est bornée en parts de ciel, et la direction qu'on leur donne est la part de leur course perpendiculaire au regard — ce qui vient droit sur nous ne traverse pas le ciel. La distance au soleil, elle, reste celle de la vraie place : c'est elle qui fait la longueur de la queue.
+
+  Le rémanent de la supernova est reposé à chaque image, et pas seulement à l'allumage : il doit se retrouver dans le même coin de ciel jusqu'à la fin de la session. `scene/ciel.test.ts` vérifie les quatre, de près puis depuis trois fois le plan lointain — c'est lui qui a attrapé le passage dessiné à quatre millions d'unités, sorti d'un vecteur de travail qui servait aussi de sortie.
+
+- **Le trou noir qui avale l'écran**
+  **Fait.** La scène dit seulement d'où ça aspire et combien (`features/evenements/aspirationEcran`) ; la coque de l'application s'y abonne et se déforme, sans qu'aucun état React ne soit touché — l'aspiration change à chaque image pendant seize secondes.
+
+  **C'est une aspiration, pas une lentille.** Le filtre SVG lit chaque pixel ailleurs qu'à sa place, et l'ailleurs est pris **plus loin du trou** que là où il s'affiche : l'image coule donc vers le point. Deux conséquences qu'on n'attend pas et qui font tout l'effet. D'abord l'écran se vide **par ses bords** — un pixel du bord affiche ce qui se trouvait hors de la fenêtre, c'est-à-dire rien — et ce qui reste est un anneau qui se resserre, exactement l'allure d'un évier. Ensuite il n'y a **rien à recouvrir** : aucun disque noir n'a besoin de grandir jusqu'à la taille de l'écran, l'objet reste petit et c'est l'image qui part dedans.
+
+  La carte d'attraction **porte partout**, et c'est la deuxième chose à ne pas rater : elle couvre deux diagonales et demie, décroît avec la distance sans jamais s'annuler dans le champ, et le coin de l'écran s'en va environ au quart de la vitesse du centre. Une carte qui s'éteindrait à quelques centaines de pixels ne déformerait qu'une pastille au milieu d'une interface intacte — ce qui ne se lit pas comme une déformation mais comme un défaut d'affichage. Un tourbillon de 0,85 fait se visser l'image en descendant : rien ne tombe droit sur une masse.
+
+  Elle **commence avec l'objet**, et non après lui : il n'y a pas un temps pour le voir arriver puis un temps où il agit, c'est le même. La puissance 1,6 de l'avancement donne la montée — un cinquième du chemin au tiers du temps, le reste ensuite et de plus en plus vite. Le compte de la fin se vérifie : le dernier endroit à céder n'est ni le centre ni le bord, mais l'anneau à mi-chemin, assez loin du trou pour n'en recevoir qu'une fraction et assez loin du bord pour avoir du chemin à faire ; `lentilleEcran.test.ts` le parcourt rayon par rayon.
+
+  **Rien n'est déplacé.** L'image tombait vers le point en tournant, par une transformation CSS posée sur la coque : c'est retiré. Une image qui part de côté est une image qu'on voit partir, pas une image avalée — et ce qui s'en va en bloc ne se déforme plus. Un temps mort de sept dixièmes de seconde, écran entièrement noir, précède le retour : sans lui, le fond était touché et quitté dans la même image, et l'on ne voyait qu'un clignement.
+
+  Il **n'avale plus les systèmes un par un**. C'était une trentaine de secondes de cérémonie : chaque étoile, chaque planète, chaque ceinture happée à son tour, en spirale et en rapetissant, étiquettes et balises emmenées avec elles. L'effet tenait la scène en otage, remuait tout ce qu'elle porte — et la seule chose qu'on voulait voir arrivait après. Il se forme, il tord le ciel, il prend l'image, il rend tout, et la galaxie n'est plus touchée du tout.
+
+  Deux pièges du filtre, qui se voient tout de suite si on les oublie : `feFlood` remplit d'abord toute la région de gris neutre, faute de quoi le reste de la page part d'un bloc d'un demi-écran de côté ; et `feOffset` reprend le biais d'un 128 qui n'est pas tout à fait le milieu de 0..255, lequel vaut plusieurs pixels à ces échelles. Enfin la région du filtre colle à la coque (104 %, et non 140 %) : mesuré 36 ms par image avec la marge, 13,3 ms sans, pour 12,1 ms au repos. Détail dans `features/evenements/lentilleEcran`.
 
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.

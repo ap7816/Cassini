@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Le trou noir : l'événement qui défait la galaxie, puis la rend.
+ * Le trou noir : il se forme, il tord le ciel, puis il emporte l'image.
  *
  * Il ne se dessine pas. Un disque noir avec un anneau peint autour serait une
  * illustration ; ici, c'est le ciel lui-même qui est courbé. La lumière des
@@ -16,21 +16,42 @@ import * as THREE from 'three';
  * proportionnelle à cet angle. Au-dessous d'un certain angle, plus rien ne
  * ressort : c'est l'ombre.
  *
- * Le reste est une chorégraphie. Les systèmes sont happés **un par un**, du
- * plus proche au plus lointain, chacun en spirale et en rapetissant. Puis
- * l'objet s'évapore et tout revient — ce qui n'a aucun sens physique, et c'est
- * assumé : on ne va pas détruire la bibliothèque de quelqu'un pour la beauté du
- * geste.
+ * Il happait auparavant les systèmes un par un, du plus proche au plus
+ * lointain, chacun en spirale et en rapetissant — une trentaine de secondes de
+ * cérémonie pendant lesquelles la galaxie se défaisait pièce par pièce. C'est
+ * retiré : l'effet tenait la scène en otage, remuait tout ce qu'elle porte, et
+ * la seule chose qu'on voulait voir était ailleurs. Reste ce qui se regarde :
+ * la courbure, et l'image qui part dedans d'un seul mouvement (voir
+ * `features/evenements`) — d'abord si lentement qu'on la croit immobile, puis
+ * tout d'un coup. Et tout revient, ce qui n'a aucun sens physique, et c'est
+ * assumé.
  */
 
-/** Les quatre temps de l'événement, et leur durée en secondes. */
-const APPARITION = 7;
-/** Durée totale de l'aspiration, quel que soit le nombre d'objets. */
-const ASPIRATION = 20;
-/** Temps que met un objet, une fois son tour venu, à disparaître. */
-const CHUTE = 3;
-const EVAPORATION = 5;
-const RETOUR = 4;
+/** Les temps de l'événement, et leur durée en secondes. */
+/** Il se forme : la courbure du ciel s'installe et l'anneau se referme. */
+const APPARITION = 8;
+/**
+ * Et l'image se creuse, du premier instant au dernier.
+ *
+ * Elle attendait auparavant que l'objet soit formé, puis posé : il y avait un
+ * avant et un après, et l'aspiration arrivait comme un deuxième événement.
+ * C'est le même : elle commence avec lui, imperceptible, et s'emballe. La
+ * puissance de l'avancement s'en charge : au tiers du temps, un cinquième du
+ * chemin seulement. Le reste vient après, et de plus en plus vite — mais sans
+ * l'à-coup qu'un exposant plus franc donnait à la fin, où le noir s'ouvrait
+ * d'un seul tenant au lieu de grandir.
+ */
+const ASPIRATION = 14;
+/**
+ * Et plus rien, le temps d'un battement.
+ *
+ * Sans ce temps mort, l'écran n'était noir qu'à un instant — il touchait le
+ * fond et repartait dans la même image. On ne voyait pas la disparition, on
+ * voyait un clignement.
+ */
+const NOIR = 0.7;
+/** Puis tout revient d'un coup : c'est la détente qui fait la blague. */
+const DETENTE = 1.6;
 
 export type EtatTrouNoir = {
   /** L'événement est-il en cours ? */
@@ -39,14 +60,14 @@ export type EtatTrouNoir = {
   position: THREE.Vector3;
   /** Rayon angulaire de l'ombre, en radians. */
   ombre: number;
-  /** Force de la déviation : monte à l'apparition, retombe à l'évaporation. */
+  /** Force de la déviation : monte à l'apparition, retombe à la détente. */
   force: number;
   /**
    * Et pour finir, l'écran lui-même.
    *
-   * De 0 à 1 pendant que l'objet s'évapore : la galaxie étant avalée, il ne
-   * reste plus que l'image — alors il la prend aussi, interface comprise, avant
-   * de tout rendre. Ce n'est évidemment pas sérieux.
+   * De 0 à 1 une fois l'objet installé : il ne prend rien à la galaxie, il
+   * prend l'image qu'on en a — interface comprise — avant de tout rendre. Ce
+   * n'est évidemment pas sérieux.
    */
   ecran: number;
 };
@@ -56,16 +77,6 @@ export type TrouNoir = {
   declencher: (camera: THREE.Camera) => THREE.Vector3 | null;
   update: (dt: number) => void;
   etat: () => EtatTrouNoir;
-  /**
-   * Part du trajet parcourue par l'objet de ce rang : 0 tant qu'il n'est pas
-   * touché, 1 quand il a disparu.
-   *
-   * Le rang vient de sa distance à l'objet — le plus proche tombe le premier.
-   * Chaque chose part pour son compte : un système entier qui s'évanouirait
-   * d'un bloc ne ressemblerait à rien, puisque sa planète extérieure est cent
-   * fois plus loin que son étoile.
-   */
-  partDe: (rang: number, total: number) => number;
   /** Tirage périodique. Rend vrai si l'événement vient d'être déclenché. */
   peutSurvenir: (dt: number) => boolean;
 };
@@ -82,7 +93,8 @@ export function createTrouNoir(distance: number): TrouNoir {
   let avantTirage = 1200;
   let deja = false;
 
-  const DUREE = APPARITION + ASPIRATION + CHUTE + EVAPORATION + RETOUR;
+  const FIN_NOIR = ASPIRATION + NOIR;
+  const DUREE = FIN_NOIR + DETENTE;
 
   function declencher(camera: THREE.Camera): THREE.Vector3 | null {
     if (actif) return null;
@@ -105,47 +117,26 @@ export function createTrouNoir(distance: number): TrouNoir {
     if (temps >= DUREE) actif = false;
   }
 
-  function partDe(rang: number, total: number): number {
-    if (!actif || total <= 0) return 0;
-
-    const finAspiration = APPARITION + ASPIRATION + CHUTE;
-
-    // Le retour : tout remonte ensemble, à l'envers.
-    if (temps > finAspiration + EVAPORATION) {
-      const retour = (temps - finAspiration - EVAPORATION) / RETOUR;
-      return Math.max(0, 1 - retour);
-    }
-
-    const debut = APPARITION + (rang / total) * ASPIRATION;
-    return THREE.MathUtils.clamp((temps - debut) / CHUTE, 0, 1);
-  }
-
   function etat(): EtatTrouNoir {
     if (!actif) return { actif: false, position, ombre: 0, force: 0, ecran: 0 };
 
-    const finAspiration = APPARITION + ASPIRATION + CHUTE;
     let force: number;
     if (temps < APPARITION) {
       // Il se forme : la courbure s'installe progressivement.
       force = (temps / APPARITION) ** 1.6;
-    } else if (temps < finAspiration + EVAPORATION) {
+    } else if (temps < FIN_NOIR) {
       force = 1;
     } else {
       // Il s'évapore, et la lumière reprend son chemin droit.
-      force = Math.max(0, 1 - (temps - finAspiration - EVAPORATION) / (EVAPORATION * 0.8));
+      force = Math.max(0, 1 - (temps - FIN_NOIR) / DETENTE);
     }
 
-    // L'aspiration de l'image : après la galaxie, pendant l'évaporation.
-    const debutEcran = finAspiration + EVAPORATION * 0.25;
-    const finEcran = finAspiration + EVAPORATION;
-    let ecran = 0;
-    if (temps > debutEcran && temps < finEcran + RETOUR * 0.5) {
-      // Elle plonge, puis revient d'un coup — c'est la détente qui fait la
-      // blague, pas la chute.
-      ecran = temps < finEcran
-        ? ((temps - debutEcran) / (finEcran - debutEcran)) ** 2.2
-        : Math.max(0, 1 - (temps - finEcran) / (RETOUR * 0.5)) ** 0.6;
-    }
+    // L'aspiration de l'image : elle s'enfonce de plus en plus vite, le noir
+    // se tient, puis tout revient d'un coup.
+    let ecran: number;
+    if (temps < ASPIRATION) ecran = (temps / ASPIRATION) ** 1.6;
+    else if (temps < FIN_NOIR) ecran = 1;
+    else ecran = Math.max(0, 1 - (temps - FIN_NOIR) / DETENTE) ** 0.6;
 
     return { actif: true, position, ombre: 0.085 * force, force, ecran };
   }
@@ -158,5 +149,5 @@ export function createTrouNoir(distance: number): TrouNoir {
     return Math.random() < 1 / 900;
   }
 
-  return { declencher, update, etat, partDe, peutSurvenir };
+  return { declencher, update, etat, peutSurvenir };
 }
