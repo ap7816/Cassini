@@ -207,6 +207,27 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   rideau.renderOrder = -1;
   groupe.add(rideau);
 
+  /**
+   * La distance à laquelle les événements se dessinent.
+   *
+   * Aucun rapport avec leur place dans la galaxie, dont on ne garde que la
+   * direction. Un objet posé à sa vraie place est condamné deux fois : le plan
+   * lointain de la caméra le tranche dès qu'on s'en éloigne de plus de vingt
+   * mille unités, et il rapetisse à mesure qu'on s'en va — c'est-à-dire qu'une
+   * supernova à l'autre bout de la galaxie n'existe plus pour personne.
+   *
+   * Rapporté sur une sphère autour de l'œil, il garde sa direction, donc le
+   * coin de ciel où il se produit, mais plus sa distance : il se voit de
+   * partout, à la même taille, et rien ne peut le couper. C'est ce qu'on fait
+   * de toute façon pour les étoiles du fond — personne ne les dessine à des
+   * années-lumière.
+   *
+   * Courte, cette distance : ce qui compte n'est pas elle, mais la taille
+   * qu'on donne aux choses rapportée à elle. Prise grande, les traînes et les
+   * queues finissaient par dépasser le plan lointain et se faisaient trancher.
+   */
+  const RAYON_CIEL = 2200;
+
   // ── La traînée ───────────────────────────────────────────────────────────
   //
   // Deux triangles, une seule fois pour toute la session : on les déplace et
@@ -217,7 +238,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   // lisait comme une seconde comète. Or ce qui distingue une étoile filante,
   // c'est justement qu'elle est brève, mince, et qu'on n'a pas le temps de
   // l'examiner.
-  const longueur = distance * 0.3;
+  // Sa longueur est un angle, pas une distance : le cinquième du ciel, comme
+  // lorsqu'elle vivait à sa vraie place, à huit dixièmes de la distance de
+  // rendu.
+  const longueur = RAYON_CIEL * 0.375;
   const geoTrainee = new THREE.PlaneGeometry(longueur, longueur * 0.02);
   const matTrainee = new THREE.ShaderMaterial({
     uniforms: {
@@ -268,6 +292,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     fog: false,
   });
   const trainee = new THREE.Mesh(geoTrainee, matTrainee);
+  trainee.name = 'trainee';
   trainee.renderOrder = -1;
   trainee.visible = false;
   groupe.add(trainee);
@@ -306,8 +331,8 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     fog: false,
   });
   const vaisseau = new THREE.Points(geoVaisseau, matVaisseau);
+  vaisseau.name = 'vaisseau';
   vaisseau.renderOrder = -1;
-  vaisseau.frustumCulled = false;
   vaisseau.frustumCulled = false;
   vaisseau.visible = false;
   groupe.add(vaisseau);
@@ -341,6 +366,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       void main() {
         vec2 p = gl_PointCoord - 0.5;
         float r = length(p);
+        // Un point de rendu est un carré : hors du cercle inscrit, rien n'est
+        // dessiné du tout. Le fondu plus bas suffirait presque, mais « presque »
+        // laisse justement voir les coins quand la chevelure est au plus fort.
+        if (r > 0.5) discard;
 
         // Un cœur minuscule et violent.
         //
@@ -378,6 +407,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     fog: false,
   });
   const nova = new THREE.Points(geoNova, matNova);
+  nova.name = 'nova';
   nova.renderOrder = -1;
   // Jamais écarté comme hors champ.
   //
@@ -385,14 +415,6 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   // d'un point à l'origine, donc de rayon nul. Déplacer ensuite le sommet ne la
   // met pas à jour : le moteur juge la visibilité d'après une bille restée au
   // centre de la galaxie, et écarte l'objet alors qu'il est droit devant.
-  nova.frustumCulled = false;
-  // Jamais écarté comme hors champ.
-  //
-  // La sphère englobante d'un objet est calculée à sa création — ici autour
-  // d'un point à l'origine, donc de rayon nul. Déplacer ensuite le sommet ne la
-  // met pas à jour : le moteur continue de juger la visibilité d'après une
-  // bille située au centre de la galaxie, et écarte l'objet alors qu'il est
-  // droit devant nous. C'est ce qui rendait la supernova invisible.
   nova.frustumCulled = false;
   nova.visible = false;
   groupe.add(nova);
@@ -433,8 +455,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     fog: false,
   });
   const noyau = new THREE.Points(geoNoyau, matNoyau);
-  // Même raison : son sommet bouge, pas sa sphère englobante.
-  noyau.frustumCulled = false;
+  noyau.name = 'noyauComete';
   // Même raison : son sommet bouge, pas sa sphère englobante.
   noyau.frustumCulled = false;
 
@@ -504,7 +525,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   // n'est pas une teinte, c'est une matière. Un cœur blanc qui déborde, une
   // enveloppe de glace cyan, et une couronne bleue qui s'étale loin.
   const matNoyauBleu = new THREE.ShaderMaterial({
-    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 } },
+    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 }, uBout: { value: 0 } },
     vertexShader: /* glsl */ `
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -514,17 +535,19 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         // minuscule pendant que la racine du panache brillait déjà. La comète
         // se lisait alors comme un cône finissant en pointe — tout l'inverse
         // d'une comète, qui est une tête ronde suivie d'une traîne.
-        gl_PointSize = 210.0;
+        gl_PointSize = 300.0;
       }
     `,
     fragmentShader: /* glsl */ `
       uniform float uEclat;
       uniform float uTemps;
+      /** De 0 (elle passe de profil) à 1 (elle vient droit sur nous). */
+      uniform float uBout;
       void main() {
         vec2 p = gl_PointCoord - 0.5;
         float r = length(p);
 
-        // La chevelure : une boule, et c'est ce qu'on voit d'une comète.
+        // La chevelure : une boule, large, et c'est ce qu'on voit d'une comète.
         //
         // Le noyau fait quelques kilomètres — rien, à ces distances. Ce qui se
         // voit est le gaz qu'il relâche en chauffant, et qui l'entoure d'une
@@ -534,21 +557,50 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         // Les trois éclats sont tenus en dessous de la saturation : au-delà,
         // tout vire au blanc et la couleur disparaît. Une comète bleue qui
         // brille trop n'est plus bleue.
-        float boule = exp(-pow(r / 0.3, 2.0) * 2.4) * 0.62;
-        // Un cœur blanc au milieu, là où le gaz est le plus dense.
-        float coeur = exp(-pow(r / 0.085, 2.0) * 2.0) * 0.85;
+        //
+        // C'est la règle de tout ce fichier en mélange additif : la teinte ne
+        // survit que tant que le canal le plus faible — ici le rouge — reste
+        // sous un. Au-delà, les trois canaux butent ensemble sur la même
+        // valeur, et la couleur, quelle qu'elle soit, devient du blanc.
+        float boule = exp(-pow(r / 0.34, 2.0) * 2.4) * 0.62;
+        // Un cœur clair au milieu, là où le gaz est le plus dense. Petit, et
+        // pas tout à fait blanc : sur une photographie de comète, ce cœur fait
+        // quelques pixels au milieu d'une chevelure qui, elle, est bleue.
+        // Le cœur, lui, ne grossit pas avec elle : c'est un point sur toutes les
+        // photographies de comètes, et c'est aussi ce qui garde la couleur —
+        // les trois éclats s'ajoutent, et le rouge de celui-ci est le premier à
+        // buter sur un.
+        float coeur = exp(-pow(r / 0.04, 2.0) * 2.0) * 0.55;
         // Et ce qu'elle perd autour d'elle, qui se perd loin.
-        float voile = 0.16 / (1.0 + 26.0 * r * r);
+        //
+        // C'est aussi la queue, quand on la regarde par le bout.
+        //
+        // Le panache est un rectangle tourné vers l'œil : vue de face il barre
+        // le ciel, mais quand la comète vient droit sur nous il n'a plus de
+        // face à présenter et il s'efface — et l'on ne voyait plus rien qu'une
+        // boule. Or une queue vue par le bout ne disparaît pas : elle se range
+        // derrière la chevelure et l'entoure d'un halo, large et diffus. C'est
+        // ce halo-là qu'on enfle ici, exactement à mesure que le panache s'en
+        // va, de sorte qu'il y a toujours quelque chose à voir.
+        float voile = (0.16 + 0.42 * uBout) / (1.0 + (26.0 - 17.0 * uBout) * r * r);
 
         // Elle respire : de la glace qui s'évapore n'a pas un éclat fixe.
         float souffle = 0.92 + 0.08 * sin(uTemps * 1.3);
 
         float a = (boule + coeur + voile) * souffle * uEclat;
-        // Blanche au cœur, cyan sur la boule, bleue sur le voile.
+
+        // Éteint avant le bord du carré qui la porte.
+        //
+        // Un point de rendu est un carré, et tout ce qui vit encore à son bord
+        // y est coupé net : le halo, autrefois ténu, y passait inaperçu ; large
+        // et franc comme il l'est devenu de bout, il y dessinait un cadre. On
+        // le ramène à zéro sur le cercle inscrit, où il n'y a plus de coin.
+        a *= smoothstep(0.5, 0.36, r);
+        // Claire au cœur, cyan sur la boule, franchement bleue sur le voile.
         vec3 couleur = mix(
-          mix(vec3(0.3, 0.62, 1.0), vec3(0.55, 0.85, 1.0), boule),
-          vec3(0.95, 0.99, 1.0),
-          smoothstep(0.06, 0.0, r)
+          mix(vec3(0.10, 0.40, 1.0), vec3(0.28, 0.66, 1.0), boule),
+          vec3(0.72, 0.90, 1.0),
+          smoothstep(0.045, 0.0, r)
         );
         gl_FragColor = vec4(couleur * a, a);
       }
@@ -564,7 +616,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const geoQueueBleue = new THREE.PlaneGeometry(1, 1);
   geoQueueBleue.translate(0.5, 0, 0);
   const matQueueBleue = new THREE.ShaderMaterial({
-    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 }, uRatio: { value: 2 }, uFace: { value: 1 } },
+    uniforms: { uEclat: { value: 0 }, uTemps: { value: 0 }, uFace: { value: 1 } },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
       void main() {
@@ -598,22 +650,40 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         float along = vUv.x;
         float across = abs(vUv.y - 0.5) * 2.0;
 
-        // La densité décroît en cloche en travers : aucun bord, nulle part.
-        // Elle commence à la largeur de la boule, et s'évase lentement : une
-        // queue ne naît pas d'un point, elle sort de la chevelure.
-        // Étroite au départ, puis évasée. Large d'emblée, elle présentait une
-        // arête franche en travers, juste derrière la boule — le bord court du
-        // rectangle, qu'aucun fondu ne cachait.
-        float largeur = 0.1 + 0.9 * pow(along, 0.55);
-        float profil = exp(-pow(across / largeur, 2.0) * 3.0);
-
-        // Les filaments modulent cette densité au lieu de s'y ajouter.
+        // Les filaments, d'abord : ils servent aussi à border le panache.
         //
         // En bandes à seuil, ils dessinaient des rectangles à bord franc —
         // exactement ce qu'une queue de comète n'a pas. Ici ils ne font que
         // creuser et renforcer, de quelques dizaines de pour cent.
         float strie = bruit(vec2((vUv.y - 0.5) * 16.0, along * 2.6 - uTemps * 0.12));
         float module = 0.7 + 0.5 * strie;
+
+        // La densité décroît en cloche en travers : aucun bord, nulle part.
+        //
+        // Elle commence **à la largeur de la chevelure**, et non en pointe. Une
+        // amorce fine disparaissait sous l'éclat de la boule : le panache ne se
+        // voyait qu'une fois évasé, c'est-à-dire à distance, et l'on voyait
+        // alors une boule d'un côté, une traîne de l'autre, et un trou entre
+        // les deux. Partant large, il sort du rond lui-même.
+        //
+        // Et elle meurt bien avant le bord du rectangle qui la porte. Elle s'y
+        // étendait jusqu'au bout, où un fondu la coupait : ce fondu suit le
+        // bord, il est donc parfaitement droit, et c'est cette barre-là qu'on
+        // finissait par voir courir le long du panache. En laissant un tiers de
+        // marge, plus rien n'atteint le bord et il n'y a plus de droite à voir.
+        //
+        // Les filaments ondulent la largeur elle-même : le contour n'est plus
+        // le même d'un bout à l'autre, ce qui achève de défaire la ligne.
+        // L'exposant décide de la silhouette, et c'est lui qu'on voit.
+        //
+        // Pris petit, la largeur est acquise dans le premier quart puis ne bouge
+        // plus : le panache a deux longs côtés parallèles, c'est-à-dire un
+        // rectangle — et vu de bout, où la longueur se trouve écrasée par la
+        // perspective, il ne reste que ce rectangle. Pris proche de un, la
+        // largeur croît d'un bout à l'autre et la chose reste un éventail quel
+        // que soit l'angle sous lequel on la prend.
+        float largeur = (0.03 + 0.72 * pow(along, 0.85)) * (0.85 + 0.3 * strie);
+        float profil = exp(-pow(across / largeur, 2.0) * 2.4);
 
         // Pas de jet central.
         //
@@ -626,19 +696,37 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         // n'a pas encore eu le temps de se disperser.
         float sortie = exp(-pow(across / (largeur * 0.55), 2.0) * 1.6) * pow(1.0 - along, 7.0);
 
-        // Et le panache démarre au ras de la boule, sans intervalle.
-        float derriere = smoothstep(0.0, 0.03, along);
+        // Et le panache démarre sur le noyau, par une amorce courte.
+        //
+        // Deux écueils se font face, et l'évasement rapide passe entre les deux.
+        //
+        // Une amorce large bute sur le petit côté du rectangle : le fondu qui le
+        // cache vaut zéro sur toute sa hauteur puis un, c'est-à-dire une barre
+        // droite en travers, plus haute que la boule et qui dépasse d'elle. Un
+        // fondu circulaire, essayé ensuite, efface le panache dans un disque qui
+        // se trouve être plus grand que la chevelure : la queue reparaît alors à
+        // distance de la tête, avec un trou entre les deux.
+        //
+        // L'amorce est donc fine — le petit côté ne fait qu'un demi-degré de
+        // haut, enfoui dans le cœur — mais elle s'évase en quelques centièmes de
+        // la longueur, bien avant de sortir de la chevelure. Il n'y a ni barre à
+        // voir ni intervalle à combler.
+        float derriere = smoothstep(0.0, 0.012, along);
 
         float extinction = pow(1.0 - along, 2.1);
         float a = (profil * module * 0.5 + sortie * 0.32) * extinction * derriere * uEclat * uFace;
 
         // Garde-fou : rien n'atteint jamais le bord du rectangle, quelles que
-        // soient les valeurs ci-dessus.
-        a *= smoothstep(1.0, 0.8, across);
+        // soient les valeurs ci-dessus. Il s'y prend de loin, là où la cloche
+        // ne vaut déjà plus rien — sans quoi c'est lui qui trace la barre qu'il
+        // est censé prévenir.
+        a *= smoothstep(0.98, 0.6, across);
 
-        // Blanche près de la chevelure, bleue en s'éloignant : c'est la
-        // dilution du gaz, et c'est ce qui donne sa profondeur à l'éventail.
-        vec3 couleur = mix(vec3(0.2, 0.55, 1.0), vec3(0.78, 0.92, 1.0), sortie * 0.8 + profil * 0.12);
+        // Claire près de la chevelure, bleue en s'éloignant : c'est la dilution
+        // du gaz, et c'est ce qui donne sa profondeur à l'éventail. Le clair
+        // est tenu court — il ne gagne que la racine du panache, sans quoi
+        // c'est toute la queue qui blanchit.
+        vec3 couleur = mix(vec3(0.08, 0.38, 1.0), vec3(0.55, 0.82, 1.0), sortie * 0.65 + profil * 0.06);
         gl_FragColor = vec4(couleur * a, a);
       }
     `,
@@ -674,6 +762,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   let prochaineTrainee = 18 + Math.random() * 45;
   const departTrainee = new THREE.Vector3();
   const finTrainee = new THREE.Vector3();
+  /** Sa place réelle, dont on ne garde que la direction. */
+  const vraieTrainee = new THREE.Vector3();
+  const courseTrainee = new THREE.Vector3();
+  const capTrainee = new THREE.Vector3();
 
   let vaisseauRestant = 0;
   let prochainVaisseau = 200 + Math.random() * 320;
@@ -688,6 +780,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   let novaFaite = false;
   let prochainTirageNova = 600;
   const positionNova = new THREE.Vector3();
+  const tmpNova = new THREE.Vector3();
 
   // La comète : toutes les six à quinze minutes, une traversée lente.
   const DUREE_COMETE = 80;
@@ -695,18 +788,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   let prochaineComete = 150 + Math.random() * 400;
   const departComete = new THREE.Vector3();
   const finComete = new THREE.Vector3();
+  const vraieComete = new THREE.Vector3();
+  const courseComete = new THREE.Vector3();
+  const capComete = new THREE.Vector3();
 
   /** La bleue : rare, lente, et beaucoup plus grande. */
   const DUREE_BLEUE = 150;
-  /**
-   * Distance à laquelle on la dessine.
-   *
-   * Sans rapport avec sa place réelle, dont on ne garde que la direction. Assez
-   * courte pour que sa queue tienne devant le plan lointain de la caméra, et
-   * c'est la seule contrainte : sur une sphère autour de l'œil, ce qui compte
-   * n'est pas la distance mais la taille qu'on lui donne.
-   */
-  const RAYON_BLEUE = 2200;
   let bleueRestante = 0;
   let prochaineBleue = 900 + Math.random() * 1500;
   const departBleue = new THREE.Vector3();
@@ -717,10 +804,14 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   /** Sa place réelle dans la galaxie, dont on ne garde que la direction. */
   const vraieBleue = new THREE.Vector3();
   const tmpDirection = new THREE.Vector3();
+  const tmpCiel = new THREE.Vector3();
+  const tmpCap = new THREE.Vector3();
   /** Sens de la course, fixé au départ : la queue s'adosse à lui. */
   const arriereComete = new THREE.Vector3();
   const departVaisseau = new THREE.Vector3();
   const finVaisseau = new THREE.Vector3();
+  const vraieVaisseau = new THREE.Vector3();
+  const placeVaisseau = new THREE.Vector3();
   const DUREE_VAISSEAU = 42;
 
   /**
@@ -750,6 +841,49 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       .add(camera.position);
   }
 
+  /**
+   * Rapporte un événement sur la sphère du ciel : même direction, distance
+   * fixe. Voir `RAYON_CIEL` pour le pourquoi.
+   */
+  function poserDansLeCiel(
+    sortie: THREE.Vector3,
+    vraie: THREE.Vector3,
+    camera: THREE.Camera,
+  ): THREE.Vector3 {
+    tmpCiel.subVectors(vraie, camera.position).normalize();
+    // Posé coordonnée par coordonnée, et non par un copier-ajouter : les trois
+    // valeurs sont calculées avant d'être écrites, de sorte que la sortie peut
+    // être n'importe quel vecteur — y compris celui qui vient de servir.
+    return sortie.set(
+      camera.position.x + tmpCiel.x * RAYON_CIEL,
+      camera.position.y + tmpCiel.y * RAYON_CIEL,
+      camera.position.z + tmpCiel.z * RAYON_CIEL,
+    );
+  }
+
+  /**
+   * La direction qu'une course prend à l'écran.
+   *
+   * Une fois l'objet rapporté près de l'œil, sa course dans la galaxie n'est
+   * plus celle qu'on voit : seule en reste la part perpendiculaire au regard —
+   * ce qui s'approche de nous ne traverse pas le ciel. C'est cette part-là qui
+   * oriente une traînée et la queue d'une comète.
+   *
+   * Rend `null` quand la course vient droit sur nous : il n'y a alors aucune
+   * direction apparente, et l'appelant garde la précédente.
+   */
+  function capApparent(
+    sortie: THREE.Vector3,
+    course: THREE.Vector3,
+    vraie: THREE.Vector3,
+    camera: THREE.Camera,
+  ): THREE.Vector3 | null {
+    tmpCap.subVectors(vraie, camera.position).normalize();
+    sortie.copy(course).addScaledVector(tmpCap, -course.dot(tmpCap));
+    if (sortie.lengthSq() < 1e-8) return null;
+    return sortie.normalize();
+  }
+
   function lancerTrainee(camera: THREE.Camera): void {
     devantLaCamera(departTrainee, camera, distance * 0.8, 0.5);
     // L'arrivée est proche du départ : une traînée file, elle ne fait pas le
@@ -757,8 +891,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     devantLaCamera(finTrainee, camera, distance * 0.8, 0.5);
     finTrainee.lerp(departTrainee, 0.55);
 
-    trainee.position.copy(departTrainee);
-    orienter(trainee, finTrainee.clone().sub(departTrainee).normalize(), camera);
+    courseTrainee.subVectors(finTrainee, departTrainee).normalize();
+    vraieTrainee.copy(departTrainee);
+    poserDansLeCiel(trainee.position, vraieTrainee, camera);
+    orienter(trainee, capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee, camera);
     trainee.visible = true;
     trainéeRestante = DUREE_TRAINEE;
   }
@@ -792,10 +928,11 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     objet.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
   }
 
-  /** Pose la supernova à l'endroit tiré. */
-  function positionNovaDansObjet(): void {
+  /** Pose la supernova dans la direction tirée, à la distance du ciel. */
+  function poserNova(camera: THREE.Camera): void {
+    poserDansLeCiel(tmpNova, positionNova, camera);
     const p = geoNova.attributes.position as THREE.BufferAttribute;
-    p.setXYZ(0, positionNova.x, positionNova.y, positionNova.z);
+    p.setXYZ(0, tmpNova.x, tmpNova.y, tmpNova.z);
     p.needsUpdate = true;
   }
 
@@ -830,11 +967,13 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     const course = travers.multiplyScalar(0.4).addScaledVector(fuite, -0.9).normalize();
     finComete.copy(departComete).addScaledVector(course, distance * 0.55);
     // La queue traîne derrière : l'arrière, c'est l'opposé de la course.
+    courseComete.copy(course);
     arriereComete.copy(course).multiplyScalar(-1);
     const p = geoNoyau.attributes.position as THREE.BufferAttribute;
     p.setXYZ(0, 0, 0, 0);
     p.needsUpdate = true;
-    noyau.position.copy(departComete);
+    vraieComete.copy(departComete);
+    poserDansLeCiel(noyau.position, vraieComete, camera);
     comete.visible = true;
     cometeRestante = DUREE_COMETE;
   }
@@ -957,7 +1096,13 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     if (trainéeRestante > 0) {
       trainéeRestante -= dt;
       const t = 1 - trainéeRestante / DUREE_TRAINEE;
-      trainee.position.lerpVectors(departTrainee, finTrainee, t);
+      // Elle file toujours de son départ vers son arrivée ; mais c'est la
+      // direction de cette course, et non la place qu'elle occupe, qu'on
+      // reporte dans le ciel. L'orientation suit à chaque image : rapportée
+      // près de l'œil, la chose tourne avec la tête.
+      vraieTrainee.lerpVectors(departTrainee, finTrainee, t);
+      poserDansLeCiel(trainee.position, vraieTrainee, camera);
+      orienter(trainee, capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee, camera);
       // S'allume net, s'éteint doucement.
       matTrainee.uniforms.uEclat.value = Math.max(0, Math.sin(Math.min(1, t) * Math.PI) ** 0.55);
       if (trainéeRestante <= 0) trainee.visible = false;
@@ -994,38 +1139,49 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // queue de vingt-huit mille dépassait le plan lointain de la caméra et se
       // faisait trancher net, ce qui lui taillait un biseau à bord droit.
       const direction = tmpDirection.subVectors(vraieBleue, camera.position).normalize();
-      noyauBleu.position.copy(camera.position).addScaledVector(direction, RAYON_BLEUE);
+      noyauBleu.position.copy(camera.position).addScaledVector(direction, RAYON_CIEL);
       teteBleue.copy(noyauBleu.position);
 
-      const versCamera = RAYON_BLEUE;
+      const versCamera = RAYON_CIEL;
       // Démesurée, et c'est le propos : elle doit barrer le ciel.
       // Et sa queue tient tout entière devant le plan lointain.
       const longueur = versCamera * 1.5;
-      // Le panache démarre dans la boule, et pas devant.
+      // Le panache démarre sur le noyau, ni devant ni derrière.
       //
-      // Son origine est reculée juste ce qu'il faut pour que son amorce tombe
-      // sous la chevelure, qui la couvre : l'intervalle sombre disparaît sans
-      // que la queue ne déborde en avant. Plus loin, c'est elle qui faisait
-      // l'aura devant la tête, alors que cette lueur appartient à la boule —
-      // c'est le gaz autour du noyau, pas la traîne.
-      queueBleue.position
-        .copy(noyauBleu.position)
-        .addScaledVector(arriereBleue, -longueur * 0.018);
-      queueBleue.scale.set(longueur, longueur * 0.42, 1);
-      matQueueBleue.uniforms.uRatio.value = 1 / 0.42;
+      // Son origine était avancée d'un cheveu pour que l'amorce tombe sous la
+      // chevelure ; depuis que cette amorce est une calotte ronde, elle y tombe
+      // d'elle-même, et ce décalage ne faisait plus que pousser une pointe
+      // claire en avant de la tête — alors que cette lueur-là appartient à la
+      // boule, c'est le gaz autour du noyau et pas la traîne.
+      queueBleue.position.copy(noyauBleu.position);
+      // Plus haut que large d'apparence : le rectangle est élargi d'autant que
+      // la cloche a été resserrée, de sorte que le panache garde la même taille
+      // à l'écran tout en gardant ses bords loin de ceux du rectangle.
+      queueBleue.scale.set(longueur, longueur * 0.65, 1);
       orienter(queueBleue, arriereBleue, camera);
 
       // Une queue vue par la tranche n'est pas une queue.
       //
-      // Le rectangle qui la porte pivote autour de son axe pour nous présenter
-      // sa face ; mais quand cet axe est dans la direction du regard, il n'a
-      // plus de face à présenter et se réduit à un trait en travers de la
-      // chevelure. Dans le ciel, une comète qui vient droit sur nous ne montre
-      // d'ailleurs aucune queue : elle est cachée derrière elle. On l'efface
-      // donc à mesure que son axe s'aligne sur le regard.
+      // Du panache au halo, selon l'angle sous lequel on la prend.
+      //
+      // Le rectangle qui porte la queue pivote autour de son axe pour nous
+      // présenter sa face ; quand cet axe tombe dans la direction du regard, il
+      // n'a plus de face à présenter et se réduit à un trait en travers de la
+      // chevelure. Il faut donc l'effacer — mais pas sans rien mettre à la
+      // place : la queue n'a pas disparu, elle s'est rangée derrière la tête,
+      // où elle fait un halo. Le même nombre commande les deux, l'un s'en va
+      // comme l'autre arrive.
+      //
+      // Et il s'y prend à trente-cinq degrés de l'axe : au-delà, la perspective
+      // écrase tellement la longueur du panache qu'il ne reste de lui qu'une
+      // forme large et courte, sans direction — le halo dit mieux la même chose.
+      // Plus tard, on voyait le rectangle ; plus tôt, on perdait la queue dès
+      // qu'elle n'était plus exactement de profil.
       const versOeil = tmpDirection.subVectors(camera.position, noyauBleu.position).normalize();
       const alignement = Math.abs(arriereBleue.dot(versOeil));
-      matQueueBleue.uniforms.uFace.value = 1 - THREE.MathUtils.smoothstep(alignement, 0.72, 0.97);
+      const parLeBout = THREE.MathUtils.smoothstep(alignement, 0.82, 0.985);
+      matQueueBleue.uniforms.uFace.value = 1 - parLeBout;
+      matNoyauBleu.uniforms.uBout.value = parLeBout;
 
       const bords = Math.sin(Math.min(1, t) * Math.PI) ** 0.3;
       // La tête atteint son plein éclat bien avant la queue : c'est elle
@@ -1044,6 +1200,13 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     }
 
     // ── Supernova ──────────────────────────────────────────────────────────
+    //
+    // Sa place est rapportée à l'œil à chaque image, et pas seulement quand
+    // elle s'allume : on doit pouvoir s'en aller à l'autre bout de la galaxie
+    // et la voir encore briller dans le même coin de ciel. Le rémanent
+    // compris, qui reste là jusqu'à la fin de la session.
+    if (nova.visible) poserNova(camera);
+
     if (novaRestante > 0) {
       novaRestante -= dt;
       const ecoule = DUREE_NOVA - novaRestante;
@@ -1070,7 +1233,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         prochainTirageNova = 60;
         if (Math.random() < 1 / 180) {
           devantLaCamera(positionNova, camera, distance * 0.9, 0.55);
-          positionNovaDansObjet();
+          poserNova(camera);
           nova.visible = true;
           novaRestante = DUREE_NOVA;
           void import('@tauri-apps/plugin-log').then((l) => l.info('[sonde] supernova allumée'));
@@ -1083,13 +1246,16 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     if (cometeRestante > 0) {
       cometeRestante -= dt;
       const t = 1 - cometeRestante / DUREE_COMETE;
-      noyau.position.lerpVectors(departComete, finComete, t);
+
+      // Sa vraie course décide de la direction où on la voit et de ce qu'elle
+      // vit — surtout de sa distance au soleil, qui fait toute la longueur de
+      // sa queue. Ce qu'on dessine, lui, est rapporté à l'œil.
+      vraieComete.lerpVectors(departComete, finComete, t);
+      poserDansLeCiel(noyau.position, vraieComete, camera);
       queue.position.copy(noyau.position);
 
-      // La queue est poussée par le vent de l'étoile : elle pointe à l'opposé
-      // du soleil, et s'allonge à mesure que la comète s'en approche.
-      const versCamera = noyau.position.distanceTo(camera.position);
-      const auSoleil = Math.max(1, noyau.position.distanceTo(soleil));
+      const versCamera = RAYON_CIEL;
+      const auSoleil = Math.max(1, vraieComete.distanceTo(soleil));
 
       // La queue traîne derrière la comète, et nulle part ailleurs.
       //
@@ -1099,14 +1265,27 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // du système, et se lit comme une erreur d'affichage. On garde donc de la
       // physique ce qui se voit bien — la queue s'allonge en approchant de
       // l'étoile — et on laisse le reste au manuel d'astronomie.
-      const fuite = arriereComete;
+      //
+      // Derrière la course telle qu'on la voit, et non telle qu'elle est :
+      // rapportée près de l'œil, la comète ne traverse plus le ciel dans la
+      // direction de sa course, mais dans celle qu'il en reste une fois ôté ce
+      // qui vient vers nous.
+      const cap = capApparent(capComete, courseComete, vraieComete, camera);
+      const fuite = cap ? cap.multiplyScalar(-1) : arriereComete;
 
       // Plus elle approche du soleil, plus la glace s'évapore et plus la queue
       // s'allonge. La longueur est rapportée à la distance de l'œil pour qu'elle
       // garde une taille lisible à l'écran, et bornée pour ne jamais devenir un
       // voile dans lequel on se trouverait.
       const chauffe = THREE.MathUtils.clamp((distance * 0.35) / auSoleil, 0.4, 2.2);
-      const longueur = THREE.MathUtils.clamp(versCamera * 0.3 * chauffe, 30, distance * 0.35);
+      // Bornée en parts du ciel, et non de la galaxie : la queue garde la même
+      // taille à l'écran où qu'on soit, et ne devient jamais le voile dans
+      // lequel on se trouverait.
+      const longueur = THREE.MathUtils.clamp(
+        versCamera * 0.3 * chauffe,
+        RAYON_CIEL * 0.1,
+        RAYON_CIEL * 0.8,
+      );
       queue.scale.set(longueur, longueur * 0.45, 1);
 
       // Le rectangle s'étend vers +X depuis le noyau : on pose donc +X sur la
@@ -1129,8 +1308,9 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     if (vaisseauRestant > 0) {
       vaisseauRestant -= dt;
       const t = 1 - vaisseauRestant / DUREE_VAISSEAU;
-      const p = departVaisseau.clone().lerp(finVaisseau, t);
-      position.setXYZ(0, p.x, p.y, p.z);
+      vraieVaisseau.lerpVectors(departVaisseau, finVaisseau, t);
+      poserDansLeCiel(placeVaisseau, vraieVaisseau, camera);
+      position.setXYZ(0, placeVaisseau.x, placeVaisseau.y, placeVaisseau.z);
       position.needsUpdate = true;
       // Clignotement lent, et extinction aux deux bouts de la course pour
       // qu'il n'apparaisse ni ne disparaisse d'un coup.
@@ -1187,7 +1367,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     }
     if (evenement === 'supernova') {
       devantLaCamera(positionNova, camera, distance * 0.9, 0.35);
-      positionNovaDansObjet();
+      poserNova(camera);
       nova.visible = true;
       novaRestante = DUREE_NOVA;
       return positionNova.clone();
