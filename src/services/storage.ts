@@ -41,6 +41,7 @@ export const STORAGE_KEYS = {
   reglagesLaunchers:   'archive.solar.launcherSystems.v1',
   dernierSysteme:      'archive.solar.lastSystem.v1',
   solarLargeurs:       'archive.solar.largeurs.v1',
+  succes:              'archive.succes.v1',
 } as const;
 
 /**
@@ -325,6 +326,21 @@ export function readAmbientVolume(): number {
 export function writeAmbientVolume(v: number): void { rawWrite(STORAGE_KEYS.ambientVolume, String(v)); }
 
 // Lecture/écriture de la langue de l'interface
+/**
+ * Les succès décrochés, un identifiant par ligne.
+ *
+ * Une liste de mots séparés par des virgules plutôt que du JSON : c'est un
+ * ensemble de clés courtes, et le store se lit à l'œil nu.
+ */
+export function readSucces(): string[] {
+  const v = rawRead(STORAGE_KEYS.succes);
+  if (!v) return [];
+  return v.split(',').filter(Boolean);
+}
+export function writeSucces(cles: string[]): void {
+  rawWrite(STORAGE_KEYS.succes, cles.join(','));
+}
+
 export function readLanguage(): string | null { return rawRead(STORAGE_KEYS.language); }
 export function writeLanguage(lang: string): void { rawWrite(STORAGE_KEYS.language, lang); }
 

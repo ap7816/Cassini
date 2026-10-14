@@ -12,6 +12,7 @@ import {
   type Reglages,
 } from './tuning';
 import { declencherCiel, EVENEMENTS_CIEL } from './evenementsCiel';
+import { abonnerSucces, reinitialiserSucces, succesDecroches } from '../succes/succes';
 
 type Valeur = Reglages[keyof Reglages];
 
@@ -34,6 +35,10 @@ export function DebugPanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [recherche, setRecherche] = useState('');
   const [replies, setReplies] = useState<Set<string>>(lireReplies);
+  // Le nombre de succès décrochés, pour savoir où l'on en est sans quitter le
+  // panneau. Il monte tout seul quand un événement passe à l'écran.
+  const [succes, setSucces] = useState(() => succesDecroches().length);
+  useEffect(() => abonnerSucces(() => { setSucces(succesDecroches().length); }), []);
   // La révision change à chaque modification : c'est elle qui fait redessiner,
   // les réglages eux-mêmes étant un objet modifié sur place.
   useSyncExternalStore(abonnerReglages, revisionReglages);
@@ -174,6 +179,17 @@ export function DebugPanel() {
                     </button>
                   ))}
                 </div>
+                {/* Un succès ne se décroche qu'une fois : sans ce bouton, sa
+                    notification ne se revoit plus jamais, et donc ne se règle
+                    pas. Le compte dit où l'on en est sans avoir à chercher. */}
+                <button
+                  type="button"
+                  className={css.evenement}
+                  onClick={() => { reinitialiserSucces(); setSucces(0); }}
+                  title="Oublie tous les succès décrochés, pour revoir leurs notifications"
+                >
+                  Réinitialiser les succès ({succes})
+                </button>
               </section>
             )}
 

@@ -284,7 +284,11 @@
     "themeHint": "Interface colours. Space stays black.",
     "themeDark": "Dark",
     "themeLight": "Light",
-    "themeSystem": "System (Windows)"
+    "themeSystem": "System (Windows)",
+    "tabSucces": "Achievements",
+    "succesTitre": "Achievements",
+    "succesHint": "What you have seen go by in the sky. They are earned by watching, not by hunting.",
+    "succesPasEncore": "Not seen yet."
   },
   "common": {
     "close": "Close",
@@ -491,7 +495,8 @@
       "new_1": "[Solar system] Fully recomputed sky: the Milky Way is a real concentration of stars, with its dust lanes and emission nebulae. It stays sharp at any zoom, and new stars appear as you get closer",
       "new_2": "[Settings] “Living sky” turns off with one switch, for modest machines",
       "new_10": "[Solar system] The supernova now explodes instead of lighting up: a flash, then a torn shell that opens over the whole minute, cools from blue to copper and finally disperses — as large as the black hole, and never in front of the system you are looking at",
-      "new_11": "[Settings] Music volume can be set event by event, like the ambient one"
+      "new_11": "[Settings] Music volume can be set event by event, like the ambient one",
+      "new_12": "[Achievements] Seven achievements to earn, one per sky event: they unlock when you actually see the thing go by, with a notification and a little chime, and a settings tab shows which ones are missing"
     },
     "v5_1_0": {
       "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",
@@ -686,5 +691,36 @@
     "remove": "Remove the tag {{tag}}",
     "filterNone": "All tags",
     "none": "Untagged"
+  },
+  "succes": {
+    "debloque": "Achievement unlocked",
+    "trainee": {
+      "titre": "Shooting star",
+      "detail": "A speck of dust burning across the sky. The most common one, and the first you see."
+    },
+    "tempete": {
+      "titre": "Magnetic storm",
+      "detail": "The gas curtain driven to its peak, then left to fall back."
+    },
+    "comete": {
+      "titre": "Comet",
+      "detail": "It crossed the system, its tail always pointing away from the sun."
+    },
+    "vaisseau": {
+      "titre": "Flyby",
+      "detail": "Something went by in a straight line, very far away. You will not know what."
+    },
+    "cometeBleue": {
+      "titre": "Blue comet",
+      "detail": "Huge, slow and blue. It will not be back any time soon."
+    },
+    "supernova": {
+      "titre": "Supernova",
+      "detail": "A star exploded before your eyes. One goes off per century in a galaxy."
+    },
+    "trouNoir": {
+      "titre": "Black hole",
+      "detail": "The rarest event of all. Many will never see it."
+    }
   }
 }

@@ -11,6 +11,7 @@ import { noterEtat, surEtatFenetre } from '../../features/system/etatFenetre';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
+import { NotificationSucces } from '../../features/succes/NotificationSucces';
 import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
 import { listen } from '@tauri-apps/api/event';
@@ -326,6 +327,9 @@ export function AppLayout() {
       {location.pathname !== '/solar' && <MusicVisualizer />}
       <UpdateBanner u={updater} />
       <Toasts />
+      {/* Montée ici, et pas dans la galaxie : un succès peut tomber pendant
+          qu'on la regarde, et il doit se voir même si l'on vient d'en partir. */}
+      <NotificationSucces />
       {DebugPanel && (
         <Suspense fallback={null}>
           <DebugPanel />

@@ -23,6 +23,8 @@ import {
   type EvenementMusical,
 } from '../../features/evenements/musiqueEvenement';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
+import { ListeSucces } from '../../features/succes/ListeSucces';
+import { SUCCES } from '../../features/succes/succes';
 import { clearCoverCache } from '../../features/library/services/coverArtService';
 import { LANGUES, estLangue, getCurrentLanguage, setLanguage, type Langue } from '../../i18n';
 import { usePatchNotes } from '../../features/patchNotes/PatchNotesContext';
@@ -225,7 +227,7 @@ export function ReglagesContenu({ recherche }: Props) {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
-  const [tab, setTab] = useState<'perso' | 'graphisme' | 'params'>('perso');
+  const [tab, setTab] = useState<'perso' | 'graphisme' | 'succes' | 'params'>('perso');
 
   // Vérifie les mises à jour disponibles et propose de télécharger+installer si une existe
   async function handleCheckUpdate() {
@@ -347,6 +349,13 @@ export function ReglagesContenu({ recherche }: Props) {
             onClick={() => setTab('graphisme')}
           >
             {t('settings.tabGraphisme')}
+          </button>
+          <button
+            type="button"
+            className={[css.tab, tab === 'succes' ? css.tabActive : ''].filter(Boolean).join(' ')}
+            onClick={() => setTab('succes')}
+          >
+            {t('settings.tabSucces')}
           </button>
           <button
             type="button"
@@ -502,6 +511,16 @@ export function ReglagesContenu({ recherche }: Props) {
       {/* ── Paramètres ───────────────────────────────────────── */}
 
       {/* Mises à jour */}
+      {/* ── Succès ───────────────────────────────────────────── */}
+
+      {(tab === 'succes' || !!q) && matches('settings.succesTitre', 'settings.succesHint', ...SUCCES.map((c) => `succes.${c}.titre`)) && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.succesTitre')}</div>
+        <div className={css.empty}>{t('settings.succesHint')}</div>
+        <ListeSucces />
+      </div>
+      )}
+
       {(tab === 'params' || !!q) && matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint', 'settings.patchNotesLabel', 'settings.patchNotesHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>

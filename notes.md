@@ -153,7 +153,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
 | Supernova : une vraie explosion, à la taille du trou noir                | ✅ Done    |
 | Régler le volume de la musique de chaque événement                       | ✅ Done    |
-| Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
+| Succès à décrocher : voir chaque événement du ciel                        | ✅ Done    |
 | Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
 | Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
@@ -287,6 +287,19 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Le volume se règle aussi par événement**, à côté du morceau, comme celui de l'ambiance. Il ne se déduit plus du volume d'ambiance relevé de moitié : ce n'est pas un fond, et un réglage qu'on tire d'un autre surprend toujours quelqu'un. La valeur par défaut est exactement ce que donnait l'ancien calcul sur une installation neuve, de sorte que rien ne change pour qui ne touche à rien. Le curseur s'entend pendant qu'on le tire — sauf au milieu d'un fondu, qui écrit lui aussi dans ce volume et qu'il ne faut pas contrarier.
 
   Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
+
+- **Les succès**
+  **Faits, pour les événements du ciel.** Un par événement, sept en tout, du plus courant au plus rare. Ce sont des choses rares — un trou noir se montre une fois toutes les trente heures passées devant la galaxie — et la seule façon de savoir qu'on les avait toutes vues était de s'en souvenir.
+
+  **Vu, et non déclenché.** Le succès tombe pendant que la chose est à l'écran, signalé par la scène à chaque image tant que l'événement court, et non à l'endroit qui le lance. La raison est bête et décisive : il y a deux chemins par événement — le tirage au sort et le panneau de débogage —, et poser le crochet sur les deux, c'est en oublier un. Le signalement répété ne coûte rien, le module rendant faux pour un succès déjà décroché ; c'est ce qui permet à la scène de signaler bêtement ce qu'elle montre sans retenir ce qu'elle a déjà signalé, et c'est la première chose que vérifie `succes.test.ts`. Le tout est sous le `vivant` de la scène : un ciel coupé ne montre rien, et ce qu'on ne voit pas ne se décroche pas.
+
+  La notification est montée au niveau de l'application et non de la galaxie — un succès peut tomber pendant qu'on la regarde et doit se voir même si l'on vient d'en partir. Elle tient sept secondes, contre trois ou quatre pour un toast : il y a un nom et une explication à lire, et cela n'arrive que sept fois dans une vie d'installation.
+
+  **Le petit air est synthétisé**, trois notes montantes calculées à la volée plutôt qu'un fichier : quelques centaines de kilo-octets pour une seconde de son qu'on entend sept fois seraient chers payés, et une note calculée ne pose aucune question de licence ni de chargement. L'enveloppe compte plus que les notes — sans attaque ni décroissance, un oscillateur qu'on démarre et qu'on arrête fait deux claquements secs.
+
+  **Un onglet des paramètres les montre**, décrochés et manquants, avec le compte et une jauge. Rien n'y est caché : le nom d'un succès dit ce qu'il faut voir pour l'avoir, et le masquer ne ferait pas un mystère, seulement une liste de cases vides. Les manquants sont éteints et portent « Pas encore vu », parce que leur explication est écrite au passé — elle raconte ce qui s'est passé, elle n'a rien à dire tant que rien ne s'est passé. La liste s'abonne : la galaxie continue de tourner derrière les paramètres, et un succès peut tomber pendant qu'on la regarde.
+
+  Le panneau de débogage a un bouton qui les oublie tous, avec leur compte : sans lui, un succès décroché une fois ne se revoit plus jamais, et sa notification non plus — autant dire qu'elle ne se règle pas. À savoir : ce qui est encore à l'écran au moment de la remise à zéro est aussitôt redécroché, puisque c'est précisément ce qu'on est en train de voir.
 
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.

@@ -1,0 +1,99 @@
+/* La liste des succès : une ligne par succès, décroché ou non.
+   Les deux se ressemblent assez pour qu'on les compare d'un coup d'œil, et
+   diffèrent assez pour qu'on sache lesquels manquent. */
+
+.compte {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.chiffre {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent, #6c8efb);
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  font-size: 0.78rem;
+  color: rgb(var(--encre) / 0.6);
+}
+
+/* La jauge : la même information que le compte, mais qu'on lit sans lire. */
+.jauge {
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(var(--hud) / 0.12);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.jaugePleine {
+  height: 100%;
+  background: var(--accent, #6c8efb);
+  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.liste {
+  display: grid;
+  gap: 2px;
+}
+
+.ligne {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 2px;
+}
+
+.ligne + .ligne {
+  border-top: 1px solid rgb(var(--hud) / 0.07);
+}
+
+.sceau {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  border: 1px solid rgb(var(--hud) / 0.14);
+  border-radius: 50%;
+  color: var(--accent, #6c8efb);
+}
+
+/* Non décroché : tout s'éteint, mais rien ne se cache. Le nom d'un succès dit
+   quoi faire pour l'avoir — le masquer ne ferait pas un mystère, seulement une
+   liste de cases vides. */
+.eteint .sceau {
+  color: rgb(var(--encre) / 0.3);
+  border-color: rgb(var(--hud) / 0.08);
+}
+
+.eteint .titre {
+  color: rgb(var(--encre) / 0.55);
+}
+
+.eteint .detail {
+  color: rgb(var(--encre) / 0.38);
+}
+
+.texte {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titre {
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: rgb(var(--encre) / 0.95);
+}
+
+.detail {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: rgb(var(--encre) / 0.7);
+  line-height: 1.45;
+}

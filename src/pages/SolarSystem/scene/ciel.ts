@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { EvenementCiel } from '../../../features/debug/evenementsCiel';
+import { decrocherSucces } from '../../../features/succes/succes';
 import { createSupernova } from './supernova';
 import { createTrouNoir } from './trouNoir';
 import {
@@ -1159,6 +1160,24 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     derniereCamera = camera;
     dernierSoleil.copy(soleil);
     temps += dt;
+
+    // Ce qui est à l'écran est vu, et vaut son succès.
+    //
+    // Ici, et pas aux endroits qui lancent les événements : il y en a deux par
+    // événement — le tirage au sort et le panneau de débogage —, et un seul des
+    // deux aurait fini par être oublié. L'appel est fait à chaque image, ce qui
+    // ne coûte qu'une recherche dans un ensemble : c'est le module des succès
+    // qui sait si c'en est un nouveau.
+    //
+    // Et seulement ici, c'est-à-dire sous le `vivant` : un ciel coupé ne montre
+    // rien, et ce qu'on ne voit pas ne se décroche pas.
+    if (trainéeRestante > 0) decrocherSucces('trainee');
+    if (tempete > 0) decrocherSucces('tempete');
+    if (cometeRestante > 0) decrocherSucces('comete');
+    if (vaisseauRestant > 0) decrocherSucces('vaisseau');
+    if (bleueRestante > 0) decrocherSucces('cometeBleue');
+    if (novaRestante > 0) decrocherSucces('supernova');
+    if (trouRestant > 0) decrocherSucces('trouNoir');
 
     // Le rideau enveloppe l'observateur, où qu'il soit.
     //

@@ -284,7 +284,11 @@
     "themeHint": "Couleurs de l’interface. L’espace reste noir.",
     "themeDark": "Sombre",
     "themeLight": "Clair",
-    "themeSystem": "Système (Windows)"
+    "themeSystem": "Système (Windows)",
+    "tabSucces": "Succès",
+    "succesTitre": "Succès",
+    "succesHint": "Ce que tu as vu passer dans le ciel. Ils se décrochent en regardant, pas en cherchant.",
+    "succesPasEncore": "Pas encore vu."
   },
   "common": {
     "close": "Fermer",
@@ -491,7 +495,8 @@
       "new_1": "[Système solaire] Ciel entièrement recalculé : la voie lactée est une vraie concentration d’étoiles, avec ses couloirs de poussière et ses nébuleuses en émission. Il reste net à n’importe quel zoom, et de nouvelles étoiles y apparaissent à mesure qu’on s’approche",
       "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes",
       "new_10": "[Système solaire] La supernova explose au lieu de s’allumer : un éclair, puis une coquille déchirée qui s’ouvre sur toute la minute, se refroidit du bleu au cuivre, et finit par se disperser — aussi grande que le trou noir, et jamais devant le système qu’on regarde",
-      "new_11": "[Réglages] Le volume de la musique se règle événement par événement, comme celui de l’ambiance"
+      "new_11": "[Réglages] Le volume de la musique se règle événement par événement, comme celui de l’ambiance",
+      "new_12": "[Succès] Sept succès à décrocher, un par événement du ciel : ils tombent quand on voit la chose passer, avec une notification et un petit air, et un onglet des paramètres dit lesquels manquent"
     },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",
@@ -686,5 +691,36 @@
     "remove": "Retirer le tag {{tag}}",
     "filterNone": "Tous les tags",
     "none": "Sans tag"
+  },
+  "succes": {
+    "debloque": "Succès débloqué",
+    "trainee": {
+      "titre": "Étoile filante",
+      "detail": "Une poussière qui brûle en traversant le ciel. La plus courante, et la première qu'on voit."
+    },
+    "tempete": {
+      "titre": "Tempête magnétique",
+      "detail": "Le rideau de gaz porté au comble, puis laissé retomber."
+    },
+    "comete": {
+      "titre": "Comète",
+      "detail": "Elle a traversé le système, la queue toujours à l'opposé du soleil."
+    },
+    "vaisseau": {
+      "titre": "Passage",
+      "detail": "Quelque chose a filé en ligne droite, très loin. On ne saura pas quoi."
+    },
+    "cometeBleue": {
+      "titre": "Comète bleue",
+      "detail": "Immense, lente et bleue. Elle ne repassera pas de sitôt."
+    },
+    "supernova": {
+      "titre": "Supernova",
+      "detail": "Une étoile a explosé sous tes yeux. Il en éclate une par siècle dans une galaxie."
+    },
+    "trouNoir": {
+      "titre": "Trou noir",
+      "detail": "Le plus rare de tous les événements. Beaucoup ne le verront jamais."
+    }
   }
 }

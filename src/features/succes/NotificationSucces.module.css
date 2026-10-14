@@ -1,0 +1,102 @@
+/* La carte d'un succès : plus haute et plus large qu'un toast, et pour cause —
+   c'est une récompense, pas un message d'état. Elle se tient au-dessus de la
+   pile des toasts pour ne jamais lui disputer la place. */
+
+.pile {
+  position: fixed;
+  bottom: 160px;
+  right: 20px;
+  z-index: 9100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  width: max-content;
+  max-width: 360px;
+}
+
+.carte {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px 14px 15px;
+  border-radius: 2px;
+  background: rgb(var(--fond) / 0.97);
+  border: 1px solid rgb(var(--hud) / 0.14);
+  border-left: 3px solid var(--accent, #6c8efb);
+  box-shadow: 0 10px 34px rgb(var(--fond) / 0.6), 0 0 22px rgb(var(--hud) / 0.06);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+  min-width: 260px;
+  animation: entree 0.42s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+/* L'étoile n'est pas une icône de statut : elle brille, discrètement, le temps
+   qu'on la remarque. */
+.sceau {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  color: var(--accent, #6c8efb);
+  border: 1px solid rgb(var(--hud) / 0.16);
+  border-radius: 50%;
+  animation: lueur 2.4s ease-in-out infinite;
+}
+
+.texte {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.entete {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent, #6c8efb);
+  opacity: 0.9;
+}
+
+.titre {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgb(var(--encre) / 0.95);
+}
+
+.detail {
+  font-size: 0.76rem;
+  color: rgb(var(--encre) / 0.68);
+  line-height: 1.4;
+}
+
+.fermer {
+  background: none;
+  border: none;
+  color: rgb(var(--encre) / 0.5);
+  font-size: 0.68rem;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  align-self: flex-start;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.fermer:hover { color: rgb(var(--encre) / 0.8); }
+
+@keyframes entree {
+  from { transform: translateX(28px) scale(0.96); opacity: 0; }
+  to   { transform: translateX(0) scale(1);       opacity: 1; }
+}
+
+@keyframes lueur {
+  0%, 100% { box-shadow: 0 0 0 rgb(var(--hud) / 0); }
+  50%      { box-shadow: 0 0 14px rgb(var(--hud) / 0.22); }
+}
+
+/* Mouvement réduit : la carte paraît, elle ne glisse ni ne respire. */
+@media (prefers-reduced-motion: reduce) {
+  .carte { animation: none; }
+  .sceau { animation: none; }
+}
