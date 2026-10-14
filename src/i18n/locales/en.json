@@ -464,11 +464,10 @@
   "changelog": {
     "v5_2_0": {
       "new_6": "[Graphics] A tab of its own in the settings: image sharpness, light bloom, sky density — enough to lighten the scene on a modest machine",
-      "new_7": "[Solar system] And the black hole takes the screen itself: the interface bends around it like the sky, twists and fades out — buttons included — before it all snaps back",
       "new_8": "[Solar system] Sky events are now visible from anywhere: supernova, shooting star, comet and flyby no longer vanish once you move past the render distance",
       "fix_0": "[Release notes] “Don’t show again” now sticks: the choice was lost at every update",
       "new_5": "[Controls] Free-flight speed is now adjustable, from 0.25× to 5×, and starts out brisker",
-      "new_4": "[Solar system] Two more rare events: a vast blue comet sailing over the galaxy — hover it to hear it — and a black hole that forms in front of you and bends the sky around it",
+      "new_4": "[Solar system] One more rare event: a vast blue comet sailing over the galaxy — hover it to hear it",
       "new_3": "[Solar system] Comets cross the systems, and now and then a star explodes — at most once per session, and it leaves its mark",
       "perf_0": "[Performance] The dedicated graphics card is now claimed at the right moment: on a dual-GPU laptop the scene ran on the integrated chip. Five to six times faster, measured",
       "perf_1": "[Performance] The sky needs no texture at all: 8 MB of graphics memory and a second of startup drawing saved",

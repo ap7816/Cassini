@@ -9,8 +9,6 @@ import { useMusicPlayer } from '../../features/music/MusicContext';
 import { initAmbient, suspendAmbient, resumeAmbient } from '../../features/ambient/ambientPlayer';
 import { noterEtat, surEtatFenetre } from '../../features/system/etatFenetre';
 import { invoke, isTauri } from '@tauri-apps/api/core';
-import { abonnerAspiration } from '../../features/evenements/aspirationEcran';
-import { appliquerAspiration } from '../../features/evenements/lentilleEcran';
 import { MusicVisualizer } from '../../features/music/MusicVisualizer';
 import { Toasts } from '../../features/toast/Toasts';
 import { MiniPlayer } from './MiniPlayer';
@@ -270,20 +268,8 @@ export function AppLayout() {
 
   const updater = useUpdater();
 
-  // Le trou noir avale aussi l'écran.
-  //
-  // Tout y passe, la scène comprise — c'est la blague. L'interface subit la
-  // même lentille que le ciel : l'image se creuse autour du point, s'étire en
-  // anneau, puis s'y replie. Le comment est dans `lentilleEcran`.
-  const coque = useRef<HTMLDivElement>(null);
-  useEffect(() =>
-    abonnerAspiration((a) => {
-      if (coque.current) appliquerAspiration(coque.current, a);
-    }),
-  []);
-
   return (
-    <div ref={coque} className={css.shell} style={bgStyle}>
+    <div className={css.shell} style={bgStyle}>
       <main className={css.main}>
         {/* Pas d'en-tête sur le système solaire : il n'y portait qu'un titre
             que la page dit déjà, et une recherche que la liste des jeux fait

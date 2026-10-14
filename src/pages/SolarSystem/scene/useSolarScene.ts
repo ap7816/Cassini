@@ -18,8 +18,6 @@ import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { createFondCiel } from './cielFond';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
 import { createCiel } from './ciel';
-import { createTrouNoir } from './trouNoir';
-import { definirAspiration } from '../../../features/evenements/aspirationEcran';
 import { createChantComete } from '../../../features/ambient/chantComete';
 import { enregistrerCiel } from '../../../features/debug/evenementsCiel';
 import { lumiereDe } from '../lib/couleurSoleil';
@@ -466,11 +464,6 @@ export function useSolarScene({
     const ciel = createCiel(galaxie.rayon, new THREE.Color(tint));
     scene.add(ciel.objet);
 
-    // Il ne dessine rien et ne touche à rien : il tient une horloge et une
-    // place. La courbure du ciel est appliquée par le fond, la déformation de
-    // l'image par la coque de l'application — ici, on ne fait que relayer.
-    const trouNoir = createTrouNoir(Math.max(1400, galaxie.rayon * 3.2));
-
     // Le chant de la comète bleue : quelques notes que le navigateur synthétise
     // quand on pose le curseur sur elle. Rien n'est créé tant que personne ne
     // l'a survolée — un contexte audio ouvert pour rien reste un contexte
@@ -489,12 +482,7 @@ export function useSolarScene({
     // Le panneau de débogage peut provoquer ces événements sans attendre leur
     // heure. En production, personne ne s'adresse à ce registre.
     const retirerCiel = enregistrerCiel((evenement) => {
-      // Le trou noir ne vit pas dans le module des événements du ciel : il
-      // courbe le fond et emporte l'écran, deux choses que la scène seule
-      // sait atteindre.
-      const endroit = evenement === 'trouNoir'
-        ? trouNoir.declencher(camera)
-        : ciel.declencher(evenement);
+      const endroit = ciel.declencher(evenement);
       if (!endroit) return;
 
       // On tourne la tête, on ne se déplace pas : la caméra reste où elle est,
@@ -1490,27 +1478,6 @@ export function useSolarScene({
         }
       }
 
-      // ── Le trou noir ──────────────────────────────────────────────────────
-      if (cielRef.current && trouNoir.peutSurvenir(dt)) trouNoir.declencher(camera);
-      trouNoir.update(dt);
-      const etatTrou = trouNoir.etat();
-      fond.courber(etatTrou.position, etatTrou.ombre, etatTrou.force);
-
-      // Et l'écran lui-même, pour finir. La coque de l'application s'abonne à
-      // cette annonce : la scène ne touche pas au HTML, elle dit seulement d'où
-      // ça aspire et combien.
-      if (etatTrou.ecran > 0.001) {
-        projection.copy(etatTrou.position).project(camera);
-        const r = canvas.getBoundingClientRect();
-        definirAspiration({
-          x: r.left + ((projection.x + 1) / 2) * r.width,
-          y: r.top + ((1 - projection.y) / 2) * r.height,
-          force: etatTrou.ecran,
-        });
-      } else {
-        definirAspiration(null);
-      }
-
       // Construit ce dont on s'approche, libère ce qu'on laisse derrière.
       // Pendant l'édition, le système ne doit pas être libéré si la caméra
       // s'éloigne : on perdrait l'aperçu. La fin d'un voyage lève l'épingle,
@@ -1641,7 +1608,6 @@ export function useSolarScene({
       canvas.removeEventListener('pointermove', surPointeur);
       canvas.removeEventListener('pointerleave', surSortie);
       chant.arreter();
-      definirAspiration(null);
       retirerCiel();
       ciel.dispose();
       galaxie.dispose();

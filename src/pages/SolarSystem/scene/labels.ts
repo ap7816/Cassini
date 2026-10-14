@@ -75,21 +75,6 @@ export class LabelLayer {
    * la galaxie pour si peu la ferait disparaître le temps de la reconstruire.
    * Le texte n'est réécrit que s'il diffère.
    */
-  /**
-   * Déplace l'étiquette d'un système, et règle sa visibilité.
-   *
-   * Son point d'ancrage est fixe : c'est le centre du système, posé une fois
-   * pour toutes. Quand ce centre cesse d'exister — un trou noir qui avale
-   * l'étoile — le nom restait suspendu dans le vide.
-   */
-  deplacerMonde(cle: string, position: THREE.Vector3, visible: boolean): void {
-    for (const l of this.labels) {
-      if (l.cle !== cle || !l.world) continue;
-      l.world.copy(position);
-      if (l.div.hidden !== !visible) l.div.hidden = !visible;
-    }
-  }
-
   renommer(cle: string, texte: string): void {
     for (const l of this.labels) {
       if (l.cle === cle && l.div.textContent !== texte) l.div.textContent = texte;
