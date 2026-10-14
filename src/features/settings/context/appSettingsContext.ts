@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import type { AppSettings, PageRappelable } from '../../types';
 import type { ModeTheme } from '../theme';
+import type { EvenementMusical } from '../../evenements/musiqueEvenement';
 
 // Forme du contexte exposé par AppSettingsProvider à tous les composants enfants
 export type AppSettingsContextValue = {
@@ -12,11 +13,10 @@ export type AppSettingsContextValue = {
   setSgdbApiKey: (key: string) => Promise<void>;
   setAutostart: (enabled: boolean) => void;
   setRunInBackground: (enabled: boolean) => void;
-  setMusicParticles: (enabled: boolean) => void;
   setCielVivant: (enabled: boolean) => void;
   setEvenementsCiel: (enabled: boolean) => void;
-  /** Le chemin d'un fichier de la machine, ou `null` pour la musique fournie. */
-  setMusiqueEvenement: (chemin: string | null) => void;
+  /** Le morceau d'un événement : un fichier de la machine, ou `null` pour le dossier. */
+  setMusiqueEvenement: (evenement: EvenementMusical, chemin: string | null) => void;
   setFinesse: (v: number) => void;
   setDebordement: (enabled: boolean) => void;
   setDensiteCiel: (v: number) => void;

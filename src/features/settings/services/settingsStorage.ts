@@ -11,10 +11,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   sgdbKeySet: false,
   autostart: false,
   runInBackground: false,
-  musicParticles: true,
   cielVivant: true,
   evenementsCiel: true,
-  musiqueEvenement: null,
+  musiquesEvenements: { supernova: null, cometeBleue: null, trouNoir: null },
   finesse: 2,
   debordement: true,
   densiteCiel: 1,
@@ -53,16 +52,24 @@ export function loadSettings(): AppSettings {
       typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
     const runInBackground =
       typeof parsed.runInBackground === 'boolean' ? parsed.runInBackground : false;
-    const musicParticles =
-      typeof parsed.musicParticles === 'boolean' ? parsed.musicParticles : true;
     const cielVivant =
       typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
     const evenementsCiel =
       typeof parsed.evenementsCiel === 'boolean' ? parsed.evenementsCiel : true;
-    const musiqueEvenement =
+    // Un morceau par événement — et l'ancien réglage unique, s'il traîne
+    // encore, devient celui des trois : personne ne doit avoir à le rechoisir.
+    const ancienne =
       typeof parsed.musiqueEvenement === 'string' && parsed.musiqueEvenement
         ? parsed.musiqueEvenement
         : null;
+    const lue = isRecord(parsed.musiquesEvenements) ? parsed.musiquesEvenements : {};
+    const unMorceau = (cle: string): string | null =>
+      typeof lue[cle] === 'string' && lue[cle] ? (lue[cle] as string) : ancienne;
+    const musiquesEvenements = {
+      supernova: unMorceau('supernova'),
+      cometeBleue: unMorceau('cometeBleue'),
+      trouNoir: unMorceau('trouNoir'),
+    };
     // Bornés à la relecture : ces trois-là viennent d'un fichier qu'on peut
     // éditer à la main, et une finesse de mille mettrait la carte à genoux.
     const finesse =
@@ -84,10 +91,9 @@ export function loadSettings(): AppSettings {
       sgdbKeySet: false,
       autostart,
       runInBackground,
-      musicParticles,
       cielVivant,
       evenementsCiel,
-      musiqueEvenement,
+      musiquesEvenements,
       finesse,
       debordement,
       densiteCiel,

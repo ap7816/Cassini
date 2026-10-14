@@ -147,7 +147,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
 | Événements visibles partout, quelle que soit la distance de rendu        | ✅ Done    |
-| Une musique pour les événements rares, au choix ou tirée d'un dossier    | ✅ Done    |
+| Une musique par gros événement, au choix ou tirée d'un dossier          | ✅ Done    |
 | Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
 | Couper les événements du ciel sans couper le rideau de gaz              | ✅ Done    |
 | Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
@@ -237,7 +237,9 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Le rémanent de la supernova est reposé à chaque image, et pas seulement à l'allumage : il doit se retrouver dans le même coin de ciel jusqu'à la fin de la session. `scene/ciel.test.ts` vérifie les quatre, de près puis depuis trois fois le plan lointain — c'est lui qui a attrapé le passage dessiné à quatre millions d'unités, sorti d'un vecteur de travail qui servait aussi de sortie.
 
 - **Le trou noir**
-  **Fait, et en volume.** C'est un événement du ciel — le plus gros, le plus rare, une fois par session au plus et jamais avant vingt minutes. Il ne touche à rien : il paraît en neuf secondes, se tient une minute, s'en va de même.
+  **Fait, et en volume.** C'est un événement du ciel — le plus gros, le plus rare, une fois par session au plus et jamais avant vingt minutes. Il ne touche à rien.
+
+  **Il arrive, il ne s'allume pas.** Neuf secondes pour paraître, une minute sur place, seize pour s'en aller — et le départ est le plus long des trois, parce qu'un départ aussi rapide que l'arrivée se lit comme un interrupteur. Il **grandit** du cinquième de sa taille au plein, puis rapetisse, la taille un peu en avance sur l'éclat : on voit d'abord quelque chose d'assez grand mais sombre, qui s'allume ensuite — l'ordre inverse ressemblerait à une explosion. Chaque pièce a son heure : l'ombre et son anneau de photons d'abord, qui sont l'objet, puis le disque, le temps que le gaz tombe et chauffe ; au départ, le même ordre à l'envers. Et la sortie traîne en racine plutôt que de tomber droit sur zéro, ce qui laisse à l'œil le temps de le perdre au lieu de le voir disparaître.
 
   Quatre pièces, et chacune a sa raison d'être là. **L'horizon** est une sphère : elle n'éclaire rien, tout son travail est d'écrire la profondeur, donc de cacher ce qui passe derrière. **Le disque** est un vrai anneau posé dans un plan, incliné au hasard à chaque fois, qui tourne plus vite au-dedans qu'au-dehors — c'est lui qui donne le relief, sa moitié lointaine disparaît derrière la sphère et ressort de l'autre côté. **L'anneau de photons** et **la couronne** restent tournés vers l'œil, et c'est exact : la lumière qui a fait le tour de l'objet ressort en cercle autour de l'ombre quel que soit l'endroit d'où on regarde ; la couronne ne se montre d'ailleurs que si le disque est vu de biais, puisqu'il faut du disque derrière l'ombre pour qu'il y ait quelque chose à relever.
 
@@ -257,11 +259,11 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Rien de tout cela n'est dans l'application : le trou noir n'avale plus rien, et c'est très bien ainsi.
 
 - **La musique des événements, et l'interrupteur qui les coupe**
-  **Fait.** Deux réglages dans l'onglet Graphisme, sous « Ciel vivant ».
+  **Fait.** L'interrupteur est dans l'onglet Graphisme, sous « Ciel vivant » — c'est un réglage de scène. Les musiques, elles, sont dans la carte Ambiance de l'onglet Personnalisation, avec la musique de fond et son volume : elles n'ont rien à faire parmi les réglages d'image.
 
   **Événements du ciel** est un interrupteur à part : il coupe les tirages — étoile filante, tempête, comète, passage, supernova, trou noir — sans toucher au rideau de gaz, qui reste gouverné par « Ciel vivant ». On peut vouloir un ciel qui respire sans que rien ne vienne traverser le regard pendant qu'on range sa bibliothèque. Le panneau de débogage, lui, continue de pouvoir les provoquer à la main.
 
-  **Musique des événements** ne joue qu'aux trois rares — supernova, comète bleue, trou noir. Les étoiles filantes reviennent toutes les trente secondes : une musique à chaque fois ne serait plus une annonce, seulement du bruit. Elle entre et sort en fondu, s'arrête avec l'événement, et l'ambiance se tait pendant ce temps comme elle le fait déjà pour le lecteur.
+  **La musique se règle événement par événement** — supernova, comète bleue, trou noir ont chacun la leur. Et ces trois-là seulement : les étoiles filantes reviennent toutes les trente secondes, et une musique à chaque fois ne serait plus une annonce mais du bruit. Elle entre et sort en fondu, s'arrête avec l'événement, et l'ambiance se tait pendant ce temps comme elle le fait déjà pour le lecteur.
 
   Les morceaux fournis vivent dans `features/evenements/pistes/`, **ramassé à la construction** par `import.meta.glob` : déposer un fichier suffit à l'ajouter, et un morceau y est tiré au sort à chaque événement. L'utilisateur peut aussi en choisir un sur sa machine — on n'en retient que le chemin, le fichier reste où il est, et il passe par le protocole d'actifs de Tauri, dont la portée couvre déjà `$HOME` et `$AUDIO`.
 

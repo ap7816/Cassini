@@ -1,4 +1,5 @@
 import type { ModeTheme } from './settings/theme';
+import type { MusiquesEvenements } from './evenements/musiqueEvenement';
 // Plateformes de jeu supportées par Cassini
 export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Xbox' | 'GOG' | 'Other';
 
@@ -35,7 +36,6 @@ export type AppSettings = {
   sgdbKeySet: boolean;
   autostart: boolean;
   runInBackground: boolean;
-  musicParticles: boolean;
   /** Aurores, tempêtes et passages dans le ciel du système solaire. */
   cielVivant: boolean;
   /**
@@ -47,11 +47,12 @@ export type AppSettings = {
    */
   evenementsCiel: boolean;
   /**
-   * Musique jouée quand survient un événement rare — supernova, comète bleue,
-   * trou noir. Un fichier choisi sur la machine, ou `null` pour celle que
-   * l'application apporte.
+   * La musique de chaque gros événement : supernova, comète bleue, trou noir.
+   *
+   * Un fichier choisi sur la machine, ou `null` — auquel cas un morceau du
+   * dossier `features/evenements/pistes` est tiré au sort.
    */
-  musiqueEvenement: string | null;
+  musiquesEvenements: MusiquesEvenements;
   /**
    * Finesse de l'image : 1 ne dessine qu'un pixel par point d'écran, 2 en
    * dessine quatre sur un écran dense.

@@ -271,6 +271,12 @@ export function createTrouNoir(rayon: number): TrouNoirCiel {
   couronne.renderOrder = 2;
   groupe.add(couronne);
 
+  /** Marche douce de 0 à 1, dérivée nulle aux deux bouts. */
+  function lisser(x: number): number {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  }
+
   const versOeil = new THREE.Vector3();
   const normaleDisque = new THREE.Vector3();
   const sensInverse = new THREE.Quaternion();
@@ -278,11 +284,37 @@ export function createTrouNoir(rayon: number): TrouNoirCiel {
   return {
     objet: groupe,
     regler(eclat, temps, camera) {
-      matDisque.uniforms.uEclat.value = eclat;
+      // L'objet ne s'allume pas d'un bloc.
+      //
+      // Un même nombre monté en droite ligne sur toutes les pièces à la fois se
+      // lit comme un variateur qu'on tourne, pas comme quelque chose qui
+      // arrive. Alors chacune a son heure : l'ombre et son anneau de photons
+      // d'abord — ils sont l'objet, et ils sont là avant le reste —, puis le
+      // disque, le temps que le gaz tombe et chauffe. Au départ, le même ordre
+      // à l'envers : le disque s'éteint en premier, la silhouette reste.
+      //
+      // Et chaque montée est adoucie à ses deux bouts, de sorte qu'aucune
+      // n'ait de début ni de fin visibles.
+      const tot = lisser(eclat / 0.45);
+      const tard = lisser((eclat - 0.25) / 0.75);
+      matDisque.uniforms.uEclat.value = tard;
       matDisque.uniforms.uTemps.value = temps;
-      matPhotons.uniforms.uEclat.value = eclat;
-      matCouronne.uniforms.uEclat.value = eclat;
+      matPhotons.uniforms.uEclat.value = tot;
+      matCouronne.uniforms.uEclat.value = tard;
       matCouronne.uniforms.uTemps.value = temps;
+
+      // Il **grandit** en paraissant, et rapetisse en s'en allant.
+      //
+      // C'est la moitié de l'effet : une masse pareille ne s'allume pas sur
+      // place, elle vient. Du cinquième de sa taille au plein, puis l'inverse
+      // — et comme le départ traîne (voir `SORTIE_TROU`), il s'éloigne
+      // longuement au lieu de s'éteindre d'un coup.
+      //
+      // La taille suit sa propre courbe, un peu en avance sur l'éclat : on voit
+      // d'abord quelque chose d'assez grand mais sombre, puis cela s'allume.
+      // L'ordre inverse donnerait un point brillant qui enfle, ce qui ressemble
+      // à une explosion et non à une arrivée.
+      groupe.scale.setScalar(0.2 + 0.8 * lisser(eclat * 1.25));
 
       // La direction de l'œil, ramenée dans le repère du disque : c'est elle
       // qui dit quel côté vient vers nous, donc lequel brûle.

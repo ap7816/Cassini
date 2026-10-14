@@ -4,6 +4,7 @@ import { createTrouNoir } from './trouNoir';
 import {
   arreterMusiqueEvenement,
   jouerMusiqueEvenement,
+  type EvenementMusical,
 } from '../../../features/evenements/musiqueEvenement';
 
 /**
@@ -781,8 +782,8 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
    * trente secondes — une musique à chaque fois ne serait plus une annonce,
    * seulement du bruit.
    */
-  function annoncer(): void {
-    jouerMusiqueEvenement();
+  function annoncer(evenement: EvenementMusical): void {
+    jouerMusiqueEvenement(evenement);
   }
 
   // ── L'horloge des événements ─────────────────────────────────────────────
@@ -854,8 +855,18 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
    * quelqu'un.
    */
   const DUREE_TROU = 60;
-  /** Le temps que met son éclat à monter, puis à retomber. */
+  /** Le temps que met son éclat à monter. */
   const FONDU_TROU = 9;
+  /**
+   * Et celui qu'il met à s'en aller, beaucoup plus long.
+   *
+   * Un départ aussi rapide que l'arrivée se voit comme un interrupteur : on
+   * regarde l'objet, et il n'est plus là. Il s'efface donc presque deux fois
+   * plus lentement, et en traînant — la racine ci-dessous garde une lueur
+   * basse pendant plusieurs secondes au lieu de tomber droit sur zéro, ce qui
+   * laisse à l'œil le temps de le perdre plutôt que de le voir disparaître.
+   */
+  const SORTIE_TROU = 16;
   let trouRestant = 0;
   let trouFait = false;
   let prochainTirageTrou = 1200;
@@ -1067,7 +1078,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     noyauBleu.position.copy(departBleue);
     cometeBleue.visible = true;
     bleueRestante = DUREE_BLEUE;
-    annoncer();
+    annoncer('cometeBleue');
   }
 
   /** Le pose haut dans le ciel, et l'allume. */
@@ -1108,7 +1119,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     trouNoir.objet.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normale);
     trouNoir.objet.visible = true;
     trouRestant = DUREE_TROU;
-    annoncer();
+    annoncer('trouNoir');
   }
 
   function lancerVaisseau(camera: THREE.Camera): void {
@@ -1340,7 +1351,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
           poserNova(camera);
           nova.visible = true;
           novaRestante = DUREE_NOVA;
-          annoncer();
+          annoncer('supernova');
           void import('@tauri-apps/plugin-log').then((l) => l.info('[sonde] supernova allumée'));
           novaFaite = true;
         }
@@ -1414,8 +1425,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       trouRestant -= dt;
       const ecoule = DUREE_TROU - trouRestant;
       // Il paraît lentement et s'en va de même : rien d'aussi gros ne doit
-      // s'allumer d'un coup.
-      const eclat = Math.min(1, ecoule / FONDU_TROU, trouRestant / FONDU_TROU);
+      // s'allumer d'un coup. Ce nombre n'est qu'une enveloppe — `trouNoir.ts`
+      // en tire des heures différentes pour chacune de ses pièces.
+      const eclat = Math.min(
+        Math.min(1, ecoule / FONDU_TROU),
+        Math.min(1, trouRestant / SORTIE_TROU) ** 0.6,
+      );
       // Accroché au ciel : toujours la même direction, à la distance du ciel.
       // Il ne suit pas l'œil, il ne s'en éloigne pas — il est là, en haut, et
       // n'en bouge pas. Et il n'est jamais tourné vers nous : c'est un volume,
@@ -1512,7 +1527,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       poserNova(camera);
       nova.visible = true;
       novaRestante = DUREE_NOVA;
-      annoncer();
+      annoncer('supernova');
       return positionNova.clone();
     }
     return null;

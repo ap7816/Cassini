@@ -67,7 +67,7 @@ import {
 } from './lib/largeurs';
 import css from './SolarSystemPage.module.css';
 import { abonnerReglages, versionStructure } from '../../features/debug/tuning';
-import { reglerMusiqueEvenement } from '../../features/evenements/musiqueEvenement';
+import { reglerMusiquesEvenements } from '../../features/evenements/musiqueEvenement';
 
 /**
  * Signature des seules propriétés dont dépend le rendu 3D : identité, nom,
@@ -227,8 +227,8 @@ export function SolarSystemPage() {
 
   // Et la musique qui les accompagne, portée au module qui la joue.
   useEffect(() => {
-    reglerMusiqueEvenement(settings.musiqueEvenement);
-  }, [settings.musiqueEvenement]);
+    reglerMusiquesEvenements(settings.musiquesEvenements);
+  }, [settings.musiquesEvenements]);
 
   // Les réglages de graphisme suivent le même chemin : une référence que la
   // scène relit, pour que les changer ne la reconstruise pas.

@@ -4,12 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 
-import { MusicSnowVisualizer } from '../../features/music/MusicSnowVisualizer';
 import { useMusicPlayer } from '../../features/music/MusicContext';
 import { useBasicBatch, refreshCover } from '../../features/music/useTrackMeta';
 import { useAutoEnrich } from '../../features/music/useAutoEnrich';
 import { resetEnrichment } from '../../features/music/enrichMeta';
-import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { useToast } from '../../features/toast/ToastContext';
 import { useDialog } from '../../hooks/useDialog';
 import { AppDialog } from '../../components/AppDialog/AppDialog';
@@ -42,7 +40,6 @@ import css from './MusicPage.module.css';
 // Page principale de la bibliothèque musicale : navigateur de dossiers, lecture et enrichissement
 export function MusicPage() {
   const { t, i18n } = useTranslation();
-  const { settings } = useAppSettings();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
   const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
@@ -292,8 +289,6 @@ export function MusicPage() {
 
   return (
     <div className={css.page} style={{ position: 'relative' }} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
-      {settings.musicParticles && <MusicSnowVisualizer />}
-
       {/* ── En-tête ── */}
       <div className={css.header}>
         <div className={css.enteteTitre}>

@@ -52,14 +52,47 @@ const FONDU_MS = 1800;
 
 let audio: HTMLAudioElement | null = null;
 let fondu: ReturnType<typeof setInterval> | null = null;
-/** Le réglage courant : un chemin de la machine, ou `null`. */
-let choisie: string | null = null;
-/** Vrai entre le début et la fin d'un événement, pour ne pas empiler. */
-let enCours = false;
+/** Les réglages courants : un chemin de la machine par événement, ou `null`. */
+let choisies: MusiquesEvenements = { supernova: null, cometeBleue: null, trouNoir: null };
+/**
+ * L'événement dont la musique joue, ou `null`.
+ *
+ * Il sert à deux choses : empêcher deux morceaux de se superposer, et dire à
+ * l'interface quoi écrire sur son bouton — « Écouter » ou « Arrêter ».
+ */
+let enCoursPour: EvenementMusical | null = null;
+const abonnes = new Set<() => void>();
+
+/** Quel événement fait du bruit en ce moment. */
+export function musiqueEnCours(): EvenementMusical | null {
+  return enCoursPour;
+}
+
+/** Prévient quand la musique démarre, s'arrête, ou se termine d'elle-même. */
+export function abonnerMusiqueEvenement(fn: () => void): () => void {
+  abonnes.add(fn);
+  return () => { abonnes.delete(fn); };
+}
+
+function changer(quoi: EvenementMusical | null): void {
+  enCoursPour = quoi;
+  abonnes.forEach((fn) => fn());
+}
+
+/**
+ * Les gros événements, les seuls à avoir droit à une musique.
+ *
+ * Les étoiles filantes et les passages reviennent toutes les trente secondes —
+ * une musique à chaque fois ne serait plus une annonce, seulement du bruit.
+ */
+export type EvenementMusical = 'supernova' | 'cometeBleue' | 'trouNoir';
+
+/** Un morceau choisi par événement ; `null` en laisse un du dossier au sort. */
+export type MusiquesEvenements = Record<EvenementMusical, string | null>;
 
 /** La scène ne lit pas les réglages : on les lui apporte. */
-export function reglerMusiqueEvenement(chemin: string | null): void {
-  choisie = chemin;
+export function reglerMusiquesEvenements(musiques: MusiquesEvenements): void {
+  choisies = musiques;
 }
 
 function volumeVoulu(): number {
@@ -90,10 +123,15 @@ function possible(): boolean {
   return typeof Audio !== 'undefined';
 }
 
-/** Démarre la musique de l'événement. Sans effet si une autre joue déjà. */
-export function jouerMusiqueEvenement(): void {
-  if (enCours || !possible()) return;
-  enCours = true;
+/** Démarre la musique d'un événement. Sans effet si une autre joue déjà. */
+export function jouerMusiqueEvenement(evenement: EvenementMusical): void {
+  if (enCoursPour || !possible()) return;
+  // Un fondu encore en cours appartient au morceau précédent : laissé vivant,
+  // sa dernière marche mettrait en pause celui qu'on démarre.
+  if (fondu) clearInterval(fondu);
+  fondu = null;
+  changer(evenement);
+  const choisie = choisies[evenement];
 
   // Le morceau choisi par l'utilisateur l'emporte sur le dossier ; à défaut,
   // on en tire un au sort. Un chemin de la machine passe par le protocole
@@ -107,7 +145,7 @@ export function jouerMusiqueEvenement(): void {
     }
   }
   if (!source) {
-    enCours = false;
+    changer(null);
     return;
   }
 
@@ -116,7 +154,7 @@ export function jouerMusiqueEvenement(): void {
   audio.loop = false;
   audio.volume = 0;
   audio.onended = () => {
-    enCours = false;
+    changer(null);
     resumeAmbient('evenement');
   };
 
@@ -129,15 +167,15 @@ export function jouerMusiqueEvenement(): void {
     // Fichier introuvable, format refusé, lecture bloquée : l'événement se
     // regarde en silence, et c'est tout.
     .catch(() => {
-      enCours = false;
+      changer(null);
       resumeAmbient('evenement');
     });
 }
 
 /** Éteint la musique en fondu, et rend l'ambiance. */
 export function arreterMusiqueEvenement(): void {
-  if (!enCours || !possible()) return;
-  enCours = false;
+  if (!enCoursPour || !possible()) return;
+  changer(null);
   if (!audio || audio.paused) {
     resumeAmbient('evenement');
     return;

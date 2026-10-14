@@ -4,6 +4,7 @@ import type { AppSettings, PageRappelable } from '../../types';
 import { loadSettings, saveSettings, migrateAndCheckKey } from '../services/settingsStorage';
 import { AppSettingsContext } from './appSettingsContext';
 import { accentPourTheme, resoudreTheme, type ModeTheme } from '../theme';
+import type { EvenementMusical } from '../../evenements/musiqueEvenement';
 
 // Fournit les paramètres de l'application à tous les composants enfants et persiste les changements
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
@@ -115,8 +116,11 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, evenementsCiel: enabled }));
   }
 
-  function setMusiqueEvenement(chemin: string | null) {
-    setSettings((prev) => ({ ...prev, musiqueEvenement: chemin }));
+  function setMusiqueEvenement(evenement: EvenementMusical, chemin: string | null) {
+    setSettings((prev) => ({
+      ...prev,
+      musiquesEvenements: { ...prev.musiquesEvenements, [evenement]: chemin },
+    }));
   }
 
   // Finesse de l'image, débordement lumineux, densité du ciel
@@ -130,10 +134,6 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
 
   function setDensiteCiel(v: number) {
     setSettings((prev) => ({ ...prev, densiteCiel: v }));
-  }
-
-  function setMusicParticles(enabled: boolean) {
-    setSettings((prev) => ({ ...prev, musicParticles: enabled }));
   }
 
   // Taille des planètes d'après le temps de jeu plutôt que l'espace disque
@@ -167,7 +167,6 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setSgdbApiKey,
       setAutostart,
       setRunInBackground,
-      setMusicParticles,
       setCielVivant,
       setEvenementsCiel,
       setMusiqueEvenement,

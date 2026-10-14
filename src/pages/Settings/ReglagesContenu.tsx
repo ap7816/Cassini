@@ -1,4 +1,4 @@
-﻿import { useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
@@ -14,9 +14,12 @@ import { useAppSettings } from '../../features/settings/context/useAppSettings';
 import { open as ouvrirFichier } from '@tauri-apps/plugin-dialog';
 import {
   aUneMusiqueFournie,
+  abonnerMusiqueEvenement,
   arreterMusiqueEvenement,
   jouerMusiqueEvenement,
-  reglerMusiqueEvenement,
+  musiqueEnCours,
+  reglerMusiquesEvenements,
+  type EvenementMusical,
 } from '../../features/evenements/musiqueEvenement';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
 import { clearCoverCache } from '../../features/library/services/coverArtService';
@@ -108,7 +111,7 @@ export function ReglagesContenu({ recherche }: Props) {
    * On ne retient que le chemin : le fichier reste où il est, l'application ne
    * le recopie pas. Hors Tauri — ou si l'utilisateur renonce — rien ne change.
    */
-  async function choisirMusiqueEvenement(): Promise<void> {
+  async function choisirMusiqueEvenement(evenement: EvenementMusical): Promise<void> {
     try {
       const choix = await ouvrirFichier({
         multiple: false,
@@ -117,10 +120,10 @@ export function ReglagesContenu({ recherche }: Props) {
         ],
       });
       if (typeof choix === 'string') {
-        setMusiqueEvenement(choix);
+        setMusiqueEvenement(evenement, choix);
         // Le module qui joue ne lit pas les réglages : on les lui porte, sans
         // quoi le bouton d'écoute ci-dessous ferait entendre l'ancien morceau.
-        reglerMusiqueEvenement(choix);
+        reglerMusiquesEvenements({ ...settings.musiquesEvenements, [evenement]: choix });
       }
     } catch {
       // Un clic qui ne fait rien et ne dit rien n'est pas un réglage, c'est
@@ -129,11 +132,29 @@ export function ReglagesContenu({ recherche }: Props) {
     }
   }
 
-  /** Fait entendre le morceau tout de suite, pour s'assurer que c'est le bon. */
-  function ecouterMusiqueEvenement(): void {
-    reglerMusiqueEvenement(settings.musiqueEvenement);
+  /**
+   * Ce qui joue en ce moment, pour que le bouton sache s'il lance ou s'il
+   * arrête. Le morceau peut aussi se terminer tout seul : on s'abonne plutôt
+   * que de deviner.
+   */
+  const [ecoute, setEcoute] = useState(musiqueEnCours);
+  useEffect(() => abonnerMusiqueEvenement(() => setEcoute(musiqueEnCours())), []);
+
+  /** Fait entendre le morceau, ou le coupe s'il joue déjà. */
+  function ecouterMusiqueEvenement(evenement: EvenementMusical): void {
+    if (ecoute === evenement) {
+      arreterMusiqueEvenement();
+      return;
+    }
+    reglerMusiquesEvenements(settings.musiquesEvenements);
     arreterMusiqueEvenement();
-    jouerMusiqueEvenement();
+    jouerMusiqueEvenement(evenement);
+  }
+
+  /** Retire le morceau d'un événement : le dossier reprend la main. */
+  function retirerMusiqueEvenement(evenement: EvenementMusical): void {
+    setMusiqueEvenement(evenement, null);
+    reglerMusiquesEvenements({ ...settings.musiquesEvenements, [evenement]: null });
   }
 
   /** Le nom seul, pour l'afficher sans étaler le chemin de la machine. */
@@ -160,7 +181,6 @@ export function ReglagesContenu({ recherche }: Props) {
     setSgdbApiKey,
     setAutostart,
     setRunInBackground,
-    setMusicParticles,
     setPlanetSizeByPlaytime,
     setCielVivant,
     setEvenementsCiel,
@@ -492,7 +512,7 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Ambiance */}
-      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musicParticlesLabel', 'settings.musicParticlesHint') && (
+      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musiqueSupernovaLabel', 'settings.musiqueCometeBleueLabel', 'settings.musiqueTrouNoirLabel') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
 
@@ -519,20 +539,52 @@ export function ReglagesContenu({ recherche }: Props) {
           </div>
         </SettingRow>
 
-        <SettingRow
-          labelKey="settings.musicParticlesLabel"
-          hintKey="settings.musicParticlesHint"
-          query={q}
-        >
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.musicParticles}
-              onChange={e => setMusicParticles(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
+        {([
+          ['supernova', 'settings.musiqueSupernovaLabel', 'settings.musiqueSupernovaHint'],
+          ['cometeBleue', 'settings.musiqueCometeBleueLabel', 'settings.musiqueCometeBleueHint'],
+          ['trouNoir', 'settings.musiqueTrouNoirLabel', 'settings.musiqueTrouNoirHint'],
+        ] as const).map(([evenement, labelKey, hintKey]) => {
+          const chemin = settings.musiquesEvenements[evenement];
+          return (
+            <SettingRow key={evenement} labelKey={labelKey} hintKey={hintKey} query={q}>
+              <div className={css.actions}>
+                <button
+                  type="button"
+                  className={css.primary}
+                  disabled={!settings.evenementsCiel}
+                  onClick={() => { void choisirMusiqueEvenement(evenement); }}
+                >
+                  {t('settings.musiqueEvenementChoisir')}
+                </button>
+                <button
+                  type="button"
+                  className={css.button}
+                  onClick={() => ecouterMusiqueEvenement(evenement)}
+                  disabled={!settings.evenementsCiel}
+                >
+                  {t(ecoute === evenement
+                    ? 'settings.musiqueEvenementArreter'
+                    : 'settings.musiqueEvenementEcouter')}
+                </button>
+                <button
+                  type="button"
+                  className={css.button}
+                  onClick={() => retirerMusiqueEvenement(evenement)}
+                  disabled={!chemin}
+                >
+                  {t('settings.musiqueEvenementRetirer')}
+                </button>
+              </div>
+              <div className={css.empty}>
+                {chemin
+                  ? nomDeFichier(chemin)
+                  : t(aUneMusiqueFournie()
+                    ? 'settings.musiqueEvenementDefaut'
+                    : 'settings.musiqueEvenementAucune')}
+              </div>
+            </SettingRow>
+          );
+        })}
       </div>
       )}
 
@@ -565,7 +617,7 @@ export function ReglagesContenu({ recherche }: Props) {
 
       {/* ── Graphisme ────────────────────────────────────────── */}
 
-      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.finesseLabel', 'settings.finesseHint', 'settings.debordementLabel', 'settings.debordementHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.cielVivantLabel', 'settings.cielVivantHint') && (
+      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.finesseLabel', 'settings.finesseHint', 'settings.debordementLabel', 'settings.debordementHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.cielVivantLabel', 'settings.cielVivantHint', 'settings.evenementsLabel', 'settings.evenementsHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.graphismeTitle')}</div>
 
@@ -632,48 +684,6 @@ export function ReglagesContenu({ recherche }: Props) {
           </label>
         </SettingRow>
 
-        <SettingRow
-          labelKey="settings.musiqueEvenementLabel"
-          hintKey="settings.musiqueEvenementHint"
-          query={q}
-        >
-          <div className={css.actions}>
-            <button
-              type="button"
-              className={css.primary}
-              disabled={!settings.evenementsCiel}
-              onClick={() => { void choisirMusiqueEvenement(); }}
-            >
-              {t('settings.musiqueEvenementChoisir')}
-            </button>
-            <button
-              type="button"
-              className={css.button}
-              onClick={ecouterMusiqueEvenement}
-              disabled={!settings.evenementsCiel}
-            >
-              {t('settings.musiqueEvenementEcouter')}
-            </button>
-            <button
-              type="button"
-              className={css.button}
-              onClick={() => { setMusiqueEvenement(null); reglerMusiqueEvenement(null); }}
-              disabled={!settings.musiqueEvenement}
-            >
-              {t('settings.musiqueEvenementRetirer')}
-            </button>
-          </div>
-        </SettingRow>
-
-        {matches('settings.musiqueEvenementLabel', 'settings.musiqueEvenementHint') && (
-          <div className={css.empty}>
-            {settings.musiqueEvenement
-              ? nomDeFichier(settings.musiqueEvenement)
-              : t(aUneMusiqueFournie()
-                ? 'settings.musiqueEvenementDefaut'
-                : 'settings.musiqueEvenementAucune')}
-          </div>
-        )}
       </div>
       )}
 
