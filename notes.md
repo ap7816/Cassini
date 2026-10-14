@@ -151,6 +151,8 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
 | Couper les événements du ciel sans couper le rideau de gaz              | ✅ Done    |
 | Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
+| Supernova : une vraie explosion, à la taille du trou noir                | ✅ Done    |
+| Régler le volume de la musique de chaque événement                       | ✅ Done    |
 | Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
 | Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
@@ -258,6 +260,21 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Rien de tout cela n'est dans l'application : le trou noir n'avale plus rien, et c'est très bien ainsi.
 
+- **La supernova**
+  **Faite, et en volume.** Elle n'était qu'un point lumineux posé sur un carré tourné vers l'œil : un cœur, un halo, quatre aigrettes, le tout dessiné en pixels d'écran. À côté du trou noir, on voyait une lampe et une masse. Une explosion n'est pas une lumière au loin — ce qu'on en reconnaît, c'est que quelque chose **part**.
+
+  Trois pièces, et c'est l'ordre dans le temps qui fait l'explosion. **L'éclair** reste le carré d'avant, cœur, halo et aigrettes, mais il n'est plus toute l'affaire : il domine la première seconde, puis s'éteint plus vite que le reste, sans quoi l'ensemble ressemble à une lampe entourée de fumée. **L'onde de choc** est une sphère qui enfle, et dont on ne voit que le bord — au bord, le regard prend la coquille en biais et rencontre bien plus de matière qu'en son milieu, et c'est pour cela qu'un rémanent se voit comme un anneau alors qu'il est une sphère. **Les débris** sont une seconde coquille, plus lente, plus épaisse, plus grumeleuse : l'explosion n'est pas propre, des paquets partent plus vite que d'autres.
+
+  Elle grandit comme la **racine cinquième du temps au carré** — la loi de Sedov et Taylor, celle d'un souffle qui pousse le milieu autour de lui : très vite au début, de plus en plus lentement ensuite. Une croissance régulière donnerait un ballon qu'on gonfle. Mais cette loi seule **sature** : entre les deux tiers et la fin, le rayon ne gagne plus que quinze pour cent, ce qui ne se voit pas, et le dernier tiers de l'événement devenait un grand cercle rouge arrêté qui attendait de s'éteindre — exactement ce qu'on reproche à une explosion. Un second terme lui rend une vitesse à la fin : elle grandit encore quand elle s'efface, et c'est ainsi qu'on la **perd de vue** au lieu de la voir s'arrêter. `supernova.test.ts` tient la loi : elle ne recule jamais, elle est au quart de sa taille en trois secondes, et elle gagne encore un tiers dans son dernier tiers. La montée d'éclat a suivi, en deux essais : huit secondes donnaient une lampe qu'on allume, une seconde ne se voyait pas arriver du tout — l'image d'avant n'avait rien, celle d'après avait tout. Deux secondes et demie, en montant de plus en plus vite, laissent voir la chose **venir** ; c'est la montée qu'on regarde, pas le palier. Le palier qui suit, lui, n'est pas de la physique : c'est le temps de tourner la tête.
+
+  Sa taille est de l'ordre de celle du trou noir, et c'est le point de départ de tout ce travail : ce sont les deux mêmes gros événements, et l'un ne doit pas avoir l'air d'une broutille à côté de l'autre. Un carré dessiné en pixels d'écran ne pouvait pas y arriver — `gl_PointSize` est plafonné par le pilote et ne suit ni la résolution ni le champ de la caméra.
+
+  **Elle éclate à côté du regard, et non dedans.** Tirée comme les autres dans un cône autour de l'axe de vue, elle tombait une fois sur deux juste devant le système qu'on était en train de regarder, qu'on ne voyait alors plus du tout. Les petits événements peuvent se permettre de passer par là, ils sont minces et durent trois secondes ; pas une explosion large de vingt-sept degrés qui tient une minute. Elle se pose donc entre vingt-quatre et trente-deux degrés de l'axe, de biais vers le haut. L'écart est serré des deux côtés — plus près elle couvre le système, plus loin elle sort du cadre d'une fenêtre étroite, et un événement qu'on ne voit pas n'en est pas un —, et c'est pour cela que `ciel.test.ts` le vérifie sur vingt tirages, projection à l'écran comprise. L'image n'offre d'ailleurs que trente degrés vers le haut pour un champ de soixante, contre une quarantaine sur les côtés : la place est de côté, pas au-dessus.
+
+  Deux choses apprises à l'image. Le plafond d'opacité posé **avant** la force écrasait tout le haut de la courbe : le bord de la coquille y arrivait partout, les déchirures disparaissaient dans le plafond, et il n'en restait qu'un anneau lisse. Et un bruit pris tel quel reste autour de sa moyenne — les deux faces de la sphère se superposant en s'y moyennant encore, on obtenait une bulle de savon. Tranché (`smoothstep`), il fait des trous, et c'est par les trous qu'on voit que cela se déchire.
+
+  **Et elle ne laisse rien.** Une lueur restait accrochée au ciel jusqu'à la fin de la session : c'était juste quand la supernova était un point, cela ne l'est plus du tout depuis qu'elle est une coquille de vingt-sept degrés — ce qui restait était un grand cercle rouge immobile, planté dans un coin du ciel pour toujours. Une explosion se disperse. La durée a suivi, de soixante-dix secondes à cinquante-huit, et la décroissance est plus franche : la moitié dim et sans mouvement ne servait à personne.
+
 - **La musique des événements, et l'interrupteur qui les coupe**
   **Fait.** L'interrupteur est dans l'onglet Graphisme, sous « Ciel vivant » — c'est un réglage de scène. Les musiques, elles, sont dans la carte Ambiance de l'onglet Personnalisation, avec la musique de fond et son volume : elles n'ont rien à faire parmi les réglages d'image.
 
@@ -266,6 +283,8 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **La musique se règle événement par événement** — supernova, comète bleue, trou noir ont chacun la leur. Et ces trois-là seulement : les étoiles filantes reviennent toutes les trente secondes, et une musique à chaque fois ne serait plus une annonce mais du bruit. Elle entre et sort en fondu, s'arrête avec l'événement, et l'ambiance se tait pendant ce temps comme elle le fait déjà pour le lecteur.
 
   Les morceaux fournis vivent dans `features/evenements/pistes/`, **ramassé à la construction** par `import.meta.glob` : déposer un fichier suffit à l'ajouter, et un morceau y est tiré au sort à chaque événement. L'utilisateur peut aussi en choisir un sur sa machine — on n'en retient que le chemin, le fichier reste où il est, et il passe par le protocole d'actifs de Tauri, dont la portée couvre déjà `$HOME` et `$AUDIO`.
+
+  **Le volume se règle aussi par événement**, à côté du morceau, comme celui de l'ambiance. Il ne se déduit plus du volume d'ambiance relevé de moitié : ce n'est pas un fond, et un réglage qu'on tire d'un autre surprend toujours quelqu'un. La valeur par défaut est exactement ce que donnait l'ancien calcul sur une installation neuve, de sorte que rien ne change pour qui ne touche à rien. Le curseur s'entend pendant qu'on le tire — sauf au milieu d'un fondu, qui écrit lui aussi dans ce volume et qu'il ne faut pas contrarier.
 
   Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
 

@@ -1,5 +1,5 @@
 import type { ModeTheme } from './settings/theme';
-import type { MusiquesEvenements } from './evenements/musiqueEvenement';
+import type { MusiquesEvenements, VolumesEvenements } from './evenements/musiqueEvenement';
 // Plateformes de jeu supportées par Cassini
 export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Xbox' | 'GOG' | 'Other';
 
@@ -53,6 +53,7 @@ export type AppSettings = {
    * dossier `features/evenements/pistes` est tiré au sort.
    */
   musiquesEvenements: MusiquesEvenements;
+  volumesEvenements: VolumesEvenements;
   /**
    * Finesse de l'image : 1 ne dessine qu'un pixel par point d'écran, 2 en
    * dessine quatre sur un écran dense.

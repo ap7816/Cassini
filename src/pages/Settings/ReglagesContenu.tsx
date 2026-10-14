@@ -19,6 +19,7 @@ import {
   jouerMusiqueEvenement,
   musiqueEnCours,
   reglerMusiquesEvenements,
+  reglerVolumesEvenements,
   type EvenementMusical,
 } from '../../features/evenements/musiqueEvenement';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
@@ -147,6 +148,7 @@ export function ReglagesContenu({ recherche }: Props) {
       return;
     }
     reglerMusiquesEvenements(settings.musiquesEvenements);
+    reglerVolumesEvenements(settings.volumesEvenements);
     arreterMusiqueEvenement();
     jouerMusiqueEvenement(evenement);
   }
@@ -157,9 +159,26 @@ export function ReglagesContenu({ recherche }: Props) {
     reglerMusiquesEvenements({ ...settings.musiquesEvenements, [evenement]: null });
   }
 
-  /** Le nom seul, pour l'afficher sans étaler le chemin de la machine. */
+  /**
+   * Le volume d'un événement.
+   *
+   * Porté au module en même temps qu'au réglage : on tire le curseur en
+   * écoutant, et ce qu'on entend doit suivre la main.
+   */
+  function reglerVolume(evenement: EvenementMusical, volume: number): void {
+    setVolumeEvenement(evenement, volume);
+    reglerVolumesEvenements({ ...settings.volumesEvenements, [evenement]: volume });
+  }
+
+  /**
+   * Le nom seul, pour l'afficher sans étaler le chemin de la machine.
+   *
+   * Les deux séparateurs, et c'est tout l'intérêt : sur Windows le dialogue
+   * rend un chemin à contre-barres, qu'une coupure sur la seule barre oblique
+   * laissait entier dans la carte.
+   */
   function nomDeFichier(chemin: string): string {
-    return chemin.split(/[\/]/).pop() || chemin;
+    return chemin.split(/[\\/]/).pop() || chemin;
   }
   const q = recherche.trim().toLowerCase();
 
@@ -185,6 +204,7 @@ export function ReglagesContenu({ recherche }: Props) {
     setCielVivant,
     setEvenementsCiel,
     setMusiqueEvenement,
+    setVolumeEvenement,
     setFinesse,
     setDebordement,
     setDensiteCiel,
@@ -512,7 +532,7 @@ export function ReglagesContenu({ recherche }: Props) {
       )}
 
       {/* Ambiance */}
-      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musiqueSupernovaLabel', 'settings.musiqueCometeBleueLabel', 'settings.musiqueTrouNoirLabel') && (
+      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musiqueSupernovaLabel', 'settings.musiqueCometeBleueLabel', 'settings.musiqueTrouNoirLabel', 'settings.musiqueEvenementVolume') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
 
@@ -545,42 +565,57 @@ export function ReglagesContenu({ recherche }: Props) {
           ['trouNoir', 'settings.musiqueTrouNoirLabel', 'settings.musiqueTrouNoirHint'],
         ] as const).map(([evenement, labelKey, hintKey]) => {
           const chemin = settings.musiquesEvenements[evenement];
+          const volume = settings.volumesEvenements[evenement];
           return (
             <SettingRow key={evenement} labelKey={labelKey} hintKey={hintKey} query={q}>
-              <div className={css.actions}>
-                <button
-                  type="button"
-                  className={css.primary}
-                  disabled={!settings.evenementsCiel}
-                  onClick={() => { void choisirMusiqueEvenement(evenement); }}
-                >
-                  {t('settings.musiqueEvenementChoisir')}
-                </button>
-                <button
-                  type="button"
-                  className={css.button}
-                  onClick={() => ecouterMusiqueEvenement(evenement)}
-                  disabled={!settings.evenementsCiel}
-                >
-                  {t(ecoute === evenement
-                    ? 'settings.musiqueEvenementArreter'
-                    : 'settings.musiqueEvenementEcouter')}
-                </button>
-                <button
-                  type="button"
-                  className={css.button}
-                  onClick={() => retirerMusiqueEvenement(evenement)}
-                  disabled={!chemin}
-                >
-                  {t('settings.musiqueEvenementRetirer')}
-                </button>
-              </div>
-              <div className={css.empty}>
-                {chemin
-                  ? nomDeFichier(chemin)
-                  : t(aUneMusiqueFournie()
-                    ? 'settings.musiqueEvenementDefaut'
-                    : 'settings.musiqueEvenementAucune')}
+              <div className={css.pileEvenement}>
+                <div className={css.actions}>
+                  <button
+                    type="button"
+                    className={css.primary}
+                    disabled={!settings.evenementsCiel}
+                    onClick={() => { void choisirMusiqueEvenement(evenement); }}
+                  >
+                    {t('settings.musiqueEvenementChoisir')}
+                  </button>
+                  <button
+                    type="button"
+                    className={css.button}
+                    onClick={() => ecouterMusiqueEvenement(evenement)}
+                    disabled={!settings.evenementsCiel}
+                  >
+                    {t(ecoute === evenement
+                      ? 'settings.musiqueEvenementArreter'
+                      : 'settings.musiqueEvenementEcouter')}
+                  </button>
+                  <button
+                    type="button"
+                    className={css.button}
+                    onClick={() => retirerMusiqueEvenement(evenement)}
+                    disabled={!chemin}
+                  >
+                    {t('settings.musiqueEvenementRetirer')}
+                  </button>
+                </div>
+                <div className={css.sliderRow}>
+                  <input
+                    type="range" min={0} max={100}
+                    value={Math.round(volume * 100)}
+                    disabled={!settings.evenementsCiel}
+                    className={css.slider}
+                    aria-label={t('settings.musiqueEvenementVolume')}
+                    title={t('settings.musiqueEvenementVolume')}
+                    onChange={e => reglerVolume(evenement, Number(e.target.value) / 100)}
+                  />
+                  <span className={css.sliderValue}>{Math.round(volume * 100)} %</span>
+                </div>
+                <div className={css.empty}>
+                  {chemin
+                    ? nomDeFichier(chemin)
+                    : t(aUneMusiqueFournie()
+                      ? 'settings.musiqueEvenementDefaut'
+                      : 'settings.musiqueEvenementAucune')}
+                </div>
               </div>
             </SettingRow>
           );

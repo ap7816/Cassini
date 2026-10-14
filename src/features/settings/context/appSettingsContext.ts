@@ -17,6 +17,7 @@ export type AppSettingsContextValue = {
   setEvenementsCiel: (enabled: boolean) => void;
   /** Le morceau d'un événement : un fichier de la machine, ou `null` pour le dossier. */
   setMusiqueEvenement: (evenement: EvenementMusical, chemin: string | null) => void;
+  setVolumeEvenement: (evenement: EvenementMusical, volume: number) => void;
   setFinesse: (v: number) => void;
   setDebordement: (enabled: boolean) => void;
   setDensiteCiel: (v: number) => void;

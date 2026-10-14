@@ -123,6 +123,14 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     }));
   }
 
+  function setVolumeEvenement(evenement: EvenementMusical, volume: number) {
+    const borne = Math.max(0, Math.min(1, volume));
+    setSettings((prev) => ({
+      ...prev,
+      volumesEvenements: { ...prev.volumesEvenements, [evenement]: borne },
+    }));
+  }
+
   // Finesse de l'image, débordement lumineux, densité du ciel
   function setFinesse(v: number) {
     setSettings((prev) => ({ ...prev, finesse: v }));
@@ -170,6 +178,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setCielVivant,
       setEvenementsCiel,
       setMusiqueEvenement,
+      setVolumeEvenement,
       setFinesse,
       setDebordement,
       setDensiteCiel,

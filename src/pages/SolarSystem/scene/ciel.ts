@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { EvenementCiel } from '../../../features/debug/evenementsCiel';
+import { createSupernova } from './supernova';
 import { createTrouNoir } from './trouNoir';
 import {
   arreterMusiqueEvenement,
@@ -346,85 +347,25 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
 
   // ── La supernova ─────────────────────────────────────────────────────────
   //
-  // Une étoile qui s'embrase, écrase tout le ciel pendant quelques secondes,
-  // puis décline sur une minute en laissant un nuage à sa place pour le reste
-  // de la session.
+  // Une étoile qui explose : un éclair, une coquille qui s'ouvre et grandit sur
+  // toute la minute, et ce qu'il en reste pour le reste de la session.
+  //
+  // Elle est en volume, comme le trou noir, et pour la même raison — voir
+  // `supernova.ts`. Un point lumineux, si brillant soit-il, ne se lit pas comme
+  // une explosion : il faut que quelque chose parte.
+  //
+  // Sa taille est de l'ordre de celle du trou noir, et c'est voulu : ce sont
+  // les deux mêmes gros événements, et l'un ne doit pas avoir l'air d'une
+  // broutille à côté de l'autre.
   //
   // Rare, et c'est tout l'intérêt : dans notre galaxie il en éclate une par
   // siècle environ, et Kepler a vu la dernière visible à l'œil nu en 1604. Une
   // par session au plus, jamais dans les premières minutes — sinon on croit à
   // une séquence d'ouverture — et seulement quand quelqu'un regarde.
-  const geoNova = new THREE.BufferGeometry();
-  geoNova.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
-  const matNova = new THREE.ShaderMaterial({
-    uniforms: { uEclat: { value: 0 }, uTaille: { value: 90 }, uAge: { value: 0 } },
-    vertexShader: /* glsl */ `
-      uniform float uTaille;
-      void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = uTaille;
-      }
-    `,
-    // Un cœur net, un halo, et quatre branches : la signature d'un point
-    // lumineux qui sature l'instrument.
-    fragmentShader: /* glsl */ `
-      uniform float uEclat;
-      uniform float uAge;
-      void main() {
-        vec2 p = gl_PointCoord - 0.5;
-        float r = length(p);
-        // Un point de rendu est un carré : hors du cercle inscrit, rien n'est
-        // dessiné du tout. Le fondu plus bas suffirait presque, mais « presque »
-        // laisse justement voir les coins quand la chevelure est au plus fort.
-        if (r > 0.5) discard;
-
-        // Un cœur minuscule et violent.
-        //
-        // C'est ce qui distingue une source ponctuelle d'une boule de gaz : la
-        // lumière ne vient pas d'un disque, elle vient d'un point. Tout ce qu'on
-        // voit autour est la réponse de l'instrument, pas l'objet.
-        float coeur = smoothstep(0.03, 0.0, r) * 3.2;
-
-        // Et une décroissance en carré de la distance, sans plateau.
-        //
-        // Deux fondus superposés donnaient un halo large et uniforme — de la
-        // ouate, où le cœur se noyait. Une vraie source saturée s'éteint vite,
-        // et c'est cette chute brutale qui la rend éblouissante.
-        float halo = 0.55 / (1.0 + 160.0 * r * r);
-
-        // Les aigrettes : longues, très fines, et qui s'éteignent en s'éloignant
-        // au lieu de s'arrêter net.
-        float horizontale = exp(-abs(p.x) * 6.5) * exp(-pow(abs(p.y) * 70.0, 1.3));
-        float verticale = exp(-abs(p.y) * 6.5) * exp(-pow(abs(p.x) * 70.0, 1.3));
-        float branches = (horizontale + verticale) * 1.1;
-
-        // Elle rougit en vieillissant : la boule de gaz se détend et se
-        // refroidit. Bleu-blanc au pic, cuivrée à la fin — c'est à cette
-        // dérive qu'on reconnaît une supernova d'une étoile quelconque.
-        vec3 couleur = mix(vec3(0.82, 0.9, 1.0), vec3(1.0, 0.62, 0.42), uAge);
-
-        float a = (coeur + halo + branches) * uEclat;
-        gl_FragColor = vec4(couleur * a, a);
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    depthTest: false,
-    fog: false,
-  });
-  const nova = new THREE.Points(geoNova, matNova);
-  nova.name = 'nova';
-  nova.renderOrder = -1;
-  // Jamais écarté comme hors champ.
-  //
-  // La sphère englobante d'un objet est calculée à sa création — ici autour
-  // d'un point à l'origine, donc de rayon nul. Déplacer ensuite le sommet ne la
-  // met pas à jour : le moteur juge la visibilité d'après une bille restée au
-  // centre de la galaxie, et écarte l'objet alors qu'il est droit devant.
-  nova.frustumCulled = false;
-  nova.visible = false;
+  const supernova = createSupernova(RAYON_CIEL * 0.24);
+  const nova = supernova.objet;
   groupe.add(nova);
+
 
   // ── La comète ────────────────────────────────────────────────────────────
   //
@@ -816,9 +757,18 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   // Le tirage se fait une fois par minute, avec une chance sur cent quatre-vingts
   // — soit une toutes les trois heures de galaxie regardée. La plupart des
   // sessions n'en verront aucune : c'est ce qui fait qu'on s'en souvient.
-  const DUREE_NOVA = 70;
+  const DUREE_NOVA = 58;
   let novaRestante = 0;
   let novaFaite = false;
+  /**
+   * Son éclat et son âge, gardés d'une image à l'autre.
+   *
+   * Ils survivent à l'événement : le rémanent est la même coquille, arrêtée au
+   * bout de sa course, et il faut continuer de la régler pour qu'elle reste
+   * tournée vers l'œil.
+   */
+  let novaEclat = 0;
+  let novaAge = 0;
   let prochainTirageNova = 600;
   const positionNova = new THREE.Vector3();
   const tmpNova = new THREE.Vector3();
@@ -901,6 +851,56 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       .copy(avant)
       .addScaledVector(droite, Math.cos(angle) * ecart)
       .addScaledVector(haut, Math.sin(angle) * ecart)
+      .normalize()
+      .multiplyScalar(rayonCiel)
+      .add(camera.position);
+  }
+
+  /**
+   * Un coin de ciel, et surtout pas le milieu du regard.
+   *
+   * Tirée dans un cône autour de l'axe de vue, la supernova tombait une fois
+   * sur deux juste devant le système qu'on était en train de regarder : sa
+   * lueur le mangeait, et il ne restait plus rien à voir derrière elle. Les
+   * petits événements peuvent se permettre de passer par là — ils sont minces
+   * et durent trois secondes. Pas une explosion large de vingt-sept degrés qui
+   * tient une minute.
+   *
+   * Elle se pose donc à l'écart : assez loin de l'axe pour laisser le système
+   * tranquille, assez près pour rester dans l'image, et de biais vers le haut
+   * — c'est là qu'il n'y a rien, et c'est là qu'on lève les yeux. Le même
+   * raisonnement que pour le trou noir, à ceci près que lui ne bouge jamais,
+   * alors qu'elle est tirée au moment où elle éclate.
+   */
+  function aCoteDuRegard(
+    cible: THREE.Vector3,
+    camera: THREE.Camera,
+    rayonCiel: number,
+  ): THREE.Vector3 {
+    const avant = new THREE.Vector3();
+    camera.getWorldDirection(avant);
+    const droite = new THREE.Vector3().crossVectors(avant, AXE_HAUT).normalize();
+    const haut = new THREE.Vector3().crossVectors(droite, avant).normalize();
+
+    // D'un côté ou de l'autre, à soixante-cinq ou quatre-vingt-cinq degrés de
+    // la verticale : nettement de côté, et toujours un peu au-dessus.
+    //
+    // Plus haut, elle dépasserait par le dessus : l'image n'offre que trente
+    // degrés vers le haut pour un champ de soixante, contre une quarantaine
+    // sur les côtés, et la coquille en mesure treize à elle seule.
+    const cote = Math.random() < 0.5 ? -1 : 1;
+    const azimut = cote * (1.13 + Math.random() * 0.35);
+    // Et entre vingt-quatre et trente-deux degrés de l'axe du regard. C'est un
+    // compromis, et il est serré des deux côtés : plus près, elle couvre le
+    // système qu'on regarde ; plus loin, elle sort du cadre d'une fenêtre
+    // étroite, et un événement qu'on ne voit pas n'en est pas un. À cette
+    // distance, son bord intérieur laisse le tiers central de l'image libre.
+    const ecart = Math.tan(0.42 + Math.random() * 0.14);
+
+    return cible
+      .copy(avant)
+      .addScaledVector(droite, Math.sin(azimut) * ecart)
+      .addScaledVector(haut, Math.cos(azimut) * ecart)
       .normalize()
       .multiplyScalar(rayonCiel)
       .add(camera.position);
@@ -996,9 +996,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   /** Pose la supernova dans la direction tirée, à la distance du ciel. */
   function poserNova(camera: THREE.Camera): void {
     poserDansLeCiel(tmpNova, positionNova, camera);
-    const p = geoNova.attributes.position as THREE.BufferAttribute;
-    p.setXYZ(0, tmpNova.x, tmpNova.y, tmpNova.z);
-    p.needsUpdate = true;
+    nova.position.copy(tmpNova);
   }
 
   /**
@@ -1319,38 +1317,58 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     // elle s'allume : on doit pouvoir s'en aller à l'autre bout de la galaxie
     // et la voir encore briller dans le même coin de ciel. Le rémanent
     // compris, qui reste là jusqu'à la fin de la session.
-    if (nova.visible) poserNova(camera);
+    if (nova.visible) {
+      poserNova(camera);
+      // Réglée à chaque image, et pas seulement pendant l'événement : l'éclair
+      // est tourné vers l'œil, et le rémanent doit continuer de l'être.
+      supernova.regler(novaEclat, novaAge, temps, camera);
+    }
 
     if (novaRestante > 0) {
       novaRestante -= dt;
       const ecoule = DUREE_NOVA - novaRestante;
-      // Montée franche en huit secondes, puis déclin lent : c'est la courbe de
-      // lumière d'une supernova, et c'est elle qui la rend reconnaissable.
-      const eclat = ecoule < 8
-        ? (ecoule / 8) ** 2
-        : Math.max(0, 1 - (ecoule - 8) / (DUREE_NOVA - 8)) ** 1.6;
-      matNova.uniforms.uEclat.value = eclat;
-      // Elle enfle en s'allumant : au pic, elle occupe une bonne part du ciel.
-      matNova.uniforms.uTaille.value = 60 + 260 * eclat;
-      matNova.uniforms.uAge.value = Math.min(1, ecoule / DUREE_NOVA);
-      // Le rémanent : ce qu'il en reste pour le reste de la session, de quoi
-      // vérifier qu'on n'a pas rêvé.
+      // Une explosion, mais pas un éclair d'appareil photo.
+      //
+      // Elle a tenu huit secondes, ce qui donnait une lampe qu'on allume, puis
+      // une seconde, ce qui ne se voyait pas arriver du tout : l'image d'avant
+      // n'avait rien, celle d'après avait tout. Deux secondes et demie, en
+      // montant de plus en plus vite, laissent voir la chose **venir** — c'est
+      // la montée qu'on regarde, pas le palier.
+      //
+      // Le palier qui suit n'est pas de la physique : c'est le temps d'aller
+      // chercher quelqu'un, ou simplement de tourner la tête — sans lui,
+      // l'événement serait fini pour qui n'avait pas les yeux dessus.
+      novaEclat = ecoule < 2.6
+        ? (ecoule / 2.6) ** 1.6
+        : ecoule < 8
+          ? 1
+          : Math.max(0, 1 - (ecoule - 8) / (DUREE_NOVA - 8)) ** 2.4;
+      novaAge = Math.min(1, ecoule / DUREE_NOVA);
+      // Et à la fin, plus rien.
+      //
+      // Il en restait une lueur accrochée au ciel jusqu'à la fin de la
+      // session — c'était juste quand la supernova était un point, cela ne
+      // l'est plus du tout depuis qu'elle est une coquille de vingt-sept
+      // degrés : ce qui restait était un grand cercle rouge immobile, planté
+      // dans un coin du ciel pour toujours. Une explosion se disperse ; la
+      // sienne s'étend jusqu'au bout et s'efface en s'étendant.
       if (novaRestante <= 0) {
         arreterMusiqueEvenement();
-        // Le rémanent : une lueur cuivrée, étalée, à l'endroit exact.
-        matNova.uniforms.uEclat.value = 0.07;
-        matNova.uniforms.uTaille.value = 70;
-        matNova.uniforms.uAge.value = 1;
+        nova.visible = false;
+        novaEclat = 0;
+        novaAge = 1;
       }
     } else if (!novaFaite) {
       if (evenements) prochainTirageNova -= dt;
       if (prochainTirageNova <= 0) {
         prochainTirageNova = 60;
         if (Math.random() < 1 / 180) {
-          devantLaCamera(positionNova, camera, distance * 0.9, 0.55);
+          aCoteDuRegard(positionNova, camera, distance * 0.9);
           poserNova(camera);
           nova.visible = true;
           novaRestante = DUREE_NOVA;
+          novaEclat = 0;
+          novaAge = 0;
           annoncer('supernova');
           void import('@tauri-apps/plugin-log').then((l) => l.info('[sonde] supernova allumée'));
           novaFaite = true;
@@ -1523,10 +1541,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       return camera.position.clone().addScaledVector(directionTrou, RAYON_CIEL);
     }
     if (evenement === 'supernova') {
-      devantLaCamera(positionNova, camera, distance * 0.9, 0.35);
+      aCoteDuRegard(positionNova, camera, distance * 0.9);
       poserNova(camera);
       nova.visible = true;
       novaRestante = DUREE_NOVA;
+      novaEclat = 0;
+      novaAge = 0;
       annoncer('supernova');
       return positionNova.clone();
     }
@@ -1547,8 +1567,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matNoyauBleu.dispose();
       geoQueueBleue.dispose();
       matQueueBleue.dispose();
-      geoNova.dispose();
-      matNova.dispose();
+      supernova.dispose();
       geoNoyau.dispose();
       matNoyau.dispose();
       geoQueue.dispose();

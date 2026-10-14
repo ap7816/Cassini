@@ -109,6 +109,16 @@
   font-size: 12px;
 }
 
+/* Les commandes d'une musique d'événement, empilées : les boutons, le volume,
+   puis le nom du morceau. Laissées en vrac dans la ligne, elles se rangeaient
+   côte à côte et le curseur finissait au bout des boutons, moitié hors carte. */
+.pileEvenement {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
 /* Slider */
 .sliderRow {
   display: flex;

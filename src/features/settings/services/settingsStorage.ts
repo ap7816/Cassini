@@ -2,6 +2,7 @@ import type { AppSettings } from '../../types';
 import { readSettingsRaw, writeSettingsRaw, STORAGE_KEYS } from '../../../services/storage';
 import { invoke } from '@tauri-apps/api/core';
 import { estModeTheme } from '../theme';
+import { VOLUME_EVENEMENT_DEFAUT } from '../../evenements/musiqueEvenement';
 
 // Valeurs par défaut utilisées si le stockage est vide ou corrompu
 const DEFAULT_SETTINGS: AppSettings = {
@@ -14,6 +15,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   cielVivant: true,
   evenementsCiel: true,
   musiquesEvenements: { supernova: null, cometeBleue: null, trouNoir: null },
+  volumesEvenements: {
+    supernova: VOLUME_EVENEMENT_DEFAUT,
+    cometeBleue: VOLUME_EVENEMENT_DEFAUT,
+    trouNoir: VOLUME_EVENEMENT_DEFAUT,
+  },
   finesse: 2,
   debordement: true,
   densiteCiel: 1,
@@ -70,6 +76,18 @@ export function loadSettings(): AppSettings {
       cometeBleue: unMorceau('cometeBleue'),
       trouNoir: unMorceau('trouNoir'),
     };
+    // Un volume par événement, borné : ces valeurs viennent d'un fichier qu'on
+    // peut éditer à la main, et un volume de dix ne veut rien dire.
+    const lus = isRecord(parsed.volumesEvenements) ? parsed.volumesEvenements : {};
+    const unVolume = (cle: string): number =>
+      typeof lus[cle] === 'number' && Number.isFinite(lus[cle])
+        ? Math.min(1, Math.max(0, lus[cle] as number))
+        : VOLUME_EVENEMENT_DEFAUT;
+    const volumesEvenements = {
+      supernova: unVolume('supernova'),
+      cometeBleue: unVolume('cometeBleue'),
+      trouNoir: unVolume('trouNoir'),
+    };
     // Bornés à la relecture : ces trois-là viennent d'un fichier qu'on peut
     // éditer à la main, et une finesse de mille mettrait la carte à genoux.
     const finesse =
@@ -94,6 +112,7 @@ export function loadSettings(): AppSettings {
       cielVivant,
       evenementsCiel,
       musiquesEvenements,
+      volumesEvenements,
       finesse,
       debordement,
       densiteCiel,

@@ -264,6 +264,7 @@
     "musiqueEvenementChoisir": "Choose a track",
     "musiqueEvenementEcouter": "Play",
     "musiqueEvenementArreter": "Stop",
+    "musiqueEvenementVolume": "Volume",
     "musiqueEvenementRetirer": "Remove",
     "musiqueEvenementAucune": "No track: drop files into src/features/evenements/pistes/.",
     "musiqueEvenementDefaut": "A track from the folder, drawn at random.",
@@ -414,7 +415,7 @@
     "title": "Movement",
     "waiting": "Press a key…",
     "sensitivity": "Sensitivity",
-      "speed": "Movement speed",
+    "speed": "Movement speed",
     "reset": "Reset",
     "note": "Keys are matched by their position on the keyboard, whatever its layout: WASD on QWERTY, ZQSD on AZERTY.",
     "actions": {
@@ -488,7 +489,9 @@
       "perf_1": "[Performance] The sky needs no texture at all: 8 MB of graphics memory and a second of startup drawing saved",
       "new_0": "[Solar system] The sky comes alive: drifting curtains of ionised gas, occasional magnetic storms, shooting stars, and rare travellers crossing in a straight line",
       "new_1": "[Solar system] Fully recomputed sky: the Milky Way is a real concentration of stars, with its dust lanes and emission nebulae. It stays sharp at any zoom, and new stars appear as you get closer",
-      "new_2": "[Settings] “Living sky” turns off with one switch, for modest machines"
+      "new_2": "[Settings] “Living sky” turns off with one switch, for modest machines",
+      "new_10": "[Solar system] The supernova now explodes instead of lighting up: a flash, then a torn shell that opens over the whole minute, cools from blue to copper and finally disperses — as large as the black hole, and never in front of the system you are looking at",
+      "new_11": "[Settings] Music volume can be set event by event, like the ambient one"
     },
     "v5_1_0": {
       "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",

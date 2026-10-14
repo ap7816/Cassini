@@ -14,7 +14,6 @@
  */
 
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { readAmbientVolume } from '../../services/storage';
 import { resumeAmbient, suspendAmbient } from '../ambient/ambientPlayer';
 
 /**
@@ -47,6 +46,15 @@ function fournieAuHasard(): string | null {
   return FOURNIES[Math.floor(Math.random() * FOURNIES.length)];
 }
 
+/**
+ * Le volume d'un événement tant que personne n'y a touché.
+ *
+ * C'est exactement ce que donnait l'ancien calcul — le volume de l'ambiance,
+ * relevé de moitié — pour une installation neuve. Autrement dit : rien ne
+ * change pour qui ne touche à rien.
+ */
+export const VOLUME_EVENEMENT_DEFAUT = 0.4;
+
 /** Durée des fondus, à l'entrée comme à la sortie. */
 const FONDU_MS = 1800;
 
@@ -54,6 +62,11 @@ let audio: HTMLAudioElement | null = null;
 let fondu: ReturnType<typeof setInterval> | null = null;
 /** Les réglages courants : un chemin de la machine par événement, ou `null`. */
 let choisies: MusiquesEvenements = { supernova: null, cometeBleue: null, trouNoir: null };
+let volumes: VolumesEvenements = {
+  supernova: VOLUME_EVENEMENT_DEFAUT,
+  cometeBleue: VOLUME_EVENEMENT_DEFAUT,
+  trouNoir: VOLUME_EVENEMENT_DEFAUT,
+};
 /**
  * L'événement dont la musique joue, ou `null`.
  *
@@ -90,14 +103,32 @@ export type EvenementMusical = 'supernova' | 'cometeBleue' | 'trouNoir';
 /** Un morceau choisi par événement ; `null` en laisse un du dossier au sort. */
 export type MusiquesEvenements = Record<EvenementMusical, string | null>;
 
+/** Le volume de chacune, de 0 à 1. */
+export type VolumesEvenements = Record<EvenementMusical, number>;
+
 /** La scène ne lit pas les réglages : on les lui apporte. */
 export function reglerMusiquesEvenements(musiques: MusiquesEvenements): void {
   choisies = musiques;
 }
 
-function volumeVoulu(): number {
-  // Un peu au-dessus de l'ambiance : c'est un événement, pas un fond.
-  return Math.min(1, readAmbientVolume() * 1.6);
+/**
+ * Et de même pour les volumes.
+ *
+ * Appliqué sur-le-champ si quelque chose joue : un volume se règle en
+ * l'écoutant, et le curseur des paramètres doit s'entendre pendant qu'on le
+ * tire. Sauf au milieu d'un fondu, qui écrit lui aussi dans ce volume et qu'il
+ * ne faut pas contrarier — il finira sur la valeur neuve de toute façon.
+ */
+export function reglerVolumesEvenements(nouveaux: VolumesEvenements): void {
+  volumes = nouveaux;
+  if (audio && enCoursPour && !fondu) audio.volume = volumeVoulu(enCoursPour);
+}
+
+function volumeVoulu(evenement: EvenementMusical): number {
+  // Le sien, et plus celui de l'ambiance : ce n'est pas un fond, et il a
+  // maintenant son propre curseur.
+  const v = volumes[evenement];
+  return Math.max(0, Math.min(1, Number.isFinite(v) ? v : VOLUME_EVENEMENT_DEFAUT));
 }
 
 function fondre(vers: number, apres?: () => void): void {
@@ -162,7 +193,7 @@ export function jouerMusiqueEvenement(evenement: EvenementMusical): void {
     .play()
     .then(() => {
       suspendAmbient('evenement');
-      fondre(volumeVoulu());
+      fondre(volumeVoulu(evenement));
     })
     // Fichier introuvable, format refusé, lecture bloquée : l'événement se
     // regarde en silence, et c'est tout.

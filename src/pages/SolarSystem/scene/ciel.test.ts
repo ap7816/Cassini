@@ -124,21 +124,69 @@ describe('les événements du ciel se voient de loin', () => {
     expect(tete!.distanceTo(cam.position)).toBeCloseTo(RAYON_CIEL, 0);
   });
 
-  it('le rémanent de la supernova suit l’œil jusqu’à la fin de la session', () => {
+  /**
+   * Elle est large, elle dure une minute, et elle efface ce qu'elle couvre.
+   *
+   * Tirée dans un cône autour de l'axe du regard, elle tombait une fois sur
+   * deux juste devant le système qu'on regardait, dont on ne voyait plus rien.
+   * Elle se pose donc à l'écart : hors du système, dans l'image, et vers le
+   * haut. Vingt tirages, parce que la place est tirée au sort — un seul ne
+   * prouverait rien.
+   */
+  it('la supernova éclate à côté du regard, jamais en plein dedans', () => {
+    for (let i = 0; i < 20; i++) {
+      const c = ciel();
+      const cam = camera();
+      c.update(0.016, true, true, false, cam, SOLEIL);
+      const vraie = c.declencher('supernova');
+      expect(vraie).not.toBeNull();
+
+      const avant = new THREE.Vector3();
+      cam.getWorldDirection(avant);
+      const vers = vraie!.clone().sub(cam.position).normalize();
+      const ecart = vers.angleTo(avant);
+      expect(ecart).toBeGreaterThan(0.38);
+      expect(ecart).toBeLessThan(0.60);
+
+      // Et au-dessus de l'axe du regard : le ciel est en haut, le système est
+      // au milieu.
+      const droite = new THREE.Vector3().crossVectors(avant, new THREE.Vector3(0, 1, 0)).normalize();
+      const haut = new THREE.Vector3().crossVectors(droite, avant).normalize();
+      expect(vers.dot(haut)).toBeGreaterThan(0);
+
+      // Dans l'image, et avec de la marge. L'écart est serré des deux côtés :
+      // trop près elle couvre le système, trop loin elle sort du cadre d'une
+      // fenêtre étroite — et un événement qu'on ne voit pas n'en est pas un.
+      // Le point est projeté comme la caméra le projettera.
+      const ndc = vraie!.clone().project(cam);
+      expect(Math.abs(ndc.x)).toBeLessThan(0.75);
+      expect(Math.abs(ndc.y)).toBeLessThan(0.75);
+
+      c.dispose();
+    }
+  });
+
+  /**
+   * L'explosion se disperse, et ne laisse rien.
+   *
+   * Il en restait une lueur accrochée au ciel jusqu'à la fin de la session.
+   * C'était juste quand la supernova était un point ; depuis qu'elle est une
+   * coquille de vingt-sept degrés, ce qui restait était un grand cercle rouge
+   * immobile, planté dans un coin du ciel pour toujours.
+   */
+  it('la supernova ne laisse rien derrière elle', () => {
     const c = ciel();
     const cam = camera();
     c.update(0.016, true, true, false, cam, SOLEIL);
     c.declencher('supernova');
 
-    // Bien après son extinction : il ne reste que la lueur, qui doit rester
-    // visible de partout elle aussi.
+    // En plein milieu : elle est là, et bien là.
+    for (let i = 0; i < 10; i++) c.update(2, true, true, false, cam, SOLEIL);
+    expect(c.objet.getObjectByName('nova')?.visible).toBe(true);
+
+    // Bien après son extinction : plus rien.
     for (let i = 0; i < 40; i++) c.update(2, true, true, false, cam, SOLEIL);
-
-    cam.position.set(PLAN_LOINTAIN * 2, 0, 0);
-    cam.updateMatrixWorld(true);
-    c.update(0.5, true, true, false, cam, SOLEIL);
-
-    expect(placeDessinee(c.objet, 'nova').distanceTo(cam.position)).toBeCloseTo(RAYON_CIEL, 0);
+    expect(c.objet.getObjectByName('nova')?.visible).toBe(false);
     c.dispose();
   });
 });

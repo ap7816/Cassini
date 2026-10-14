@@ -264,6 +264,7 @@
     "musiqueEvenementChoisir": "Choisir un morceau",
     "musiqueEvenementEcouter": "Écouter",
     "musiqueEvenementArreter": "Arrêter",
+    "musiqueEvenementVolume": "Volume",
     "musiqueEvenementRetirer": "Supprimer",
     "musiqueEvenementAucune": "Aucun morceau : dépose des fichiers dans src/features/evenements/pistes/.",
     "musiqueEvenementDefaut": "Un morceau du dossier, tiré au sort.",
@@ -414,7 +415,7 @@
     "title": "Déplacement",
     "waiting": "Appuie…",
     "sensitivity": "Sensibilité",
-      "speed": "Vitesse de déplacement",
+    "speed": "Vitesse de déplacement",
     "reset": "Réinitialiser",
     "note": "Les touches sont repérées par leur emplacement sur le clavier, quelle que soit sa disposition : WASD en QWERTY, ZQSD en AZERTY.",
     "actions": {
@@ -488,7 +489,9 @@
       "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins",
       "new_0": "[Système solaire] Le ciel s’anime : rideaux de gaz ionisé qui dérivent, tempêtes magnétiques de loin en loin, étoiles filantes, et de rares passages en ligne droite",
       "new_1": "[Système solaire] Ciel entièrement recalculé : la voie lactée est une vraie concentration d’étoiles, avec ses couloirs de poussière et ses nébuleuses en émission. Il reste net à n’importe quel zoom, et de nouvelles étoiles y apparaissent à mesure qu’on s’approche",
-      "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes"
+      "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes",
+      "new_10": "[Système solaire] La supernova explose au lieu de s’allumer : un éclair, puis une coquille déchirée qui s’ouvre sur toute la minute, se refroidit du bleu au cuivre, et finit par se disperser — aussi grande que le trou noir, et jamais devant le système qu’on regarde",
+      "new_11": "[Réglages] Le volume de la musique se règle événement par événement, comme celui de l’ambiance"
     },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",
