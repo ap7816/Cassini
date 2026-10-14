@@ -59,6 +59,7 @@ const EVENEMENTS: Array<{ cle: EvenementCiel; nom: string; instant: number }> = 
   { cle: 'comete', nom: 'noyauComete', instant: 80 * 0.35 },
   { cle: 'vaisseau', nom: 'vaisseau', instant: 42 * 0.4 },
   { cle: 'supernova', nom: 'nova', instant: 0.016 },
+  { cle: 'trouNoir', nom: 'trouNoir', instant: 0.016 },
 ];
 
 describe('les événements du ciel se voient de loin', () => {

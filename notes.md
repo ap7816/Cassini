@@ -149,7 +149,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Événements visibles partout, quelle que soit la distance de rendu        | ✅ Done    |
 | Une musique paramétrable par événement du ciel                           | ❌ À faire |
 | Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
-| Trou noir : aspirer l'écran entier, interface comprise, en la déformant  | ❌ À faire |
+| Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
 | Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
 | Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
 | Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
@@ -235,15 +235,25 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Le rémanent de la supernova est reposé à chaque image, et pas seulement à l'allumage : il doit se retrouver dans le même coin de ciel jusqu'à la fin de la session. `scene/ciel.test.ts` vérifie les quatre, de près puis depuis trois fois le plan lointain — c'est lui qui a attrapé le passage dessiné à quatre millions d'unités, sorti d'un vecteur de travail qui servait aussi de sortie.
 
-- **Le trou noir qui avale l'écran**
-  **Retiré, à refaire autrement.** Tout ce qui ne servait qu'à lui est parti : l'horloge de l'événement, la lentille d'écran, le registre d'aspiration, la courbure du fond du ciel et son anneau d'Einstein, le bouton du panneau de débogage, et deux méthodes devenues mortes avec lui — le déplacement d'une balise de soleil et celui d'une étiquette de système, qui n'existaient que pour suivre une étoile en train d'être avalée.
+- **Le trou noir**
+  **Fait, et en volume.** C'est un événement du ciel — le plus gros, le plus rare, une fois par session au plus et jamais avant vingt minutes. Il ne touche à rien : il paraît en neuf secondes, se tient une minute, s'en va de même.
 
-  Ce qui a été essayé, pour ne pas y revenir par le même chemin :
+  Quatre pièces, et chacune a sa raison d'être là. **L'horizon** est une sphère : elle n'éclaire rien, tout son travail est d'écrire la profondeur, donc de cacher ce qui passe derrière. **Le disque** est un vrai anneau posé dans un plan, incliné au hasard à chaque fois, qui tourne plus vite au-dedans qu'au-dehors — c'est lui qui donne le relief, sa moitié lointaine disparaît derrière la sphère et ressort de l'autre côté. **L'anneau de photons** et **la couronne** restent tournés vers l'œil, et c'est exact : la lumière qui a fait le tour de l'objet ressort en cercle autour de l'ombre quel que soit l'endroit d'où on regarde ; la couronne ne se montre d'ailleurs que si le disque est vu de biais, puisqu'il faut du disque derrière l'ombre pour qu'il y ait quelque chose à relever.
+
+  Il est **accroché au ciel**, haut au-dessus de la galaxie — une cinquantaine de degrés au-dessus de l'horizon, et une direction retenue une fois pour toutes. Les deux essais précédents disent pourquoi : posé à sa place dans la galaxie, il se faisait couper par le plan lointain dès qu'on s'en éloignait ; rapporté sur la sphère du ciel mais visé par un point fixe du monde, il traversait le ciel dès qu'on tournait autour d'un système, alors qu'il doit y être planté comme une étoile. Une direction, elle, ne bouge pour personne. Ce qu'on perd est de pouvoir s'en approcher — mais un objet qu'on peut atteindre n'est plus un événement du ciel.
+
+  Son orientation est **choisie, et non tirée au hasard** : la normale du disque est le haut du monde ramené perpendiculaire à cette direction, puis penchée d'une quinzaine de degrés. Le plan du disque contient alors l'horizontale de l'écran — son ellipse y est couchée — et la pente ouvre juste assez pour qu'on en voie le dessus. Au hasard, il se dressait sur la tranche une fois sur deux ; à plat, vu de dessous, il n'était qu'une cible.
+
+  Deux pièges d'éclat, payés comptant : les éclats avaient été réglés **sans la passe de débordement**, dont le seuil vaut 0,85 — à l'écran, l'objet était un aplat blanc. Les grandes surfaces restent désormais sous le seuil et gardent leur couleur, seul l'anneau de photons a le droit de le franchir. Et le mélange additif multiplie déjà la couleur par l'opacité : fournir les deux revenait à peindre au carré.
+
+  **Ce qui a été essayé avant, et retiré** — à ne pas reprendre par le même chemin :
 
   - **Avaler les systèmes un par un**, chaque étoile et chaque planète happée à son tour en spirale. Trente secondes de cérémonie qui tenaient la scène en otage et remuaient tout ce qu'elle porte, pour une chose qu'on voulait voir ailleurs.
-  - **Déformer l'image par un filtre SVG**, une carte de déplacement posée sur la coque. C'est la bonne idée — elle tord l'application entière, boutons compris, pour une dizaine de millisecondes par image à condition que la région du filtre colle à la coque (140 % de marge : 36 ms ; 104 % : 13,3 ms, pour 12,1 ms au repos). Mais une carte tient sur huit bits, et c'est elle qui décide de tout : au-delà d'environ trois pixels de décalage entre deux niveaux voisins, l'image ne glisse plus, elle se gaufre. Tramer l'arrondi change les marches en grain et repousse la limite, sans la lever.
+  - **Aspirer l'écran lui-même** par un filtre SVG posé sur la coque. L'idée tord bien l'application entière, boutons compris, pour une dizaine de millisecondes par image à condition que la région du filtre colle à la coque (140 % de marge : 36 ms ; 104 % : 13,3 ms, pour 12,1 ms au repos). Mais sa carte de déplacement tient sur huit bits, et c'est elle qui décide de tout : au-delà d'environ trois pixels de décalage entre deux niveaux voisins, l'image ne glisse plus, elle se gaufre. Tramer l'arrondi change les marches en grain et repousse la limite sans la lever.
   - D'où le partage **tourner d'un côté, rassembler de l'autre** : un pixel qui tourne reste à sa distance du trou, donc à l'écran, tandis qu'un pixel qui glisse va chercher sa couleur hors de la fenêtre et vide l'image par les bords avant que rien n'ait été mangé. Le vissage par le filtre, le resserrement par une transformation CSS dont l'origine est le point lui-même — le filtre ne sait pas rapprocher l'image entière d'un seul endroit, cela demanderait des décalages de plusieurs diagonales.
-  - Et le compte à ne pas perdre de vue : le point d'arrivée se lit **en coordonnées de mise en page**, la coque étant elle-même en train de se resserrer dessus ; et la projection rend le point symétrique quand l'objet passe derrière l'œil.
+  - Et deux pièges de coordonnées : le point d'arrivée se lit **en coordonnées de mise en page**, la coque étant elle-même en train de se resserrer dessus ; et la projection rend le point symétrique quand l'objet passe derrière l'œil.
+
+  Rien de tout cela n'est dans l'application : le trou noir n'avale plus rien, et c'est très bien ainsi.
 
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.

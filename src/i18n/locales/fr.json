@@ -463,6 +463,7 @@
   },
   "changelog": {
     "v5_2_0": {
+      "new_7": "[Système solaire] Un trou noir géant traverse le ciel : son ombre, son anneau de photons et son disque relevé par-dessus — le plus rare de tous les événements, une fois par session au plus",
       "new_6": "[Graphisme] Un onglet à part dans les paramètres : finesse de l’image, débordement lumineux, densité du ciel — de quoi alléger la scène sur une machine modeste",
       "new_8": "[Système solaire] Les événements du ciel se voient maintenant de n’importe où : supernova, étoile filante, comète et passage ne disparaissaient plus loin que la distance de rendu",
       "fix_0": "[Notes de version] « Ne plus afficher » tient pour de bon : la décision ne se perdait plus à chaque mise à jour",

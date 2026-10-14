@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { EvenementCiel } from '../../../features/debug/evenementsCiel';
+import { createTrouNoir } from './trouNoir';
 
 /**
  * Ce qui se passe dans le ciel quand on ne regarde pas les planètes.
@@ -745,6 +746,28 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   cometeBleue.visible = false;
   groupe.add(cometeBleue);
 
+  // ── Le trou noir ─────────────────────────────────────────────────────────
+  //
+  // Le plus gros et le plus rare. Il ne fait rien d'autre que d'être là : voir
+  // `trouNoir.ts`, qui le construit.
+  //
+  // Comme les autres, il est rapporté sur la sphère du ciel : seule sa
+  // direction est vraie, sa distance est celle du ciel. Posé à sa place dans la
+  // galaxie, il se faisait couper par le plan lointain dès qu'on s'en éloignait
+  // — et c'est justement de loin qu'un objet pareil doit se voir.
+  //
+  // Il n'y perd pas son relief. Son orientation, elle, reste celle du monde :
+  // en se déplaçant dans la galaxie on change l'angle sous lequel on le prend,
+  // et son disque s'ouvre, se referme, se montre par la tranche. Ce qu'on perd
+  // est seulement de pouvoir s'en approcher — un objet qu'on peut atteindre
+  // n'est plus un événement du ciel.
+  // Sa taille : son disque barre environ le quart du ciel, soit le tiers de la
+  // hauteur de l'écran. Au double, il ne restait plus rien à voir autour de lui
+  // — ni les systèmes, ni la voie lactée, ni le reste du ciel —, et un
+  // événement qui cache tout le reste n'est plus un événement, c'est un décor.
+  const trouNoir = createTrouNoir(RAYON_CIEL * 0.045);
+  groupe.add(trouNoir.objet);
+
   // ── L'horloge des événements ─────────────────────────────────────────────
   let temps = 0;
 
@@ -808,6 +831,20 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const tmpCap = new THREE.Vector3();
   /** Sens de la course, fixé au départ : la queue s'adosse à lui. */
   const arriereComete = new THREE.Vector3();
+  /**
+   * Le trou noir : une fois par session au plus, et jamais avant vingt
+   * minutes. Quand il vient, il reste une minute — le temps d'aller chercher
+   * quelqu'un.
+   */
+  const DUREE_TROU = 60;
+  /** Le temps que met son éclat à monter, puis à retomber. */
+  const FONDU_TROU = 9;
+  let trouRestant = 0;
+  let trouFait = false;
+  let prochainTirageTrou = 1200;
+  /** La direction où il se tient : fixe, pour qu'il ne bouge pour personne. */
+  const directionTrou = new THREE.Vector3();
+
   const departVaisseau = new THREE.Vector3();
   const finVaisseau = new THREE.Vector3();
   const vraieVaisseau = new THREE.Vector3();
@@ -1015,6 +1052,46 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     bleueRestante = DUREE_BLEUE;
   }
 
+  /** Le pose haut dans le ciel, et l'allume. */
+  function lancerTrouNoir(): void {
+    // On retient une **direction**, et non un endroit.
+    //
+    // Un point fixe de la galaxie change de direction dès que l'œil se déplace :
+    // l'objet traversait donc le ciel quand on tournait autour d'un système,
+    // alors qu'il est censé y être accroché comme une étoile. Une direction,
+    // elle, ne bouge pour personne — et c'est bien ce qu'on veut d'un objet
+    // dont on ne peut de toute façon pas s'approcher.
+    //
+    // En haut, et non devant soi : les systèmes sont posés à plat, et ce qui se
+    // produit à hauteur d'œil se dispute le regard avec eux. Une cinquantaine
+    // de degrés au-dessus de l'horizon — assez haut pour qu'il domine, pas au
+    // point qu'il faille se renverser.
+    const cap = Math.random() * Math.PI * 2;
+    directionTrou.set(Math.cos(cap) * 0.58, 0.81, Math.sin(cap) * 0.58).normalize();
+
+    // Son disque est présenté presque par la tranche.
+    //
+    // C'est l'inclinaison qui fait la silhouette : vu de face, une couronne de
+    // gaz n'est qu'une cible ; vu de biais, c'est l'objet qu'on reconnaît. Posé
+    // là-haut et laissé à plat, il aurait justement été vu de dessous, donc de
+    // face.
+    //
+    // La normale est donc le haut du monde ramené perpendiculaire à la
+    // direction : le plan du disque contient alors l'horizontale de l'écran et
+    // son ellipse y est couchée. Puis on la penche d'une quinzaine de degrés,
+    // ce qui ouvre l'ellipse juste assez pour qu'on voie le dessus du disque.
+    const normale = new THREE.Vector3(0, 1, 0);
+    normale.addScaledVector(directionTrou, -normale.dot(directionTrou));
+    if (normale.lengthSq() < 1e-6) normale.set(1, 0, 0);
+    normale
+      .normalize()
+      .addScaledVector(directionTrou, Math.sin(0.2 + Math.random() * 0.2))
+      .normalize();
+    trouNoir.objet.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normale);
+    trouNoir.objet.visible = true;
+    trouRestant = DUREE_TROU;
+  }
+
   function lancerVaisseau(camera: THREE.Camera): void {
     devantLaCamera(departVaisseau, camera, distance * 0.7, 0.75);
     devantLaCamera(finVaisseau, camera, distance * 0.7, 0.75);
@@ -1039,6 +1116,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       if (groupe.visible) {
         groupe.visible = false;
         trainee.visible = false;
+        trouNoir.objet.visible = false;
         vaisseau.visible = false;
         nova.visible = false;
         comete.visible = false;
@@ -1304,6 +1382,36 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       }
     }
 
+    // ── Trou noir ──────────────────────────────────────────────────────────
+    if (trouRestant > 0) {
+      trouRestant -= dt;
+      const ecoule = DUREE_TROU - trouRestant;
+      // Il paraît lentement et s'en va de même : rien d'aussi gros ne doit
+      // s'allumer d'un coup.
+      const eclat = Math.min(1, ecoule / FONDU_TROU, trouRestant / FONDU_TROU);
+      // Accroché au ciel : toujours la même direction, à la distance du ciel.
+      // Il ne suit pas l'œil, il ne s'en éloigne pas — il est là, en haut, et
+      // n'en bouge pas. Et il n'est jamais tourné vers nous : c'est un volume,
+      // et son orientation appartient au monde.
+      trouNoir.objet.position
+        .copy(camera.position)
+        .addScaledVector(directionTrou, RAYON_CIEL);
+      trouNoir.regler(Math.max(0, eclat), temps, camera);
+      if (trouRestant <= 0) trouNoir.objet.visible = false;
+    } else if (!trouFait) {
+      prochainTirageTrou -= dt;
+      if (prochainTirageTrou <= 0) {
+        prochainTirageTrou = 60;
+        // Une chance sur deux mille par minute : de l'ordre d'une fois toutes
+        // les trente heures passées devant la galaxie. La plupart des sessions
+        // n'en verront aucun, et c'est ce qui en fait un événement.
+        if (Math.random() < 1 / 2000) {
+          lancerTrouNoir();
+          trouFait = true;
+        }
+      }
+    }
+
     // ── Passage ────────────────────────────────────────────────────────────
     if (vaisseauRestant > 0) {
       vaisseauRestant -= dt;
@@ -1365,6 +1473,10 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       lancerCometeBleue(camera, dernierSoleil);
       return departBleue.clone().lerp(finBleue, 0.25);
     }
+    if (evenement === 'trouNoir') {
+      lancerTrouNoir();
+      return camera.position.clone().addScaledVector(directionTrou, RAYON_CIEL);
+    }
     if (evenement === 'supernova') {
       devantLaCamera(positionNova, camera, distance * 0.9, 0.35);
       poserNova(camera);
@@ -1397,6 +1509,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matQueue.dispose();
       geoVaisseau.dispose();
       matVaisseau.dispose();
+      trouNoir.dispose();
     },
   };
 }

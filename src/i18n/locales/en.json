@@ -463,6 +463,7 @@
   },
   "changelog": {
     "v5_2_0": {
+      "new_7": "[Solar system] A giant black hole crosses the sky: its shadow, its photon ring and its disc bent over the top — the rarest event of all, once a session at most",
       "new_6": "[Graphics] A tab of its own in the settings: image sharpness, light bloom, sky density — enough to lighten the scene on a modest machine",
       "new_8": "[Solar system] Sky events are now visible from anywhere: supernova, shooting star, comet and flyby no longer vanish once you move past the render distance",
       "fix_0": "[Release notes] “Don’t show again” now sticks: the choice was lost at every update",

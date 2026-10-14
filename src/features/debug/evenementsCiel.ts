@@ -21,7 +21,8 @@ export type EvenementCiel =
   | 'comete'
   | 'vaisseau'
   | 'supernova'
-  | 'cometeBleue';
+  | 'cometeBleue'
+  | 'trouNoir';
 
 export const EVENEMENTS_CIEL: Array<{ cle: EvenementCiel; libelle: string }> = [
   { cle: 'trainee', libelle: 'Étoile filante' },
@@ -30,6 +31,7 @@ export const EVENEMENTS_CIEL: Array<{ cle: EvenementCiel; libelle: string }> = [
   { cle: 'vaisseau', libelle: 'Passage' },
   { cle: 'supernova', libelle: 'Supernova' },
   { cle: 'cometeBleue', libelle: 'Comète bleue' },
+  { cle: 'trouNoir', libelle: 'Trou noir' },
 ];
 
 type Declencheur = (evenement: EvenementCiel) => void;
