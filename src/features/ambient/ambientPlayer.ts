@@ -211,7 +211,11 @@ function fadeTo(target: number, ms: number, onDone?: () => void): void {
  * que la fenêtre est réduite, puis la fenêtre qu'on rouvre — avec un simple
  * drapeau, l'ambiance repartirait par-dessus le morceau.
  */
-export type AmbientSuspension = 'music' | 'window';
+/**
+ * Ce qui fait taire l'ambiance : le lecteur de musique, une fenêtre qui n'est
+ * plus à l'écran, ou la musique d'un événement rare du ciel.
+ */
+export type AmbientSuspension = 'music' | 'window' | 'evenement';
 
 const _suspensions = new Set<AmbientSuspension>();
 

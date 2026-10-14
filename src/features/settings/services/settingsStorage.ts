@@ -13,6 +13,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   runInBackground: false,
   musicParticles: true,
   cielVivant: true,
+  evenementsCiel: true,
+  musiqueEvenement: null,
   finesse: 2,
   debordement: true,
   densiteCiel: 1,
@@ -55,6 +57,12 @@ export function loadSettings(): AppSettings {
       typeof parsed.musicParticles === 'boolean' ? parsed.musicParticles : true;
     const cielVivant =
       typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
+    const evenementsCiel =
+      typeof parsed.evenementsCiel === 'boolean' ? parsed.evenementsCiel : true;
+    const musiqueEvenement =
+      typeof parsed.musiqueEvenement === 'string' && parsed.musiqueEvenement
+        ? parsed.musiqueEvenement
+        : null;
     // Bornés à la relecture : ces trois-là viennent d'un fichier qu'on peut
     // éditer à la main, et une finesse de mille mettrait la carte à genoux.
     const finesse =
@@ -78,6 +86,8 @@ export function loadSettings(): AppSettings {
       runInBackground,
       musicParticles,
       cielVivant,
+      evenementsCiel,
+      musiqueEvenement,
       finesse,
       debordement,
       densiteCiel,

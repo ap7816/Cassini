@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import type { EvenementCiel } from '../../../features/debug/evenementsCiel';
 import { createTrouNoir } from './trouNoir';
+import {
+  arreterMusiqueEvenement,
+  jouerMusiqueEvenement,
+} from '../../../features/evenements/musiqueEvenement';
 
 /**
  * Ce qui se passe dans le ciel quand on ne regarde pas les planètes.
@@ -121,6 +125,7 @@ export type Ciel = {
   update: (
     dt: number,
     vivant: boolean,
+    evenements: boolean,
     mouvementReduit: boolean,
     camera: THREE.Camera,
     soleil: THREE.Vector3,
@@ -768,6 +773,18 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const trouNoir = createTrouNoir(RAYON_CIEL * 0.045);
   groupe.add(trouNoir.objet);
 
+  /**
+   * Les trois rares ont droit à une musique.
+   *
+   * Supernova, comète bleue, trou noir : ceux qu'on ne voit qu'une fois ou deux
+   * par session. Les étoiles filantes et les passages reviennent toutes les
+   * trente secondes — une musique à chaque fois ne serait plus une annonce,
+   * seulement du bruit.
+   */
+  function annoncer(): void {
+    jouerMusiqueEvenement();
+  }
+
   // ── L'horloge des événements ─────────────────────────────────────────────
   let temps = 0;
 
@@ -1050,6 +1067,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     noyauBleu.position.copy(departBleue);
     cometeBleue.visible = true;
     bleueRestante = DUREE_BLEUE;
+    annoncer();
   }
 
   /** Le pose haut dans le ciel, et l'allume. */
@@ -1090,6 +1108,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     trouNoir.objet.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normale);
     trouNoir.objet.visible = true;
     trouRestant = DUREE_TROU;
+    annoncer();
   }
 
   function lancerVaisseau(camera: THREE.Camera): void {
@@ -1108,6 +1127,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   function update(
     dt: number,
     vivant: boolean,
+    evenements: boolean,
     mouvementReduit: boolean,
     camera: THREE.Camera,
     soleil: THREE.Vector3,
@@ -1117,6 +1137,8 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         groupe.visible = false;
         trainee.visible = false;
         trouNoir.objet.visible = false;
+        // Le ciel qu'on coupe emporte sa musique avec lui.
+        arreterMusiqueEvenement();
         vaisseau.visible = false;
         nova.visible = false;
         comete.visible = false;
@@ -1148,8 +1170,8 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     }
 
     // ── Tempête ────────────────────────────────────────────────────────────
-    prochaineTempete -= dt;
-    if (prochaineTempete <= 0 && tempete <= 0) {
+    if (evenements) prochaineTempete -= dt;
+    if (evenements && prochaineTempete <= 0 && tempete <= 0) {
       tempete = DUREE_TEMPETE;
       prochaineTempete = 150 + Math.random() * 240;
     }
@@ -1185,7 +1207,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matTrainee.uniforms.uEclat.value = Math.max(0, Math.sin(Math.min(1, t) * Math.PI) ** 0.55);
       if (trainéeRestante <= 0) trainee.visible = false;
     } else {
-      prochaineTrainee -= dt;
+      if (evenements) prochaineTrainee -= dt;
       if (prochaineTrainee <= 0) {
         lancerTrainee(camera);
         prochaineTrainee = 25 + Math.random() * 70;
@@ -1268,9 +1290,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matQueueBleue.uniforms.uEclat.value = bords * 1.0;
       matNoyauBleu.uniforms.uTemps.value = temps;
       matQueueBleue.uniforms.uTemps.value = temps;
-      if (bleueRestante <= 0) cometeBleue.visible = false;
+      if (bleueRestante <= 0) {
+        cometeBleue.visible = false;
+        arreterMusiqueEvenement();
+      }
     } else {
-      prochaineBleue -= dt;
+      if (evenements) prochaineBleue -= dt;
       if (prochaineBleue <= 0) {
         lancerCometeBleue(camera, soleil);
         prochaineBleue = 1800 + Math.random() * 2400;
@@ -1300,13 +1325,14 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // Le rémanent : ce qu'il en reste pour le reste de la session, de quoi
       // vérifier qu'on n'a pas rêvé.
       if (novaRestante <= 0) {
+        arreterMusiqueEvenement();
         // Le rémanent : une lueur cuivrée, étalée, à l'endroit exact.
         matNova.uniforms.uEclat.value = 0.07;
         matNova.uniforms.uTaille.value = 70;
         matNova.uniforms.uAge.value = 1;
       }
     } else if (!novaFaite) {
-      prochainTirageNova -= dt;
+      if (evenements) prochainTirageNova -= dt;
       if (prochainTirageNova <= 0) {
         prochainTirageNova = 60;
         if (Math.random() < 1 / 180) {
@@ -1314,6 +1340,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
           poserNova(camera);
           nova.visible = true;
           novaRestante = DUREE_NOVA;
+          annoncer();
           void import('@tauri-apps/plugin-log').then((l) => l.info('[sonde] supernova allumée'));
           novaFaite = true;
         }
@@ -1375,7 +1402,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matQueue.uniforms.uEclat.value = bords;
       if (cometeRestante <= 0) comete.visible = false;
     } else {
-      prochaineComete -= dt;
+      if (evenements) prochaineComete -= dt;
       if (prochaineComete <= 0) {
         lancerComete(camera, soleil);
         prochaineComete = 360 + Math.random() * 540;
@@ -1397,9 +1424,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         .copy(camera.position)
         .addScaledVector(directionTrou, RAYON_CIEL);
       trouNoir.regler(Math.max(0, eclat), temps, camera);
-      if (trouRestant <= 0) trouNoir.objet.visible = false;
+      if (trouRestant <= 0) {
+        trouNoir.objet.visible = false;
+        arreterMusiqueEvenement();
+      }
     } else if (!trouFait) {
-      prochainTirageTrou -= dt;
+      if (evenements) prochainTirageTrou -= dt;
       if (prochainTirageTrou <= 0) {
         prochainTirageTrou = 60;
         // Une chance sur deux mille par minute : de l'ordre d'une fois toutes
@@ -1426,7 +1456,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       matVaisseau.uniforms.uEclat.value = bords * (0.5 + 0.5 * Math.sin(temps * 2.4));
       if (vaisseauRestant <= 0) vaisseau.visible = false;
     } else {
-      prochainVaisseau -= dt;
+      if (evenements) prochainVaisseau -= dt;
       if (prochainVaisseau <= 0) {
         lancerVaisseau(camera);
         prochainVaisseau = 260 + Math.random() * 420;
@@ -1482,6 +1512,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       poserNova(camera);
       nova.visible = true;
       novaRestante = DUREE_NOVA;
+      annoncer();
       return positionNova.clone();
     }
     return null;
@@ -1510,6 +1541,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       geoVaisseau.dispose();
       matVaisseau.dispose();
       trouNoir.dispose();
+      arreterMusiqueEvenement();
     },
   };
 }

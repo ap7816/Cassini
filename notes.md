@@ -147,8 +147,9 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 | Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
 | vaisseau promo steam, actualité etc                                      | ❌ À faire |
 | Événements visibles partout, quelle que soit la distance de rendu        | ✅ Done    |
-| Une musique paramétrable par événement du ciel                           | ❌ À faire |
+| Une musique pour les événements rares, au choix ou tirée d'un dossier    | ✅ Done    |
 | Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
+| Couper les événements du ciel sans couper le rideau de gaz              | ✅ Done    |
 | Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
 | Succès à décrocher : voir chaque événement, créer un système, etc.       | ❌ À faire |
 | Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
@@ -254,6 +255,17 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   - Et deux pièges de coordonnées : le point d'arrivée se lit **en coordonnées de mise en page**, la coque étant elle-même en train de se resserrer dessus ; et la projection rend le point symétrique quand l'objet passe derrière l'œil.
 
   Rien de tout cela n'est dans l'application : le trou noir n'avale plus rien, et c'est très bien ainsi.
+
+- **La musique des événements, et l'interrupteur qui les coupe**
+  **Fait.** Deux réglages dans l'onglet Graphisme, sous « Ciel vivant ».
+
+  **Événements du ciel** est un interrupteur à part : il coupe les tirages — étoile filante, tempête, comète, passage, supernova, trou noir — sans toucher au rideau de gaz, qui reste gouverné par « Ciel vivant ». On peut vouloir un ciel qui respire sans que rien ne vienne traverser le regard pendant qu'on range sa bibliothèque. Le panneau de débogage, lui, continue de pouvoir les provoquer à la main.
+
+  **Musique des événements** ne joue qu'aux trois rares — supernova, comète bleue, trou noir. Les étoiles filantes reviennent toutes les trente secondes : une musique à chaque fois ne serait plus une annonce, seulement du bruit. Elle entre et sort en fondu, s'arrête avec l'événement, et l'ambiance se tait pendant ce temps comme elle le fait déjà pour le lecteur.
+
+  Les morceaux fournis vivent dans `features/evenements/pistes/`, **ramassé à la construction** par `import.meta.glob` : déposer un fichier suffit à l'ajouter, et un morceau y est tiré au sort à chaque événement. L'utilisateur peut aussi en choisir un sur sa machine — on n'en retient que le chemin, le fichier reste où il est, et il passe par le protocole d'actifs de Tauri, dont la portée couvre déjà `$HOME` et `$AUDIO`.
+
+  Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
 
 - **Statistiques de jeu**
   Nouvelle page ou panneau latéral. Données disponibles : `lastPlayedAt` par session (actuellement on n'enregistre que la dernière). Pour avoir de vraies stats, il faut stocker un tableau d'horodatages `playHistory: string[]` dans le type `Game`. Graphique par semaine/mois : bibliothèque légère type `recharts` ou dessin canvas custom. Afficher aussi : temps total estimé, jeu le plus joué, jours d'activité.

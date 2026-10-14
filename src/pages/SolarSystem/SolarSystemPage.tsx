@@ -67,6 +67,7 @@ import {
 } from './lib/largeurs';
 import css from './SolarSystemPage.module.css';
 import { abonnerReglages, versionStructure } from '../../features/debug/tuning';
+import { reglerMusiqueEvenement } from '../../features/evenements/musiqueEvenement';
 
 /**
  * Signature des seules propriétés dont dépend le rendu 3D : identité, nom,
@@ -218,6 +219,16 @@ export function SolarSystemPage() {
   // la référence à chaque image.
   const cielRef = useRef(settings.cielVivant);
   useEffect(() => { cielRef.current = settings.cielVivant; }, [settings.cielVivant]);
+
+  // Les événements se coupent à part : on peut vouloir le ciel vivant sans que
+  // rien ne vienne traverser le regard.
+  const evenementsRef = useRef(settings.evenementsCiel);
+  useEffect(() => { evenementsRef.current = settings.evenementsCiel; }, [settings.evenementsCiel]);
+
+  // Et la musique qui les accompagne, portée au module qui la joue.
+  useEffect(() => {
+    reglerMusiqueEvenement(settings.musiqueEvenement);
+  }, [settings.musiqueEvenement]);
 
   // Les réglages de graphisme suivent le même chemin : une référence que la
   // scène relit, pour que les changer ne la reconstruise pas.
@@ -532,6 +543,7 @@ export function SolarSystemPage() {
   useSolarScene({
     mountRef,
     cielRef,
+    evenementsRef,
     graphismeRef,
     labelsRef,
     parPlateformeRef,

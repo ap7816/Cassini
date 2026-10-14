@@ -67,11 +67,11 @@ describe('les événements du ciel se voient de loin', () => {
     it(`${cle} : dessiné à distance fixe de l’œil, dans sa vraie direction`, () => {
       const c = ciel();
       const cam = camera();
-      c.update(0.016, true, false, cam, SOLEIL);
+      c.update(0.016, true, true, false, cam, SOLEIL);
 
       const vraie = c.declencher(cle);
       expect(vraie).not.toBeNull();
-      c.update(instant, true, false, cam, SOLEIL);
+      c.update(instant, true, true, false, cam, SOLEIL);
 
       const dessinee = placeDessinee(c.objet, nom);
       expect(dessinee.distanceTo(cam.position)).toBeCloseTo(RAYON_CIEL, 0);
@@ -89,16 +89,16 @@ describe('les événements du ciel se voient de loin', () => {
     it(`${cle} : toujours là après être parti au bout de la galaxie`, () => {
       const c = ciel();
       const cam = camera();
-      c.update(0.016, true, false, cam, SOLEIL);
+      c.update(0.016, true, true, false, cam, SOLEIL);
       c.declencher(cle);
-      c.update(0.016, true, false, cam, SOLEIL);
+      c.update(0.016, true, true, false, cam, SOLEIL);
 
       // Trois fois le plan lointain : à sa vraie place, la chose serait
       // découpée par la caméra et n'existerait plus.
       cam.position.set(0, 4000, PLAN_LOINTAIN * 3);
       cam.lookAt(0, 0, 0);
       cam.updateMatrixWorld(true);
-      c.update(0.5, true, false, cam, SOLEIL);
+      c.update(0.5, true, true, false, cam, SOLEIL);
 
       const dessinee = placeDessinee(c.objet, nom);
       expect(dessinee.distanceTo(cam.position)).toBeCloseTo(RAYON_CIEL, 0);
@@ -111,13 +111,13 @@ describe('les événements du ciel se voient de loin', () => {
   it('la comète bleue garde le même traitement', () => {
     const c = ciel();
     const cam = camera();
-    c.update(0.016, true, false, cam, SOLEIL);
+    c.update(0.016, true, true, false, cam, SOLEIL);
     c.declencher('cometeBleue');
-    c.update(0.016, true, false, cam, SOLEIL);
+    c.update(0.016, true, true, false, cam, SOLEIL);
 
     cam.position.set(0, 4000, PLAN_LOINTAIN * 3);
     cam.updateMatrixWorld(true);
-    c.update(0.5, true, false, cam, SOLEIL);
+    c.update(0.5, true, true, false, cam, SOLEIL);
 
     const tete = c.teteCometeBleue();
     expect(tete).not.toBeNull();
@@ -127,16 +127,16 @@ describe('les événements du ciel se voient de loin', () => {
   it('le rémanent de la supernova suit l’œil jusqu’à la fin de la session', () => {
     const c = ciel();
     const cam = camera();
-    c.update(0.016, true, false, cam, SOLEIL);
+    c.update(0.016, true, true, false, cam, SOLEIL);
     c.declencher('supernova');
 
     // Bien après son extinction : il ne reste que la lueur, qui doit rester
     // visible de partout elle aussi.
-    for (let i = 0; i < 40; i++) c.update(2, true, false, cam, SOLEIL);
+    for (let i = 0; i < 40; i++) c.update(2, true, true, false, cam, SOLEIL);
 
     cam.position.set(PLAN_LOINTAIN * 2, 0, 0);
     cam.updateMatrixWorld(true);
-    c.update(0.5, true, false, cam, SOLEIL);
+    c.update(0.5, true, true, false, cam, SOLEIL);
 
     expect(placeDessinee(c.objet, 'nova').distanceTo(cam.position)).toBeCloseTo(RAYON_CIEL, 0);
     c.dispose();

@@ -110,6 +110,15 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, cielVivant: enabled }));
   }
 
+  // Les événements du ciel, et la musique qui les accompagne
+  function setEvenementsCiel(enabled: boolean) {
+    setSettings((prev) => ({ ...prev, evenementsCiel: enabled }));
+  }
+
+  function setMusiqueEvenement(chemin: string | null) {
+    setSettings((prev) => ({ ...prev, musiqueEvenement: chemin }));
+  }
+
   // Finesse de l'image, débordement lumineux, densité du ciel
   function setFinesse(v: number) {
     setSettings((prev) => ({ ...prev, finesse: v }));
@@ -160,6 +169,8 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setRunInBackground,
       setMusicParticles,
       setCielVivant,
+      setEvenementsCiel,
+      setMusiqueEvenement,
       setFinesse,
       setDebordement,
       setDensiteCiel,

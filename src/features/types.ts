@@ -39,6 +39,20 @@ export type AppSettings = {
   /** Aurores, tempêtes et passages dans le ciel du système solaire. */
   cielVivant: boolean;
   /**
+   * Les événements du ciel : étoiles filantes, comètes, supernova, trou noir.
+   *
+   * Distinct de `cielVivant`, qui ne gouverne que le rideau de gaz : on peut
+   * vouloir le ciel vivant sans que rien ne vienne traverser le regard pendant
+   * qu'on range sa bibliothèque.
+   */
+  evenementsCiel: boolean;
+  /**
+   * Musique jouée quand survient un événement rare — supernova, comète bleue,
+   * trou noir. Un fichier choisi sur la machine, ou `null` pour celle que
+   * l'application apporte.
+   */
+  musiqueEvenement: string | null;
+  /**
    * Finesse de l'image : 1 ne dessine qu'un pixel par point d'écran, 2 en
    * dessine quatre sur un écran dense.
    *

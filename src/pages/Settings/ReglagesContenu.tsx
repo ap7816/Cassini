@@ -11,6 +11,13 @@ import { clearAllStorage } from '../../services/storage';
 import { SettingRow } from './components/SettingRow';
 import css from './SettingsPage.module.css';
 import { useAppSettings } from '../../features/settings/context/useAppSettings';
+import { open as ouvrirFichier } from '@tauri-apps/plugin-dialog';
+import {
+  aUneMusiqueFournie,
+  arreterMusiqueEvenement,
+  jouerMusiqueEvenement,
+  reglerMusiqueEvenement,
+} from '../../features/evenements/musiqueEvenement';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
 import { clearCoverCache } from '../../features/library/services/coverArtService';
 import { LANGUES, estLangue, getCurrentLanguage, setLanguage, type Langue } from '../../i18n';
@@ -94,6 +101,45 @@ type Props = {
  */
 export function ReglagesContenu({ recherche }: Props) {
   const { t } = useTranslation();
+
+  /**
+   * Ouvre un dialogue natif pour choisir la musique des événements rares.
+   *
+   * On ne retient que le chemin : le fichier reste où il est, l'application ne
+   * le recopie pas. Hors Tauri — ou si l'utilisateur renonce — rien ne change.
+   */
+  async function choisirMusiqueEvenement(): Promise<void> {
+    try {
+      const choix = await ouvrirFichier({
+        multiple: false,
+        filters: [
+          { name: t('settings.musiqueEvenementFiltre'), extensions: ['mp3', 'ogg', 'wav', 'flac', 'm4a'] },
+        ],
+      });
+      if (typeof choix === 'string') {
+        setMusiqueEvenement(choix);
+        // Le module qui joue ne lit pas les réglages : on les lui porte, sans
+        // quoi le bouton d'écoute ci-dessous ferait entendre l'ancien morceau.
+        reglerMusiqueEvenement(choix);
+      }
+    } catch {
+      // Un clic qui ne fait rien et ne dit rien n'est pas un réglage, c'est
+      // une panne silencieuse.
+      toast.error(t('errors.dialogUnavailable'));
+    }
+  }
+
+  /** Fait entendre le morceau tout de suite, pour s'assurer que c'est le bon. */
+  function ecouterMusiqueEvenement(): void {
+    reglerMusiqueEvenement(settings.musiqueEvenement);
+    arreterMusiqueEvenement();
+    jouerMusiqueEvenement();
+  }
+
+  /** Le nom seul, pour l'afficher sans étaler le chemin de la machine. */
+  function nomDeFichier(chemin: string): string {
+    return chemin.split(/[\/]/).pop() || chemin;
+  }
   const q = recherche.trim().toLowerCase();
 
   // Retourne true si au moins une des clés i18n correspond à la recherche courante (ou si pas de recherche)
@@ -117,6 +163,8 @@ export function ReglagesContenu({ recherche }: Props) {
     setMusicParticles,
     setPlanetSizeByPlaytime,
     setCielVivant,
+    setEvenementsCiel,
+    setMusiqueEvenement,
     setFinesse,
     setDebordement,
     setDensiteCiel,
@@ -568,6 +616,64 @@ export function ReglagesContenu({ recherche }: Props) {
             <span className={css.toggleSlider} />
           </label>
         </SettingRow>
+
+        <SettingRow
+          labelKey="settings.evenementsLabel"
+          hintKey="settings.evenementsHint"
+          query={q}
+        >
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.evenementsCiel}
+              onChange={e => setEvenementsCiel(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
+
+        <SettingRow
+          labelKey="settings.musiqueEvenementLabel"
+          hintKey="settings.musiqueEvenementHint"
+          query={q}
+        >
+          <div className={css.actions}>
+            <button
+              type="button"
+              className={css.primary}
+              disabled={!settings.evenementsCiel}
+              onClick={() => { void choisirMusiqueEvenement(); }}
+            >
+              {t('settings.musiqueEvenementChoisir')}
+            </button>
+            <button
+              type="button"
+              className={css.button}
+              onClick={ecouterMusiqueEvenement}
+              disabled={!settings.evenementsCiel}
+            >
+              {t('settings.musiqueEvenementEcouter')}
+            </button>
+            <button
+              type="button"
+              className={css.button}
+              onClick={() => { setMusiqueEvenement(null); reglerMusiqueEvenement(null); }}
+              disabled={!settings.musiqueEvenement}
+            >
+              {t('settings.musiqueEvenementRetirer')}
+            </button>
+          </div>
+        </SettingRow>
+
+        {matches('settings.musiqueEvenementLabel', 'settings.musiqueEvenementHint') && (
+          <div className={css.empty}>
+            {settings.musiqueEvenement
+              ? nomDeFichier(settings.musiqueEvenement)
+              : t(aUneMusiqueFournie()
+                ? 'settings.musiqueEvenementDefaut'
+                : 'settings.musiqueEvenementAucune')}
+          </div>
+        )}
       </div>
       )}
 

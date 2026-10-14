@@ -14,6 +14,9 @@ export type AppSettingsContextValue = {
   setRunInBackground: (enabled: boolean) => void;
   setMusicParticles: (enabled: boolean) => void;
   setCielVivant: (enabled: boolean) => void;
+  setEvenementsCiel: (enabled: boolean) => void;
+  /** Le chemin d'un fichier de la machine, ou `null` pour la musique fournie. */
+  setMusiqueEvenement: (chemin: string | null) => void;
   setFinesse: (v: number) => void;
   setDebordement: (enabled: boolean) => void;
   setDensiteCiel: (v: number) => void;

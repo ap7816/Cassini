@@ -216,6 +216,7 @@ type Options = {
    * pas reconstruire la scène, seulement cesser de dessiner le ciel.
    */
   cielRef: RefObject<boolean>;
+  evenementsRef: RefObject<boolean>;
   /**
    * Réglages de graphisme, lus à chaque image.
    *
@@ -302,6 +303,7 @@ export function useSolarScene({
   labelsRef,
   platformRef,
   cielRef,
+  evenementsRef,
   graphismeRef,
   labelClass,
   orbitLabelClass,
@@ -1579,7 +1581,7 @@ export function useSolarScene({
 
       galaxie.updateLueurs();
 
-      ciel.update(dt, cielRef.current, mouvementReduit, camera, lumiere.position);
+      ciel.update(dt, cielRef.current, evenementsRef.current, mouvementReduit, camera, lumiere.position);
       // Et les matrices de la scène : les planètes viennent de bouger sur leur
       // orbite, et tout ce qui suit lit leur position **monde**. Sans ce
       // recalcul, elle daterait de la frame précédente — le rendu la met bien à
