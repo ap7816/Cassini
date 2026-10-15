@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   _reinitialiserEtatFenetre,
-  fenetreMasquee,
+  fenetreEnArrierePlan,
   noterEtat,
   surEtatFenetre,
 } from './etatFenetre';
@@ -20,18 +20,18 @@ beforeEach(() => _reinitialiserEtatFenetre());
 describe('état de la fenêtre', () => {
   it('est masquée dès qu’une source le dit', () => {
     noterEtat('navigateur', true);
-    expect(fenetreMasquee()).toBe(true);
+    expect(fenetreEnArrierePlan()).toBe(true);
   });
 
   it('reste masquée tant qu’une source le maintient', () => {
     noterEtat('navigateur', true);
     noterEtat('natif', false);
     // Cas particulier : le natif voit la fenêtre, son avis lève celui du moteur.
-    expect(fenetreMasquee()).toBe(false);
+    expect(fenetreEnArrierePlan()).toBe(false);
 
     noterEtat('natif', true);
     noterEtat('navigateur', false);
-    expect(fenetreMasquee()).toBe(true);
+    expect(fenetreEnArrierePlan()).toBe(true);
   });
 
   it('ne prévient qu’au changement de verdict', () => {
@@ -62,5 +62,35 @@ describe('état de la fenêtre', () => {
     stop();
     noterEtat('natif', false);
     expect(vu).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Le focus est la voix qui manquait : une fenêtre recouverte par une autre
+   * application n'est ni réduite ni occultée, elle n'est simplement plus
+   * devant. Et le natif, qui a le dernier mot sur ce que le moteur web croit
+   * voir, ne l'a pas sur le focus — qu'il ne connaît pas.
+   */
+  it('le focus perdu met la fenêtre en arrière-plan, même sans être masquée', () => {
+    noterEtat('focus', true);
+    expect(fenetreEnArrierePlan()).toBe(true);
+
+    // Le natif a beau affirmer la fenêtre visible, elle reste derrière.
+    noterEtat('natif', false);
+    expect(fenetreEnArrierePlan()).toBe(true);
+
+    noterEtat('focus', false);
+    expect(fenetreEnArrierePlan()).toBe(false);
+  });
+
+  it('prévient à chaque passage, et une seule fois par passage', () => {
+    const vus: boolean[] = [];
+    surEtatFenetre((arriere) => vus.push(arriere));
+
+    noterEtat('focus', true);
+    noterEtat('navigateur', true); // déjà en arrière-plan : rien à annoncer
+    noterEtat('navigateur', false);
+    noterEtat('focus', false);
+
+    expect(vus).toEqual([false, true, false]);
   });
 });

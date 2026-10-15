@@ -1,99 +1,139 @@
-/* La liste des succès : une ligne par succès, décroché ou non.
-   Les deux se ressemblent assez pour qu'on les compare d'un coup d'œil, et
-   diffèrent assez pour qu'on sache lesquels manquent. */
+/* Le journal des observations.
+   Pas une liste de trophées : un registre de bord. Chaque ligne a son numéro,
+   son intitulé, un filet qui court jusqu'au verdict, et le verdict. Ce qui n'a
+   pas été vu n'a pas d'histoire à raconter — il n'a qu'un état, « en attente »,
+   et la place reste ouverte. */
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  /* Le même filet segmenté que l'en-tête du panneau : c'est la ligne qui dit
+     « ceci est un instrument ». */
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100% 3px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
+}
 
 .compte {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 4px;
+  font-family: var(--police-donnee);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgb(var(--hud));
+  text-shadow: 0 0 12px rgb(var(--hud) / 0.45);
 }
 
-.chiffre {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--accent, #6c8efb);
-  font-variant-numeric: tabular-nums;
+.sur {
+  font-family: var(--police-donnee);
+  font-size: 0.8rem;
+  color: var(--hud-texte-faible);
+  margin-left: -6px;
 }
 
-.total {
-  font-size: 0.78rem;
-  color: rgb(var(--encre) / 0.6);
-}
-
-/* La jauge : la même information que le compte, mais qu'on lit sans lire. */
+/* La jauge est segmentée, un bloc par observation : on lit le compte sans le
+   lire, et un bloc qui s'allume veut dire quelque chose — une barre qui
+   avance de quatorze pour cent, non. */
 .jauge {
-  height: 3px;
-  border-radius: 2px;
-  background: rgb(var(--hud) / 0.12);
-  overflow: hidden;
-  margin-bottom: 12px;
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
 }
 
-.jaugePleine {
-  height: 100%;
-  background: var(--accent, #6c8efb);
-  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+.bloc {
+  width: 12px;
+  height: 10px;
+  border: 1px solid rgb(var(--hud) / 0.3);
+  background: rgb(var(--hud) / 0.07);
+}
+
+.blocPlein {
+  background: rgb(var(--hud) / 0.75);
+  border-color: rgb(var(--hud));
+  box-shadow: 0 0 8px rgb(var(--hud) / 0.5);
 }
 
 .liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  gap: 2px;
+}
+
+.entree {
+  padding: 7px 0;
+}
+
+.entree + .entree {
+  border-top: 1px solid rgb(var(--hud) / 0.08);
 }
 
 .ligne {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 9px 2px;
+  align-items: baseline;
+  gap: 8px;
 }
 
-.ligne + .ligne {
-  border-top: 1px solid rgb(var(--hud) / 0.07);
-}
-
-.sceau {
+.index {
+  font-family: var(--police-donnee);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: rgb(var(--hud) / 0.55);
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  font-size: 0.8rem;
-  border: 1px solid rgb(var(--hud) / 0.14);
-  border-radius: 50%;
-  color: var(--accent, #6c8efb);
 }
 
-/* Non décroché : tout s'éteint, mais rien ne se cache. Le nom d'un succès dit
-   quoi faire pour l'avoir — le masquer ne ferait pas un mystère, seulement une
-   liste de cases vides. */
-.eteint .sceau {
-  color: rgb(var(--encre) / 0.3);
-  border-color: rgb(var(--hud) / 0.08);
+.nom {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-texte);
+  white-space: nowrap;
 }
 
-.eteint .titre {
-  color: rgb(var(--encre) / 0.55);
+/* Le filet de conduite, qui mène le regard du nom au verdict. */
+.filet {
+  flex: 1;
+  min-width: 10px;
+  height: 1px;
+  align-self: center;
+  background: repeating-linear-gradient(90deg, rgb(var(--hud) / 0.3) 0 1px, transparent 1px 4px);
 }
 
-.eteint .detail {
-  color: rgb(var(--encre) / 0.38);
-}
-
-.texte {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.titre {
-  font-size: calc(13px * var(--ui-font-scale, 1));
-  font-weight: 700;
-  color: rgb(var(--encre) / 0.95);
+.etat {
+  font-family: var(--police-donnee);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  letter-spacing: 0.08em;
+  color: rgb(var(--hud));
+  text-shadow: 0 0 10px rgb(var(--hud) / 0.4);
+  flex-shrink: 0;
 }
 
 .detail {
+  margin-left: 36px;
+  margin-top: 3px;
   font-size: calc(11px * var(--ui-font-scale, 1));
-  color: rgb(var(--encre) / 0.7);
+  color: var(--hud-texte-doux);
   line-height: 1.45;
+}
+
+/* En attente : tout s'éteint, rien ne se cache. Le nom d'une observation dit
+   ce qu'il y a à voir, et le masquer ne ferait pas un mystère, seulement une
+   liste de cases vides. */
+.attente .index {
+  color: rgb(var(--hud) / 0.25);
+}
+
+.attente .nom {
+  color: var(--hud-texte-faible);
+  font-weight: 400;
+}
+
+.attente .filet {
+  background: repeating-linear-gradient(90deg, rgb(var(--hud) / 0.14) 0 1px, transparent 1px 4px);
+}
+
+.attente .etat {
+  color: var(--hud-texte-faible);
+  text-shadow: none;
 }

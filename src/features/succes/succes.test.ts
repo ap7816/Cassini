@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   SUCCES,
   abonnerSucces,
@@ -63,6 +63,30 @@ describe('les succès', () => {
     expect(estDecroche('trouNoir')).toBe(false);
     // Et on peut les redécrocher : c'est tout l'intérêt du bouton.
     expect(decrocherSucces('trouNoir')).toBe(true);
+  });
+
+  /**
+   * L'ordre du démarrage est le piège.
+   *
+   * Le stockage n'est rempli qu'une fois `initStorage()` revenu, et les modules
+   * sont évalués avant la première ligne de `main.tsx`. Lire au chargement du
+   * module donnait donc un ensemble vide à chaque lancement : les succès de la
+   * veille perdus, et le premier succès du jour les effaçant pour de bon en
+   * réécrivant la liste. On relit au premier accès, qui vient de la scène ou de
+   * l'interface, donc bien après.
+   */
+  it('relit le stockage au premier accès, et non au chargement du module', async () => {
+    vi.resetModules();
+    // Les deux viennent du registre neuf, sans quoi ils ne partageraient pas
+    // le même stockage en mémoire.
+    const stockage = await import('../../services/storage');
+    const frais = await import('./succes');
+
+    // Le stockage arrive après le module : c'est l'ordre réel au démarrage.
+    stockage.writeSucces(['comete', 'trouNoir']);
+
+    expect(frais.succesDecroches()).toEqual(['comete', 'trouNoir']);
+    expect(frais.estDecroche('comete')).toBe(true);
   });
 
   it('il y en a un par événement du ciel', () => {

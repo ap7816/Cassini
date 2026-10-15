@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { abonnerSucces, type CleSucces } from './succes';
+import { SUCCES, abonnerSucces, type CleSucces } from './succes';
 import { jouerSonSucces } from './sonSucces';
 import css from './NotificationSucces.module.css';
 
@@ -44,7 +44,11 @@ export function NotificationSucces() {
     <div className={css.pile} role="status" aria-live="polite">
       {cartes.map(({ id, cle }) => (
         <div key={id} className={css.carte}>
-          <span className={css.sceau} aria-hidden="true">★</span>
+          {/* Le numéro de l'entrée, celui-là même que porte le journal : c'est
+              la même chose qu'on regarde, à deux endroits. */}
+          <span className={css.index} aria-hidden="true">
+            {String(SUCCES.indexOf(cle) + 1).padStart(3, '0')}
+          </span>
           <div className={css.texte}>
             <div className={css.entete}>{t('succes.debloque')}</div>
             <div className={css.titre}>{t(`succes.${cle}.titre`)}</div>

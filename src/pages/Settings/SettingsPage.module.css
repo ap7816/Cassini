@@ -35,55 +35,66 @@
   display: none;
 }
 
-.primary {
-  padding: 7px 11px;
+/* Les commandes.
+   Un bouton de tableau de bord n'est pas une pastille : il est carré, gravé,
+   et il s'allume quand la main s'en approche. D'où la chasse fixe — celle des
+   compteurs de l'application —, les capitales espacées, la trame de balayage
+   en fond, et le halo au survol plutôt qu'un fond qui s'éclaircit. Le cadre,
+   lui, reste à deux pixels de rayon comme tout le reste de l'interface : une
+   console n'a pas de coins ronds, mais elle n'a pas non plus d'arêtes vives. */
+.primary,
+.button,
+.danger {
+  padding: 7px 12px;
+  font-family: var(--police-donnee);
   font-size: calc(12px * var(--ui-font-scale, 1));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   border-radius: 2px;
-  border: 1px solid var(--accent, rgb(var(--hud)));
-  background: color-mix(in srgb, var(--accent, rgb(var(--hud))) 24%, transparent);
-  color: rgb(var(--encre));
   cursor: pointer;
   box-shadow: none;
-  letter-spacing: 0.08em;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.primary {
+  border: 1px solid var(--accent, rgb(var(--hud)));
+  background: var(--hud-trame), color-mix(in srgb, var(--accent, rgb(var(--hud))) 20%, transparent);
+  color: rgb(var(--encre));
 }
 
 .primary:hover {
-  background: color-mix(in srgb, var(--accent, rgb(var(--encre))) 26%, transparent);
+  background: var(--hud-trame), color-mix(in srgb, var(--accent, rgb(var(--hud))) 32%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent, rgb(var(--hud))) 40%, transparent);
 }
 
 .button {
-  padding: 7px 11px;
-  font-size: calc(12px * var(--ui-font-scale, 1));
-  border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.115);
-  background: rgb(var(--hud) / 0.046);
-  color: inherit;
-  cursor: pointer;
-  box-shadow: none;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: var(--hud-trame), rgb(var(--hud) / 0.05);
+  color: var(--hud-texte);
 }
 
-.button:hover {
-  background: rgb(var(--hud) / 0.081);
+.button:hover:not(:disabled) {
+  border-color: var(--hud-ligne-forte);
+  background: var(--hud-trame), rgb(var(--hud) / 0.1);
+  box-shadow: var(--hud-lueur);
 }
 
 .button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .danger {
   padding: 10px 12px;
-  border-radius: 2px;
   border: 1px solid rgb(var(--hud-danger) / 0.7);
-  background: rgb(var(--hud-danger) / 0.14);
+  background: var(--hud-trame), rgb(var(--hud-danger) / 0.12);
   color: rgb(var(--hud-danger));
-  cursor: pointer;
-  box-shadow: none;
   white-space: nowrap;
 }
 
 .danger:hover {
-  background: rgba(239, 68, 68, 0.22);
+  background: var(--hud-trame), rgb(var(--hud-danger) / 0.2);
+  box-shadow: 0 0 14px rgb(var(--hud-danger) / 0.35);
 }
 
 .previewWrap {
@@ -127,9 +138,16 @@
   min-width: 180px;
 }
 
+/* Un curseur de console : une règle graduée et une manette qui coulisse
+   dessus. Le curseur natif — un rail arrondi et une pastille — est le même
+   dans toutes les applications du monde, ce qui est exactement le défaut qu'on
+   cherche à corriger ici. Les graduations sont un dégradé répété : aucune
+   marque à poser, et elles suivent la largeur sans qu'on s'en occupe. */
 .slider {
   flex: 1;
-  accent-color: var(--accent, rgb(var(--encre)));
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
   cursor: pointer;
   padding: 0;
   border: none;
@@ -137,18 +155,39 @@
   box-shadow: none;
 }
 
+.slider::-webkit-slider-runnable-track {
+  height: 16px;
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.35) 0 1px, transparent 1px 9px) 50% 50% / 100% 9px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.3) 0 0) 50% 50% / 100% 1px no-repeat;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 7px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--accent, rgb(var(--hud)));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent, rgb(var(--hud))) 65%, transparent);
+  border: none;
+}
+
 .slider:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
+.slider:disabled::-webkit-slider-thumb {
+  box-shadow: none;
+}
+
 .sliderValue {
-  min-width: 36px;
+  min-width: 42px;
   text-align: right;
-  font-size: 13px;
-  opacity: 0.8;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   font-family: var(--police-donnee);
   color: rgb(var(--hud));
+  text-shadow: 0 0 10px rgb(var(--hud) / 0.35);
 }
 
 /* Swatches */
@@ -159,24 +198,28 @@
   align-items: center;
 }
 
+/* Des plaquettes carrées, pas des pastilles : un sélecteur de voie sur une
+   console, et non une palette de peinture. Celle qui est choisie est tenue
+   par un cadre lumineux au lieu de grossir dans son coin. */
 .swatch {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 26px;
+  height: 22px;
+  border-radius: 2px;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1px solid rgb(var(--hud) / 0.25);
   padding: 0;
-  box-shadow: 0 0 0 1px rgb(var(--hud) / 0.172);
-  transition: transform 0.1s, border-color 0.15s;
+  box-shadow: none;
+  transition: box-shadow 0.15s, border-color 0.15s;
 }
 
 .swatch:hover {
-  transform: scale(1.15);
+  border-color: var(--hud-ligne-forte);
+  box-shadow: var(--hud-lueur);
 }
 
 .swatchActive {
-  border-color: rgb(var(--hud) / 0.977);
-  transform: scale(1.15);
+  border-color: rgb(var(--hud));
+  box-shadow: 0 0 0 1px rgb(var(--hud)), 0 0 12px rgb(var(--hud) / 0.45);
 }
 
 .swatchCustom {
@@ -195,8 +238,8 @@
 
 .swatchCustomWrapper {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 22px;
 }
 
 .colorInput {
@@ -208,20 +251,46 @@
   cursor: pointer;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 2px;
 }
 
-/* Langue */
+/* Langue.
+   Le champ fermé est une vitre comme le reste du tableau de bord — il était
+   d'un blanc d'imprimante au milieu des instruments, et c'est la première
+   chose que l'œil trouvait en ouvrant le panneau. La liste déroulée, elle,
+   reste blanche : elle est dessinée par le système, et une liste sombre y
+   sort illisible sur plus d'une machine. */
 .langSelect {
-  padding: 8px 12px;
+  /* Sans cela, Windows peint le champ lui-même et notre fond ne se voit pas :
+     le menu restait blanc au milieu des instruments bien qu'il fût habillé.
+     Le chevron est alors à notre charge — c'est celui du système qui s'en va
+     avec son habillage. */
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 7px 26px 7px 10px;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.138);
-  /* Blanc dans les deux thèmes : c'est un champ, pas une vitre. */
-  background: #fff;
-  color: #1a1f2b;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0h10L5 6z' fill='%236fdcff'/%3E%3C/svg%3E") no-repeat right 9px center / 9px 6px,
+    var(--hud-trame),
+    rgb(var(--hud) / 0.05);
+  color: var(--hud-texte);
   cursor: pointer;
   box-shadow: none;
-  font-size: 13px;
+  /* La police de l'interface, et non celle des compteurs : un menu contient
+     des mots, pas des nombres, et la chasse fixe est assez large pour que
+     « Français » finisse coupé en « Franç ». C'est d'ailleurs le partage que
+     fait déjà le reste du tableau de bord. */
+  font-family: var(--police-ui);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.langSelect:hover {
+  border-color: var(--hud-ligne-forte);
+  box-shadow: var(--hud-lueur);
 }
 
 .langSelect option {
@@ -229,14 +298,27 @@
   color: #1a1f2b;
 }
 
-/* Integrations */
+/* Le titre d'une carte porte le même filet segmenté que l'en-tête du panneau,
+   qui court jusqu'au bord : c'est cette ligne, plus que la couleur, qui fait
+   d'un titre l'étiquette d'un instrument. */
 .sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 700;
   font-size: calc(12px * var(--ui-font-scale, 1));
-  opacity: 0.6;
+  opacity: 0.85;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: rgb(var(--hud) / 0.85);
+}
+
+.sectionTitle::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.4) 0 1px, transparent 1px 6px) 0 100% / 100% 3px no-repeat;
 }
 
 .apiKeyRow {
@@ -249,20 +331,33 @@
   min-width: 0;
 }
 
+/* Un champ de saisie du même bord que les commandes : vitre sombre, cadre
+   HUD, et la chasse fixe — celle-là s'impose, puisqu'on y lit une clé
+   caractère par caractère. Le cadre s'allume quand on écrit dedans. */
 .apiKeyInput {
   flex: 1;
   min-width: 0;
   padding: 7px 10px;
   border-radius: 2px;
-  border: 1px solid rgb(var(--hud) / 0.138);
-  background: rgb(var(--hud) / 0.057);
-  color: inherit;
+  border: 1px solid var(--hud-ligne-moyenne);
+  background: var(--hud-trame), rgb(var(--hud) / 0.05);
+  color: var(--hud-texte);
+  font-family: var(--police-donnee);
   font-size: calc(12px * var(--ui-font-scale, 1));
+  letter-spacing: 0.04em;
   box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.apiKeyInput:focus {
+  outline: none;
+  border-color: var(--hud-ligne-forte);
+  box-shadow: var(--hud-lueur);
 }
 
 .apiKeyInput::placeholder {
-  opacity: 0.4;
+  color: var(--hud-texte-faible);
+  opacity: 1;
 }
 
 .link {
@@ -332,8 +427,17 @@
 }
 
 /* Onglets style header */
+/* Les onglets passent à la ligne au lieu de déborder.
+   À quatre — et en anglais, où ils sont plus longs —, la rangée dépassait la
+   largeur du panneau, qui fait 460 px : « Application » sortait par la droite,
+   sans barre pour aller le chercher ni moyen de le cliquer. Une barre de
+   défilement n'aurait fait que cacher le problème derrière un geste de plus ;
+   une deuxième ligne montre tout, tout de suite. Le reste du resserrement —
+   moins de chasse, moins de marges — suffit à les tenir sur une seule ligne
+   dans les deux langues. */
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   border-bottom: 1px solid rgb(var(--hud) / 0.115);
   margin-bottom: 8px;
@@ -341,8 +445,8 @@
 
 .tab {
   position: relative;
-  padding: 7px 14px;
-  font-size: calc(13px * var(--ui-font-scale, 1));
+  padding: 7px 8px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
   border: none;
   background: transparent;
   color: inherit;
@@ -350,8 +454,9 @@
   font-weight: 600;
   opacity: 0.55;
   transition: opacity 0.15s;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .tab::after {

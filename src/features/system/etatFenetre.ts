@@ -1,7 +1,7 @@
 /**
- * La fenêtre est-elle devant l'utilisateur, ou absente de l'écran ?
+ * La fenêtre est-elle devant l'utilisateur, ou derrière le reste ?
  *
- * Question simple, réponse à deux voix. Le moteur web signale `visibilitychange`
+ * Question simple, réponse à trois voix. Le moteur web signale `visibilitychange`
  * quand il croit la page occultée, mais il ne le fait pas toujours à la
  * réduction — cela dépend de la version de WebView2 et de la façon dont Windows
  * masque la fenêtre. Et le côté natif, lui, connaît l'état réel : réduite dans
@@ -17,17 +17,24 @@
  * — elle vient de reprendre le focus —, l'avis du moteur web est levé avec le
  * sien. Certains hôtes disent la page masquée alors qu'elle est bien à l'écran,
  * et sans cela l'ambiance ne reviendrait jamais.
+ *
+ * La troisième voix est le **focus**, et c'est elle qui manquait. Une fenêtre
+ * recouverte par une autre application n'est ni réduite ni occultée : le moteur
+ * web la dit visible, le natif aussi, et ils ont raison tous les deux. Elle
+ * n'est simplement plus devant. Sans cette voix, la musique continuait de jouer
+ * par-dessus ce qu'on était parti faire ailleurs — ce qui est précisément le
+ * moment où l'on n'en veut pas.
  */
 
-/** Ce qui peut déclarer la fenêtre absente de l'écran. */
-export type SourceEtat = 'navigateur' | 'natif';
+/** Ce qui peut déclarer la fenêtre absente du premier plan. */
+export type SourceEtat = 'navigateur' | 'natif' | 'focus';
 
 const _masquee = new Set<SourceEtat>();
 const _abonnes = new Set<(masquee: boolean) => void>();
 let _branche = false;
 
-/** La fenêtre est-elle hors de vue, au sens d'au moins une source ? */
-export function fenetreMasquee(): boolean {
+/** La fenêtre est-elle hors du premier plan, au sens d'au moins une source ? */
+export function fenetreEnArrierePlan(): boolean {
   return _masquee.size > 0;
 }
 
@@ -39,22 +46,24 @@ export function fenetreMasquee(): boolean {
  * la fermeture.
  */
 export function noterEtat(source: SourceEtat, masquee: boolean): void {
-  const avant = fenetreMasquee();
+  const avant = fenetreEnArrierePlan();
 
   if (masquee) {
     _masquee.add(source);
   } else {
     _masquee.delete(source);
-    // Le natif fait foi : s'il voit la fenêtre, elle est vue.
+    // Le natif fait foi sur ce que le moteur web croit voir — mais pas sur le
+    // focus, qui ne se devine pas : une fenêtre peut être à l'écran, entière,
+    // et derrière celle d'une autre application.
     if (source === 'natif') _masquee.delete('navigateur');
   }
 
-  const apres = fenetreMasquee();
+  const apres = fenetreEnArrierePlan();
   if (avant !== apres) _abonnes.forEach((fn) => fn(apres));
 }
 
 /**
- * S'abonne au passage de la fenêtre hors de vue et à son retour.
+ * S'abonne au passage de la fenêtre en arrière-plan et à son retour.
  *
  * L'abonné est appelé tout de suite avec l'état courant : l'application peut
  * avoir été lancée réduite, ou démarrée avec la session.
@@ -62,7 +71,7 @@ export function noterEtat(source: SourceEtat, masquee: boolean): void {
 export function surEtatFenetre(fn: (masquee: boolean) => void): () => void {
   brancher();
   _abonnes.add(fn);
-  fn(fenetreMasquee());
+  fn(fenetreEnArrierePlan());
   return () => {
     _abonnes.delete(fn);
   };
@@ -84,6 +93,14 @@ function brancher(): void {
   }
 
   if (typeof window === 'undefined') return;
+
+  // Le focus, lu à la source : `hasFocus` donne l'état de départ, les deux
+  // événements donnent la suite. L'application peut très bien démarrer
+  // derrière une autre fenêtre.
+  window.addEventListener('blur', () => noterEtat('focus', true));
+  window.addEventListener('focus', () => noterEtat('focus', false));
+  if (typeof document !== 'undefined') noterEtat('focus', !document.hasFocus());
+
   if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
 
   void import('@tauri-apps/api/event').then(({ listen }) => {

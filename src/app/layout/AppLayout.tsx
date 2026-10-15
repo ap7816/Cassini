@@ -239,15 +239,18 @@ export function AppLayout() {
     }).catch(() => {});
   }, [aUnePiste, music.isPlaying, t]);
 
-  // Coupe l'ambiance quand la fenêtre quitte l'écran, la reprend à son retour.
+  // Coupe l'ambiance quand la fenêtre quitte le premier plan, la reprend à son
+  // retour.
   //
-  // Réduite dans la barre des tâches ou repliée dans la zone de notification :
-  // dans les deux cas, plus personne ne la regarde. L'état vient de
-  // `etatFenetre`, qui recoupe l'avis du moteur web et celui de la fenêtre
-  // native — l'un des deux seul se trompe.
+  // Réduite dans la barre des tâches, repliée dans la zone de notification, ou
+  // simplement passée derrière une autre application : dans les trois cas, plus
+  // personne ne la regarde. L'état vient de `etatFenetre`, qui recoupe l'avis du
+  // moteur web, celui de la fenêtre native et le focus — aucun des trois seul ne
+  // suffit.
   //
-  // La musique du lecteur, elle, n'est pas touchée : on la laisse tourner, et le
-  // menu de la zone de notification permet de l'arrêter sans rouvrir la fenêtre.
+  // Les deux autres musiques — celle du lecteur, celle des événements —
+  // s'abonnent au même état chacune de son côté, au plus près de l'élément
+  // qu'elles ont à mettre en pause.
   useEffect(() =>
     surEtatFenetre((masquee) => {
       if (masquee) suspendAmbient('window');

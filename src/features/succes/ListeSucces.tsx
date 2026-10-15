@@ -4,12 +4,16 @@ import { SUCCES, abonnerSucces, succesDecroches } from './succes';
 import css from './ListeSucces.module.css';
 
 /**
- * Les sept succès, décrochés ou non.
+ * Le journal des observations : ce qu'on a vu passer, et ce qui manque.
  *
- * Rien n'est caché : le nom d'un succès dit ce qu'il faut voir pour l'avoir, et
- * le masquer ne ferait pas un mystère, seulement une liste de cases vides. Ceux
- * qui manquent sont éteints, pas secrets — c'est ce qui en fait une liste de
- * choses à voir plutôt qu'un tableau de chasse.
+ * Un registre de bord plutôt qu'une liste de trophées — numéro, intitulé, filet
+ * de conduite, verdict. Ce qui n'a pas encore été vu n'a pas d'histoire à
+ * raconter : il porte son état, et la place reste ouverte. Rien n'est caché, le
+ * nom d'une observation disant déjà ce qu'il y a à voir ; le masquer ne ferait
+ * pas un mystère, seulement une liste de cases vides.
+ *
+ * La jauge est segmentée, un bloc par observation. Un bloc qui s'allume veut
+ * dire quelque chose ; une barre qui avance de quatorze pour cent, non.
  *
  * Elle s'abonne, parce qu'un succès peut tomber pendant qu'on la regarde : la
  * galaxie continue de tourner derrière les paramètres.
@@ -23,34 +27,39 @@ export function ListeSucces() {
     [],
   );
 
-  const part = (decroches.size / SUCCES.length) * 100;
-
   return (
     <>
-      <div className={css.compte}>
-        <span className={css.chiffre}>{decroches.size}</span>
-        <span className={css.total}>/ {SUCCES.length}</span>
-      </div>
-      <div className={css.jauge}>
-        <div className={css.jaugePleine} style={{ width: `${part}%` }} />
+      <div className={css.entete}>
+        <span className={css.compte}>{String(decroches.size).padStart(2, '0')}</span>
+        <span className={css.sur}>/ {String(SUCCES.length).padStart(2, '0')}</span>
+        <div className={css.jauge} aria-hidden="true">
+          {SUCCES.map((cle) => (
+            <span
+              key={cle}
+              className={decroches.has(cle) ? `${css.bloc} ${css.blocPlein}` : css.bloc}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className={css.liste}>
-        {SUCCES.map((cle) => {
-          const eu = decroches.has(cle);
+      <ol className={css.liste}>
+        {SUCCES.map((cle, i) => {
+          const vu = decroches.has(cle);
           return (
-            <div key={cle} className={eu ? css.ligne : `${css.ligne} ${css.eteint}`}>
-              <span className={css.sceau} aria-hidden="true">{eu ? '★' : '☆'}</span>
-              <div className={css.texte}>
-                <div className={css.titre}>{t(`succes.${cle}.titre`)}</div>
-                <div className={css.detail}>
-                  {eu ? t(`succes.${cle}.detail`) : t('settings.succesPasEncore')}
-                </div>
+            <li key={cle} className={vu ? css.entree : `${css.entree} ${css.attente}`}>
+              <div className={css.ligne}>
+                <span className={css.index}>{String(i + 1).padStart(3, '0')}</span>
+                <span className={css.nom}>{t(`succes.${cle}.titre`)}</span>
+                <span className={css.filet} aria-hidden="true" />
+                <span className={css.etat}>
+                  {t(vu ? 'settings.succesObserve' : 'settings.succesAttente')}
+                </span>
               </div>
-            </div>
+              {vu && <div className={css.detail}>{t(`succes.${cle}.detail`)}</div>}
+            </li>
           );
         })}
-      </div>
+      </ol>
     </>
   );
 }

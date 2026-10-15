@@ -15,6 +15,7 @@
 
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { resumeAmbient, suspendAmbient } from '../ambient/ambientPlayer';
+import { surEtatFenetre } from '../system/etatFenetre';
 
 /**
  * Les musiques fournies : tout ce qui se trouve dans `pistes/`.
@@ -149,6 +150,26 @@ function fondre(vers: number, apres?: () => void): void {
   }, FONDU_MS / pas);
 }
 
+/**
+ * Elle ne joue que devant l'utilisateur.
+ *
+ * Fenêtre réduite, repliée dans la zone de notification, ou simplement passée
+ * derrière une autre application : la musique s'arrête, et reprend au retour si
+ * l'événement court toujours. Une musique qu'on entend par-dessus ce qu'on est
+ * parti faire ailleurs n'annonce plus rien, elle dérange.
+ *
+ * L'abonnement est pris au chargement du module : il ne coûte qu'une fonction
+ * dans un ensemble, et hors navigateur — les tests — la source ne s'attache à
+ * rien du tout.
+ */
+let enArrierePlan = false;
+surEtatFenetre((arriere) => {
+  enArrierePlan = arriere;
+  if (!audio || !enCoursPour) return;
+  if (arriere) audio.pause();
+  else void audio.play().catch(() => {});
+});
+
 /** Vrai là où il y a de quoi jouer un son : pas dans les tests, qui tournent hors navigateur. */
 function possible(): boolean {
   return typeof Audio !== 'undefined';
@@ -194,6 +215,9 @@ export function jouerMusiqueEvenement(evenement: EvenementMusical): void {
     .then(() => {
       suspendAmbient('evenement');
       fondre(volumeVoulu(evenement));
+      // Partie entre-temps derrière une autre fenêtre : on la laisse en place,
+      // au volume voulu, mais muette jusqu'au retour.
+      if (enArrierePlan) audio?.pause();
     })
     // Fichier introuvable, format refusé, lecture bloquée : l'événement se
     // regarde en silence, et c'est tout.

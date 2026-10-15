@@ -286,9 +286,10 @@
     "themeLight": "Light",
     "themeSystem": "System (Windows)",
     "tabSucces": "Achievements",
-    "succesTitre": "Achievements",
-    "succesHint": "What you have seen go by in the sky. They are earned by watching, not by hunting.",
-    "succesPasEncore": "Not seen yet."
+    "succesTitre": "Observation log",
+    "succesHint": "What has been seen going by. The sky gives no warning.",
+    "succesObserve": "LOGGED",
+    "succesAttente": "AWAITING"
   },
   "common": {
     "close": "Close",
@@ -496,7 +497,9 @@
       "new_2": "[Settings] “Living sky” turns off with one switch, for modest machines",
       "new_10": "[Solar system] The supernova now explodes instead of lighting up: a flash, then a torn shell that opens over the whole minute, cools from blue to copper and finally disperses — as large as the black hole, and never in front of the system you are looking at",
       "new_11": "[Settings] Music volume can be set event by event, like the ambient one",
-      "new_12": "[Achievements] Seven achievements to earn, one per sky event: they unlock when you actually see the thing go by, with a notification and a little chime, and a settings tab shows which ones are missing"
+      "new_12": "[Achievements] Seven achievements to earn, one per sky event: they unlock if you actually watched the thing go by, not merely if it happened — with a notification, a little chime, and a settings tab showing which ones are missing",
+      "new_13": "[Solar system] Events no longer happen in front of the camera but anywhere in the sky: you have to be looking the right way, and you can miss them entirely",
+      "new_14": "[Music] Nothing plays while the window is not in front: ambience, player and event music all stop as soon as another application covers it, and pick up again on return"
     },
     "v5_1_0": {
       "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",
@@ -693,34 +696,34 @@
     "none": "Untagged"
   },
   "succes": {
-    "debloque": "Achievement unlocked",
+    "debloque": "Observation logged",
     "trainee": {
       "titre": "Shooting star",
-      "detail": "A speck of dust burning across the sky. The most common one, and the first you see."
+      "detail": "It was only a grain of sand. It burned up 80 km above your head, after drifting around the solar system for longer than the Earth has existed."
     },
     "tempete": {
       "titre": "Magnetic storm",
-      "detail": "The gas curtain driven to its peak, then left to fall back."
+      "detail": "The sun's wind slams into the magnetic field, and that is what lights up the sky. In 1859, a storm of that kind set telegraph paper on fire."
     },
     "comete": {
       "titre": "Comet",
-      "detail": "It crossed the system, its tail always pointing away from the sun."
+      "detail": "The sun's wind blows against the comet and pushes its tail away from the star. That is why a comet moving away from the sun travels tail first."
     },
     "vaisseau": {
       "titre": "Flyby",
-      "detail": "Something went by in a straight line, very far away. You will not know what."
+      "detail": "Something crossed the sky in a straight line, then vanished. In 2017, an object from another star made the same trip through the solar system, and nobody ever managed to say what it was."
     },
     "cometeBleue": {
       "titre": "Blue comet",
-      "detail": "Huge, slow and blue. It will not be back any time soon."
+      "detail": "That blue does not come from ice: it is carbon monoxide, ionised by the sun, that starts to glow. It will be back in a few thousand years."
     },
     "supernova": {
       "titre": "Supernova",
-      "detail": "A star exploded before your eyes. One goes off per century in a galaxy."
+      "detail": "For a few days, that star shone brighter than the hundred billion stars of its galaxy put together. The last one seen with the naked eye in ours was in 1604."
     },
     "trouNoir": {
       "titre": "Black hole",
-      "detail": "The rarest event of all. Many will never see it."
+      "detail": "Its mass bends the light going past and swallows anything that comes too close. That is why its shadow is two and a half times wider than it is."
     }
   }
 }

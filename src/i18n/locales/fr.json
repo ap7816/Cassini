@@ -286,9 +286,10 @@
     "themeLight": "Clair",
     "themeSystem": "Système (Windows)",
     "tabSucces": "Succès",
-    "succesTitre": "Succès",
-    "succesHint": "Ce que tu as vu passer dans le ciel. Ils se décrochent en regardant, pas en cherchant.",
-    "succesPasEncore": "Pas encore vu."
+    "succesTitre": "Journal des observations",
+    "succesHint": "Ce qui a été vu passer dans le ciel. Il ne prévient pas.",
+    "succesObserve": "OBSERVÉ",
+    "succesAttente": "EN ATTENTE"
   },
   "common": {
     "close": "Fermer",
@@ -496,7 +497,9 @@
       "new_2": "[Réglages] « Ciel vivant » se coupe d’un interrupteur, pour les machines modestes",
       "new_10": "[Système solaire] La supernova explose au lieu de s’allumer : un éclair, puis une coquille déchirée qui s’ouvre sur toute la minute, se refroidit du bleu au cuivre, et finit par se disperser — aussi grande que le trou noir, et jamais devant le système qu’on regarde",
       "new_11": "[Réglages] Le volume de la musique se règle événement par événement, comme celui de l’ambiance",
-      "new_12": "[Succès] Sept succès à décrocher, un par événement du ciel : ils tombent quand on voit la chose passer, avec une notification et un petit air, et un onglet des paramètres dit lesquels manquent"
+      "new_12": "[Succès] Sept succès à décrocher, un par événement du ciel : ils tombent si tu as regardé la chose passer, et pas seulement si elle a eu lieu — avec une notification, un petit air, et un onglet des paramètres qui dit lesquels manquent",
+      "new_13": "[Système solaire] Les événements ne se produisent plus devant la caméra mais n’importe où dans le ciel : il faut regarder au bon endroit, et on peut très bien les manquer",
+      "new_14": "[Musique] Plus rien ne joue quand la fenêtre n’est pas devant : ambiance, lecteur et musiques d’événement se taisent dès qu’une autre application passe par-dessus, et reprennent au retour"
     },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",
@@ -693,34 +696,34 @@
     "none": "Sans tag"
   },
   "succes": {
-    "debloque": "Succès débloqué",
+    "debloque": "Observation consignée",
     "trainee": {
       "titre": "Étoile filante",
-      "detail": "Une poussière qui brûle en traversant le ciel. La plus courante, et la première qu'on voit."
+      "detail": "Ce n'était qu'un grain de sable. Il a brûlé à 80 km au-dessus de ta tête, après avoir traîné dans le système solaire plus longtemps que la Terre elle-même."
     },
     "tempete": {
       "titre": "Tempête magnétique",
-      "detail": "Le rideau de gaz porté au comble, puis laissé retomber."
+      "detail": "Le vent du soleil vient frapper le champ magnétique, et c'est ce qui allume le ciel. En 1859, une tempête de ce genre a mis le feu au papier des télégraphes."
     },
     "comete": {
       "titre": "Comète",
-      "detail": "Elle a traversé le système, la queue toujours à l'opposé du soleil."
+      "detail": "Le vent du soleil souffle sur la comète et repousse sa queue loin de l'étoile. C'est pour ça qu'une comète qui s'éloigne du soleil avance la queue la première."
     },
     "vaisseau": {
       "titre": "Passage",
-      "detail": "Quelque chose a filé en ligne droite, très loin. On ne saura pas quoi."
+      "detail": "Quelque chose a traversé le ciel en ligne droite, puis a disparu. En 2017, un objet venu d'une autre étoile a fait le même trajet à travers le système solaire, et personne n'a jamais su dire ce que c'était."
     },
     "cometeBleue": {
       "titre": "Comète bleue",
-      "detail": "Immense, lente et bleue. Elle ne repassera pas de sitôt."
+      "detail": "Ce bleu ne vient pas de la glace : c'est du monoxyde de carbone, ionisé par le soleil, qui se met à briller. Elle reviendra dans quelques milliers d'années."
     },
     "supernova": {
       "titre": "Supernova",
-      "detail": "Une étoile a explosé sous tes yeux. Il en éclate une par siècle dans une galaxie."
+      "detail": "Pendant quelques jours, cette étoile a brillé plus fort que les cent milliards d'étoiles de sa galaxie réunies. La dernière qu'on a vue à l'œil nu dans la nôtre, c'était en 1604."
     },
     "trouNoir": {
       "titre": "Trou noir",
-      "detail": "Le plus rare de tous les événements. Beaucoup ne le verront jamais."
+      "detail": "Sa masse courbe la lumière qui passe à côté et avale tout ce qui s'approche trop près. C'est pour ça que son ombre est deux fois et demie plus large que lui."
     }
   }
 }

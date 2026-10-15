@@ -44,16 +44,31 @@ function connue(cle: string): cle is CleSucces {
   return (SUCCES as readonly string[]).includes(cle);
 }
 
-let decroches = new Set<CleSucces>(readSucces().filter(connue));
+/**
+ * Lus au premier besoin, et surtout pas au chargement du module.
+ *
+ * Le stockage n'est rempli qu'une fois `initStorage()` revenu, et les modules
+ * sont évalués avant la première ligne de `main.tsx` : lire ici même aurait
+ * donné un ensemble vide à chaque démarrage — les succès d'hier perdus, et le
+ * premier succès du jour les effaçant pour de bon en réécrivant la liste. Le
+ * premier accès vient de la scène ou de l'interface, donc bien après.
+ */
+let decroches: Set<CleSucces> | null = null;
 const abonnes = new Set<(cle: CleSucces) => void>();
+
+function ensemble(): Set<CleSucces> {
+  if (!decroches) decroches = new Set<CleSucces>(readSucces().filter(connue));
+  return decroches;
+}
 
 /** Les succès déjà décrochés, dans l'ordre de `SUCCES`. */
 export function succesDecroches(): CleSucces[] {
-  return SUCCES.filter((c) => decroches.has(c));
+  const eus = ensemble();
+  return SUCCES.filter((c) => eus.has(c));
 }
 
 export function estDecroche(cle: CleSucces): boolean {
-  return decroches.has(cle);
+  return ensemble().has(cle);
 }
 
 /**
@@ -63,8 +78,9 @@ export function estDecroche(cle: CleSucces): boolean {
  * signale ce qu'elle montre, le module décide si c'est une nouvelle.
  */
 export function decrocherSucces(cle: CleSucces): boolean {
-  if (decroches.has(cle)) return false;
-  decroches.add(cle);
+  const eus = ensemble();
+  if (eus.has(cle)) return false;
+  eus.add(cle);
   writeSucces(succesDecroches());
   abonnes.forEach((fn) => fn(cle));
   return true;

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { initMusicAnalyser, loadTrackForAnalysis, setMusicPlaying } from './musicAnalyser';
+import { surEtatFenetre } from '../system/etatFenetre';
 import {
   readMusicFolder,
   readMusicVolume, writeMusicVolume,
@@ -116,6 +117,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Élément <audio> persistent — ne jamais recréer pour éviter les coupures
   const audioRef = useRef<HTMLAudioElement>(new Audio());
+  /** Vrai si c'est le départ de la fenêtre qui a mis la lecture en pause. */
+  const pauseDeFenetre = useRef(false);
 
   // Refs synchronisées avec l'état — lisibles dans les callbacks async/événements sans closure stale
   const tracksRef = useRef<TrackDto[]>([]);
@@ -303,6 +306,36 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }
+
+  /**
+   * La musique ne joue que devant l'utilisateur.
+   *
+   * Fenêtre réduite, repliée dans la zone de notification, ou simplement passée
+   * derrière une autre application : la lecture s'arrête, et reprend au retour
+   * — mais seulement si c'est bien le départ de la fenêtre qui l'avait coupée.
+   * Sans cette précaution, revenir à l'application relancerait une musique que
+   * l'on avait mise en pause soi-même avant de partir.
+   *
+   * L'ancienne règle laissait le lecteur tourner, au motif qu'on peut vouloir
+   * sa musique en lançant un jeu. C'est justement le moment où elle gêne.
+   *
+   * Pas de fondu : alt-tab doit couper tout de suite.
+   */
+  useEffect(() => surEtatFenetre((arriere) => {
+    const audio = audioRef.current;
+    if (arriere) {
+      if (audio.paused) return;
+      pauseDeFenetre.current = true;
+      audio.pause();
+      setIsPlaying(false); setMusicPlaying(false);
+      return;
+    }
+    if (!pauseDeFenetre.current) return;
+    pauseDeFenetre.current = false;
+    void audio.play().then(() => {
+      setIsPlaying(true); setMusicPlaying(true);
+    }).catch(() => {});
+  }), []);
 
   // Lance la première piste si aucune n'est sélectionnée, sinon alterne lecture/pause
   // Utilise audio.paused (état DOM live) plutôt que isPlaying (state React potentiellement périmé)

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { EvenementCiel } from '../../../features/debug/evenementsCiel';
-import { decrocherSucces } from '../../../features/succes/succes';
+import { decrocherSucces, type CleSucces } from '../../../features/succes/succes';
 import { createSupernova } from './supernova';
 import { createTrouNoir } from './trouNoir';
 import {
@@ -160,8 +160,6 @@ export type Ciel = {
  * sans la copier, faute de quoi le ciel entier prendrait la couleur d'un
  * launcher.
  */
-const AXE_HAUT = new THREE.Vector3(0, 1, 0);
-
 export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const groupe = new THREE.Group();
   // Hors de la brume : elle est réglée à l'échelle d'un système, tout ceci se
@@ -185,10 +183,15 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   // dessine avant tout le reste, seule compte sa taille **apparente**, qui ne
   // dépend que de l'angle qu'il couvre.
   const RAYON_RIDEAU = 1100;
+  // Arc de 120°, orienté pour tomber en travers du champ au premier regard.
+  // Nommés plutôt qu'écrits dans l'appel : le succès de la tempête a besoin de
+  // savoir où est l'aurore, et deux constantes recopiées finissent par ne plus
+  // dire la même chose.
+  const RIDEAU_DEPART = -Math.PI * 0.25;
+  const RIDEAU_ARC = Math.PI * 0.66;
   const geoRideau = new THREE.CylinderGeometry(
     RAYON_RIDEAU, RAYON_RIDEAU, RAYON_RIDEAU * 1.1, 48, 1, true,
-    // Arc de 120°, orienté pour tomber en travers du champ au premier regard.
-    -Math.PI * 0.25, Math.PI * 0.66,
+    RIDEAU_DEPART, RIDEAU_ARC,
   );
 
   const bas = OIII.clone().lerp(teinte, 0.25);
@@ -824,6 +827,9 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   /** La direction où il se tient : fixe, pour qu'il ne bouge pour personne. */
   const directionTrou = new THREE.Vector3();
 
+  /** Pour les tirages au sort : jamais lu entre deux appels. */
+  const tmpAlea = new THREE.Vector3();
+
   const departVaisseau = new THREE.Vector3();
   const finVaisseau = new THREE.Vector3();
   const vraieVaisseau = new THREE.Vector3();
@@ -831,80 +837,147 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const DUREE_VAISSEAU = 42;
 
   /**
-   * Un point du ciel dans le champ de la caméra.
+   * Un point du ciel, tiré au hasard sur toute la sphère.
    *
-   * Tiré au hasard sur toute la sphère, l'événement se produisait presque
-   * toujours dans le dos : un ciel de soixante degrés sur trois cent soixante,
-   * c'est une chance sur six d'être vu. Une étoile filante que personne ne voit
-   * n'est pas une étoile filante. Elle naît donc dans un cône ouvert autour de
-   * la direction du regard — assez large pour qu'elle reste une surprise, assez
-   * étroit pour qu'elle tombe dans l'image.
+   * Les événements naissaient dans un cône autour du regard, pour qu'on ait une
+   * chance de les voir : un ciel de soixante degrés sur trois cent soixante,
+   * c'est une chance sur six. Mais une étoile filante qui tombe toujours devant
+   * celui qui regarde n'est pas un ciel, c'est un spectacle — et le succès qui
+   * la récompense ne vaut plus rien, puisqu'on ne pouvait pas la manquer.
+   *
+   * Elle tombe donc n'importe où, et c'est à l'œil d'y être. Ce qui se passe
+   * dans le dos se passe quand même, et se perd. C'est le prix du reste.
+   *
+   * Tirage uniforme sur la sphère : `randomDirection` ne favorise aucun pôle,
+   * là où un tirage indépendant en latitude et en longitude entasse les points
+   * aux deux bouts de l'axe.
    */
-  function devantLaCamera(cible: THREE.Vector3, camera: THREE.Camera, rayonCiel: number, ouverture: number): THREE.Vector3 {
-    const avant = new THREE.Vector3();
-    camera.getWorldDirection(avant);
-    const droite = new THREE.Vector3().crossVectors(avant, AXE_HAUT).normalize();
-    const haut = new THREE.Vector3().crossVectors(droite, avant).normalize();
-
-    const angle = Math.random() * Math.PI * 2;
-    const ecart = Math.tan(ouverture) * Math.sqrt(Math.random());
-    return cible
-      .copy(avant)
-      .addScaledVector(droite, Math.cos(angle) * ecart)
-      .addScaledVector(haut, Math.sin(angle) * ecart)
-      .normalize()
-      .multiplyScalar(rayonCiel)
-      .add(camera.position);
-  }
-
-  /**
-   * Un coin de ciel, et surtout pas le milieu du regard.
-   *
-   * Tirée dans un cône autour de l'axe de vue, la supernova tombait une fois
-   * sur deux juste devant le système qu'on était en train de regarder : sa
-   * lueur le mangeait, et il ne restait plus rien à voir derrière elle. Les
-   * petits événements peuvent se permettre de passer par là — ils sont minces
-   * et durent trois secondes. Pas une explosion large de vingt-sept degrés qui
-   * tient une minute.
-   *
-   * Elle se pose donc à l'écart : assez loin de l'axe pour laisser le système
-   * tranquille, assez près pour rester dans l'image, et de biais vers le haut
-   * — c'est là qu'il n'y a rien, et c'est là qu'on lève les yeux. Le même
-   * raisonnement que pour le trou noir, à ceci près que lui ne bouge jamais,
-   * alors qu'elle est tirée au moment où elle éclate.
-   */
-  function aCoteDuRegard(
+  function ailleursDansLeCiel(
     cible: THREE.Vector3,
     camera: THREE.Camera,
     rayonCiel: number,
   ): THREE.Vector3 {
-    const avant = new THREE.Vector3();
-    camera.getWorldDirection(avant);
-    const droite = new THREE.Vector3().crossVectors(avant, AXE_HAUT).normalize();
-    const haut = new THREE.Vector3().crossVectors(droite, avant).normalize();
+    return cible.randomDirection().multiplyScalar(rayonCiel).add(camera.position);
+  }
 
-    // D'un côté ou de l'autre, à soixante-cinq ou quatre-vingt-cinq degrés de
-    // la verticale : nettement de côté, et toujours un peu au-dessus.
-    //
-    // Plus haut, elle dépasserait par le dessus : l'image n'offre que trente
-    // degrés vers le haut pour un champ de soixante, contre une quarantaine
-    // sur les côtés, et la coquille en mesure treize à elle seule.
-    const cote = Math.random() < 0.5 ? -1 : 1;
-    const azimut = cote * (1.13 + Math.random() * 0.35);
-    // Et entre vingt-quatre et trente-deux degrés de l'axe du regard. C'est un
-    // compromis, et il est serré des deux côtés : plus près, elle couvre le
-    // système qu'on regarde ; plus loin, elle sort du cadre d'une fenêtre
-    // étroite, et un événement qu'on ne voit pas n'en est pas un. À cette
-    // distance, son bord intérieur laisse le tiers central de l'image libre.
-    const ecart = Math.tan(0.42 + Math.random() * 0.14);
+  /**
+   * Le champ de la caméra, refait à chaque image.
+   *
+   * Six plans, et un point est dedans ou dehors. C'est ce qui décide d'un
+   * succès : l'événement doit être devant les yeux, et pas seulement en train
+   * de se produire quelque part.
+   *
+   * La matrice de vue est recalculée ici plutôt que lue sur la caméra : son
+   * inverse n'est tenu à jour que par le rendu, et la scène ne peut pas
+   * dépendre de l'ordre dans lequel on l'appelle.
+   */
+  const champDeVision = new THREE.Frustum();
+  const matChamp = new THREE.Matrix4();
+  const matVue = new THREE.Matrix4();
 
-    return cible
-      .copy(avant)
-      .addScaledVector(droite, Math.sin(azimut) * ecart)
-      .addScaledVector(haut, Math.cos(azimut) * ecart)
-      .normalize()
-      .multiplyScalar(rayonCiel)
-      .add(camera.position);
+  function majChampDeVision(camera: THREE.Camera): void {
+    matVue.copy(camera.matrixWorld).invert();
+    champDeVision.setFromProjectionMatrix(
+      matChamp.multiplyMatrices(camera.projectionMatrix, matVue),
+    );
+  }
+
+  /** Ce point est-il devant les yeux ? */
+  function dansLeChamp(point: THREE.Vector3): boolean {
+    return champDeVision.containsPoint(point);
+  }
+
+  /**
+   * Où se tient l'aurore, en cinq points répartis sur son arc.
+   *
+   * La tempête n'est pas partout : son rideau est un arc de cent vingt degrés,
+   * posé dans une direction fixe du monde, et le cylindre ne fait que suivre
+   * l'observateur sans jamais tourner avec lui. Elle a donc un endroit, comme
+   * les autres événements — et le succès a donc le droit de demander qu'on le
+   * regarde.
+   *
+   * Quinze points et non un seul : large comme il est, on en voit un bout bien
+   * avant d'en avoir le milieu dans l'œil, et exiger le milieu reviendrait à
+   * demander de viser une chose qui barre le tiers du ciel. Cinq sur la largeur
+   * de l'arc, et trois sur la hauteur du cylindre — sans ces trois-là, lever un
+   * peu les yeux faisait sortir du champ la seule rangée qu'on surveillait
+   * alors que le rideau remplissait encore l'écran.
+   */
+  const POINTS_RIDEAU = [0.08, 0.28, 0.5, 0.72, 0.92].flatMap((part) => {
+    const angle = RIDEAU_DEPART + RIDEAU_ARC * part;
+    const x = Math.sin(angle) * RAYON_RIDEAU;
+    const z = Math.cos(angle) * RAYON_RIDEAU;
+    // Le cylindre est haut de 1,1 rayon, centré sur l'œil : ses bords sont donc
+    // à plus ou moins 0,55, et on reste un peu en deçà.
+    return [-0.45, 0, 0.45].map((h) => new THREE.Vector3(x, h * RAYON_RIDEAU, z));
+  });
+  /** Les mêmes, rapportés autour de l'œil à chaque image. */
+  const rideauAutourDeLOeil = POINTS_RIDEAU.map(() => new THREE.Vector3());
+
+  function placerLeRideau(camera: THREE.Camera): THREE.Vector3[] {
+    for (let i = 0; i < POINTS_RIDEAU.length; i++) {
+      rideauAutourDeLOeil[i].copy(POINTS_RIDEAU[i]).add(camera.position);
+    }
+    return rideauAutourDeLOeil;
+  }
+
+  /**
+   * Le temps qu'il faut avoir passé à regarder une chose pour qu'elle compte.
+   *
+   * Trois secondes. Une seule image suffisait, et c'était trop peu : en se
+   * déplaçant vite on décrochait le succès d'un événement passé dans un coin de
+   * l'écran sans l'avoir vu. Trois secondes, c'est le temps de le remarquer.
+   *
+   * Sauf pour ce qui ne dure pas trois secondes : une étoile filante en met une
+   * à traverser le ciel, et il serait impossible de la regarder plus longtemps
+   * qu'elle n'existe. Le seuil est donc plafonné aux deux tiers de la vie de
+   * l'événement — assez pour qu'un coin d'écran ne suffise pas.
+   */
+  const REGARD = 3;
+  const SEUILS: Record<CleSucces, number> = {
+    trainee: Math.min(REGARD, DUREE_TRAINEE * 0.6),
+    tempete: Math.min(REGARD, DUREE_TEMPETE * 0.6),
+    comete: Math.min(REGARD, DUREE_COMETE * 0.6),
+    vaisseau: Math.min(REGARD, DUREE_VAISSEAU * 0.6),
+    cometeBleue: Math.min(REGARD, DUREE_BLEUE * 0.6),
+    supernova: Math.min(REGARD, DUREE_NOVA * 0.6),
+    trouNoir: Math.min(REGARD, DUREE_TROU * 0.6),
+  };
+
+  /** Le temps déjà passé à regarder chaque événement en cours. */
+  const regarde: Record<CleSucces, number> = {
+    trainee: 0, tempete: 0, comete: 0, vaisseau: 0,
+    cometeBleue: 0, supernova: 0, trouNoir: 0,
+  };
+
+  /**
+   * Compte le temps passé à regarder un événement, et décroche son succès au
+   * bout du compte.
+   *
+   * Le compte est **cumulé** et non continu : regarder ailleurs ne le remet pas
+   * à zéro, seule la fin de l'événement le fait. Quitter la chose des yeux une
+   * seconde pour revenir dessus n'est pas distraction, c'est la regarder.
+   *
+   * `ou` est la place de la chose, ou plusieurs places quand elle est trop
+   * large pour tenir dans un point — le rideau de l'aurore.
+   */
+  function regarder(
+    cle: CleSucces,
+    enCours: boolean,
+    ou: THREE.Vector3 | THREE.Vector3[],
+    dt: number,
+  ): void {
+    if (!enCours) {
+      regarde[cle] = 0;
+      return;
+    }
+    const vu = Array.isArray(ou) ? ou.some((p) => dansLeChamp(p)) : dansLeChamp(ou);
+    if (!vu) return;
+    // Une image ne peut pas valoir plus d'un quart de seconde : sur une machine
+    // qui peine, ou au retour d'un onglet resté en arrière-plan, un seul pas de
+    // temps démesuré offrirait le succès d'un coup.
+    regarde[cle] += Math.min(dt, 0.25);
+    if (regarde[cle] >= SEUILS[cle]) decrocherSucces(cle);
   }
 
   /**
@@ -951,11 +1024,13 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   }
 
   function lancerTrainee(camera: THREE.Camera): void {
-    devantLaCamera(departTrainee, camera, distance * 0.8, 0.5);
+    ailleursDansLeCiel(departTrainee, camera, distance * 0.8);
     // L'arrivée est proche du départ : une traînée file, elle ne fait pas le
-    // tour du ciel.
-    devantLaCamera(finTrainee, camera, distance * 0.8, 0.5);
-    finTrainee.lerp(departTrainee, 0.55);
+    // tour du ciel. D'où un écart tiré autour du départ, et non un second point
+    // tiré sur toute la sphère — qui l'enverrait à l'autre bout.
+    finTrainee
+      .copy(departTrainee)
+      .addScaledVector(tmpAlea.randomDirection(), distance * 0.3);
 
     courseTrainee.subVectors(finTrainee, departTrainee).normalize();
     vraieTrainee.copy(departTrainee);
@@ -1008,7 +1083,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
    * la regarder passer.
    */
   function lancerComete(camera: THREE.Camera, soleil: THREE.Vector3): void {
-    devantLaCamera(departComete, camera, distance * 0.45, 0.8);
+    ailleursDansLeCiel(departComete, camera, distance * 0.45);
 
     // La course se déduit du soleil, elle ne se tire plus au hasard.
     //
@@ -1122,8 +1197,11 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   }
 
   function lancerVaisseau(camera: THREE.Camera): void {
-    devantLaCamera(departVaisseau, camera, distance * 0.7, 0.75);
-    devantLaCamera(finVaisseau, camera, distance * 0.7, 0.75);
+    ailleursDansLeCiel(departVaisseau, camera, distance * 0.7);
+    // Une course franche, mais pas le tour du ciel en quarante secondes.
+    finVaisseau
+      .copy(departVaisseau)
+      .addScaledVector(tmpAlea.randomDirection(), distance * 0.9);
     vaisseau.visible = true;
     vaisseauRestant = DUREE_VAISSEAU;
   }
@@ -1160,24 +1238,6 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     derniereCamera = camera;
     dernierSoleil.copy(soleil);
     temps += dt;
-
-    // Ce qui est à l'écran est vu, et vaut son succès.
-    //
-    // Ici, et pas aux endroits qui lancent les événements : il y en a deux par
-    // événement — le tirage au sort et le panneau de débogage —, et un seul des
-    // deux aurait fini par être oublié. L'appel est fait à chaque image, ce qui
-    // ne coûte qu'une recherche dans un ensemble : c'est le module des succès
-    // qui sait si c'en est un nouveau.
-    //
-    // Et seulement ici, c'est-à-dire sous le `vivant` : un ciel coupé ne montre
-    // rien, et ce qu'on ne voit pas ne se décroche pas.
-    if (trainéeRestante > 0) decrocherSucces('trainee');
-    if (tempete > 0) decrocherSucces('tempete');
-    if (cometeRestante > 0) decrocherSucces('comete');
-    if (vaisseauRestant > 0) decrocherSucces('vaisseau');
-    if (bleueRestante > 0) decrocherSucces('cometeBleue');
-    if (novaRestante > 0) decrocherSucces('supernova');
-    if (trouRestant > 0) decrocherSucces('trouNoir');
 
     // Le rideau enveloppe l'observateur, où qu'il soit.
     //
@@ -1382,7 +1442,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       if (prochainTirageNova <= 0) {
         prochainTirageNova = 60;
         if (Math.random() < 1 / 180) {
-          aCoteDuRegard(positionNova, camera, distance * 0.9);
+          ailleursDansLeCiel(positionNova, camera, distance * 0.9);
           poserNova(camera);
           nova.visible = true;
           novaRestante = DUREE_NOVA;
@@ -1514,6 +1574,33 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
         prochainVaisseau = 260 + Math.random() * 420;
       }
     }
+
+    // ── Les succès ─────────────────────────────────────────────────────────
+    //
+    // Vu, et non pas survenu. L'événement tombe où il veut dans le ciel ; il ne
+    // compte que s'il est resté **dans le champ de la caméra** assez longtemps
+    // pour qu'on le voie. Tourné de l'autre côté, on le manque, et il ne
+    // reviendra pas — c'est ce qui donne sa valeur au reste.
+    //
+    // À la fin de la mise à jour, et non au début : les places viennent d'être
+    // recalculées, et une place d'il y a une image est fausse d'autant que la
+    // tête a tourné.
+    //
+    // Ici, et pas aux endroits qui lancent les événements : il y a deux chemins
+    // par événement — le tirage au sort et le panneau de débogage —, et un seul
+    // des deux aurait fini par être oublié. Et tout cela sous le `vivant` : un
+    // ciel coupé ne montre rien.
+    majChampDeVision(camera);
+    // La tempête compte comme les autres : son rideau occupe un arc du ciel, et
+    // non le ciel entier. Elle était décrochée tant qu'elle durait, où que l'on
+    // regarde — ce qui revenait à l'offrir à qui se trouvait là.
+    regarder('tempete', tempete > 0, placerLeRideau(camera), dt);
+    regarder('trainee', trainéeRestante > 0, trainee.position, dt);
+    regarder('comete', cometeRestante > 0, noyau.position, dt);
+    regarder('vaisseau', vaisseauRestant > 0, placeVaisseau, dt);
+    regarder('cometeBleue', bleueRestante > 0, noyauBleu.position, dt);
+    regarder('supernova', novaRestante > 0, nova.position, dt);
+    regarder('trouNoir', trouRestant > 0, trouNoir.objet.position, dt);
   }
 
   /** Force un événement, comme si son heure était venue. */
@@ -1560,7 +1647,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       return camera.position.clone().addScaledVector(directionTrou, RAYON_CIEL);
     }
     if (evenement === 'supernova') {
-      aCoteDuRegard(positionNova, camera, distance * 0.9);
+      ailleursDansLeCiel(positionNova, camera, distance * 0.9);
       poserNova(camera);
       nova.visible = true;
       novaRestante = DUREE_NOVA;
