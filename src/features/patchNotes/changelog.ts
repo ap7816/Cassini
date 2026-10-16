@@ -16,7 +16,7 @@ export interface ChangeEntry {
 export const CHANGELOG: ChangeEntry[] = [
   {
     version: '6.0.0',
-    date: '2026-10-15',
+    date: '2026-10-16',
     sections: [
       {
         type: 'new',
@@ -35,6 +35,7 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.new_11',
           'changelog.v6_0_0.new_12',
           'changelog.v6_0_0.new_13',
+          'changelog.v6_0_0.new_14',
         ],
       },
       {
@@ -44,8 +45,6 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.change_1',
           'changelog.v6_0_0.change_2',
           'changelog.v6_0_0.change_3',
-          'changelog.v6_0_0.change_4',
-          'changelog.v6_0_0.change_5',
         ],
       },
       {
