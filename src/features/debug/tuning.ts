@@ -169,8 +169,8 @@ export const REGLAGES_DEFAUT: Readonly<Reglages> = Object.freeze({
   camAmorti: 0.06,
   camReculMin: 2.6,
   camReculMax: 20,
-  volDureeMin: 1.6,
-  volDureeMax: 3.4,
+  volDureeMin: 2.4,
+  volDureeMax: 4.5,
 
   exposition: 1.15,
   // Débordement discret : le soleil et les jaquettes les plus claires luisent,

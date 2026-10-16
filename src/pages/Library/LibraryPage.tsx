@@ -329,7 +329,7 @@ export function LibraryPage() {
           </button>
         </div>
       ) : (
-        <div className={css.grid}>
+        <div className={`${css.grid} cascade`}>
           {filteredGames.map((g) => (
             <GameCard
               key={g.id}

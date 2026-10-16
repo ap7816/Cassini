@@ -16,7 +16,7 @@ export function SettingsPage() {
   const [searchParams] = useSearchParams();
 
   return (
-    <div className={css.page}>
+    <div className={`${css.page} cascade`}>
       <h1 className={css.title}>{t('settings.title')}</h1>
       <ReglagesContenu recherche={searchParams.get('q') ?? ''} />
     </div>

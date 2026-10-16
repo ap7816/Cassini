@@ -42,7 +42,7 @@ export function ListeSucces() {
         </div>
       </div>
 
-      <ol className={css.liste}>
+      <ol className={`${css.liste} cascade`}>
         {SUCCES.map((cle, i) => {
           const vu = decroches.has(cle);
           return (

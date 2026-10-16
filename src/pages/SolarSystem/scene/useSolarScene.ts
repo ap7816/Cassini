@@ -10,6 +10,7 @@ import {
   demiLargeurApparente,
   distanceApproche,
   pixelsEnMonde,
+  poseDuSysteme,
   poserCamera,
 } from '../lib/framing';
 import { densiteBrume } from '../lib/haze';
@@ -17,6 +18,7 @@ import { normaleOrbite, orbitPos, positionSurOrbite } from '../lib/orbits';
 import { MARGIN as POPUP_MARGIN, placePopup } from '../lib/popup';
 import { createFondCiel } from './cielFond';
 import { NUAGE_TAILLE, createStarfield, createSunBeacons, teindreSoleil } from './decor';
+import { RAYON_BALISE } from '../lib/balises';
 import { createCiel } from './ciel';
 import { createChantComete } from '../../../features/ambient/chantComete';
 import { enregistrerCiel } from '../../../features/debug/evenementsCiel';
@@ -43,8 +45,8 @@ import { nomPlateforme } from '../../../i18n/plateformes';
  * de `frameR * CAM_REF` dure une seconde, les autres au prorata, dans les
  * bornes ci-dessus.
  */
-const CAM_MIN_S = 1;
-const CAM_MAX_S = 2.2;
+const CAM_MIN_S = 1.3;
+const CAM_MAX_S = 2.8;
 const CAM_REF = 0.7;
 
 /**
@@ -106,8 +108,20 @@ function saisieEnCours(e: KeyboardEvent): boolean {
  * donne l'impression d'un arrêt net, et une interpolation exponentielle, qui
  * n'arrive jamais, oblige à trancher par un seuil — donc à sauter.
  */
-function easeInOut(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(2 - 2 * t, 3) / 2;
+/**
+ * Lissage quintique : `6t⁵ − 15t⁴ + 10t³`.
+ *
+ * Sa vitesse **et** son accélération sont nulles aux deux bouts, là où la
+ * cubique ci-dessus n'annule que la vitesse. La différence ne se discute pas,
+ * elle se sent : c'est elle qui enlève le petit à-coup au démarrage et à
+ * l'arrivée d'un déplacement de caméra, parce que l'œil ne suit pas une
+ * position mais une vitesse, et qu'une vitesse qui apparaît d'un coup se voit.
+ *
+ * C'est la courbe des mouvements de caméra, et c'est pour cela qu'on la
+ * retrouve partout, du bruit de Perlin aux travellings.
+ */
+function lissageQuintique(t: number): number {
+  return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
 /**
@@ -444,11 +458,12 @@ export function useSolarScene({
       // Resserré depuis 1,9 : le système occupait un peu plus du tiers de la
       // hauteur utile, le reste étant du vide étoilé.
       const frameR = s.taille.outerR * 1.42 + s.taille.sunR * 1.6;
+      const p = poseDuSysteme(frameR);
+      const pose = new THREE.Vector3(p.x, p.y, p.z);
       return {
         frameR,
-        // ~48° d'élévation : plus bas, les orbites s'écrasent sur une ligne et
-        // la répartition autour du soleil devient illisible.
-        position: new THREE.Vector3(0, frameR * 1.05, frameR * 0.95).add(s.centre),
+        // Trente degrés d'élévation, mesurés et vérifiés dans `lib/framing`.
+        position: pose.add(s.centre),
       };
     };
 
@@ -521,7 +536,7 @@ export function useSolarScene({
       const vise = endroit.clone().sub(camera.position).normalize()
         .multiplyScalar(rayon)
         .add(camera.position);
-      animateCam(camera.position.clone(), vise, 0.7);
+      animateCam(camera.position.clone(), vise, 0.7, lissageQuintique);
     });
 
     // Brume, qui noie les planètes à mesure qu'on quitte un système.
@@ -599,8 +614,9 @@ export function useSolarScene({
         } else if (role === 'couronne' && o instanceof THREE.Mesh) {
           (o.material as THREE.MeshBasicMaterial).opacity =
             (o.userData.opaciteBase as number) * r.couronneIntensite;
-        } else if (role === 'balise' && o instanceof THREE.Points) {
-          (o.material as THREE.PointsMaterial).size = r.baliseTaille;
+        } else if (role === 'balise') {
+          // Rien à faire : la taille est relue à chaque image par
+          // `balises.update`, qui la calcule par balise selon sa distance.
         }
       });
     };
@@ -631,6 +647,11 @@ export function useSolarScene({
         `#${s.couleur.toString(16).padStart(6, '0')}`,
         s.taille.systemR * 0.55,
         s.platform,
+        // Au-delà, le système n'est plus qu'une étoile parmi les autres : sa
+        // balise brille encore, son nom se tait. C'est la même distance que
+        // celle où la balise est rapportée autour de l'œil, de sorte que les
+        // deux changements tombent ensemble.
+        RAYON_BALISE,
       );
     }
     // La langue peut changer pendant que la scène est montée : on renomme sur
@@ -708,9 +729,11 @@ export function useSolarScene({
     // Avancement du déplacement, en secondes, et durée visée
     let camT = 0;
     let camDur = 0;
-    let camEase: (t: number) => number = easeInOut;
+    let camEase: (t: number) => number = lissageQuintique;
     const camOffset = new THREE.Vector3();
     const camArc = new THREE.Vector3();
+    /** Point de contrôle de l'arc que suit le **regard** pendant un voyage. */
+    const camArcRegard = new THREE.Vector3();
     /** Position monde d'une planète, réutilisée à chaque calcul. */
     const camMonde = new THREE.Vector3();
     /** Axe « droite » de la caméra, pour décaler le point visé latéralement. */
@@ -725,6 +748,7 @@ export function useSolarScene({
     let dernierViewH = 0;
     let derniereBande = 0;
     let camArcActif = false;
+    let camArcRegardActif = false;
 
     // Planète actuellement sélectionnée — la carte de détail la suit chaque
     // frame, y compris quand la caméra continue de tourner après le clic.
@@ -779,7 +803,7 @@ export function useSolarScene({
       pos: THREE.Vector3,
       look: THREE.Vector3,
       duree?: number,
-      courbe: (t: number) => number = easeInOut,
+      courbe: (t: number) => number = lissageQuintique,
       /**
        * Point de contrôle d'une courbe de Bézier quadratique.
        *
@@ -790,6 +814,15 @@ export function useSolarScene({
        * d'une téléportation.
        */
       arc?: THREE.Vector3,
+      /**
+       * Point de contrôle de l'arc du **regard**.
+       *
+       * Absent, le regard va tout droit — ce qui convient pour approcher une
+       * planète, où l'on vise déjà à peu près le bon endroit. Présent, il monte
+       * avec la caméra et devance vers l'arrivée : c'est ce qui fait qu'un
+       * survol se regarde, voir `lib/flightPath`.
+       */
+      arcRegard?: THREE.Vector3,
     ) {
       camEase = courbe;
       if (arc) camArc.copy(arc);
@@ -798,6 +831,8 @@ export function useSolarScene({
       camFromLook.copy(controls.target);
       camTargetPos.copy(pos);
       camTargetLook.copy(look);
+      if (arcRegard) camArcRegard.copy(arcRegard);
+      camArcRegardActif = Boolean(arcRegard);
 
       // Durée croissante avec la distance mais bornée : un saut entre deux
       // planètes voisines ne doit pas traîner, une traversée du système ne
@@ -884,7 +919,7 @@ export function useSolarScene({
       camOffset.set(pose.position.x, pose.position.y, pose.position.z);
       const cible = new THREE.Vector3(pose.cible.x, pose.cible.y, pose.cible.z);
 
-      animateCam(camOffset, cible);
+      animateCam(camOffset, cible, undefined, lissageQuintique);
     }
 
     /**
@@ -930,7 +965,7 @@ export function useSolarScene({
       if (camOffset.lengthSq() < 1e-6) camOffset.subVectors(viseHome, viseCentre);
       camOffset.normalize().multiplyScalar(viseHome.distanceTo(viseCentre)).add(viseCentre);
 
-      animateCam(camOffset, viseCentre);
+      animateCam(camOffset, viseCentre, undefined, lissageQuintique);
     }
     clearRef.current = clearPlanet;
 
@@ -962,12 +997,19 @@ export function useSolarScene({
 
       // Trajet en arc plutôt qu'en ligne droite — voir lib/flightPath, où sa
       // composition est vérifiée, notamment qu'il ne traverse aucun soleil.
-      const trajet = composerTrajet(depart, c.position, galaxie.rayon);
+      const trajet = composerTrajet(
+        depart, c.position, galaxie.rayon, controls.target.clone(), s.centre,
+      );
       const controle = new THREE.Vector3(
         trajet.controle.x, trajet.controle.y, trajet.controle.z,
       );
+      const controleRegard = new THREE.Vector3(
+        trajet.controleRegard.x, trajet.controleRegard.y, trajet.controleRegard.z,
+      );
 
-      animateCam(c.position, s.centre.clone(), trajet.duree, easeInOut, controle);
+      animateCam(
+        c.position, s.centre.clone(), trajet.duree, lissageQuintique, controle, controleRegard,
+      );
       onSysteme(s.platform);
     }
     flyToRef.current = (nom: string) => {
@@ -1101,7 +1143,7 @@ export function useSolarScene({
     // Lancé ici et non au bloc caméra : `animateCam` s'appuie sur des vecteurs
     // déclarés entre-temps.
     if (courant) galaxie.forcer(courant.platform);
-    animateCam(homeCam, homeLook, ARRIVAL_S, easeInOut);
+    animateCam(homeCam, homeLook, ARRIVAL_S, lissageQuintique);
 
     // ── Sélection et survol ──────────────────────────────────────────────
     const picker = createPicker({
@@ -1520,6 +1562,13 @@ export function useSolarScene({
       if (apercu) galaxie.epingler(apercu.cle);
       galaxie.update(camera);
 
+      // Les balises des soleils lointains, rapportées autour de l'œil : au-delà
+      // du plan lointain de la caméra, un système disparaissait purement et
+      // simplement alors qu'on venait de reculer pour l'embrasser.
+      // La densité de pixels de l'écran lui est passée : `gl_PointSize` compte
+      // en pixels d'écran, pas en pixels d'interface.
+      balises.update(camera, renderer.getPixelRatio());
+
       // La lumière suit le système regardé : une seule pour toute la galaxie,
       // et elle n'a de sens qu'auprès des planètes qu'elle éclaire.
       if (vise) {
@@ -1558,10 +1607,22 @@ export function useSolarScene({
         } else {
           camera.position.lerpVectors(camFromPos, camTargetPos, e);
         }
-        controls.target.lerpVectors(camFromLook, camTargetLook, e);
+        if (camArcRegardActif) {
+          // Le regard a son propre arc : il monte avec la caméra et devance
+          // vers l'arrivée. Sans lui, il allait tout droit pendant que la
+          // caméra s'élevait, et l'on survolait la galaxie en regardant le sol
+          // — jusqu'à soixante-trois degrés de plongée au milieu du trajet.
+          const u = 1 - e;
+          controls.target
+            .copy(camFromLook).multiplyScalar(u * u)
+            .addScaledVector(camArcRegard, 2 * u * e)
+            .addScaledVector(camTargetLook, e * e);
+        } else {
+          controls.target.lerpVectors(camFromLook, camTargetLook, e);
+        }
         camera.lookAt(controls.target);
 
-        // `easeInOut(1)` vaut exactement 1 : la caméra est déjà sur sa cible,
+        // La courbe vaut exactement 1 en 1 : la caméra est déjà sur sa cible,
         // il n'y a rien à recaler et donc plus d'à-coup final.
         if (k >= 1) stopCam();
       } else {

@@ -522,7 +522,10 @@
       "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins",
       "change_3": "[Graphisme] L’onglet est rangé comme un menu de jeu : un préréglage Bas / Moyen / Élevé / Ultra, une échelle de rendu de 50 à 200 %, une limite d’images par seconde et un compteur d’images",
       "fix_1": "[Bibliothèque] Les jaquettes reviennent toutes seules au retour du réseau : une coupure les marquait comme inexistantes pour toute la session, et actualiser n’y changeait rien. La coupure est désormais vue par le côté natif, le moteur web ne la signalant pas dans l’application",
-      "new_13": "[Bibliothèque] Un bandeau prévient quand il n’y a pas de réseau, et dit que les jaquettes manquantes se chargeront à son retour"
+      "new_13": "[Bibliothèque] Un bandeau prévient quand il n’y a pas de réseau, et dit que les jaquettes manquantes se chargeront à son retour",
+      "change_4": "[Interface] Tout bouge au ressort : les cartes et les listes arrivent en cascade, les modales montent en se défloutant, et chaque bouton répond au survol comme à l’appui",
+      "change_5": "[Système solaire] Le voyage d’un système à l’autre est refait : la caméra regarde désormais où elle va au lieu de fixer le sol à mi-parcours, elle arrive de trois quarts plutôt que de haut, et part comme elle s’arrête, sans à-coup",
+      "fix_2": "[Système solaire] Les systèmes restent visibles de n’importe où : vus de très loin, il n’en reste qu’une étoile — qui rapetisse avec la distance, sans jamais disparaître, et sans le nom du launcher"
     },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",

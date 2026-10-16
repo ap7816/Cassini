@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { composerFiche, largeurFicheVoulue } from './framing';
+import {
+  composerFiche,
+  elevationDeLaPose,
+  largeurFicheVoulue,
+  poseDuSysteme,
+} from './framing';
 import { REGLAGES_DEFAUT } from '../../../features/debug/tuning';
 
 /**
@@ -87,5 +92,45 @@ describe('composerFiche', () => {
   it('ne rend jamais une largeur négative, même pour une bande minuscule', () => {
     expect(placer(0, 0).largeur).toBeGreaterThan(0);
     expect(placer(10, 500).largeur).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Le cadrage d'un système, quand on arrive dessus.
+ *
+ * Il se regardait de quarante-huit degrés au-dessus du plan des orbites : une
+ * carte, où tout est à plat et à la même distance. Trente degrés lui rendent sa
+ * profondeur — c'est l'angle sous lequel on photographie une maquette, et ce
+ * n'est pas un hasard.
+ */
+describe('le cadrage d’un système', () => {
+  it('regarde de trois quarts, et non de haut', () => {
+    const angle = elevationDeLaPose(poseDuSysteme(100));
+    expect(angle).toBeGreaterThan(26);
+    expect(angle).toBeLessThan(34);
+  });
+
+  it('tient le système entier dans la largeur de l’écran', () => {
+    const cadre = 100;
+    const pose = poseDuSysteme(cadre);
+    const distance = Math.hypot(pose.x, pose.y, pose.z);
+
+    // Un champ vertical de 60° sur un écran 16/9 : la moitié de l'angle
+    // horizontal vaut atan(tan(30°) · 16/9).
+    const demiHorizontal = Math.atan(Math.tan((30 * Math.PI) / 180) * (16 / 9));
+    const demiLargeurVisible = distance * Math.tan(demiHorizontal);
+
+    // Le système tient, et il reste de la marge — sans quoi la moindre orbite
+    // excentrée sortirait du cadre.
+    expect(demiLargeurVisible).toBeGreaterThan(cadre * 1.15);
+    // Mais pas trop : au-delà, on regarderait un point au milieu du vide.
+    expect(demiLargeurVisible).toBeLessThan(cadre * 1.8);
+  });
+
+  it('se tient plus près qu’avant, l’angle étant plus rasant', () => {
+    const distance = Math.hypot(0, poseDuSysteme(100).y, poseDuSysteme(100).z);
+    // 1,42 fois le cadre auparavant.
+    expect(distance).toBeLessThan(142);
+    expect(distance).toBeGreaterThan(110);
   });
 });

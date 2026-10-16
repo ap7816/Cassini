@@ -201,3 +201,29 @@ export function distanceApproche(
 
   return Math.min(maxi, Math.max(mini, d));
 }
+
+/**
+ * Où poser la caméra pour regarder un système entier.
+ *
+ * `cadre` est le rayon à embrasser — orbite extérieure et couronne du soleil
+ * comprises. Le résultat est un décalage à ajouter au centre du système.
+ *
+ * **Trente degrés d'élévation, et non quarante-huit.** De haut, on regardait
+ * une carte : les orbites devenaient des cercles posés à plat, toutes les
+ * planètes à la même distance apparente. À trente, elles redeviennent des
+ * ellipses, passent devant et derrière leur soleil, et le système retrouve une
+ * profondeur. Plus bas, elles s'écraseraient sur une ligne.
+ *
+ * La distance suit l'angle : 1,22 fois le cadre contre 1,42 auparavant. Ce
+ * n'est pas un réglage à l'œil — à cette élévation, c'est la **largeur** du
+ * système qui commande le cadrage, et elle ne change pas quand on s'abaisse,
+ * là où sa hauteur apparente, elle, diminue. On peut donc s'approcher d'autant.
+ */
+export function poseDuSysteme(cadre: number): { x: number; y: number; z: number } {
+  return { x: 0, y: cadre * 0.62, z: cadre * 1.05 };
+}
+
+/** L'élévation de cette pose au-dessus du plan des orbites, en degrés. */
+export function elevationDeLaPose(pose: { y: number; z: number }): number {
+  return (Math.atan2(pose.y, Math.hypot(pose.z, 0)) * 180) / Math.PI;
+}

@@ -288,6 +288,45 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
 
+- **Les systèmes vus de très loin**
+  **Réparé.** En reculant, les planètes se libéraient — c'est voulu —, les soleils tenaient encore un moment, puis s'éteignaient un à un. On reculait pour embrasser la galaxie entière, et la galaxie disparaissait.
+
+  La cause n'était pas la taille apparente : des balises existaient déjà pour ça, un point lumineux par soleil, à taille fixe en pixels. C'était le **plan lointain de la caméra**, à vingt mille unités, au-delà desquelles rien n'est dessiné. Sur une bibliothèque de sept launchers, les systèmes de l'autre bout de la galaxie passent dessous dès qu'on prend du recul — et avec eux leur balise, qui vivait à leur place exacte.
+
+  Les balises sont donc **rapportées sur une sphère autour de l'œil** quand elles sont plus loin que douze mille unités : même direction, donc même place dans le ciel, mais à une distance que la caméra sait voir. C'est exactement ce que fait `ciel.ts` pour ses événements, et le raisonnement y est écrit en long. En deçà du seuil, la balise reste exactement sur son soleil — c'est lui qu'on vise pour s'y rendre, et un repère décalé mentirait.
+
+  **Et elles rapetissent avec la distance**, ce que la première version ne faisait pas : leur taille était fixe — vingt-six pixels — pour les sauver de la disparition, ce qui en faisait sept ballons lumineux suspendus au milieu d'un champ d'étoiles fines dès qu'on prenait du recul. Une atténuation ordinaire ferait l'inverse et les effacerait. D'où une décroissance en `1/d`, celle de la perspective, bornée aux deux bouts : jamais plus grosse que de près, jamais plus fine qu'une étoile du fond. Réglée sur ce qu'on veut voir plutôt que sur une formule — à quatre mille unités, huit pixels ; au-delà de onze mille, le plancher. Autrement dit, dès qu'un système cesse de se lire comme un système, sa balise est une étoile.
+
+  La taille varie d'une balise à l'autre, ce que `PointsMaterial` ne sait pas faire — sa taille est un uniforme, la même pour tout l'objet. D'où une quinzaine de lignes de shader, qui ne coûtent rien : la galaxie n'a qu'une poignée de soleils, et c'est toujours un seul appel de dessin. Un piège au passage : `gl_PointSize` compte en pixels d'**écran** et non d'interface, et il faut donc le multiplier par la densité de pixels — ce que `PointsMaterial` faisait dans notre dos.
+
+  **Et les noms se taisent au même seuil.** De si loin, un système n'est plus qu'un point lumineux parmi d'autres : son nom n'a plus rien à désigner, et sept étiquettes suspendues dans le vide font une liste, pas une galaxie. Les deux changements tombent ensemble, de sorte qu'il n'y a qu'un seuil à comprendre : en deçà, un système avec son nom ; au-delà, une étoile.
+
+- **La caméra, d'un système à l'autre**
+  **Refaite.** Elle allait trop vite, regardait n'importe où, et arrivait sur un système vu de dessus. Les trois défauts tenaient à trois décisions distinctes.
+
+  **Le regard allait tout droit pendant que la caméra montait.** C'était le pire des trois, et un vrai défaut : la position suivait un arc qui s'élevait haut au-dessus du disque — c'est ce qui donne au voyage son mouvement de recul —, mais le point visé, lui, était interpolé en ligne droite d'un centre de système à l'autre, sans jamais s'élever. À mi-parcours, la caméra surplombait une cible restée en bas, presque à sa verticale : **soixante-trois degrés de plongée**, mesurés. On traversait la galaxie en regardant le sol.
+
+  Le regard a donc son propre arc. Il monte presque autant que la caméra — la petite différence qui reste est exactement ce qui fait l'inclinaison vers le bas — et surtout il **devance** : son point de contrôle est aux quatre cinquièmes du chemin, de sorte qu'à mi-parcours il a déjà fait 61 % de la route quand la caméra n'en est qu'à la moitié. On survole en regardant où l'on va, et le système d'arrivée entre dans le champ bien avant qu'on y soit. Résultat mesuré : l'angle de plongée ne s'écarte plus de plus d'un degré de celui du cadrage d'arrivée sur toute la traversée. `flightPath.test.ts` le tient.
+
+  **Le cadrage d'arrivée passe de 48° à 30°** au-dessus du plan des orbites. De haut, on regardait une carte : des cercles posés à plat, toutes les planètes à la même distance apparente. À trente degrés, les orbites redeviennent des ellipses, les planètes passent devant et derrière leur soleil, et le système retrouve une profondeur. La distance suit — 1,22 fois le cadre contre 1,42 —, parce qu'à cette élévation c'est la **largeur** du système qui commande le cadrage, et elle ne change pas quand on s'abaisse, là où sa hauteur apparente, elle, diminue.
+
+  **Les durées** passent de 1,6–3,4 s à 2,4–4,5 s pour un voyage, et l'arc s'élève de 30 % de la distance au lieu de 45.
+
+  **La courbe**, enfin : lissage quintique (`6t⁵ − 15t⁴ + 10t³`) partout, au lieu d'une cubique. Sa vitesse **et** son accélération sont nulles aux deux bouts, là où la cubique n'annulait que la vitesse — et c'est précisément ce qui enlève le petit à-coup au démarrage et à l'arrivée, parce que l'œil ne suit pas une position mais une vitesse, et qu'une vitesse qui apparaît d'un coup se voit.
+
+- **Le mouvement de l'interface**
+  **Fait, et sans bibliothèque.** Une règle, et tout le reste en découle : rien ne bouge à vitesse constante. Un objet qui démarre et s'arrête net n'existe pas, et l'œil le sait.
+
+  Framer Motion n'est pas installé, et l'ajouter coûterait une cinquantaine de kilo-octets plus un calcul en JavaScript à chaque image — cher pour un bouton qui s'enfonce, sur une application qui fait déjà tourner une galaxie. Le navigateur sait le faire seul depuis que `linear()` accepte une liste de points : on y échantillonne la **vraie** courbe d'un ressort — la solution de `m·x″ + c·x′ + k·x = 0`, prise en trente-six points — et le moteur interpole. Même mouvement, zéro octet, zéro image de calcul, et cela marche aussi dans une transition.
+
+  Trois ressorts, et leur durée est celle qu'il leur faut pour se taire, non un chiffre rond : **100/15** pour ce qui paraît, qui dépasse sa cible de 2,8 % avant de revenir — c'est ce débordement qui fait « organique » plutôt que « glissé » ; **320/30** pour ce qu'on touche, presque sans dépassement, parce qu'un bouton qui rebondit sous le doigt a l'air cassé ; **180/26**, critique, pour ce qui s'en va et pour les couleurs.
+
+  **La cascade** décale chaque élément d'un vingtième de seconde sur le précédent — cartes des paramètres, journal des observations, liste des jeux, grille de la bibliothèque, notes de version. Le rang vient du CSS plutôt que du JSX, et il est **plafonné au onzième** : sans cela, une bibliothèque de quarante jeux ferait attendre deux secondes à la dernière vignette, et une cascade qu'on attend n'est plus une cascade.
+
+  **Une difficulté de cascade CSS, et deux spécificités pour la résoudre.** `transition` est une propriété unique : la règle qui l'emporte prend toute la liste, on ne peut pas y ajouter une ligne. Les modules déclarent déjà leurs transitions avec une classe ; une règle à spécificité nulle aurait été écrasée, et le survol aurait sauté au lieu de ressortir. La déclaration de transition passe donc **au-dessus** et reprend à son compte ce que les modules animaient — vérifié avant d'écrire, les deux seules transitions de largeur du dépôt sont des barres de progression. Le mouvement lui-même, en revanche, reste à spécificité **nulle** : plusieurs composants ont déjà leur geste à eux — la fiche de jeu soulève son bouton de lecture —, et les écraser tous par un même 1,02 aurait appauvri l'interface au lieu de la soigner.
+
+  Dernier détail, qui compte : couper les animations ne se fait pas avec `animation: none`, qui laisserait les éléments à leur état de départ, c'est-à-dire transparents. La durée est écourtée à un millième de milliseconde — plus rien ne bouge, tout reste visible.
+
 - **Les jaquettes et le réseau**
   **Réparé, et expliqué à l'utilisateur.** Sans wifi, les jaquettes ne se chargeaient pas — c'est normal. Ce qui ne l'était pas : au retour du réseau, elles ne revenaient plus, même en actualisant la bibliothèque. Il fallait relancer l'application.
 

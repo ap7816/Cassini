@@ -48,14 +48,14 @@ export function PanneauReglages({ onFermer }: Props) {
 
   return (
     <div
-      className={css.fond}
+      className={`${css.fond} voile`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onFermer();
       }}
     >
       <div
         ref={fenetre}
-        className={css.panneau}
+        className={`${css.panneau} glisseDeDroite`}
         role="dialog"
         aria-modal="true"
         aria-label={t('settings.title')}
@@ -84,7 +84,8 @@ export function PanneauReglages({ onFermer }: Props) {
 
         {/* Pas de numéro de version ici : il est affiché sous le bouton qui
             ouvre ce panneau, dans la barre des launchers. */}
-        <div className={css.corps}>
+        {/* `cascade` : les cartes ne tombent pas toutes en même temps. */}
+        <div className={`${css.corps} cascade`}>
           <ReglagesContenu recherche={recherche} />
         </div>
       </div>

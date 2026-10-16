@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.15s ease;
+  animation: fadeIn var(--ressort-doux-duree) var(--ressort-doux) both;
 }
 
 .dialog {
@@ -18,7 +18,8 @@
   padding: 26px 24px 22px;
   width: min(400px, 92vw);
   box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
-  animation: popIn 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* Le ressort partagé — voir `styles/animations.css`. */
+  animation: popIn var(--ressort-duree) var(--ressort) both;
 }
 
 /* ─── Prompt variant ──────────────────────────────────────── */
@@ -118,8 +119,8 @@
 }
 
 @keyframes popIn {
-  from { transform: scale(0.93) translateY(8px); opacity: 0; }
-  to   { transform: scale(1)    translateY(0);   opacity: 1; }
+  from { transform: translateY(14px) scale(0.985); opacity: 0; filter: blur(5px); }
+  to   { transform: translateY(0) scale(1);        opacity: 1; filter: blur(0); }
 }
 
 /* Le contour global d'App.css était annulé plus haut : sans lui, rien ne

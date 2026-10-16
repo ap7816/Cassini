@@ -44,6 +44,8 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.change_1',
           'changelog.v6_0_0.change_2',
           'changelog.v6_0_0.change_3',
+          'changelog.v6_0_0.change_4',
+          'changelog.v6_0_0.change_5',
         ],
       },
       {
@@ -51,6 +53,7 @@ export const CHANGELOG: ChangeEntry[] = [
         itemKeys: [
           'changelog.v6_0_0.fix_0',
           'changelog.v6_0_0.fix_1',
+          'changelog.v6_0_0.fix_2',
         ],
       },
       {

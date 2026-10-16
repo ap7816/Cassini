@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { placerBalise, tailleBalise } from '../lib/balises';
 import { seededRng } from '../lib/random';
 import { lireReglages } from '../../../features/debug/tuning';
 import { couronneDe } from '../lib/couleurSoleil';
@@ -247,6 +248,8 @@ export function createSunBeacons(
   soleils: Array<{ centre: THREE.Vector3; couleur: THREE.Color }>,
 ): {
   points: THREE.Points;
+  /** Rapporte les balises trop lointaines autour de l'œil. */
+  update: (camera: THREE.Camera, densitePixels?: number) => void;
   dispose: () => void;
 } {
   const n = soleils.length;
@@ -265,16 +268,47 @@ export function createSunBeacons(
     colors[i * 3 + 2] = 0.55 + s.couleur.b * 0.45;
   });
 
+  // Une taille par balise, et non une pour toutes : chacune rapetisse selon la
+  // distance de **son** soleil. `PointsMaterial` ne sait pas faire — sa taille
+  // est un uniforme, la même pour tout l'objet —, d'où ces quelques lignes de
+  // shader. Elles ne coûtent rien : la galaxie n'a qu'une poignée de soleils,
+  // et c'est toujours un seul appel de dessin.
+  const tailles = new Float32Array(n).fill(lireReglages().baliseTaille);
+
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('taille', new THREE.BufferAttribute(tailles, 1));
 
   const map = makeBeaconTexture();
-  const mat = new THREE.PointsMaterial({
-    // Diamètre en pixels, indépendant de la distance.
-    size: lireReglages().baliseTaille,
-    sizeAttenuation: false,
-    map,
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uCarte: { value: map },
+      // `gl_PointSize` est en pixels de l'écran, et non de l'interface : sur un
+      // écran à deux pixels par point, une balise de six paraîtrait de trois.
+      // C'est ce que fait `PointsMaterial` dans notre dos, et qu'il faut refaire
+      // ici.
+      uDensite: { value: 1 },
+    },
+    vertexShader: /* glsl */ `
+      attribute float taille;
+      uniform float uDensite;
+      varying vec3 vCouleur;
+      void main() {
+        vCouleur = color;
+        vec4 vue = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = taille * uDensite;
+        gl_Position = projectionMatrix * vue;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uCarte;
+      varying vec3 vCouleur;
+      void main() {
+        vec4 grain = texture2D(uCarte, gl_PointCoord);
+        gl_FragColor = vec4(vCouleur * grain.rgb, grain.a);
+      }
+    `,
     vertexColors: true,
     transparent: true,
     blending: THREE.AdditiveBlending,
@@ -289,8 +323,37 @@ export function createSunBeacons(
   // écarterait tout l'objet dès qu'un seul soleil quitte le champ.
   points.frustumCulled = false;
 
+  const attribut = geo.getAttribute('position') as THREE.BufferAttribute;
+  const attrTaille = geo.getAttribute('taille') as THREE.BufferAttribute;
+
   return {
     points,
+    update(camera: THREE.Camera, densitePixels = 1) {
+      mat.uniforms.uDensite.value = densitePixels;
+      const maxPx = lireReglages().baliseTaille;
+
+      // Place et taille : les deux décisions sont dans `lib/balises`, où elles
+      // se vérifient. La taille suit la distance **vraie** du soleil, et non
+      // celle du point dessiné — rapporté près de l'œil, il ne dirait plus rien
+      // de l'éloignement.
+      let bouge = false;
+      let redimensionne = false;
+      for (let i = 0; i < n; i++) {
+        const centre = soleils[i].centre;
+        const p = placerBalise(centre, camera.position);
+        if (attribut.getX(i) !== p.x || attribut.getY(i) !== p.y || attribut.getZ(i) !== p.z) {
+          attribut.setXYZ(i, p.x, p.y, p.z);
+          bouge = true;
+        }
+        const t = tailleBalise(centre.distanceTo(camera.position), maxPx);
+        if (attrTaille.getX(i) !== t) {
+          attrTaille.setX(i, t);
+          redimensionne = true;
+        }
+      }
+      if (bouge) attribut.needsUpdate = true;
+      if (redimensionne) attrTaille.needsUpdate = true;
+    },
     dispose: () => { geo.dispose(); mat.dispose(); map.dispose(); },
   };
 }

@@ -10,7 +10,7 @@
   background: rgb(5 12 22 / 0.72);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  animation: overlayIn 0.22s ease;
+  animation: overlayIn var(--ressort-doux-duree) var(--ressort-doux) both;
 }
 
 @keyframes overlayIn {
@@ -29,12 +29,15 @@
   border-radius: 2px;
   box-shadow: 0 0 34px rgb(var(--hud) / 0.14), 0 18px 50px rgb(0 0 0 / 0.65);
   overflow: hidden;
-  animation: modalIn 0.3s cubic-bezier(0.34, 1.25, 0.64, 1);
+  /* Le ressort partagé, et le flou qui se lève : c'est lui qui donne la
+     vitesse, un objet net qui se déplace vite étant un objet qu'on n'a pas eu
+     le temps de voir bouger. Voir `styles/animations.css`. */
+  animation: modalIn var(--ressort-duree) var(--ressort) both;
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
 /* ─── Header ──────────────────────────────────────────────────── */

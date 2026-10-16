@@ -137,18 +137,21 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
-  animation: pageEnter 0.22s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  /* Le ressort partagé, et une translation avec le fondu : une page qui ne
+     fait que s'éclaircir ne vient de nulle part. Voir `styles/animations.css`. */
+  animation: pageEnter var(--ressort-duree) var(--ressort) backwards;
   min-height: 0;
 }
 
 @keyframes pageEnter {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .retour { transition: none; }
-  .pageTransition { animation: none; }
+  /* Pas `animation: none` : la page resterait à son état de départ, c'est-à-dire
+     transparente. La feuille des animations écourte déjà toutes les durées. */
 }
 
 @media (max-width: 900px) {

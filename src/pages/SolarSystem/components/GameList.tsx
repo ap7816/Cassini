@@ -390,7 +390,8 @@ export function GameList({
           </div>
         )}
 
-        <ul className={css.items}>
+        {/* `cascade` : les vignettes arrivent l'une après l'autre. */}
+        <ul className={`${css.items} cascade`}>
           {installes.map((g) => (
             <Ligne
               key={g.id}

@@ -16,6 +16,9 @@ import '@fontsource/chakra-petch/600.css';
 import '@fontsource/chakra-petch/700.css';
 import '@fontsource/share-tech-mono/400.css';
 import './App.css';
+// Le mouvement de l'interface : ressorts, cascades, micro-interactions.
+// Après `App.css`, qui pose les jetons de couleur dont il se sert.
+import './styles/animations.css';
 
 initStorage().then(async () => {
   // Avant le premier rendu : la langue choisie n'est lisible qu'une fois le

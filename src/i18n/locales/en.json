@@ -522,7 +522,10 @@
       "perf_1": "[Performance] The sky needs no texture at all: 8 MB of graphics memory and a second of startup drawing saved",
       "change_3": "[Graphics] The tab is laid out like a game's graphics menu: a Low / Medium / High / Ultra preset, a render scale from 50 to 200%, a frame rate limit and a frame counter",
       "fix_1": "[Library] Cover art comes back on its own once the network returns: an outage used to mark it as non-existent for the whole session, and refreshing changed nothing. The outage is now detected natively, since the web engine does not report it inside the app",
-      "new_13": "[Library] A banner warns when there is no network, and says that missing cover art will load once it is back"
+      "new_13": "[Library] A banner warns when there is no network, and says that missing cover art will load once it is back",
+      "change_4": "[Interface] Everything moves on a spring: cards and lists arrive in a cascade, dialogs rise out of a blur, and every button answers to hover and press",
+      "change_5": "[Solar system] The trip from one system to another has been redone: the camera now looks where it is going instead of staring at the ground halfway, it arrives at a three-quarter angle rather than from above, and starts and stops without a jolt",
+      "fix_2": "[Solar system] Systems stay visible from anywhere: seen from very far away only a star remains — one that shrinks with distance without ever vanishing, and without the launcher name"
     },
     "v5_1_0": {
       "fix_0": "[Settings] The “start with Windows” switch reflects what Windows actually does, not what was stored",

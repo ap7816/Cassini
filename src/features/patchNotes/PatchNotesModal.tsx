@@ -68,7 +68,7 @@ export function PatchNotesModal({ dismissed, onClose, onToggleDismiss }: Props) 
         </header>
 
         {/* Liste de toutes les versions du changelog */}
-        <div className={css.body}>
+        <div className={`${css.body} cascade`}>
           {CHANGELOG.map((entry, ei) => (
             <div key={entry.version} className={css.entry}>
               <div className={css.entryHeader}>

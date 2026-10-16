@@ -23,7 +23,7 @@
   box-shadow: 0 8px 28px rgb(var(--fond) / 0.55), 0 2px 8px rgb(var(--fond) / 0.35);
   backdrop-filter: blur(14px);
   pointer-events: auto;
-  animation: slideIn 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: slideIn var(--ressort-duree) var(--ressort) both;
   min-width: 220px;
 }
 

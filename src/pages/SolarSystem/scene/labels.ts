@@ -14,6 +14,8 @@ type Label = {
   world?: THREE.Vector3;
   /** Distance au-delà de laquelle ce label apparaît. */
   seuil?: number;
+  /** Distance au-delà de laquelle il se tait : il n'y a plus qu'une étoile. */
+  seuilMax?: number;
   /** Système nommé par ce label, pour pouvoir le renommer (label de plateforme). */
   cle?: string;
   /** Planète suivie (label de jeu). */
@@ -60,12 +62,20 @@ export class LabelLayer {
     seuil = 0,
     /** Clé du système nommé, pour `renommer`. */
     cle?: string,
+    /**
+     * Distance au-delà de laquelle le nom se tait.
+     *
+     * De si loin, un système n'est plus qu'un point lumineux parmi d'autres :
+     * son nom n'a plus rien à désigner, et sept noms suspendus dans le vide
+     * font une liste, pas une galaxie. On ne garde que les étoiles.
+     */
+    seuilMax = Infinity,
   ): void {
     const div = document.createElement('div');
     div.className = className;
     div.textContent = text;
     if (color) div.style.color = color;
-    this.push(div, { world, seuil, cle });
+    this.push(div, { world, seuil, seuilMax, cle });
   }
 
   /**
@@ -159,7 +169,8 @@ export class LabelLayer {
         show = this.proj.z <= 1 && (survole || dist <= maxDist);
         opacity = survole ? 1 : 0;
       } else if (lbl.world) {
-        show = camera.position.distanceTo(lbl.world) > (lbl.seuil ?? 0);
+        const d = camera.position.distanceTo(lbl.world);
+        show = d > (lbl.seuil ?? 0) && d < (lbl.seuilMax ?? Infinity);
         if (show) {
           this.proj.copy(lbl.world).project(camera);
           show = this.proj.z <= 1;

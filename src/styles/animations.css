@@ -1,0 +1,230 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Le mouvement de l'interface.
+
+   Une règle, et tout le reste en découle : **rien ne bouge à vitesse
+   constante**. Un objet qui démarre et s'arrête net n'existe pas, et l'œil le
+   sait ; c'est à peu près tout ce qui sépare une interface finie d'un
+   prototype.
+
+   Pas de bibliothèque d'animation ici. Framer Motion n'est pas installé, et
+   l'ajouter coûterait une cinquantaine de kilo-octets plus un calcul en
+   JavaScript à chaque image — sur une application qui fait déjà tourner une
+   galaxie en trois dimensions, c'est cher pour un bouton qui s'enfonce. Le
+   navigateur sait le faire seul depuis que `linear()` accepte une liste de
+   points : on y échantillonne la **vraie** courbe d'un ressort, et le moteur
+   interpole entre les points. Même mouvement, zéro octet, zéro image de
+   calcul, et cela marche aussi dans une transition — ce que ne sait pas faire
+   une bibliothèque qui anime en JavaScript sans monopoliser le fil principal.
+
+   Les trois courbes ci-dessous sont la solution de l'équation d'un ressort
+   amorti, `m·x″ + c·x′ + k·x = 0` avec `x(0) = 0` et `x′(0) = 0`, prise en
+   trente-six points. Leur durée est celle qu'il faut au ressort pour se taire
+   — ici, pour rester à deux millièmes de sa cible —, et non un chiffre rond
+   choisi à l'œil. Pour les changer : changer la raideur et l'amortissement,
+   puis rééchantillonner. Les nombres ne se retouchent pas à la main.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Raideur 100, amortissement 15, masse 1 — soit un amortissement de 0,75 : le
+     ressort dépasse sa cible de 2,8 % puis revient. C'est ce très léger
+     débordement qui fait « organique » plutôt que « glissé ». Pour tout ce qui
+     paraît : cartes, listes, panneaux, modales. */
+  --ressort: linear(
+    0.000, 0.021, 0.075, 0.151, 0.240, 0.335, 0.430, 0.521, 0.606, 0.683,
+    0.752, 0.811, 0.862, 0.904, 0.938, 0.965, 0.986, 1.002, 1.013, 1.021,
+    1.025, 1.028, 1.028, 1.028, 1.026, 1.024, 1.021, 1.019, 1.016, 1.013,
+    1.011, 1.009, 1.007, 1.005, 1.004, 1.003, 1.000
+  );
+  --ressort-duree: 0.78s;
+
+  /* Raideur 320, amortissement 30 : vif, et ne dépasse que de huit millièmes.
+     Pour ce qu'on touche — survol, appui. Un bouton qui rebondit sous le doigt
+     donne l'impression d'un défaut, pas d'un ressort. */
+  --ressort-vif: linear(
+    0.000, 0.023, 0.081, 0.160, 0.250, 0.344, 0.437, 0.524, 0.604, 0.676,
+    0.738, 0.793, 0.839, 0.877, 0.908, 0.934, 0.954, 0.969, 0.981, 0.990,
+    0.997, 1.002, 1.005, 1.007, 1.008, 1.008, 1.008, 1.007, 1.007, 1.006,
+    1.005, 1.005, 1.004, 1.003, 1.003, 1.002, 1.000
+  );
+  --ressort-vif-duree: 0.46s;
+
+  /* Raideur 180, amortissement 26 : quasi critique, donc aucun dépassement du
+     tout. Pour ce qui s'en va, et pour les couleurs — une teinte qui dépasse
+     sa cible, cela se voit et ne veut rien dire. */
+  --ressort-doux: linear(
+    0.000, 0.020, 0.071, 0.140, 0.217, 0.298, 0.378, 0.455, 0.525, 0.590,
+    0.648, 0.700, 0.745, 0.785, 0.819, 0.848, 0.873, 0.895, 0.913, 0.928,
+    0.941, 0.951, 0.960, 0.967, 0.973, 0.978, 0.983, 0.986, 0.989, 0.991,
+    0.993, 0.994, 0.995, 0.996, 0.997, 0.998, 1.000
+  );
+  --ressort-doux-duree: 0.58s;
+
+  /* Le décalage d'un élément au suivant dans une liste. Assez pour que l'œil
+     suive la cascade, pas assez pour qu'il attende le dernier. */
+  --cascade: 0.05s;
+}
+
+/* ── Ce qui paraît ──────────────────────────────────────────────────────── */
+
+/* Monte en se révélant. La translation est courte : douze pixels suffisent à
+   dire « ceci arrive », au-delà on regarde le trajet au lieu de la chose. */
+@keyframes surgirDuBas {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pour une modale : elle monte, elle grandit d'un cheveu, et le flou se lève.
+   Le flou est ce qui donne la vitesse — un objet net qui se déplace vite est
+   un objet qu'on n'a pas eu le temps de voir bouger. */
+@keyframes surgirEtNet {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* Pour un panneau latéral : il glisse depuis son bord, et se pose. */
+@keyframes glisserDeDroite {
+  from { opacity: 0; transform: translateX(26px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Et le voile derrière, qui ne fait que s'épaissir. */
+@keyframes voileQuiMonte {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Les utilitaires ────────────────────────────────────────────────────── */
+
+/* À poser sur ce qui vient d'arriver à l'écran. */
+.surgit {
+  animation: surgirDuBas var(--ressort-duree) var(--ressort) both;
+}
+
+/* La modale et le panneau, pour que tout l'écran ait le même geste. */
+.surgitModale {
+  animation: surgirEtNet var(--ressort-duree) var(--ressort) both;
+}
+
+.glisseDeDroite {
+  animation: glisserDeDroite var(--ressort-duree) var(--ressort) both;
+}
+
+.voile {
+  animation: voileQuiMonte var(--ressort-doux-duree) var(--ressort-doux) both;
+}
+
+/*
+   La cascade.
+
+   Chaque enfant part un cran plus tard que le précédent. Le rang vient du CSS,
+   ce qui évite d'avoir à le passer depuis le JSX : les onze premiers couvrent
+   ce qu'on voit sans défiler, et tout ce qui suit démarre avec le onzième.
+   Sans ce plafond, une bibliothèque de quarante jeux ferait attendre deux
+   secondes à la dernière vignette — et une cascade qu'on attend n'est plus une
+   cascade.
+*/
+.cascade > * {
+  animation: surgirDuBas var(--ressort-duree) var(--ressort) both;
+  animation-delay: calc(var(--rang, 0) * var(--cascade));
+}
+
+.cascade > *:nth-child(1)  { --rang: 0; }
+.cascade > *:nth-child(2)  { --rang: 1; }
+.cascade > *:nth-child(3)  { --rang: 2; }
+.cascade > *:nth-child(4)  { --rang: 3; }
+.cascade > *:nth-child(5)  { --rang: 4; }
+.cascade > *:nth-child(6)  { --rang: 5; }
+.cascade > *:nth-child(7)  { --rang: 6; }
+.cascade > *:nth-child(8)  { --rang: 7; }
+.cascade > *:nth-child(9)  { --rang: 8; }
+.cascade > *:nth-child(10) { --rang: 9; }
+.cascade > *:nth-child(n + 11) { --rang: 10; }
+
+/* ── Ce qu'on touche ────────────────────────────────────────────────────── */
+
+/*
+   Tout ce qui se clique répond à la main : un cheveu plus grand quand elle
+   approche, un cheveu plus petit quand elle appuie. Deux pour cent, pas
+   davantage — au-delà, le bouton saute au lieu de répondre.
+
+   Le ressort vif, et non une transition linéaire : c'est là que la différence
+   se voit le plus, parce que c'est le seul mouvement que l'utilisateur
+   provoque lui-même et dont il attend la réponse.
+
+   **Deux spécificités, et c'est voulu.**
+
+   `transition` est une propriété unique : la règle qui l'emporte prend toute
+   la liste, on ne peut pas y ajouter une ligne. Or les modules déclarent déjà
+   leurs transitions — fond, bordure, couleur — avec une classe, donc 0-1-0 ;
+   une règle à spécificité nulle serait écrasée, et le survol sauterait au lieu
+   de ressortir. Celle-ci passe donc au-dessus, et reprend à son compte tout ce
+   que les modules animaient. (Vérifié avant d'écrire : les deux seules
+   transitions de largeur du dépôt sont des barres de progression, qui ne sont
+   pas des boutons.)
+*/
+:root :is(button, [role='button'], summary, label.toggle) {
+  transition:
+    transform var(--ressort-vif-duree) var(--ressort-vif),
+    filter var(--ressort-doux-duree) var(--ressort-doux),
+    background var(--ressort-doux-duree) var(--ressort-doux),
+    border-color var(--ressort-doux-duree) var(--ressort-doux),
+    color var(--ressort-doux-duree) var(--ressort-doux),
+    box-shadow var(--ressort-doux-duree) var(--ressort-doux),
+    opacity var(--ressort-doux-duree) var(--ressort-doux);
+}
+
+/*
+   Le mouvement lui-même, en revanche, reste à spécificité **nulle**.
+
+   Plusieurs composants ont déjà leur geste à eux — la fiche de jeu soulève son
+   bouton de lecture, le panneau de débogage enfonce ses déclencheurs. Ces
+   gestes-là sont choisis, et une règle générale qui les écraserait tous par un
+   même 1,02 rendrait l'interface plus pauvre, pas plus soignée. Ils gagnent
+   donc, et ils gagnent en plus le ressort de la règle ci-dessus.
+*/
+
+:where(button, [role='button'], summary):not(:disabled):hover {
+  transform: scale(1.02);
+  filter: brightness(1.08);
+}
+
+:where(button, [role='button'], summary):not(:disabled):active {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+  /* L'appui répond tout de suite : attendre un ressort pour s'enfoncer donne
+     l'impression d'un clic qui n'a pas été pris. Le relâchement, lui, reprend
+     le ressort — c'est le retour qui doit être vivant, pas la descente. */
+  transition-duration: 0.06s;
+}
+
+/* ── Ce qui ne doit pas bouger ──────────────────────────────────────────── */
+
+/*
+   Les exceptions ont toutes la même raison : l'échelle déplacerait quelque
+   chose que l'œil est en train de viser, de lire ou de tirer.
+
+   - la galaxie : on y clique pour atteindre un point précis ;
+   - les champs de saisie : le curseur de texte sauterait avec eux ;
+   - les menus et les manettes de curseur : on les tire, on ne les survole pas.
+*/
+:where(canvas, input, select, textarea):hover,
+:where(canvas, input, select, textarea):active {
+  transform: none;
+  filter: none;
+}
+
+/* ── Quand on n'en veut pas ─────────────────────────────────────────────── */
+
+/*
+   Plus rien ne bouge, mais tout reste visible : une animation coupée ne doit
+   pas emporter ce qu'elle animait. D'où une durée minuscule plutôt que
+   `animation: none`, qui laisserait les éléments à leur état de départ —
+   c'est-à-dire transparents, et pour de bon.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
