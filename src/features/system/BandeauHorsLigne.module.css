@@ -1,0 +1,66 @@
+/* L'avertissement de réseau : un voyant d'alerte, en haut et au milieu.
+   Au milieu parce que c'est un état de la machine et non un message de plus :
+   les toasts ont le coin, les succès la gauche, les mises à jour la droite.
+   Et sous les en-têtes — la bibliothèque et la page musique ont une barre de
+   titre avec un champ de recherche, que le bandeau recouvrait. */
+
+.bandeau {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 8px 14px;
+  border-radius: 2px;
+  background: var(--hud-crochets), var(--hud-trame), var(--hud-vitre-forte);
+  border: 1px solid rgb(var(--hud-alerte) / 0.45);
+  box-shadow: 0 0 22px rgb(var(--hud-alerte) / 0.14), 0 8px 24px rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  animation: descendre 0.3s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+/* Le voyant bat lentement : un état qui dure, pas une alarme. */
+.voyant {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(var(--hud-alerte));
+  box-shadow: 0 0 10px rgb(var(--hud-alerte) / 0.8);
+  animation: battre 2.6s ease-in-out infinite;
+}
+
+.titre {
+  font-family: var(--police-donnee);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--hud-alerte));
+  white-space: nowrap;
+}
+
+.detail {
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: var(--hud-texte-doux);
+  line-height: 1.4;
+}
+
+@keyframes descendre {
+  from { transform: translate(-50%, -14px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+
+@keyframes battre {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bandeau { animation: none; }
+  .voyant { animation: none; }
+}

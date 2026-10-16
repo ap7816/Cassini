@@ -11,11 +11,26 @@ import type { Game } from '../../types';
 
 import { readCoverCacheRaw, writeCoverCacheRaw, removeCoverCache as storageRemoveCache } from '../../../services/storage';
 import { tauriInvoke } from '../../../services/tauri';
+import { estEnLigne, surEtatReseau, verifierLeReseau } from '../../system/reseau';
 
 // URLs d'images trouvées → persistées dans le stockage entre les sessions
 const persistentCache = new Map<string, string>();
 // Clés sans résultat → gardées en mémoire seulement (retente à chaque redémarrage)
+//
+// « Sans résultat » veut dire : le fournisseur a répondu, et il n'a rien. Une
+// panne de réseau n'a rien à faire ici — c'était le défaut. Hors ligne, chaque
+// jeu y entrait comme s'il n'avait pas de jaquette, et au retour du wifi plus
+// rien ne se rechargeait : la seule porte de sortie était de relancer
+// l'application.
 const notFoundCache = new Set<string>();
+
+// Le réseau revient : on oublie les échecs, qui n'en étaient peut-être pas.
+//
+// Rien n'est rechargé d'autorité — ce sont les vignettes qui redemanderont, et
+// elles le feront d'elles-mêmes puisqu'elles écoutent le même signal.
+surEtatReseau((enLigne) => {
+  if (enLigne) notFoundCache.clear();
+});
 
 function loadCache(): Map<string, string> {
   try {
@@ -152,6 +167,8 @@ export function fetchCoverArt(
         }
       } catch (e) {
         console.error('[xbox] lecture du logo impossible pour', title, e);
+        // Une lecture qui échoue n'est pas une absence : on ne retient rien.
+        return null;
       }
       notFoundCache.add(cacheKey);
       return null;
@@ -159,6 +176,9 @@ export function fetchCoverArt(
     inFlight.set(cacheKey, lecture);
     return lecture;
   }
+
+  // Sans réseau, inutile de demander : on ne retient rien et on réessaiera.
+  if (!estEnLigne()) return Promise.resolve(null);
 
   const running = inFlight.get(cacheKey);
   if (running) return running;
@@ -172,7 +192,16 @@ export function fetchCoverArt(
         return url;
       }
     } catch (e) {
-      console.error('[sgdb] tauri invoke error for', title, e);
+      // Le côté natif ne rend une erreur que s'il n'a pas pu **joindre** le
+      // fournisseur ; une recherche qui aboutit sans rien trouver rend un
+      // résultat vide. On ne retient donc rien ici : ce n'est pas une absence
+      // de jaquette, c'est une absence de réponse.
+      console.error('[sgdb] jaquette injoignable pour', title, e);
+      // Le plus sûr des signaux : on vient d'essayer, et ça n'est pas passé.
+      // On fait vérifier l'état du réseau sur-le-champ, au lieu d'attendre la
+      // prochaine sonde — c'est ce qui fait paraître le bandeau tout de suite.
+      verifierLeReseau();
+      return null;
     }
     notFoundCache.add(cacheKey);
     return null;

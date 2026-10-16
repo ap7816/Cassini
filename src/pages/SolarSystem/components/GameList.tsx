@@ -9,6 +9,7 @@ import {
 } from '../../../features/library/services/coverArtService';
 import { PLATFORM_CSS } from '../constants';
 import { useDiskSpace } from '../../../features/system/useDiskSpace';
+import { useEnLigne, useEpoqueReseau } from '../../../features/system/useReseau';
 import { formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import { useCalques } from '../../../features/calques/useCalques';
@@ -42,9 +43,22 @@ function steamAppIdOf(g: Game): string | null {
  */
 function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKeySet: boolean }) {
   const appId = steamAppIdOf(game);
-  const [src, setSrc] = useState<string | null>(
-    game.customImageUrl ?? (appId ? steamCdnUrl(appId) : null),
-  );
+  const depart = game.customImageUrl ?? (appId ? steamCdnUrl(appId) : null);
+  const enLigne = useEnLigne();
+  const epoque = useEpoqueReseau();
+
+  // Source résolue, **étiquetée par l'époque du réseau**.
+  //
+  // C'est le défaut à réparer : hors ligne l'image échouait, la vignette
+  // retombait sur sa lettre, et plus rien ne la relançait — même en
+  // actualisant la bibliothèque, puisque le service avait retenu l'échec comme
+  // une absence de jaquette. Au retour du wifi, l'époque change, l'étiquette ne
+  // correspond plus, et la vignette repart de son adresse de départ. Étiqueter
+  // plutôt que remettre à zéro dans un effet : c'est ce que fait déjà la fiche
+  // de jeu, et cela évite un rendu en cascade.
+  const [resolu, setResolu] = useState<{ epoque: number; src: string | null } | null>(null);
+  const src = resolu && resolu.epoque === epoque ? resolu.src : depart;
+  const setSrc = (valeur: string | null) => setResolu({ epoque, src: valeur });
 
   // Jeux sans appId Steam : la jaquette ne peut venir que de SteamGridDB.
   // Le service met en cache par titre, donc une entrée déjà vue est gratuite.
@@ -55,9 +69,21 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
       if (!cancelled && url) setSrc(url);
     });
     return () => { cancelled = true; };
-  }, [game.title, game.customImageUrl, appId, sgdbKeySet]);
+    // `epoque` est dans les dépendances pour que le retour du réseau relance la
+    // demande, et non pour être lu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.title, game.customImageUrl, appId, sgdbKeySet, epoque]);
 
   function handleError() {
+    // Hors ligne, l'image n'a pas échoué : elle n'a pas pu être demandée.
+    //
+    // Sans cette porte, on enchaînait sur SteamGridDB, qui jetait l'adresse
+    // Steam du cache persistant au passage — une coupure de réseau coûtait
+    // ainsi une jaquette parfaitement valable.
+    if (!enLigne) {
+      setSrc(null);
+      return;
+    }
     // La bannière Steam manque parfois : tenter le portrait, puis SteamGridDB
     if (appId && src === steamCdnUrl(appId)) {
       setSrc(steamPortraitUrl(appId));

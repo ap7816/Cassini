@@ -10,6 +10,7 @@ import {
 import { launchGame } from '../../../features/library/services/launchGame';
 import { desinstallerJeu, trouverDesinstalleur } from '../../../features/library/services/uninstallGame';
 import { useToast } from '../../../features/toast/ToastContext';
+import { useEnLigne, useEpoqueReseau } from '../../../features/system/useReseau';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { PLATFORM_CSS } from '../constants';
@@ -48,9 +49,16 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
     game.steamAppId ??
     (isSteam && game.id.startsWith('steam-') ? game.id.slice('steam-'.length) : null);
 
-  const [imgSrc, setImgSrc] = useState<string | null>(
-    resolvedAppId ? steamCdnUrl(resolvedAppId) : null,
-  );
+  const depart = resolvedAppId ? steamCdnUrl(resolvedAppId) : null;
+  const enLigne = useEnLigne();
+  const epoque = useEpoqueReseau();
+
+  // Étiquetée par l'époque du réseau : au retour du wifi, l'étiquette ne
+  // correspond plus et la jaquette repart de son adresse de départ. Voir
+  // `useReseau.ts` — étiqueter plutôt que remettre à zéro dans un effet.
+  const [resolu, setResolu] = useState<{ epoque: number; src: string | null } | null>(null);
+  const imgSrc = resolu && resolu.epoque === epoque ? resolu.src : depart;
+  const setImgSrc = (valeur: string | null) => setResolu({ epoque, src: valeur });
   const [launching, setLaunching] = useState(false);
   /** Le lancement vient d'aboutir : la coche verte reste quelques secondes. */
   const [lance, setLance] = useState(false);
@@ -90,7 +98,15 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
     }
   }, [game.id, game.title, game.customImageUrl, resolvedAppId, isSteam, sgdbKeySet]);
 
+
   function handleImgError() {
+    // Hors ligne, l'image n'a pas échoué : elle n'a pas pu être demandée.
+    // Enchaîner sur SteamGridDB jetterait au passage une adresse parfaitement
+    // valable, et la jaquette ne reviendrait plus de la session.
+    if (!enLigne) {
+      setImgSrc(null);
+      return;
+    }
     if (imagePerso) {
       setImageKo(imagePerso);
       return;

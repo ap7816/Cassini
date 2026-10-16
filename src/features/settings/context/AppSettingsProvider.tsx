@@ -131,9 +131,17 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     }));
   }
 
-  // Finesse de l'image, débordement lumineux, densité du ciel
-  function setFinesse(v: number) {
-    setSettings((prev) => ({ ...prev, finesse: v }));
+  // Échelle de rendu, limite d'images, compteur, débordement, densité du ciel
+  function setEchelleRendu(v: number) {
+    setSettings((prev) => ({ ...prev, echelleRendu: v }));
+  }
+
+  function setLimiteIPS(v: number) {
+    setSettings((prev) => ({ ...prev, limiteIPS: v }));
+  }
+
+  function setAfficherIPS(v: boolean) {
+    setSettings((prev) => ({ ...prev, afficherIPS: v }));
   }
 
   function setDebordement(enabled: boolean) {
@@ -179,7 +187,9 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       setEvenementsCiel,
       setMusiqueEvenement,
       setVolumeEvenement,
-      setFinesse,
+      setEchelleRendu,
+      setLimiteIPS,
+      setAfficherIPS,
       setDebordement,
       setDensiteCiel,
       setPlanetSizeByPlaytime,

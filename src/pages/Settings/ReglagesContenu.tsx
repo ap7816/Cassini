@@ -24,6 +24,16 @@ import {
 } from '../../features/evenements/musiqueEvenement';
 import { useAmbientPlayer } from '../../features/ambient/useAmbientPlayer';
 import { ListeSucces } from '../../features/succes/ListeSucces';
+import {
+  DENSITES,
+  ECHELLES,
+  LIMITES_IPS,
+  ORDRE_PRESETS,
+  PRESETS,
+  densiteLaPlusProche,
+  presetDe,
+  type Preset,
+} from '../../features/settings/qualite';
 import { SUCCES } from '../../features/succes/succes';
 import { clearCoverCache } from '../../features/library/services/coverArtService';
 import { LANGUES, estLangue, getCurrentLanguage, setLanguage, type Langue } from '../../i18n';
@@ -207,13 +217,38 @@ export function ReglagesContenu({ recherche }: Props) {
     setEvenementsCiel,
     setMusiqueEvenement,
     setVolumeEvenement,
-    setFinesse,
+    setEchelleRendu,
+    setLimiteIPS,
+    setAfficherIPS,
     setDebordement,
     setDensiteCiel,
     setStartSystem,
     setThemeMode,
     setPageVisible,
   } = useAppSettings();
+
+  /**
+   * Le préréglage de qualité, **déduit** des valeurs et jamais stocké.
+   *
+   * Rien à tenir à jour, donc rien qui puisse mentir : l'étiquette ne peut pas
+   * dire « Élevé » pendant que les réglages disent autre chose.
+   */
+  const preset = presetDe({
+    echelleRendu: settings.echelleRendu,
+    densiteCiel: settings.densiteCiel,
+    debordement: settings.debordement,
+    cielVivant: settings.cielVivant,
+  });
+
+  /** Choisir un préréglage écrit ses quatre valeurs d'un coup. */
+  function appliquerPreset(nom: Preset): void {
+    const p = PRESETS[nom];
+    setEchelleRendu(p.echelleRendu);
+    setDensiteCiel(p.densiteCiel);
+    setDebordement(p.debordement);
+    setCielVivant(p.cielVivant);
+  }
+
 
   const ambient = useAmbientPlayer();
 
@@ -671,19 +706,58 @@ export function ReglagesContenu({ recherche }: Props) {
 
       {/* ── Graphisme ────────────────────────────────────────── */}
 
-      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.finesseLabel', 'settings.finesseHint', 'settings.debordementLabel', 'settings.debordementHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.cielVivantLabel', 'settings.cielVivantHint', 'settings.evenementsLabel', 'settings.evenementsHint') && (
+      {/* ── Graphisme ──────────────────────────────────────────
+
+          Rangé comme un menu graphique de jeu, parce que c'en est un : un
+          préréglage d'abord, pour qui ne veut pas savoir, puis le détail pour
+          qui veut. Le préréglage n'est pas stocké, il se déduit des valeurs —
+          voir `features/settings/qualite.ts`. */}
+
+      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.presetLabel', 'settings.presetHint', 'settings.echelleRenduLabel', 'settings.echelleRenduHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.debordementLabel', 'settings.debordementHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.graphismeTitle')}</div>
 
-        <SettingRow labelKey="settings.finesseLabel" hintKey="settings.finesseHint" query={q}>
-          <input
-            type="range"
-            min={1}
-            max={2}
-            step={0.25}
-            value={settings.finesse}
-            onChange={(e) => setFinesse(Number(e.target.value))}
-          />
+        <SettingRow labelKey="settings.presetLabel" hintKey="settings.presetHint" query={q}>
+          <select
+            className={css.langSelect}
+            value={preset}
+            onChange={(e) => appliquerPreset(e.target.value as Preset)}
+          >
+            {ORDRE_PRESETS.map((nom) => (
+              <option key={nom} value={nom}>{t(`settings.preset_${nom}`)}</option>
+            ))}
+            {/* « Personnalisé » n'est pas un choix, c'est un constat : il ne
+                paraît que lorsqu'aucun préréglage ne décrit l'état courant. */}
+            {preset === 'perso' && (
+              <option value="perso" disabled>{t('settings.preset_perso')}</option>
+            )}
+          </select>
+        </SettingRow>
+
+        <SettingRow labelKey="settings.echelleRenduLabel" hintKey="settings.echelleRenduHint" query={q}>
+          <select
+            className={css.langSelect}
+            value={settings.echelleRendu}
+            onChange={(e) => setEchelleRendu(Number(e.target.value))}
+          >
+            {ECHELLES.map((v) => (
+              <option key={v} value={v}>
+                {Math.round(v * 100)} %{v > 1 ? ` · ${t('settings.echelleSuper')}` : ''}
+              </option>
+            ))}
+          </select>
+        </SettingRow>
+
+        <SettingRow labelKey="settings.densiteCielLabel" hintKey="settings.densiteCielHint" query={q}>
+          <select
+            className={css.langSelect}
+            value={densiteLaPlusProche(settings.densiteCiel)}
+            onChange={(e) => setDensiteCiel(Number(e.target.value))}
+          >
+            {DENSITES.map((d) => (
+              <option key={d.cle} value={d.valeur}>{t(`settings.densite_${d.cle}`)}</option>
+            ))}
+          </select>
         </SettingRow>
 
         <SettingRow labelKey="settings.debordementLabel" hintKey="settings.debordementHint" query={q}>
@@ -696,23 +770,48 @@ export function ReglagesContenu({ recherche }: Props) {
             <span className={css.toggleSlider} />
           </label>
         </SettingRow>
+      </div>
+      )}
 
-        <SettingRow labelKey="settings.densiteCielLabel" hintKey="settings.densiteCielHint" query={q}>
-          <input
-            type="range"
-            min={0.3}
-            max={1.6}
-            step={0.1}
-            value={settings.densiteCiel}
-            onChange={(e) => setDensiteCiel(Number(e.target.value))}
-          />
+      {/* Affichage */}
+      {(tab === 'graphisme' || !!q) && matches('settings.affichageTitle', 'settings.limiteIPSLabel', 'settings.limiteIPSHint', 'settings.afficherIPSLabel', 'settings.afficherIPSHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.affichageTitle')}</div>
+
+        <SettingRow labelKey="settings.limiteIPSLabel" hintKey="settings.limiteIPSHint" query={q}>
+          <select
+            className={css.langSelect}
+            value={settings.limiteIPS}
+            onChange={(e) => setLimiteIPS(Number(e.target.value))}
+          >
+            {LIMITES_IPS.map((v) => (
+              <option key={v} value={v}>
+                {v === 0 ? t('settings.limiteIPSAucune') : `${v} IPS`}
+              </option>
+            ))}
+          </select>
         </SettingRow>
 
-        <SettingRow
-          labelKey="settings.cielVivantLabel"
-          hintKey="settings.cielVivantHint"
-          query={q}
-        >
+        <SettingRow labelKey="settings.afficherIPSLabel" hintKey="settings.afficherIPSHint" query={q}>
+          <label className={css.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.afficherIPS}
+              onChange={(e) => setAfficherIPS(e.target.checked)}
+            />
+            <span className={css.toggleSlider} />
+          </label>
+        </SettingRow>
+      </div>
+      )}
+
+      {/* Ambiance de la scène : ce qui se passe dans le ciel, et non la façon
+          dont on le dessine. */}
+      {(tab === 'graphisme' || !!q) && matches('settings.sceneTitle', 'settings.cielVivantLabel', 'settings.cielVivantHint', 'settings.evenementsLabel', 'settings.evenementsHint') && (
+      <div className={css.card}>
+        <div className={css.sectionTitle}>{t('settings.sceneTitle')}</div>
+
+        <SettingRow labelKey="settings.cielVivantLabel" hintKey="settings.cielVivantHint" query={q}>
           <label className={css.toggle}>
             <input
               type="checkbox"
@@ -723,11 +822,7 @@ export function ReglagesContenu({ recherche }: Props) {
           </label>
         </SettingRow>
 
-        <SettingRow
-          labelKey="settings.evenementsLabel"
-          hintKey="settings.evenementsHint"
-          query={q}
-        >
+        <SettingRow labelKey="settings.evenementsLabel" hintKey="settings.evenementsHint" query={q}>
           <label className={css.toggle}>
             <input
               type="checkbox"
@@ -737,11 +832,9 @@ export function ReglagesContenu({ recherche }: Props) {
             <span className={css.toggleSlider} />
           </label>
         </SettingRow>
-
       </div>
       )}
 
-      {/* Autres pages */}
       {(tab === 'params' || !!q) && matches('settings.navTitle', 'settings.showLibraryLabel', 'settings.showLibraryHint', 'settings.showLaunchersLabel', 'settings.showLaunchersHint') && (
       <div className={css.card}>
         <div className={css.sectionTitle}>{t('settings.navTitle')}</div>

@@ -6,6 +6,7 @@ import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
 import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/coverArtService';
 import { tauriInvoke } from '../../../services/tauri';
+import { useEnLigne, useEpoqueReseau } from '../../system/useReseau';
 import { formaterDate, formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import { EditeurTags } from '../../../components/Tags/Tags';
@@ -58,8 +59,19 @@ export function GameCard({
   // d'un jeu à l'autre sans être remontée, l'étiquette garantit qu'on n'affiche
   // jamais l'image du jeu précédent. Elle rend aussi inutile la réinitialisation
   // par effet, qui provoquait un rendu en cascade.
-  const [resolved, setResolved] = useState<{ id: string; src: string | null } | null>(null);
-  const imgSrc = resolved?.id === game.id ? resolved.src : steamDirectUrl;
+  //
+  // L'étiquette porte aussi **l'époque du réseau** : au retour du wifi, elle ne
+  // correspond plus, et la chaîne repart de l'adresse Steam calculée. C'est ce
+  // qui manquait — hors ligne, la jaquette échouait, et plus rien ne la
+  // relançait, même en actualisant la bibliothèque.
+  const enLigne = useEnLigne();
+  const epoque = useEpoqueReseau();
+  const [resolved, setResolved] = useState<
+    { id: string; epoque: number; src: string | null } | null
+  >(null);
+  const imgSrc = resolved?.id === game.id && resolved.epoque === epoque
+    ? resolved.src
+    : steamDirectUrl;
 
   // Image personnalisée qui ne se charge pas : retenue par son adresse, pour
   // qu'on cesse de la réclamer. Sans cela le cadre restait vide — la bannière
@@ -73,8 +85,8 @@ export function GameCard({
   const showFallback = !bannerUrl;
 
   const setImgSrc = useCallback(
-    (src: string | null) => setResolved({ id: game.id, src }),
-    [game.id],
+    (src: string | null) => setResolved({ id: game.id, epoque, src }),
+    [game.id, epoque],
   );
 
   // Seul le cas non-Steam demande un aller-retour réseau : pour Steam, l'URL
@@ -85,13 +97,21 @@ export function GameCard({
     if (!isSteam && sgdbKeySet) {
       let cancelled = false;
       fetchCoverArt(game).then((url) => {
-        if (!cancelled) setResolved({ id: game.id, src: url ?? null });
+        if (!cancelled) setResolved({ id: game.id, epoque, src: url ?? null });
       });
       return () => { cancelled = true; };
     }
-  }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbKeySet]);
+    // `epoque` relance la demande au retour du réseau.
+  }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbKeySet, epoque]);
 
   function handleImgError() {
+    // Hors ligne, l'image n'a pas échoué : elle n'a pas pu être demandée.
+    // Enchaîner sur SteamGridDB jetterait au passage une adresse parfaitement
+    // valable, et la jaquette ne reviendrait plus de la session.
+    if (!enLigne) {
+      setImgSrc(null);
+      return;
+    }
     if (imagePerso) { setImageKo(imagePerso); return; }
 
     if (isSteam && resolvedSteamAppId) {

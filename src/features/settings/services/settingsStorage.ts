@@ -20,7 +20,9 @@ const DEFAULT_SETTINGS: AppSettings = {
     cometeBleue: VOLUME_EVENEMENT_DEFAUT,
     trouNoir: VOLUME_EVENEMENT_DEFAUT,
   },
-  finesse: 2,
+  echelleRendu: 1,
+  limiteIPS: 0,
+  afficherIPS: false,
   debordement: true,
   densiteCiel: 1,
   // Masquées : la galaxie est la bibliothèque et la barre est la liste des
@@ -88,12 +90,22 @@ export function loadSettings(): AppSettings {
       cometeBleue: unVolume('cometeBleue'),
       trouNoir: unVolume('trouNoir'),
     };
-    // Bornés à la relecture : ces trois-là viennent d'un fichier qu'on peut
-    // éditer à la main, et une finesse de mille mettrait la carte à genoux.
-    const finesse =
-      typeof parsed.finesse === 'number' && Number.isFinite(parsed.finesse)
-        ? Math.min(2, Math.max(1, parsed.finesse))
-        : 2;
+    // Bornés à la relecture : ceux-là viennent d'un fichier qu'on peut éditer à
+    // la main, et une échelle de rendu de mille mettrait la carte à genoux.
+    //
+    // `finesse` était un plafond de densité de pixels, de 1 à 2, et non une
+    // part de la résolution native : sur la plupart des écrans les deux valeurs
+    // donnaient le même rendu. Les installations existantes repartent donc de
+    // 100 %, c'est-à-dire de ce qu'elles avaient à l'écran.
+    const echelleRendu =
+      typeof parsed.echelleRendu === 'number' && Number.isFinite(parsed.echelleRendu)
+        ? Math.min(2, Math.max(0.5, parsed.echelleRendu))
+        : 1;
+    const limiteIPS =
+      typeof parsed.limiteIPS === 'number' && Number.isFinite(parsed.limiteIPS)
+        ? Math.min(360, Math.max(0, Math.round(parsed.limiteIPS)))
+        : 0;
+    const afficherIPS = parsed.afficherIPS === true;
     const debordement =
       typeof parsed.debordement === 'boolean' ? parsed.debordement : true;
     const densiteCiel =
@@ -113,7 +125,9 @@ export function loadSettings(): AppSettings {
       evenementsCiel,
       musiquesEvenements,
       volumesEvenements,
-      finesse,
+      echelleRendu,
+      limiteIPS,
+      afficherIPS,
       debordement,
       densiteCiel,
       // Absentes d'une entrée écrite avant ces réglages : masquées, comme pour

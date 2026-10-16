@@ -29,6 +29,7 @@ import { distanceMini, ETENDUE_MAX } from '../lib/etendue';
 import { LabelLayer } from './labels';
 import { createPicker } from './picking';
 import { createPostprocess } from './postprocess';
+import { doitSauterImage } from './cadence';
 import { abonnerReglages, lireReglages } from '../../../features/debug/tuning';
 import type { PlanetEntry } from './types';
 import i18n from '../../../i18n';
@@ -132,6 +133,24 @@ function easeInOut(t: number): number {
  */
 let moteurPartage: THREE.WebGLRenderer | null = null;
 
+/**
+ * La densité de pixels à demander pour une échelle de rendu.
+ *
+ * L'échelle est une part de la résolution **native** : à 100 % la scène est
+ * dessinée exactement à la définition de l'écran, en dessous elle est dessinée
+ * plus petit puis étirée, au-dessus plus grand puis réduite — du
+ * suréchantillonnage, qui lisse les bords au prix fort. Comme la mise à
+ * l'échelle vaut pour les deux côtés, 50 % ne coûte pas la moitié des pixels
+ * mais le quart.
+ *
+ * Le plafond à trois est une sécurité, pas un réglage : sur un écran à deux
+ * pixels par point, 200 % demanderait seize fois les pixels de la définition
+ * de base, et la carte y passerait la nuit.
+ */
+function densiteDePixels(echelle: number): number {
+  return Math.min(3, window.devicePixelRatio * echelle);
+}
+
 function moteurDeRendu(): THREE.WebGLRenderer {
   if (moteurPartage) return moteurPartage;
 
@@ -223,7 +242,12 @@ type Options = {
    * Par référence, comme le ciel vivant : les changer ne doit pas reconstruire
    * la scène, seulement changer ce qu'elle dessine.
    */
-  graphismeRef: RefObject<{ finesse: number; debordement: boolean; densiteCiel: number }>;
+  graphismeRef: RefObject<{
+    echelleRendu: number;
+    limiteIPS: number;
+    debordement: boolean;
+    densiteCiel: number;
+  }>;
   labelClass: string;
   orbitLabelClass: string;
   onSelect: (game: Game | null) => void;
@@ -333,7 +357,7 @@ export function useSolarScene({
 
     // ── Renderer, caméra, contrôles ──────────────────────────────────────
     const renderer = moteurDeRendu();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, graphismeRef.current.finesse));
+    renderer.setPixelRatio(densiteDePixels(graphismeRef.current.echelleRendu));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x070b12);
     container.appendChild(renderer.domElement);
@@ -1374,6 +1398,15 @@ export function useSolarScene({
 
     const tick = (t: number) => {
       rafId = requestAnimationFrame(tick);
+
+      // ── Limite d'images par seconde ────────────────────────────────────
+      //
+      // L'image est sautée avant tout calcul, et `prevT` n'est pas touché : le
+      // temps écoulé continue de s'accumuler, de sorte que la scène avance
+      // exactement de ce qu'elle doit quand on la dessine enfin. La règle, et
+      // la raison de sa marge, sont dans `cadence.ts`.
+      if (doitSauterImage(t, prevT, graphismeRef.current.limiteIPS)) return;
+
       const dt = Math.min((t - prevT) / 1000, 0.1);
       prevT = t;
 
@@ -1554,11 +1587,11 @@ export function useSolarScene({
       // ── Réglages de graphisme ─────────────────────────────────────────────
       //
       // Relus à chaque image et appliqués seulement s'ils ont bougé : écrire
-      // ces valeurs coûte peu, mais changer la finesse réalloue toutes les
-      // cibles de rendu du compositeur.
+      // ces valeurs coûte peu, mais changer l'échelle de rendu réalloue toutes
+      // les cibles de rendu du compositeur.
       {
         const g = graphismeRef.current;
-        const voulue = Math.min(window.devicePixelRatio, g.finesse);
+        const voulue = densiteDePixels(g.echelleRendu);
         if (renderer.getPixelRatio() !== voulue) {
           renderer.setPixelRatio(voulue);
           const r = container.getBoundingClientRect();

@@ -1196,7 +1196,18 @@ fn write_audio_cover_from_file(
 
 // Recherche un jeu sur SteamGridDB et retourne l'URL de la meilleure bannière (460×215).
 // Appelé depuis le frontend pour contourner les restrictions CORS du navigateur.
-async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &str) -> Option<String> {
+//
+// `Ok(None)` veut dire : le fournisseur a répondu, et il n'a pas d'image.
+// `Err` veut dire : on n'a pas pu le joindre. La distinction compte côté
+// interface, qui retient la première comme « ce jeu n'a pas de jaquette » et
+// doit au contraire **ne rien retenir** de la seconde — sans quoi une coupure
+// de réseau marque toute la bibliothèque comme dépourvue d'images jusqu'au
+// prochain lancement.
+async fn sgdb_search_and_fetch(
+    client: &reqwest::Client,
+    title: &str,
+    api_key: &str,
+) -> Result<Option<String>, String> {
     let encoded = urlencoding::encode(title);
     let search_url = format!("https://www.steamgriddb.com/api/v2/search/autocomplete/{}", encoded);
 
@@ -1205,23 +1216,32 @@ async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &
         .header("Authorization", format!("Bearer {}", api_key))
         .send()
         .await
-        .ok()?;
+        .map_err(|e| format!("recherche injoignable : {e}"))?;
 
+    // Un statut d'erreur vient du service, pas du jeu : clé refusée, quota,
+    // panne. Rien à retenir non plus.
     if !resp.status().is_success() {
         eprintln!("[sgdb] search HTTP {} for «{}»", resp.status(), title);
-        return None;
+        return Err(format!("recherche HTTP {}", resp.status()));
     }
 
-    let data: serde_json::Value = resp.json().await.ok()?;
-    let results = data["data"].as_array()?;
+    let data: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("réponse illisible : {e}"))?;
+    let Some(results) = data["data"].as_array() else {
+        return Err("réponse sans tableau de résultats".to_string());
+    };
 
     if results.is_empty() {
         eprintln!("[sgdb] «{}» → no results", title);
-        return None;
+        return Ok(None);
     }
 
     let first = &results[0];
-    let game_id = first["id"].as_u64()?;
+    let Some(game_id) = first["id"].as_u64() else {
+        return Err("résultat sans identifiant".to_string());
+    };
     let matched_name = first["name"].as_str().unwrap_or("?");
     eprintln!("[sgdb] «{}» → matched «{}» (id {})", title, matched_name, game_id);
 
@@ -1236,13 +1256,16 @@ async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &
         .header("Authorization", format!("Bearer {}", api_key))
         .send()
         .await
-        .ok()?;
+        .map_err(|e| format!("bannières injoignables : {e}"))?;
 
     if resp.status().is_success() {
-        let data: serde_json::Value = resp.json().await.ok()?;
+        let data: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| format!("réponse illisible : {e}"))?;
         if let Some(url) = data["data"].as_array().and_then(|a| a.first()).and_then(|g| g["url"].as_str()) {
             eprintln!("[sgdb] «{}» → image found ✓", title);
-            return Some(url.to_string());
+            return Ok(Some(url.to_string()));
         }
     }
 
@@ -1257,15 +1280,22 @@ async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &
         .header("Authorization", format!("Bearer {}", api_key))
         .send()
         .await
-        .ok()?;
+        .map_err(|e| format!("grilles injoignables : {e}"))?;
 
     if !resp2.status().is_success() {
         eprintln!("[sgdb] grids HTTP {} for «{}»", resp2.status(), title);
-        return None;
+        return Err(format!("grilles HTTP {}", resp2.status()));
     }
 
-    let data2: serde_json::Value = resp2.json().await.ok()?;
-    let url = data2["data"].as_array()?.first()?["url"].as_str().map(|s| s.to_string());
+    let data2: serde_json::Value = resp2
+        .json()
+        .await
+        .map_err(|e| format!("réponse illisible : {e}"))?;
+    let url = data2["data"]
+        .as_array()
+        .and_then(|a| a.first())
+        .and_then(|g| g["url"].as_str())
+        .map(|s| s.to_string());
 
     if url.is_some() {
         eprintln!("[sgdb] «{}» → image found (non-standard size) ✓", title);
@@ -1273,7 +1303,7 @@ async fn sgdb_search_and_fetch(client: &reqwest::Client, title: &str, api_key: &
         eprintln!("[sgdb] «{}» → matched but no grid image", title);
     }
 
-    url
+    Ok(url)
 }
 
 // Commande Tauri : télécharge une image et la renvoie en data-URL base64.
@@ -1340,6 +1370,41 @@ fn has_sgdb_key() -> bool {
     secret_store::has_key()
 }
 
+// Commande Tauri : y a-t-il vraiment un réseau ?
+//
+// `navigator.onLine`, côté interface, ne sert à rien ici : WebView2 le laisse à
+// `true` quand on coupe le wifi, et n'émet pas davantage d'événement. C'est le
+// défaut qu'on répare — l'application ne voyait pas la coupure, et ne voyait
+// donc pas non plus le retour.
+//
+// On interroge l'adresse que Windows interroge lui-même pour allumer son propre
+// voyant « pas d'Internet ». Elle rend vingt-deux octets, et le **contenu**
+// compte autant que le statut : un portail captif — wifi d'hôtel, d'aéroport —
+// répond 200 avec sa propre page, et c'est bien une absence d'Internet pour qui
+// cherche une jaquette.
+#[tauri::command]
+async fn reseau_joignable() -> bool {
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+
+    match client
+        .get("http://www.msftconnecttest.com/connecttest.txt")
+        .send()
+        .await
+    {
+        Ok(r) if r.status().is_success() => match r.text().await {
+            Ok(corps) => corps.contains("Microsoft Connect Test"),
+            Err(_) => false,
+        },
+        _ => false,
+    }
+}
+
 // Commande Tauri : recherche une jaquette sur SteamGridDB.
 // La clé API est lue depuis le coffre au moment de l'appel : elle ne transite
 // plus par le JavaScript et n'est jamais écrite en clair sur le disque.
@@ -1352,7 +1417,9 @@ async fn fetch_sgdb_image(title: String) -> Result<Option<String>, String> {
 
     let client = reqwest::Client::new();
 
-    if let Some(url) = sgdb_search_and_fetch(&client, &title, &api_key).await {
+    // L'erreur remonte telle quelle : le frontend doit pouvoir distinguer
+    // « pas d'image » de « pas de réseau ».
+    if let Some(url) = sgdb_search_and_fetch(&client, &title, &api_key).await? {
         return Ok(Some(url));
     }
 
@@ -1360,7 +1427,7 @@ async fn fetch_sgdb_image(title: String) -> Result<Option<String>, String> {
     let stripped = title.trim_end_matches(|c: char| c.is_ascii_digit()).trim_end();
     if !stripped.is_empty() && stripped != title.as_str() {
         eprintln!("[sgdb] «{}» → retrying as «{}»", title, stripped);
-        if let Some(url) = sgdb_search_and_fetch(&client, stripped, &api_key).await {
+        if let Some(url) = sgdb_search_and_fetch(&client, stripped, &api_key).await? {
             return Ok(Some(url));
         }
     }
@@ -1722,6 +1789,7 @@ pub fn run() {
             search_itunes, write_audio_tags, write_audio_cover_from_file,
             get_disk_free_space,
             fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64,
+            reseau_joignable,
             set_tray_labels, set_tray_music
         ])
         .run(tauri::generate_context!())

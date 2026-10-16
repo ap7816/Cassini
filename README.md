@@ -80,7 +80,7 @@ Ce token authentifie les vérifications de mise à jour contre le dépôt privé
 
 Release :
 
-1. Bumper la version dans `package.json` et `src-tauri/tauri.conf.json`
+1. Bumper la version dans `package.json`, `src-tauri/tauri.conf.json` et `src-tauri/Cargo.toml` — les trois, sans quoi l'installeur et l'exécutable n'annoncent pas le même numéro (`Cargo.lock` suit tout seul au prochain `cargo`)
 2. Commit + push sur `main`
 3. `git tag vX.Y.Z && git push origin vX.Y.Z`
 4. GitHub Actions build et publie automatiquement (~15-20 min)

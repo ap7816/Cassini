@@ -62,7 +62,12 @@ export type AppSettings = {
    * d'une scène en trois dimensions suit la surface, donc le carré de ce
    * nombre.
    */
-  finesse: number;
+  /** Part de la résolution native à laquelle la scène est dessinée. */
+  echelleRendu: number;
+  /** Images par seconde au plus ; 0 vaut « sans limite ». */
+  limiteIPS: number;
+  /** La pastille du compteur d'images, en haut de la galaxie. */
+  afficherIPS: boolean;
   /** Débordement lumineux autour des étoiles et des soleils. */
   debordement: boolean;
   /** Densité du ciel : étoiles du fond et nuages des systèmes. */

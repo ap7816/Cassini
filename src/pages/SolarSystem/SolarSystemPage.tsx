@@ -240,17 +240,19 @@ export function SolarSystemPage() {
   // Les réglages de graphisme suivent le même chemin : une référence que la
   // scène relit, pour que les changer ne la reconstruise pas.
   const graphismeRef = useRef({
-    finesse: settings.finesse,
+    echelleRendu: settings.echelleRendu,
+    limiteIPS: settings.limiteIPS,
     debordement: settings.debordement,
     densiteCiel: settings.densiteCiel,
   });
   useEffect(() => {
     graphismeRef.current = {
-      finesse: settings.finesse,
+      echelleRendu: settings.echelleRendu,
+      limiteIPS: settings.limiteIPS,
       debordement: settings.debordement,
       densiteCiel: settings.densiteCiel,
     };
-  }, [settings.finesse, settings.debordement, settings.densiteCiel]);
+  }, [settings.echelleRendu, settings.limiteIPS, settings.debordement, settings.densiteCiel]);
   // Un système au moins suit un tag : la scène doit alors se refaire quand on
   // tague un jeu, puisque cela change la liste de ses planètes.
   const systemesSuivantUnTag = useMemo(() => systemesPerso.some((s) => s.tag), [systemesPerso]);
@@ -710,7 +712,10 @@ export function SolarSystemPage() {
           capter ni rien annoncer. */}
       <div className={css.verriere} aria-hidden="true" />
 
-      <div ref={fpsRef} className={css.fps} />
+      {/* La pastille du compteur. Un attribut plutôt qu'un style en ligne :
+          le panneau de débogage garde ainsi le pouvoir de la masquer par sa
+          variable, qu'un style en ligne écraserait. */}
+      <div ref={fpsRef} className={css.fps} data-visible={settings.afficherIPS} />
 
       <FlyKeysPanel settings={flySettings} onChange={setFlySettings} />
 

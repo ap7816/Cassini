@@ -288,6 +288,36 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
 
+- **Les jaquettes et le réseau**
+  **Réparé, et expliqué à l'utilisateur.** Sans wifi, les jaquettes ne se chargeaient pas — c'est normal. Ce qui ne l'était pas : au retour du réseau, elles ne revenaient plus, même en actualisant la bibliothèque. Il fallait relancer l'application.
+
+  La cause tenait en une ligne : un échec de chargement était retenu comme **« ce jeu n'a pas de jaquette »**, dans un ensemble gardé pour toute la session. Hors ligne, c'est toute la bibliothèque qui y entrait d'un coup, et plus personne ne redemandait rien. Pire pour les jeux Steam : l'adresse du CDN de Valve se calcule sans réseau, l'image échouait faute de réseau, l'affichage en concluait que Valve n'avait pas d'image, et le service **jetait du cache persistant une adresse parfaitement valable**. Une coupure coûtait donc des jaquettes jusqu'au prochain lancement.
+
+  Trois réparations. Côté natif, `sgdb_search_and_fetch` ne confond plus « le fournisseur a répondu, il n'a rien » et « je n'ai pas pu le joindre » : la première rend `Ok(None)`, la seconde une erreur — avant, `.ok()?` écrasait les deux en « rien trouvé ». Côté service, on ne retient que la première, et sans réseau on ne demande même pas. Côté affichage, une image qui échoue hors ligne ne déclenche plus la chaîne de repli qui vidait le cache.
+
+  Et au retour du réseau, tout repart **tout seul** : les échecs retenus sont oubliés, et chaque vignette porte l'**époque du réseau** où elle a été résolue. L'époque change, l'étiquette ne correspond plus, la chaîne recommence. Étiqueter plutôt que remettre à zéro dans un effet : c'est le motif qu'employait déjà la fiche de jeu pour l'identifiant, et il évite le rendu en cascade que ce dépôt interdit.
+
+  **Reste à savoir qu'il n'y a plus de réseau, et c'est là que la première version s'est trompée.** Elle s'en remettait à `navigator.onLine` : juste dans un navigateur, **faux dans l'application**. WebView2 le laisse à `true` quand on coupe le wifi et n'émet aucun événement `offline` — l'application ne voyait donc ni la coupure ni le retour, exactement ce qu'on cherchait à réparer.
+
+  Deux voix, donc, comme pour l'état de la fenêtre et pour la même raison. Le moteur web répond vite et sans rien demander à personne, et sert dans un navigateur ordinaire. Le natif, lui, va voir : il interroge l'adresse que Windows interroge pour allumer son propre voyant « pas d'Internet », et le **contenu** de la réponse compte autant que son statut — un portail captif répond 200 avec sa propre page, ce qui est bien une absence d'Internet pour qui cherche une jaquette. Le natif a le dernier mot.
+
+  La sonde coûte un aller-retour (vingt-deux octets, mesuré à 300 ms), donc elle se rationne : toutes les dix secondes quand on se croit coupé — le retour doit se voir vite —, toutes les trente quand tout va bien, jamais quand la fenêtre n'est pas devant l'utilisateur, et **tout de suite** quand une jaquette vient d'échouer. Ce dernier cas est le signal le plus sûr de tous : on vient d'essayer, et ça n'est pas passé.
+
+  **Un bandeau le dit**, en haut et au milieu, sous les en-têtes : « Hors ligne — les jaquettes manquantes se chargeront au retour du réseau ». Il annonce aussi ce qui va se passer, parce qu'un avertissement qui ne dit que le problème laisse chercher une manœuvre qui n'existe pas.
+
+- **L'onglet Graphisme, rangé comme un menu de jeu**
+  **Fait.** Il portait quatre réglages maison — « finesse de l'image » sur un curseur de 1 à 2, « densité du ciel » sur un autre, et deux interrupteurs — qui ne disaient rien à personne. Les menus graphiques ont pourtant un vocabulaire commun, vieux de vingt ans et compris de tous : un préréglage, une échelle de rendu, une limite d'images, et le détail pour qui veut y toucher.
+
+  **Le préréglage d'abord** — Bas, Moyen, Élevé, Ultra —, parce que c'est la seule chose dont a besoin celui qui ne sait pas ce qu'est un débordement lumineux : il essaie « Bas » et voit si cela tourne mieux. Il **n'est pas stocké** : il se déduit des valeurs, ce qui supprime d'un coup toute la classe de bogues où l'étiquette dit « Élevé » pendant que les réglages disent autre chose. Toucher à n'importe quoi le fait tomber sur « Personnalisé », tout seul — la convention, là encore.
+
+  **L'échelle de rendu** remplace la finesse, et dit enfin ce qu'elle fait : la part de la résolution de l'écran à laquelle la scène est dessinée, de 50 à 200 %. Au-dessus de 100 %, c'est du suréchantillonnage. L'ancienne « finesse » était un plafond de densité de pixels qui, sur la plupart des écrans, ne changeait rien du tout — les installations existantes repartent donc de 100 %, c'est-à-dire de ce qu'elles avaient déjà. Le plafond interne à trois est une sécurité : sur un écran à deux pixels par point, 200 % demanderait seize fois les pixels de la définition de base.
+
+  **La limite d'images par seconde** est nouvelle, et c'est le réglage le plus utile de la liste sur un portable : au-delà de ce qu'on veut, chaque image est du travail que personne ne verra. Elle saute l'image sans toucher à l'horloge, de sorte que la scène avance exactement de ce qu'elle doit quand on la dessine enfin. À connaître, et c'est écrit dans `cadence.ts` : sauter des images ne peut donner que des sous-multiples de la cadence de l'écran — 144 Hz limité à 60 donne 48, et c'est le prix de la régularité.
+
+  **Le compteur d'images** devient un réglage au lieu d'être toujours là. C'était un outil de mesure allumé chez tout le monde.
+
+  Enfin, ce qui n'est pas du graphisme est sorti de la carte : « Ciel vivant » et « Événements du ciel » décident de ce qui se passe dans le ciel, pas de la façon dont on le dessine. Ils ont leur propre carte, « Ambiance de la scène ».
+
 - **Toutes les musiques se taisent quand la fenêtre n'est plus devant**
   **Fait.** L'ambiance se coupait déjà quand la fenêtre quittait l'écran, mais « quitter l'écran » ne couvrait que deux cas : réduite dans la barre des tâches, ou repliée dans la zone de notification. Une fenêtre **recouverte par une autre application** n'est ni l'un ni l'autre — le moteur web la dit visible, le natif aussi, et ils ont raison tous les deux. Elle n'est simplement plus devant.
 

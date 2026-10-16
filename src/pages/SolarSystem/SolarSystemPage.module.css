@@ -297,6 +297,12 @@
   user-select: none;
 }
 
+/* Coupé par le réglage : la pastille est un outil de mesure, pas un ornement,
+   et elle n'a rien à faire sur l'écran de quelqu'un qui ne la lit pas. */
+.fps[data-visible='false'] {
+  display: none;
+}
+
 /* Verrière du cockpit : quatre grands angles aux coins de la vue, et une
    graduation discrète au milieu des bords haut et bas.
 
