@@ -15,6 +15,24 @@ export interface ChangeEntry {
 // Historique complet des versions de l'application, du plus récent au plus ancien
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '6.0.1',
+    date: '2026-10-25',
+    sections: [
+      {
+        type: 'new',
+        itemKeys: ['changelog.v6_0_1.new_0'],
+      },
+      {
+        type: 'change',
+        itemKeys: ['changelog.v6_0_1.change_0', 'changelog.v6_0_1.change_1'],
+      },
+      {
+        type: 'fix',
+        itemKeys: ['changelog.v6_0_1.fix_0'],
+      },
+    ],
+  },
+  {
     version: '6.0.0',
     date: '2026-10-16',
     sections: [
@@ -36,7 +54,6 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.new_12',
           'changelog.v6_0_0.new_13',
           'changelog.v6_0_0.new_14',
-          'changelog.v6_0_0.new_15',
         ],
       },
       {
@@ -54,7 +71,6 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.fix_0',
           'changelog.v6_0_0.fix_1',
           'changelog.v6_0_0.fix_2',
-          'changelog.v6_0_0.fix_3',
         ],
       },
       {
