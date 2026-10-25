@@ -288,6 +288,13 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Deux choses apprises en réparant ce qui ne marchait pas : un dialogue natif qui échoue doit le **dire** — avalé en silence, le bouton paraissait mort —, et une sonde `HEAD` sur un fichier statique ne prouve rien en développement, le serveur rendant la page d'accueil avec un franc 200 pour tout chemin inconnu. C'est le module qui sait maintenant s'il a de quoi jouer.
 
+- **La vitesse du clavier suivait le mauvais système**
+  **Réparé.** Le déplacement libre est rapporté au cadrage plutôt qu'exprimé en unités absolues — une bibliothèque de deux cents jeux s'étend sur des milliers d'unités, une de trois sur quelques dizaines, et une vitesse fixe serait inutilisable dans l'un ou l'autre cas. Mais ce cadrage était celui du système courant **au montage de la scène**, et rien ne le remettait à jour : on voyageait vers un launcher plus grand ou plus petit, et la vitesse du clavier restait celle d'avant. D'où l'impression de ramper dans un système vaste, ou de le traverser d'une pression dans un petit.
+
+  La vitesse se rapporte maintenant au système dont on est **le plus près**, relu à chaque image. C'est une autre grandeur que celle du système *désigné*, qui sert à calculer la durée d'un voyage et doit rester celle de la destination tout du long : les deux portent donc deux noms. La portée des étiquettes suit la même règle — elle en avait le même besoin, et pour la même raison.
+
+  Au passage, la traversée ralentit encore : de trois secondes deux à six, contre deux secondes quatre à quatre et demie.
+
 - **Les systèmes vus de très loin**
   **Réparé.** En reculant, les planètes se libéraient — c'est voulu —, les soleils tenaient encore un moment, puis s'éteignaient un à un. On reculait pour embrasser la galaxie entière, et la galaxie disparaissait.
 
@@ -357,14 +364,14 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
   Enfin, ce qui n'est pas du graphisme est sorti de la carte : « Ciel vivant » et « Événements du ciel » décident de ce qui se passe dans le ciel, pas de la façon dont on le dessine. Ils ont leur propre carte, « Ambiance de la scène ».
 
-- **Toutes les musiques se taisent quand la fenêtre n'est plus devant**
+- **Les musiques du décor se taisent quand la fenêtre n'est plus devant. Le lecteur, non**
   **Fait.** L'ambiance se coupait déjà quand la fenêtre quittait l'écran, mais « quitter l'écran » ne couvrait que deux cas : réduite dans la barre des tâches, ou repliée dans la zone de notification. Une fenêtre **recouverte par une autre application** n'est ni l'un ni l'autre — le moteur web la dit visible, le natif aussi, et ils ont raison tous les deux. Elle n'est simplement plus devant.
 
   `etatFenetre` écoute donc une troisième voix, le **focus**, et son verdict n'est plus « masquée » mais « en arrière-plan ». Le natif garde le dernier mot sur ce que le moteur web croit voir, mais pas sur le focus, qu'il ne connaît pas : une fenêtre peut être à l'écran, entière, et derrière celle d'une autre application.
 
-  Les trois musiques y sont maintenant abonnées, chacune au plus près de l'élément qu'elle a à mettre en pause : l'ambiance depuis `AppLayout`, la musique des événements dans son module, le lecteur dans son contexte. Deux précautions : le lecteur ne reprend au retour **que si c'est le départ de la fenêtre qui l'avait coupé**, faute de quoi revenir à l'application relancerait une musique qu'on avait arrêtée soi-même avant de partir ; et aucune ne fait de fondu en partant, parce qu'un alt-tab doit couper tout de suite.
+  **Deux musiques y sont abonnées, et non trois.** L'ambiance depuis `AppLayout`, la musique des événements dans son module, chacune au plus près de l'élément qu'elle a à mettre en pause. Ni l'une ni l'autre n'a été demandée par personne : elles accompagnent une galaxie qu'on regarde, et on ne la regarde plus. Aucune ne fait de fondu en partant, parce qu'un alt-tab doit couper tout de suite.
 
-  La règle précédente laissait le lecteur tourner, au motif qu'on peut vouloir sa musique en lançant un jeu. C'est justement le moment où elle gêne.
+  Le lecteur, lui, continue. Il avait été abonné comme les deux autres, au motif qu'on peut vouloir couper sa musique en lançant un jeu — mais une piste qu'on a mise soi-même est une décision, et l'arrêter revient à décider à sa place qu'il n'en veut plus dès qu'il ouvre une autre fenêtre. Le reste de l'application tenait déjà cette règle pour acquise : le menu de la zone de notification porte « lecture / pause » et « arrêter la musique », et le commentaire de `set_tray_music` dit pourquoi — réduit, c'est le seul endroit d'où l'on peut encore taire le lecteur. Deux entrées qui ne commandaient rien, puisque la lecture s'était arrêtée d'elle-même en se réduisant.
 
 - **Les succès**
   **Faits, pour les événements du ciel.** Un par événement, sept en tout, du plus courant au plus rare. Ce sont des choses rares — un trou noir se montre une fois toutes les trente heures passées devant la galaxie — et la seule façon de savoir qu'on les avait toutes vues était de s'en souvenir.

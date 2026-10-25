@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { invoke } from '@tauri-apps/api/core';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { initMusicAnalyser, loadTrackForAnalysis, setMusicPlaying } from './musicAnalyser';
-import { surEtatFenetre } from '../system/etatFenetre';
 import {
   readMusicFolder,
   readMusicVolume, writeMusicVolume,
@@ -117,8 +116,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Élément <audio> persistent — ne jamais recréer pour éviter les coupures
   const audioRef = useRef<HTMLAudioElement>(new Audio());
-  /** Vrai si c'est le départ de la fenêtre qui a mis la lecture en pause. */
-  const pauseDeFenetre = useRef(false);
 
   // Refs synchronisées avec l'état — lisibles dans les callbacks async/événements sans closure stale
   const tracksRef = useRef<TrackDto[]>([]);
@@ -307,35 +304,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  /**
-   * La musique ne joue que devant l'utilisateur.
+  /*
+   * Le lecteur, lui, continue de jouer quand la fenêtre quitte le premier plan.
    *
-   * Fenêtre réduite, repliée dans la zone de notification, ou simplement passée
-   * derrière une autre application : la lecture s'arrête, et reprend au retour
-   * — mais seulement si c'est bien le départ de la fenêtre qui l'avait coupée.
-   * Sans cette précaution, revenir à l'application relancerait une musique que
-   * l'on avait mise en pause soi-même avant de partir.
+   * Et c'est la seule des trois musiques dans ce cas. L'ambiance et les
+   * musiques d'événement s'arrêtent parce que personne ne les a demandées :
+   * elles accompagnent une galaxie qu'on regarde, et on ne la regarde plus.
+   * Une piste choisie par l'utilisateur est l'inverse — c'est une décision, et
+   * la couper revient à décider à sa place qu'il n'en veut plus dès qu'il
+   * ouvre une autre fenêtre. On l'avait fait, au motif qu'elle gênerait en
+   * lançant un jeu : elle gêne surtout quand elle s'arrête toute seule.
    *
-   * L'ancienne règle laissait le lecteur tourner, au motif qu'on peut vouloir
-   * sa musique en lançant un jeu. C'est justement le moment où elle gêne.
-   *
-   * Pas de fondu : alt-tab doit couper tout de suite.
+   * Le reste de l'application tient déjà cette règle pour acquise. Le menu de
+   * la zone de notification porte « lecture / pause » et « arrêter la
+   * musique », et son commentaire dit pourquoi : réduit, c'est le seul endroit
+   * d'où l'on peut encore taire le lecteur. Deux entrées qui ne commanderaient
+   * rien, si la lecture s'était arrêtée d'elle-même en se réduisant.
    */
-  useEffect(() => surEtatFenetre((arriere) => {
-    const audio = audioRef.current;
-    if (arriere) {
-      if (audio.paused) return;
-      pauseDeFenetre.current = true;
-      audio.pause();
-      setIsPlaying(false); setMusicPlaying(false);
-      return;
-    }
-    if (!pauseDeFenetre.current) return;
-    pauseDeFenetre.current = false;
-    void audio.play().then(() => {
-      setIsPlaying(true); setMusicPlaying(true);
-    }).catch(() => {});
-  }), []);
 
   // Lance la première piste si aucune n'est sélectionnée, sinon alterne lecture/pause
   // Utilise audio.paused (état DOM live) plutôt que isPlaying (state React potentiellement périmé)

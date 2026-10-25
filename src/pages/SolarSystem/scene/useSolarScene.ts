@@ -64,6 +64,12 @@ const ARRIVAL_ZOOM = 1.75;
  * Rapportée au cadrage et non en unités absolues : une bibliothèque de deux
  * cents jeux s'étend sur des milliers d'unités, une de trois sur quelques
  * dizaines. Une vitesse fixe serait inutilisable dans l'un ou l'autre cas.
+ *
+ * Au cadrage du système **qu'on regarde**, et non à celui du système de départ.
+ * C'était le défaut : la vitesse était calée une fois pour toutes sur le
+ * système courant au montage de la scène, et voyager vers un launcher plus
+ * grand ou plus petit ne la changeait pas — on se retrouvait à ramper dans un
+ * système vaste, ou à le traverser d'une pression dans un petit.
  */
 const FLY_SPEED = 0.55;
 const FLY_BOOST = 3;
@@ -681,6 +687,33 @@ export function useSolarScene({
     let viseCentre = homeLook.clone();
     let viseCadre = frameR;
     let viseHome = homeCam.clone();
+
+    /**
+     * Le cadrage du système le plus proche, relu à chaque image.
+     *
+     * À distinguer de `viseCadre`, qui est celui du système **désigné** — posé
+     * au départ d'un voyage, et qui doit le rester pour en calculer la durée.
+     * Celui-ci dit simplement l'échelle de ce qu'on a autour de soi, et c'est
+     * ce qu'il faut à la vitesse du clavier comme à la portée des étiquettes :
+     * en rejoignant un autre launcher au clavier, sans passer par son bouton,
+     * rien ne désigne un nouveau système — et l'on se retrouvait à ramper dans
+     * un système vaste, ou à le traverser d'une pression dans un petit.
+     */
+    let cadreProche = frameR;
+
+    /** Recale `cadreProche` sur le système dont on est le plus près. */
+    function majCadreProche(): void {
+      let meilleur = Infinity;
+      let proche: SystemeGalaxie | null = null;
+      for (const s of galaxie.systemes) {
+        const d = camera.position.distanceTo(s.centre);
+        if (d < meilleur) {
+          meilleur = d;
+          proche = s;
+        }
+      }
+      if (proche) cadreProche = cadrageDe(proche).frameR;
+    }
 
     // Largeurs masquées de part et d'autre, en pixels : le panneau de
     // navigation à gauche, la liste des jeux à droite.
@@ -1341,7 +1374,7 @@ export function useSolarScene({
       // Ne concerne plus que les vrais redimensionnements de fenêtre : le
       // repli de la liste ne change plus la taille de la canvas.
       const host = labelsRef.current;
-      labelLayer.update(camera, viseCadre, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
+      labelLayer.update(camera, cadreProche, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
       updatePopupAnchor(host?.clientWidth ?? w, host?.clientHeight ?? h);
       post.render();
     });
@@ -1401,7 +1434,7 @@ export function useSolarScene({
         // vite qu'une seule.
         .normalize()
         .multiplyScalar(
-          frameR
+          cadreProche
             * FLY_SPEED
             * flySettingsRef.current.vitesse
             * dt
@@ -1412,8 +1445,8 @@ export function useSolarScene({
       // ne fait que le rapprocher. Sans cette borne, revenir vers le système
       // rallongerait à nouveau le bras de levier.
       const pivot = Math.max(
-        Math.min(camera.position.distanceTo(controls.target), frameR * FLY_PIVOT),
-        frameR * 0.02,
+        Math.min(camera.position.distanceTo(controls.target), cadreProche * FLY_PIVOT),
+        cadreProche * 0.02,
       );
 
       camera.position.add(flyMove);
@@ -1561,6 +1594,9 @@ export function useSolarScene({
       // on la repose donc à chaque image.
       if (apercu) galaxie.epingler(apercu.cle);
       galaxie.update(camera);
+      // L'échelle de ce qu'on a autour de soi : la vitesse du clavier et la
+      // portée des étiquettes s'y rapportent.
+      majCadreProche();
 
       // Les balises des soleils lointains, rapportées autour de l'œil : au-delà
       // du plan lointain de la caméra, un système disparaissait purement et
@@ -1684,7 +1720,7 @@ export function useSolarScene({
       scene.updateMatrixWorld();
 
       picker.updateHover();
-      labelLayer.update(camera, viseCadre, hostW, hostH, hoveredEntry);
+      labelLayer.update(camera, cadreProche, hostW, hostH, hoveredEntry);
       updatePopupAnchor(hostW, hostH);
 
       post.render();

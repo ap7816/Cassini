@@ -516,7 +516,7 @@
       "new_12": "[Commandes] La vitesse de déplacement libre se règle, de 0,25 à 5 fois, et part désormais plus vive",
       "new_13": "[Bibliothèque] Un bandeau prévient quand il n’y a pas de réseau, et dit que les jaquettes manquantes se chargeront à son retour",
       "new_14": "[Système solaire] Les événements tombent n’importe où dans le ciel, et non devant la caméra : il faut regarder au bon endroit, et on peut très bien les manquer",
-      "change_0": "[Musique] Plus rien ne joue quand la fenêtre n’est pas devant : ambiance, lecteur et musiques d’événement se taisent dès qu’une autre application passe par-dessus, et reprennent au retour",
+      "change_0": "[Musique] L’ambiance et les musiques d’événement se taisent quand la fenêtre n’est plus devant, et reprennent au retour. Le lecteur, lui, continue : une piste qu’on a mise soi-même n’a pas à s’arrêter parce qu’on ouvre une autre fenêtre — et le menu de la zone de notification la met en pause sans rouvrir l’application",
       "change_1": "[Réglages] Les paramètres passent au vocabulaire du tableau de bord : boutons gravés, curseurs gradués, plaquettes de couleur, titres à filet — et les onglets passent à la ligne au lieu de déborder",
       "change_2": "[Interface] Tout bouge au ressort : les cartes et les listes arrivent en cascade, les modales montent en se défloutant, et chaque bouton répond au survol comme à l’appui",
       "change_3": "[Système solaire] Le voyage d’un système à l’autre est refait : la caméra regarde désormais où elle va au lieu de fixer le sol à mi-parcours, elle arrive de trois quarts plutôt que de haut, et part comme elle s’arrête, sans à-coup",
@@ -524,7 +524,8 @@
       "fix_1": "[Bibliothèque] Les jaquettes reviennent toutes seules au retour du réseau : une coupure les marquait comme inexistantes pour toute la session, et actualiser n’y changeait rien. La coupure est désormais vue par le côté natif, le moteur web ne la signalant pas dans l’application",
       "fix_2": "[Système solaire] Les systèmes restent visibles de n’importe où : vus de très loin, il n’en reste qu’une étoile — qui rapetisse avec la distance, sans jamais disparaître, et sans le nom du launcher",
       "perf_0": "[Performance] La carte graphique dédiée est enfin réclamée au bon moment : sur un portable à deux cartes, la scène tournait sur le circuit intégré. Cinq à six fois plus rapide, mesuré",
-      "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins"
+      "perf_1": "[Performance] Le ciel ne demande plus aucune texture : 8 Mo de mémoire graphique et une seconde de dessin au démarrage en moins",
+      "fix_3": "[Système solaire] La vitesse du clavier s’accorde enfin au système où l’on se trouve : elle restait calée sur celui du démarrage, et l’on rampait dans un grand système après avoir voyagé vers lui"
     },
     "v5_1_0": {
       "fix_0": "[Réglages] L’interrupteur « démarrer avec Windows » reflète ce que Windows fait vraiment, et non ce qui avait été enregistré",

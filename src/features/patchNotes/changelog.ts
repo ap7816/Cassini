@@ -53,6 +53,7 @@ export const CHANGELOG: ChangeEntry[] = [
           'changelog.v6_0_0.fix_0',
           'changelog.v6_0_0.fix_1',
           'changelog.v6_0_0.fix_2',
+          'changelog.v6_0_0.fix_3',
         ],
       },
       {

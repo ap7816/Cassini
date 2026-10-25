@@ -21,9 +21,14 @@
  * La troisième voix est le **focus**, et c'est elle qui manquait. Une fenêtre
  * recouverte par une autre application n'est ni réduite ni occultée : le moteur
  * web la dit visible, le natif aussi, et ils ont raison tous les deux. Elle
- * n'est simplement plus devant. Sans cette voix, la musique continuait de jouer
+ * n'est simplement plus devant. Sans cette voix, l'ambiance continuait de jouer
  * par-dessus ce qu'on était parti faire ailleurs — ce qui est précisément le
  * moment où l'on n'en veut pas.
+ *
+ * Ce que sert cet état, c'est le **décor** : l'ambiance et les musiques
+ * d'événement, que personne n'a demandées. Le lecteur ne s'y abonne pas, et
+ * `MusicContext` dit pourquoi : une piste qu'on a mise soi-même est un choix,
+ * et il n'appartient pas à la fenêtre de le défaire.
  */
 
 /** Ce qui peut déclarer la fenêtre absente du premier plan. */

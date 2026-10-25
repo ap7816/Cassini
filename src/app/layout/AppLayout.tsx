@@ -249,9 +249,12 @@ export function AppLayout() {
   // moteur web, celui de la fenêtre native et le focus — aucun des trois seul ne
   // suffit.
   //
-  // Les deux autres musiques — celle du lecteur, celle des événements —
-  // s'abonnent au même état chacune de son côté, au plus près de l'élément
-  // qu'elles ont à mettre en pause.
+  // La musique des événements fait de même, abonnée au même état de son côté,
+  // au plus près de l'élément qu'elle a à mettre en pause : elle non plus n'a
+  // été demandée par personne, et elle annonce quelque chose qui se voit.
+  //
+  // Le lecteur, lui, continue — c'est une piste qu'on a choisie, et `MusicContext`
+  // dit pourquoi on ne décide pas à sa place de l'interrompre.
   useEffect(() =>
     surEtatFenetre((masquee) => {
       if (masquee) suspendAmbient('window');

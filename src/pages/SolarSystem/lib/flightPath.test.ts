@@ -82,7 +82,10 @@ describe('le trajet entre deux systèmes', () => {
     const court = composerTrajet(POSE_A, { x: -400, y: 120, z: 200 }, RAYON, CENTRE_A, CENTRE_B);
     const long = composerTrajet(POSE_A, { x: 4000, y: 120, z: 200 }, RAYON, CENTRE_A, CENTRE_B);
     expect(court.duree).toBeLessThan(long.duree);
-    expect(court.duree).toBeGreaterThan(1);
+    // Un saut entre deux voisins ne se bâcle pas : trois secondes au moins,
+    // sinon on ne voit pas qu'on a voyagé.
+    expect(court.duree).toBeGreaterThan(3);
+    // Et une traversée de la galaxie ne s'éternise pas davantage.
     expect(long.duree).toBeLessThan(8);
   });
 
