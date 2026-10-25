@@ -516,6 +516,7 @@
       "new_12": "[Controls] Free-flight speed is now adjustable, from 0.25× to 5×, and starts out brisker",
       "new_13": "[Library] A banner warns when there is no network, and says that missing cover art will load once it is back",
       "new_14": "[Solar system] Events happen anywhere in the sky rather than in front of the camera: you have to be looking the right way, and you can miss them entirely",
+      "new_15": "[Music] A fourth ambient track, fourteen minutes long: the rotation now has four, and repeats far less",
       "change_0": "[Music] Ambience and event music go quiet while the window is not in front, and pick up again on return. The player keeps going: a track you put on yourself has no business stopping because you opened another window — and the tray menu pauses it without reopening the app",
       "change_1": "[Settings] Settings now speak the instrument panel's language: engraved buttons, graduated faders, colour plates, ruled titles — and the tabs wrap instead of overflowing",
       "change_2": "[Interface] Everything moves on a spring: cards and lists arrive in a cascade, dialogs rise out of a blur, and every button answers to hover and press",

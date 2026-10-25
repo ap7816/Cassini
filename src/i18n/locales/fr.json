@@ -516,6 +516,7 @@
       "new_12": "[Commandes] La vitesse de déplacement libre se règle, de 0,25 à 5 fois, et part désormais plus vive",
       "new_13": "[Bibliothèque] Un bandeau prévient quand il n’y a pas de réseau, et dit que les jaquettes manquantes se chargeront à son retour",
       "new_14": "[Système solaire] Les événements tombent n’importe où dans le ciel, et non devant la caméra : il faut regarder au bon endroit, et on peut très bien les manquer",
+      "new_15": "[Musique] Une quatrième piste d’ambiance, de quatorze minutes : l’enchaînement en compte désormais quatre, et se répète beaucoup moins",
       "change_0": "[Musique] L’ambiance et les musiques d’événement se taisent quand la fenêtre n’est plus devant, et reprennent au retour. Le lecteur, lui, continue : une piste qu’on a mise soi-même n’a pas à s’arrêter parce qu’on ouvre une autre fenêtre — et le menu de la zone de notification la met en pause sans rouvrir l’application",
       "change_1": "[Réglages] Les paramètres passent au vocabulaire du tableau de bord : boutons gravés, curseurs gradués, plaquettes de couleur, titres à filet — et les onglets passent à la ligne au lieu de déborder",
       "change_2": "[Interface] Tout bouge au ressort : les cartes et les listes arrivent en cascade, les modales montent en se défloutant, et chaque bouton répond au survol comme à l’appui",

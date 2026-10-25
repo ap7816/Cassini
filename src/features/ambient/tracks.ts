@@ -9,12 +9,22 @@
 //   ambiant1 : "Space Galaxy Universe Music" — viacheslavstarostin (ID 473849)
 //   ambiant2 : à compléter
 //   ambiant3 : à compléter
+//   ambiant4 : à compléter — origine et licence à confirmer avant publication
 
-/** Servies depuis `public/`, donc résolues à la racine de l'application. */
+/**
+ * Servies depuis `public/`, donc résolues à la racine de l'application.
+ *
+ * L'ordre est celui de l'enchaînement : la première est tirée au sort, les
+ * suivantes viennent dans la foulée, en boucle. La quatrième dure quatorze
+ * minutes à elle seule, contre deux pour les autres — elle tiendra donc
+ * l'essentiel d'une longue session, ce qui est plutôt ce qu'on demande à une
+ * ambiance.
+ */
 export const AMBIENT_TRACKS = [
   './ambiant1.mp3',
   './ambiant2.mp3',
   './ambiant3.mp3',
+  './ambiant4.mp3',
 ] as const;
 
 /** Piste de départ, tirée au sort à chaque lancement. */
