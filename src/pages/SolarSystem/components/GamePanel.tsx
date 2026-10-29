@@ -8,7 +8,7 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { launchGame } from '../../../features/library/services/launchGame';
-import { desinstallerJeu, trouverDesinstalleur } from '../../../features/library/services/uninstallGame';
+import { desinstallerJeu, memeNom, trouverDesinstalleur } from '../../../features/library/services/uninstallGame';
 import { useToast } from '../../../features/toast/ToastContext';
 import { useEnLigne, useEpoqueReseau } from '../../../features/system/useReseau';
 import { useDialog } from '../../../hooks/useDialog';
@@ -188,11 +188,31 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
         // Le nom exact ou le même dossier d'installation, sinon rien : une
         // correspondance approximative désinstallerait « Portal 2 » pour
         // « Portal ». Mieux vaut le dire que de se tromper de jeu.
-        toast.error(t('gameCard.uninstallNone', { name: game.title }));
+        //
+        // Et le dire utilement : un jeu installé par un lanceur se retire
+        // depuis ce lanceur, qui est seul à le connaître. C'est le cas de
+        // presque tous les jeux Epic, que Windows ne liste même pas.
+        const parLanceur = game.platform && game.platform !== 'Other';
+        toast.error(
+          parLanceur
+            ? t('gameCard.uninstallNoneLauncher', {
+                name: game.title,
+                launcher: nomPlateforme(game.platform, t),
+              })
+            : t('gameCard.uninstallNone', { name: game.title }),
+        );
         return;
       }
-      const cle = isSteam ? 'gameCard.uninstallConfirmSteam' : 'gameCard.uninstallConfirm';
-      if (!(await confirm(t(cle, { name: game.title }), { danger: true }))) return;
+      // Le nom trouvé était cherché pour être montré, et ne l'était pas : la
+      // confirmation reprenait le titre du jeu, de sorte qu'on lisait
+      // « Désinstaller Fortnite ? » quand c'était le lanceur Epic qui allait
+      // s'ouvrir. Il n'est tu que lorsqu'il ne dit rien de plus que le titre.
+      const cle = isSteam
+        ? 'gameCard.uninstallConfirmSteam'
+        : memeNom(nom, game.title)
+          ? 'gameCard.uninstallConfirm'
+          : 'gameCard.uninstallConfirmOther';
+      if (!(await confirm(t(cle, { name: game.title, programme: nom }), { danger: true }))) return;
 
       const lance = await desinstallerJeu(game);
       toast.success(t('gameCard.uninstallStarted', { name: lance }));

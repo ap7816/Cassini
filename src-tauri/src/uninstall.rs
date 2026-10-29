@@ -199,6 +199,19 @@ pub fn commande_admise(programme: &str, arguments: &[String]) -> bool {
     Path::new(programme.trim()).is_file()
 }
 
+/// Un chemin de dossier réduit à ce qui permet de le comparer : minuscules,
+/// séparateurs uniformes, sans barre finale.
+///
+/// Les trois sont nécessaires, et le registre fournit l'exemple de chacun :
+/// `C:\Program Files\Epic Games\` finit par une barre, `C:/Riot Games/Riot
+/// Client/` emploie l'autre séparateur, et la casse ne veut rien dire sous
+/// Windows.
+fn dossier_normalise(p: &str) -> String {
+    p.replace('/', "\\")
+        .trim_end_matches('\\')
+        .to_ascii_lowercase()
+}
+
 /// Note la ressemblance entre une entrée du registre et le jeu cherché.
 /// `None` quand rien ne correspond assez pour prendre le risque.
 pub fn score(titre_jeu: &str, nom_entree: &str, emplacement: Option<&str>, chemin_jeu: Option<&str>) -> Option<u32> {
@@ -208,13 +221,25 @@ pub fn score(titre_jeu: &str, nom_entree: &str, emplacement: Option<&str>, chemi
         return None;
     }
 
-    // Le dossier d'installation est le signe le plus sûr : deux jeux peuvent
-    // porter des noms proches, jamais le même dossier.
+    // Le même dossier, et lui seul.
+    //
+    // Un dossier qui *contient* celui du jeu comptait aussi, et c'était un
+    // défaut grave : le lanceur est précisément ce qui s'installe au-dessus de
+    // ses jeux. Le registre donne `C:\Program Files\Epic Games\` à « Epic
+    // Games Launcher », et chaque jeu Epic est dedans — demander à désinstaller
+    // un jeu Epic lançait donc le désinstalleur du lanceur, avec la meilleure
+    // note possible, devant l'entrée du jeu lui-même. Ubisoft Connect
+    // (`…\Ubisoft Game Launcher\`, qui porte `games\…`) et HoYoPlay avaient le
+    // même piège.
+    //
+    // L'inverse — un dossier *contenu* dans celui du jeu — est parti avec :
+    // c'est la porte ouverte aux composants installés à côté du jeu, dans son
+    // propre dossier. Les deux directions ne servaient qu'à rattraper un nom
+    // différent, ce que la règle suivante fait déjà quand elle est sûre.
     let meme_dossier = match (emplacement, chemin_jeu) {
         (Some(e), Some(j)) => {
-            let e = e.trim_end_matches(['\\', '/']).to_ascii_lowercase();
-            let j = j.trim_end_matches(['\\', '/']).to_ascii_lowercase();
-            !e.is_empty() && (e == j || j.starts_with(&format!("{e}\\")) || e.starts_with(&format!("{j}\\")))
+            let e = dossier_normalise(e);
+            !e.is_empty() && e == dossier_normalise(j)
         }
         _ => false,
     };
@@ -231,6 +256,45 @@ pub fn score(titre_jeu: &str, nom_entree: &str, emplacement: Option<&str>, chemi
     // vaut mieux que désinstaller le mauvais jeu : l'utilisateur garde le
     // chemin habituel par Windows, et nous le lui disons.
     None
+}
+
+/// Lanceurs de jeux, tels que Windows les nomme, une fois normalisés.
+///
+/// Hytale n'y est pas : son lanceur porte le nom du jeu, et c'est par lui que
+/// le jeu s'installe.
+const LANCEURS: [&str; 13] = [
+    "steam",
+    "epic games",
+    "epic games launcher",
+    "epic online services",
+    "battle net",
+    "ubisoft connect",
+    "ubisoft game launcher",
+    "ea app",
+    "ea desktop",
+    "origin",
+    "gog galaxy",
+    "riot client",
+    "rockstar games launcher",
+];
+
+/// L'entrée désigne-t-elle un lanceur, quand ce n'est pas lui qu'on cherchait ?
+///
+/// Seconde barrière, posée après la correction de la règle des dossiers : une
+/// entrée peut encore tomber sur un lanceur par son nom, ou par un dossier
+/// d'installation que le lanceur et le jeu partagent pour de bon. Or le
+/// désinstalleur d'un lanceur retire le lanceur, jamais un seul de ses jeux —
+/// il n'y a donc aucun cas où le lancer serve ce qu'on demandait.
+///
+/// Le lanceur lui-même reste désinstallable : ce qui est refusé, c'est de
+/// répondre « Epic Games Launcher » à qui demande à retirer un jeu. La version
+/// est admise après le nom, le registre en portant (« RSI Launcher 2.18.1 »).
+pub fn lanceur_etranger(nom_entree: &str, titre_jeu: &str) -> bool {
+    let n = normaliser_titre(nom_entree);
+    let est_lanceur = LANCEURS
+        .iter()
+        .any(|l| n == *l || n.starts_with(&format!("{l} ")));
+    est_lanceur && n != normaliser_titre(titre_jeu)
 }
 
 /// Éditeurs dont on ne touche jamais aux logiciels depuis Cassini.
@@ -327,6 +391,10 @@ pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
 
             let editeur: String = entree.get_value("Publisher").unwrap_or_default();
             if est_systeme(&nom, Some(editeur.as_str()).filter(|e| !e.is_empty())) {
+                continue;
+            }
+            // Un lanceur ne se désinstalle pas à la place d'un de ses jeux.
+            if lanceur_etranger(&nom, titre) {
                 continue;
             }
 
@@ -479,14 +547,82 @@ mod tests {
     }
 
     #[test]
-    fn le_dossier_d_installation_prime_sur_le_nom() {
-        let note = score(
-            "Mon Jeu",
-            "Un nom tout autre",
-            Some(r"C:\Jeux\MonJeu"),
-            Some(r"C:\Jeux\MonJeu\bin"),
+    fn le_meme_dossier_prime_sur_le_nom() {
+        // Deux noms sans rapport, un seul dossier : c'est bien la même chose.
+        assert_eq!(
+            score("Mon Jeu", "Un nom tout autre", Some(r"C:\Jeux\MonJeu"), Some(r"C:\Jeux\MonJeu")),
+            Some(100)
         );
-        assert_eq!(note, Some(100));
+        // La barre finale et le séparateur de l'autre bord ne changent rien :
+        // le registre écrit les deux.
+        assert_eq!(
+            score("Mon Jeu", "Un nom tout autre", Some(r"C:\Jeux\MonJeu\"), Some("C:/Jeux/MonJeu")),
+            Some(100)
+        );
+    }
+
+    /// Le défaut qui a désinstallé un lanceur à la place d'un jeu.
+    ///
+    /// Un dossier qui *contient* celui du jeu valait pour le même, et un
+    /// lanceur s'installe précisément au-dessus de ses jeux : sa note était la
+    /// meilleure possible, devant l'entrée du jeu lui-même. Les valeurs sont
+    /// celles d'un registre réel, barre finale comprise.
+    #[test]
+    fn ne_prend_pas_le_lanceur_pour_un_de_ses_jeux() {
+        assert!(score(
+            "Fortnite",
+            "Epic Games Launcher",
+            Some(r"C:\Program Files\Epic Games\"),
+            Some(r"C:\Program Files\Epic Games\Fortnite"),
+        )
+        .is_none());
+
+        assert!(score(
+            "Assassin's Creed Mirage",
+            "Ubisoft Connect",
+            Some(r"C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\"),
+            Some(r"C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games\Assassin's Creed Mirage"),
+        )
+        .is_none());
+
+        assert!(score(
+            "Genshin Impact",
+            "HoYoPlay",
+            Some(r"C:\Program Files\HoYoPlay"),
+            Some(r"C:\Program Files\HoYoPlay\games\Genshin Impact game"),
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn ne_prend_pas_un_composant_installe_dans_le_dossier_du_jeu() {
+        assert!(score(
+            "Mon Jeu",
+            "Un greffon quelconque",
+            Some(r"C:\Jeux\MonJeu\extras"),
+            Some(r"C:\Jeux\MonJeu"),
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn refuse_un_lanceur_quand_on_cherche_un_jeu() {
+        assert!(lanceur_etranger("Epic Games Launcher", "Fortnite"));
+        assert!(lanceur_etranger("Steam", "Half-Life"));
+        assert!(lanceur_etranger("Battle.net", "Diablo IV"));
+        assert!(lanceur_etranger("Ubisoft Connect", "Far Cry 6"));
+        // Avec son numéro de version, comme le registre l'écrit parfois.
+        assert!(lanceur_etranger("Epic Games Launcher 17.2.1", "Fortnite"));
+
+        // Le lanceur lui-même reste désinstallable.
+        assert!(!lanceur_etranger("Epic Games Launcher", "Epic Games Launcher"));
+        assert!(!lanceur_etranger("Steam", "Steam"));
+        // Hytale s'installe par un lanceur qui porte son nom : le bloquer
+        // priverait le jeu du seul désinstalleur qu'il ait.
+        assert!(!lanceur_etranger("Hytale Launcher", "Hytale"));
+        // Et un jeu dont le nom commence comme un lanceur reste un jeu.
+        assert!(!lanceur_etranger("SteamWorld Dig", "SteamWorld Dig"));
+        assert!(!lanceur_etranger("SteamWorld Dig", "Un autre jeu"));
     }
 
     #[test]

@@ -28,7 +28,11 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'fix',
-        itemKeys: ['changelog.v6_0_1.fix_0'],
+        itemKeys: [
+          'changelog.v6_0_1.fix_0',
+          'changelog.v6_0_1.fix_1',
+          'changelog.v6_0_1.fix_2',
+        ],
       },
     ],
   },
