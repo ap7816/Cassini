@@ -502,13 +502,15 @@
     "sectionChange": "Changes"
   },
   "changelog": {
+    "v6_0_2": {
+      "fix_0": "[Library] Uninstalling an Epic game removed the Epic launcher instead: Windows gives it the folder that holds every game, and Cassini read that as the game itself. Ubisoft Connect and HoYoPlay set the same trap. A launcher can no longer answer for one of its games, and the message now points to the one that installed it",
+      "fix_1": "[Library] The uninstall confirmation names the program that will really open when it does not carry the game's name: that is what was missing to catch the mistake before making it"
+    },
     "v6_0_1": {
       "new_0": "[Music] A fourth ambient track, fourteen minutes long: the rotation now has four, and repeats far less",
       "change_0": "[Music] Ambience and event music go quiet while the window is not in front, and pick up again on return. The player keeps going: a track you put on yourself has no business stopping because you opened another window — and the tray menu pauses it without reopening the app",
       "change_1": "[Solar system] The trip from one system to another takes a little longer: three to six seconds depending on distance, instead of two and a half to four and a half",
-      "fix_0": "[Solar system] Keyboard speed finally matches the system you are in: it stayed locked to the one at startup, so you crawled through a large system after travelling to it",
-      "fix_1": "[Library] Uninstalling an Epic game removed the Epic launcher instead: Windows gives it the folder that holds every game, and Cassini read that as the game itself. Ubisoft Connect and HoYoPlay set the same trap. A launcher can no longer answer for one of its games, and the message now points to the one that installed it",
-      "fix_2": "[Library] The uninstall confirmation names the program that will really open when it does not carry the game's name: that is what was missing to catch the mistake before making it"
+      "fix_0": "[Solar system] Keyboard speed finally matches the system you are in: it stayed locked to the one at startup, so you crawled through a large system after travelling to it"
     },
     "v6_0_0": {
       "new_0": "[Solar system] Fully recomputed sky: the Milky Way is a real concentration of stars, with its dust lanes and emission nebulae. It stays sharp at any zoom, and new stars appear as you get closer",

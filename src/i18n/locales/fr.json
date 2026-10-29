@@ -502,13 +502,15 @@
     "sectionChange": "Changements"
   },
   "changelog": {
+    "v6_0_2": {
+      "fix_0": "[Bibliothèque] Désinstaller un jeu Epic retirait le launcher Epic : Windows lui donne pour dossier celui qui contient tous les jeux, et Cassini y lisait le jeu lui-même. Ubisoft Connect et HoYoPlay tendaient le même piège. Un launcher ne peut plus répondre à la place d’un de ses jeux, et le message renvoie à celui qui l’a installé",
+      "fix_1": "[Bibliothèque] La confirmation de désinstallation nomme le programme qui va vraiment s’ouvrir quand il ne porte pas le nom du jeu : c’est ce qui manquait pour voir l’erreur avant de la commettre"
+    },
     "v6_0_1": {
       "new_0": "[Musique] Une quatrième piste d’ambiance, de quatorze minutes : l’enchaînement en compte désormais quatre, et se répète beaucoup moins",
       "change_0": "[Musique] L’ambiance et les musiques d’événement se taisent quand la fenêtre n’est plus devant, et reprennent au retour. Le lecteur, lui, continue : une piste qu’on a mise soi-même n’a pas à s’arrêter parce qu’on ouvre une autre fenêtre — et le menu de la zone de notification la met en pause sans rouvrir l’application",
       "change_1": "[Système solaire] Le voyage d’un système à l’autre prend un peu plus de temps : de trois à six secondes selon la distance, au lieu de deux et demie à quatre et demie",
-      "fix_0": "[Système solaire] La vitesse du clavier s’accorde enfin au système où l’on se trouve : elle restait calée sur celui du démarrage, et l’on rampait dans un grand système après avoir voyagé vers lui",
-      "fix_1": "[Bibliothèque] Désinstaller un jeu Epic retirait le launcher Epic : Windows lui donne pour dossier celui qui contient tous les jeux, et Cassini y lisait le jeu lui-même. Ubisoft Connect et HoYoPlay tendaient le même piège. Un launcher ne peut plus répondre à la place d’un de ses jeux, et le message renvoie à celui qui l’a installé",
-      "fix_2": "[Bibliothèque] La confirmation de désinstallation nomme le programme qui va vraiment s’ouvrir quand il ne porte pas le nom du jeu : c’est ce qui manquait pour voir l’erreur avant de la commettre"
+      "fix_0": "[Système solaire] La vitesse du clavier s’accorde enfin au système où l’on se trouve : elle restait calée sur celui du démarrage, et l’on rampait dans un grand système après avoir voyagé vers lui"
     },
     "v6_0_0": {
       "new_0": "[Système solaire] Ciel entièrement recalculé : la voie lactée est une vraie concentration d’étoiles, avec ses couloirs de poussière et ses nébuleuses en émission. Il reste net à n’importe quel zoom, et de nouvelles étoiles y apparaissent à mesure qu’on s’approche",
