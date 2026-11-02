@@ -21,6 +21,15 @@ export default defineConfig(async () => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
+  // Le build de production servi tel quel, sur le même port que le serveur de
+  // développement : c'est ce que les parcours Playwright utilisent sur
+  // l'intégration continue, où compiler chaque module à la première visite
+  // coûtait plus cher que tout le reste.
+  preview: {
+    port: 1420,
+    strictPort: true,
+  },
+
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,

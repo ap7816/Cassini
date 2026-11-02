@@ -41,6 +41,15 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const SUR_CI = !!process.env.CI;
 
+/**
+ * Le port servi, 1420 par défaut comme attendu par Tauri.
+ *
+ * `E2E_PORT` permet d'en changer, ce qui sert quand 1420 est déjà pris par un
+ * serveur de développement qu'on ne veut pas arrêter.
+ */
+const PORT = process.env.E2E_PORT ?? '1420';
+const ADRESSE = `http://localhost:${PORT}`;
+
 export default defineConfig({
   testDir: './e2e',
   outputDir: '.rapports/e2e/artefacts',
@@ -53,7 +62,7 @@ export default defineConfig({
   expect: { timeout: SUR_CI ? 30_000 : 15_000 },
   reporter: [['list'], ['json', { outputFile: '.rapports/e2e/resultats.json' }]],
   use: {
-    baseURL: 'http://localhost:1420',
+    baseURL: ADRESSE,
     // En local, tout est filmé, même ce qui passe : c'est le but, pas un filet
     // de secours. Sur la CI, rien n'est filmé — voir plus haut.
     video: SUR_CI ? 'off' : { mode: 'on', size: { width: 1280, height: 800 } },
@@ -64,9 +73,16 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:1420',
-    reuseExistingServer: true,
-    timeout: 120_000,
+    // En local, le serveur de développement, pour que le rechargement à chaud
+    // serve aussi quand on écrit un parcours. Sur coureur, le build de
+    // production servi en statique : le serveur de développement y compilait
+    // chaque module à la première visite d'une route, sur deux cœurs et sans
+    // cache, et cela pesait plus lourd que les tests eux-mêmes.
+    command: SUR_CI
+      ? `npm run build && npm run preview -- --port ${PORT} --strictPort`
+      : 'npm run dev',
+    url: ADRESSE,
+    reuseExistingServer: !SUR_CI,
+    timeout: 180_000,
   },
 });

@@ -81,17 +81,45 @@ const JEUX = [
  * `addInitScript` s'exécute avant tout script de la page, donc avant
  * `initStorage()` : au moment où l'application lit, la bibliothèque est déjà là.
  */
+/**
+ * Les réglages graphiques posés avant le premier rendu, sur coureur seulement.
+ *
+ * Un coureur d'intégration continue n'a pas de carte graphique : la scène y est
+ * rendue par le moteur logiciel de Chromium, vingt fois plus lentement que sur
+ * une machine ordinaire. Le préréglage le plus bas de l'application y répond,
+ * et c'est le sien, pas un réglage inventé pour les tests : moitié de
+ * résolution (donc le quart des pixels), moitié d'étoiles, pas de débordement
+ * lumineux, pas de rideaux de gaz. Les événements du ciel sont coupés avec, car
+ * une supernova qui traverse le champ pendant un parcours ne prouve rien et
+ * coûte cher.
+ *
+ * Rien de tout cela ne change ce que les parcours vérifient : ils cherchent des
+ * boutons et des calques, jamais des pixels.
+ */
+const QUALITE_COUREUR = {
+  echelleRendu: 0.5,
+  densiteCiel: 0.5,
+  debordement: false,
+  cielVivant: false,
+  evenementsCiel: false,
+};
+
 export async function semer(page: Page): Promise<void> {
-  await page.addInitScript((jeux) => {
-    window.localStorage.setItem('archive.library.games.v1', JSON.stringify(jeux));
-    // L'ouverture automatique des notes de version est coupée : leur modale n'a
-    // pas à couvrir la galaxie sur chaque film, et un parcours lui est consacré
-    // à part. On coupe la préférence plutôt que de marquer une version lue —
-    // « lue » se compare au numéro de la version courante, qui change à chaque
-    // publication, et le jour où il aurait changé tous les films auraient été
-    // couverts par la modale sans qu'on comprenne pourquoi.
-    window.localStorage.setItem('archive.patchNotes.auto', 'off');
-  }, JEUX);
+  const reglages = process.env.CI ? JSON.stringify(QUALITE_COUREUR) : null;
+  await page.addInitScript(
+    ([jeux, reglages]: [unknown, string | null]) => {
+      if (reglages) window.localStorage.setItem('archive.settings.v1', reglages);
+      window.localStorage.setItem('archive.library.games.v1', JSON.stringify(jeux));
+      // L'ouverture automatique des notes de version est coupée : leur modale n'a
+      // pas à couvrir la galaxie sur chaque film, et un parcours lui est consacré
+      // à part. On coupe la préférence plutôt que de marquer une version lue —
+      // « lue » se compare au numéro de la version courante, qui change à chaque
+      // publication, et le jour où il aurait changé tous les films auraient été
+      // couverts par la modale sans qu'on comprenne pourquoi.
+      window.localStorage.setItem('archive.patchNotes.auto', 'off');
+    },
+    [JEUX, reglages] as [unknown, string | null],
+  );
 }
 
 /**
