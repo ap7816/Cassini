@@ -23,10 +23,15 @@ export function useUpdater(): UpdaterState {
   useEffect(() => {
     async function run() {
       try {
-        const token = import.meta.env.VITE_UPDATER_TOKEN as string | undefined;
-        const u = await check(
-          token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
-        );
+        // Aucun en-tête d'authentification, et c'est volontaire. Le manifeste
+        // et les installeurs sont servis depuis `ap7816/ArcHive-updates`, qui
+        // est public : GitHub ne demande rien. Un jeton a été porté ici
+        // jusqu'à la 6.0.2, du temps où les mises à jour venaient du dépôt
+        // privé. Il ne servait plus à rien et coûtait cher : Vite remplace
+        // `import.meta.env.VITE_*` par la valeur littérale à la compilation,
+        // le jeton était donc gravé en clair dans le bundle, lui-même
+        // distribué dans un `.exe` téléchargeable par tous.
+        const u = await check();
         console.info('[updater] check result:', u);
         if (u?.available) setUpdate(u);
       } catch (e) {
@@ -44,7 +49,7 @@ export function useUpdater(): UpdaterState {
     let downloaded = 0;
     let total = 0;
     try {
-      await update.downloadAndInstall(event => {
+      await update.downloadAndInstall((event) => {
         if (event.event === 'Started') {
           total = event.data.contentLength ?? 0;
           console.info('[updater] download started, size:', total);

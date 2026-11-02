@@ -26,3 +26,13 @@ dist-ssr
 # Rapport de tests et historique des runs, produits par `npm run test:rapport`.
 rapport-tests.html
 .rapports/
+
+# Secrets et configuration locale. `*.local` couvrait deja .env.local, mais
+# un simple .env serait passe entre les mailles.
+.env
+.env.*
+!.env.example
+
+# Reglages locaux de Claude Code : chemins de la machine, rien a partager.
+.claude/settings.local.json
+.claude/worktrees/

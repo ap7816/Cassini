@@ -61,14 +61,22 @@ function compressImageFile(file: File): Promise<string> {
       img.onload = () => {
         let { width, height } = img;
         if (width > MAX_DIM || height > MAX_DIM) {
-          if (width >= height) { height = Math.round(height * MAX_DIM / width); width = MAX_DIM; }
-          else { width = Math.round(width * MAX_DIM / height); height = MAX_DIM; }
+          if (width >= height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
         }
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas not available')); return; }
+        if (!ctx) {
+          reject(new Error('Canvas not available'));
+          return;
+        }
         ctx.drawImage(img, 0, 0, width, height);
         resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
       };
@@ -97,8 +105,16 @@ const isPresetColor = (color: string) => ACCENT_COLORS.some((c) => c.value === c
  * l'ordre où elles s'y rangent.
  */
 const PAGES_RAPPELABLES: { reglage: PageRappelable; labelKey: string; hintKey: string }[] = [
-  { reglage: 'showLibrary', labelKey: 'settings.showLibraryLabel', hintKey: 'settings.showLibraryHint' },
-  { reglage: 'showLaunchers', labelKey: 'settings.showLaunchersLabel', hintKey: 'settings.showLaunchersHint' },
+  {
+    reglage: 'showLibrary',
+    labelKey: 'settings.showLibraryLabel',
+    hintKey: 'settings.showLibraryHint',
+  },
+  {
+    reglage: 'showLaunchers',
+    labelKey: 'settings.showLaunchersLabel',
+    hintKey: 'settings.showLaunchersHint',
+  },
 ];
 
 type Props = {
@@ -129,7 +145,10 @@ export function ReglagesContenu({ recherche }: Props) {
       const choix = await ouvrirFichier({
         multiple: false,
         filters: [
-          { name: t('settings.musiqueEvenementFiltre'), extensions: ['mp3', 'ogg', 'wav', 'flac', 'm4a'] },
+          {
+            name: t('settings.musiqueEvenementFiltre'),
+            extensions: ['mp3', 'ogg', 'wav', 'flac', 'm4a'],
+          },
         ],
       });
       if (typeof choix === 'string') {
@@ -249,7 +268,6 @@ export function ReglagesContenu({ recherche }: Props) {
     setCielVivant(p.cielVivant);
   }
 
-
   const ambient = useAmbientPlayer();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -258,7 +276,9 @@ export function ReglagesContenu({ recherche }: Props) {
   const [sgdbKeySaved, setSgdbKeySaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [currentLang, setCurrentLang] = useState<Langue>(getCurrentLanguage);
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'>('idle');
+  const [updateStatus, setUpdateStatus] = useState<
+    'idle' | 'checking' | 'upToDate' | 'downloading' | 'error'
+  >('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [webviewCacheCleared, setWebviewCacheCleared] = useState(false);
@@ -268,8 +288,9 @@ export function ReglagesContenu({ recherche }: Props) {
   async function handleCheckUpdate() {
     setUpdateStatus('checking');
     try {
-      const token = import.meta.env.VITE_UPDATER_TOKEN as string | undefined;
-      const update = await check(token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+      // Sans en-tête d'authentification : le dépôt des mises à jour est
+      // public. Voir `useUpdater.ts` pour le jeton qui vivait ici.
+      const update = await check();
       if (!update?.available) {
         setUpdateStatus('upToDate');
         setTimeout(() => setUpdateStatus('idle'), 3000);
@@ -301,7 +322,10 @@ export function ReglagesContenu({ recherche }: Props) {
       console.error('[update] erreur:', msg);
       setUpdateError(msg);
       setUpdateStatus('error');
-      setTimeout(() => { setUpdateStatus('idle'); setUpdateError(null); }, 6000);
+      setTimeout(() => {
+        setUpdateStatus('idle');
+        setUpdateError(null);
+      }, 6000);
     }
   }
 
@@ -380,7 +404,9 @@ export function ReglagesContenu({ recherche }: Props) {
           </button>
           <button
             type="button"
-            className={[css.tab, tab === 'graphisme' ? css.tabActive : ''].filter(Boolean).join(' ')}
+            className={[css.tab, tab === 'graphisme' ? css.tabActive : '']
+              .filter(Boolean)
+              .join(' ')}
             onClick={() => setTab('graphisme')}
           >
             {t('settings.tabGraphisme')}
@@ -405,304 +431,387 @@ export function ReglagesContenu({ recherche }: Props) {
       {/* ── Personnalisation ─────────────────────────────────── */}
 
       {/* Apparence */}
-      {(tab === 'perso' || !!q) && matches('settings.themeLabel', 'settings.themeHint', 'settings.bgLabel', 'settings.bgHint', 'settings.overlayLabel', 'settings.overlayHint', 'settings.accentLabel', 'settings.accentHint', 'settings.languageLabel', 'settings.languageHint') && (
-      <div className={css.card}>
-        {/* Image de fond */}
-        <SettingRow labelKey="settings.themeLabel" hintKey="settings.themeHint" query={q}>
-          <select
-            className={css.langSelect}
-            value={settings.themeMode}
-            onChange={(e) => {
-              if (estModeTheme(e.target.value)) setThemeMode(e.target.value);
-            }}
-          >
-            <option value="dark">{t('settings.themeDark')}</option>
-            <option value="light">{t('settings.themeLight')}</option>
-            <option value="system">{t('settings.themeSystem')}</option>
-          </select>
-        </SettingRow>
+      {(tab === 'perso' || !!q) &&
+        matches(
+          'settings.themeLabel',
+          'settings.themeHint',
+          'settings.bgLabel',
+          'settings.bgHint',
+          'settings.overlayLabel',
+          'settings.overlayHint',
+          'settings.accentLabel',
+          'settings.accentHint',
+          'settings.languageLabel',
+          'settings.languageHint',
+        ) && (
+          <div className={css.card}>
+            {/* Image de fond */}
+            <SettingRow labelKey="settings.themeLabel" hintKey="settings.themeHint" query={q}>
+              <select
+                className={css.langSelect}
+                value={settings.themeMode}
+                onChange={(e) => {
+                  if (estModeTheme(e.target.value)) setThemeMode(e.target.value);
+                }}
+              >
+                <option value="dark">{t('settings.themeDark')}</option>
+                <option value="light">{t('settings.themeLight')}</option>
+                <option value="system">{t('settings.themeSystem')}</option>
+              </select>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.bgLabel" hintKey="settings.bgHint" query={q}><div className={css.actions}>
-            <input
-              ref={inputRef}
-              className={css.hiddenInput}
-              type="file"
-              accept="image/*"
-              onChange={handlePickFile}
-            />
-            <button type="button" className={css.primary} onClick={() => inputRef.current?.click()}>
-              {t('settings.bgChoose')}
-            </button>
-            <button
-              type="button"
-              className={css.button}
-              onClick={() => { void confirm(t('settings.bgRemoveConfirm')).then((ok) => { if (ok) clearBackgroundImage(); }); }}
-              disabled={!settings.backgroundImageDataUrl}
-            >
-              {t('settings.bgRemove')}
-            </button>
-          </div>
-        </SettingRow>
+            <SettingRow labelKey="settings.bgLabel" hintKey="settings.bgHint" query={q}>
+              <div className={css.actions}>
+                <input
+                  ref={inputRef}
+                  className={css.hiddenInput}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePickFile}
+                />
+                <button
+                  type="button"
+                  className={css.primary}
+                  onClick={() => inputRef.current?.click()}
+                >
+                  {t('settings.bgChoose')}
+                </button>
+                <button
+                  type="button"
+                  className={css.button}
+                  onClick={() => {
+                    void confirm(t('settings.bgRemoveConfirm')).then((ok) => {
+                      if (ok) clearBackgroundImage();
+                    });
+                  }}
+                  disabled={!settings.backgroundImageDataUrl}
+                >
+                  {t('settings.bgRemove')}
+                </button>
+              </div>
+            </SettingRow>
 
-        {matches('settings.bgLabel', 'settings.bgHint') && (
-          settings.backgroundImageDataUrl ? (
-            <div className={css.previewWrap}>
-              <div className={css.previewLabel}>{t('settings.bgPreview')}</div>
-              <img
-                className={css.preview}
-                src={settings.backgroundImageDataUrl}
-                alt={t('settings.bgPreview')}
-              />
-            </div>
-          ) : (
-            <div className={css.empty}>{t('settings.bgEmpty')}</div>
-          )
-        )}
+            {matches('settings.bgLabel', 'settings.bgHint') &&
+              (settings.backgroundImageDataUrl ? (
+                <div className={css.previewWrap}>
+                  <div className={css.previewLabel}>{t('settings.bgPreview')}</div>
+                  <img
+                    className={css.preview}
+                    src={settings.backgroundImageDataUrl}
+                    alt={t('settings.bgPreview')}
+                  />
+                </div>
+              ) : (
+                <div className={css.empty}>{t('settings.bgEmpty')}</div>
+              ))}
 
+            {/* Opacité */}
+            <SettingRow labelKey="settings.overlayLabel" hintKey="settings.overlayHint" query={q}>
+              <div className={css.sliderRow}>
+                <input
+                  type="range"
+                  className={css.slider}
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={Math.round(settings.bgOverlayOpacity * 100)}
+                  onChange={(e) => setBgOverlayOpacity(Number(e.target.value) / 100)}
+                  disabled={!settings.backgroundImageDataUrl}
+                  aria-label={t('settings.overlayLabel')}
+                />
+                <span className={css.sliderValue}>
+                  {Math.round(settings.bgOverlayOpacity * 100)}%
+                </span>
+              </div>
+            </SettingRow>
 
-        {/* Opacité */}
-        <SettingRow labelKey="settings.overlayLabel" hintKey="settings.overlayHint" query={q}><div className={css.sliderRow}>
-            <input
-              type="range"
-              className={css.slider}
-              min={0}
-              max={100}
-              step={1}
-              value={Math.round(settings.bgOverlayOpacity * 100)}
-              onChange={(e) => setBgOverlayOpacity(Number(e.target.value) / 100)}
-              disabled={!settings.backgroundImageDataUrl}
-              aria-label={t('settings.overlayLabel')}
-            />
-            <span className={css.sliderValue}>{Math.round(settings.bgOverlayOpacity * 100)}%</span>
-          </div>
-        </SettingRow>
+            {/* Couleur d'accent */}
+            <SettingRow labelKey="settings.accentLabel" hintKey="settings.accentHint" query={q}>
+              <div className={css.swatches}>
+                {ACCENT_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    className={[
+                      css.swatch,
+                      settings.accentColor === c.value ? css.swatchActive : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    style={{ backgroundColor: c.value }}
+                    title={t(c.labelKey)}
+                    onClick={() => setAccentColor(c.value)}
+                    aria-label={t(c.labelKey)}
+                    aria-pressed={settings.accentColor === c.value}
+                  />
+                ))}
 
+                <div className={css.swatchCustomWrapper}>
+                  <div
+                    className={[
+                      css.swatch,
+                      css.swatchCustom,
+                      !isPresetColor(settings.accentColor) ? css.swatchActive : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    style={
+                      !isPresetColor(settings.accentColor)
+                        ? { backgroundColor: settings.accentColor }
+                        : undefined
+                    }
+                    title={t('settings.accentCustom')}
+                  />
+                  <input
+                    type="color"
+                    className={css.colorInput}
+                    value={settings.accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    aria-label={t('settings.accentCustom')}
+                  />
+                </div>
+              </div>
+            </SettingRow>
 
-        {/* Couleur d'accent */}
-        <SettingRow labelKey="settings.accentLabel" hintKey="settings.accentHint" query={q}><div className={css.swatches}>
-            {ACCENT_COLORS.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                className={[css.swatch, settings.accentColor === c.value ? css.swatchActive : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                style={{ backgroundColor: c.value }}
-                title={t(c.labelKey)}
-                onClick={() => setAccentColor(c.value)}
-                aria-label={t(c.labelKey)}
-                aria-pressed={settings.accentColor === c.value}
-              />
-            ))}
-
-            <div className={css.swatchCustomWrapper}>
-              <div
-                className={[
-                  css.swatch,
-                  css.swatchCustom,
-                  !isPresetColor(settings.accentColor) ? css.swatchActive : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={
-                  !isPresetColor(settings.accentColor)
-                    ? { backgroundColor: settings.accentColor }
-                    : undefined
-                }
-                title={t('settings.accentCustom')}
-              />
-              <input
-                type="color"
-                className={css.colorInput}
-                value={settings.accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-                aria-label={t('settings.accentCustom')}
-              />
-            </div>
-          </div>
-        </SettingRow>
-
-
-        {/* Langue */}
-        <SettingRow labelKey="settings.languageLabel" hintKey="settings.languageHint" query={q}><select
-            className={css.langSelect}
-            value={currentLang}
-            onChange={(e) => {
-              if (estLangue(e.target.value)) handleLanguageChange(e.target.value);
-            }}
-          >
-            {/* Chaque langue sous son propre nom : on doit pouvoir retrouver la
+            {/* Langue */}
+            <SettingRow labelKey="settings.languageLabel" hintKey="settings.languageHint" query={q}>
+              <select
+                className={css.langSelect}
+                value={currentLang}
+                onChange={(e) => {
+                  if (estLangue(e.target.value)) handleLanguageChange(e.target.value);
+                }}
+              >
+                {/* Chaque langue sous son propre nom : on doit pouvoir retrouver la
                 sienne dans une interface qu'on ne lit pas. */}
-            {LANGUES.map((l) => (
-              <option key={l.code} value={l.code} lang={l.code}>
-                {l.drapeau} {l.nom}
-              </option>
-            ))}
-          </select>
-        </SettingRow>
-      </div>
-      )}
+                {LANGUES.map((l) => (
+                  <option key={l.code} value={l.code} lang={l.code}>
+                    {l.drapeau} {l.nom}
+                  </option>
+                ))}
+              </select>
+            </SettingRow>
+          </div>
+        )}
 
       {/* ── Paramètres ───────────────────────────────────────── */}
 
       {/* Mises à jour */}
       {/* ── Succès ───────────────────────────────────────────── */}
 
-      {(tab === 'succes' || !!q) && matches('settings.succesTitre', 'settings.succesHint', ...SUCCES.map((c) => `succes.${c}.titre`)) && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.succesTitre')}</div>
-        <div className={css.empty}>{t('settings.succesHint')}</div>
-        <ListeSucces />
-      </div>
-      )}
+      {(tab === 'succes' || !!q) &&
+        matches(
+          'settings.succesTitre',
+          'settings.succesHint',
+          ...SUCCES.map((c) => `succes.${c}.titre`),
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.succesTitre')}</div>
+            <div className={css.empty}>{t('settings.succesHint')}</div>
+            <ListeSucces />
+          </div>
+        )}
 
-      {(tab === 'params' || !!q) && matches('settings.updateTitle', 'settings.updateLabel', 'settings.updateHint', 'settings.patchNotesLabel', 'settings.patchNotesHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
+      {(tab === 'params' || !!q) &&
+        matches(
+          'settings.updateTitle',
+          'settings.updateLabel',
+          'settings.updateHint',
+          'settings.patchNotesLabel',
+          'settings.patchNotesHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.updateTitle')}</div>
 
-        <SettingRow labelKey="settings.updateLabel" hintKey="settings.updateHint" query={q}><button
-            type="button"
-            className={updateStatus === 'error' ? css.danger : css.primary}
-            onClick={() => { void handleCheckUpdate(); }}
-            disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
-          >
-            {updateStatus === 'checking' ? t('settings.updateChecking')
-              : updateStatus === 'downloading' ? t('settings.updateDownloading', { pct: downloadProgress })
-              : updateStatus === 'upToDate' ? t('settings.updateUpToDate')
-              : updateStatus === 'error' ? t('settings.updateError')
-              : t('settings.updateCheck')}
-          </button>
-          {updateError && (
-            <div className={css.updateErrorMsg}>{updateError}</div>
-          )}
-        </SettingRow>
+            <SettingRow labelKey="settings.updateLabel" hintKey="settings.updateHint" query={q}>
+              <button
+                type="button"
+                className={updateStatus === 'error' ? css.danger : css.primary}
+                onClick={() => {
+                  void handleCheckUpdate();
+                }}
+                disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+              >
+                {updateStatus === 'checking'
+                  ? t('settings.updateChecking')
+                  : updateStatus === 'downloading'
+                    ? t('settings.updateDownloading', { pct: downloadProgress })
+                    : updateStatus === 'upToDate'
+                      ? t('settings.updateUpToDate')
+                      : updateStatus === 'error'
+                        ? t('settings.updateError')
+                        : t('settings.updateCheck')}
+              </button>
+              {updateError && <div className={css.updateErrorMsg}>{updateError}</div>}
+            </SettingRow>
 
-
-        <SettingRow labelKey="settings.patchNotesLabel" hintKey="settings.patchNotesHint" query={q}><button type="button" className={css.button} onClick={openPatchNotes}>
-            {t('settings.patchNotesBtn')}
-          </button>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow
+              labelKey="settings.patchNotesLabel"
+              hintKey="settings.patchNotesHint"
+              query={q}
+            >
+              <button type="button" className={css.button} onClick={openPatchNotes}>
+                {t('settings.patchNotesBtn')}
+              </button>
+            </SettingRow>
+          </div>
+        )}
 
       {/* Ambiance */}
-      {(tab === 'perso' || !!q) && matches('settings.ambientTitle', 'settings.ambientLabel', 'settings.ambientHint', 'settings.ambientVolumeLabel', 'settings.musiqueSupernovaLabel', 'settings.musiqueCometeBleueLabel', 'settings.musiqueTrouNoirLabel', 'settings.musiqueEvenementVolume') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
+      {(tab === 'perso' || !!q) &&
+        matches(
+          'settings.ambientTitle',
+          'settings.ambientLabel',
+          'settings.ambientHint',
+          'settings.ambientVolumeLabel',
+          'settings.musiqueSupernovaLabel',
+          'settings.musiqueCometeBleueLabel',
+          'settings.musiqueTrouNoirLabel',
+          'settings.musiqueEvenementVolume',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.ambientTitle')}</div>
 
-        <SettingRow labelKey="settings.ambientLabel" hintKey="settings.ambientHint" query={q}><label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={ambient.enabled}
-              onChange={e => ambient.setEnabled(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
+            <SettingRow labelKey="settings.ambientLabel" hintKey="settings.ambientHint" query={q}>
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={ambient.enabled}
+                  onChange={(e) => ambient.setEnabled(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.ambientVolumeLabel" query={q}>
-          <div className={css.sliderRow}>
-            <input
-              type="range" min={0} max={100}
-              value={Math.round(ambient.volume * 100)}
-              disabled={!ambient.enabled}
-              className={css.slider}
-              onChange={e => ambient.setVolume(Number(e.target.value) / 100)}
-            />
-            <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
-          </div>
-        </SettingRow>
-
-        {([
-          ['supernova', 'settings.musiqueSupernovaLabel', 'settings.musiqueSupernovaHint'],
-          ['cometeBleue', 'settings.musiqueCometeBleueLabel', 'settings.musiqueCometeBleueHint'],
-          ['trouNoir', 'settings.musiqueTrouNoirLabel', 'settings.musiqueTrouNoirHint'],
-        ] as const).map(([evenement, labelKey, hintKey]) => {
-          const chemin = settings.musiquesEvenements[evenement];
-          const volume = settings.volumesEvenements[evenement];
-          return (
-            <SettingRow key={evenement} labelKey={labelKey} hintKey={hintKey} query={q}>
-              <div className={css.pileEvenement}>
-                <div className={css.actions}>
-                  <button
-                    type="button"
-                    className={css.primary}
-                    disabled={!settings.evenementsCiel}
-                    onClick={() => { void choisirMusiqueEvenement(evenement); }}
-                  >
-                    {t('settings.musiqueEvenementChoisir')}
-                  </button>
-                  <button
-                    type="button"
-                    className={css.button}
-                    onClick={() => ecouterMusiqueEvenement(evenement)}
-                    disabled={!settings.evenementsCiel}
-                  >
-                    {t(ecoute === evenement
-                      ? 'settings.musiqueEvenementArreter'
-                      : 'settings.musiqueEvenementEcouter')}
-                  </button>
-                  <button
-                    type="button"
-                    className={css.button}
-                    onClick={() => retirerMusiqueEvenement(evenement)}
-                    disabled={!chemin}
-                  >
-                    {t('settings.musiqueEvenementRetirer')}
-                  </button>
-                </div>
-                <div className={css.sliderRow}>
-                  <input
-                    type="range" min={0} max={100}
-                    value={Math.round(volume * 100)}
-                    disabled={!settings.evenementsCiel}
-                    className={css.slider}
-                    aria-label={t('settings.musiqueEvenementVolume')}
-                    title={t('settings.musiqueEvenementVolume')}
-                    onChange={e => reglerVolume(evenement, Number(e.target.value) / 100)}
-                  />
-                  <span className={css.sliderValue}>{Math.round(volume * 100)} %</span>
-                </div>
-                <div className={css.empty}>
-                  {chemin
-                    ? nomDeFichier(chemin)
-                    : t(aUneMusiqueFournie()
-                      ? 'settings.musiqueEvenementDefaut'
-                      : 'settings.musiqueEvenementAucune')}
-                </div>
+            <SettingRow labelKey="settings.ambientVolumeLabel" query={q}>
+              <div className={css.sliderRow}>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={Math.round(ambient.volume * 100)}
+                  disabled={!ambient.enabled}
+                  className={css.slider}
+                  onChange={(e) => ambient.setVolume(Number(e.target.value) / 100)}
+                />
+                <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
               </div>
             </SettingRow>
-          );
-        })}
-      </div>
-      )}
+
+            {(
+              [
+                ['supernova', 'settings.musiqueSupernovaLabel', 'settings.musiqueSupernovaHint'],
+                [
+                  'cometeBleue',
+                  'settings.musiqueCometeBleueLabel',
+                  'settings.musiqueCometeBleueHint',
+                ],
+                ['trouNoir', 'settings.musiqueTrouNoirLabel', 'settings.musiqueTrouNoirHint'],
+              ] as const
+            ).map(([evenement, labelKey, hintKey]) => {
+              const chemin = settings.musiquesEvenements[evenement];
+              const volume = settings.volumesEvenements[evenement];
+              return (
+                <SettingRow key={evenement} labelKey={labelKey} hintKey={hintKey} query={q}>
+                  <div className={css.pileEvenement}>
+                    <div className={css.actions}>
+                      <button
+                        type="button"
+                        className={css.primary}
+                        disabled={!settings.evenementsCiel}
+                        onClick={() => {
+                          void choisirMusiqueEvenement(evenement);
+                        }}
+                      >
+                        {t('settings.musiqueEvenementChoisir')}
+                      </button>
+                      <button
+                        type="button"
+                        className={css.button}
+                        onClick={() => ecouterMusiqueEvenement(evenement)}
+                        disabled={!settings.evenementsCiel}
+                      >
+                        {t(
+                          ecoute === evenement
+                            ? 'settings.musiqueEvenementArreter'
+                            : 'settings.musiqueEvenementEcouter',
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={css.button}
+                        onClick={() => retirerMusiqueEvenement(evenement)}
+                        disabled={!chemin}
+                      >
+                        {t('settings.musiqueEvenementRetirer')}
+                      </button>
+                    </div>
+                    <div className={css.sliderRow}>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={Math.round(volume * 100)}
+                        disabled={!settings.evenementsCiel}
+                        className={css.slider}
+                        aria-label={t('settings.musiqueEvenementVolume')}
+                        title={t('settings.musiqueEvenementVolume')}
+                        onChange={(e) => reglerVolume(evenement, Number(e.target.value) / 100)}
+                      />
+                      <span className={css.sliderValue}>{Math.round(volume * 100)} %</span>
+                    </div>
+                    <div className={css.empty}>
+                      {chemin
+                        ? nomDeFichier(chemin)
+                        : t(
+                            aUneMusiqueFournie()
+                              ? 'settings.musiqueEvenementDefaut'
+                              : 'settings.musiqueEvenementAucune',
+                          )}
+                    </div>
+                  </div>
+                </SettingRow>
+              );
+            })}
+          </div>
+        )}
 
       {/* Système solaire */}
-      {(tab === 'perso' || !!q) && matches('settings.solarTitle', 'settings.planetPlaytimeLabel', 'settings.planetPlaytimeHint', 'settings.startSystemLabel', 'settings.startSystemHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
+      {(tab === 'perso' || !!q) &&
+        matches(
+          'settings.solarTitle',
+          'settings.planetPlaytimeLabel',
+          'settings.planetPlaytimeHint',
+          'settings.startSystemLabel',
+          'settings.startSystemHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.solarTitle')}</div>
 
-        <SettingRow labelKey="settings.startSystemLabel" hintKey="settings.startSystemHint" query={q}>
-          <ChoixOuverture valeur={settings.startSystem} onChange={setStartSystem} />
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.startSystemLabel"
+              hintKey="settings.startSystemHint"
+              query={q}
+            >
+              <ChoixOuverture valeur={settings.startSystem} onChange={setStartSystem} />
+            </SettingRow>
 
-        <SettingRow
-          labelKey="settings.planetPlaytimeLabel"
-          hintKey="settings.planetPlaytimeHint"
-          query={q}
-        >
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.planetSizeByPlaytime}
-              onChange={e => setPlanetSizeByPlaytime(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
-
-      </div>
-      )}
+            <SettingRow
+              labelKey="settings.planetPlaytimeLabel"
+              hintKey="settings.planetPlaytimeHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.planetSizeByPlaytime}
+                  onChange={(e) => setPlanetSizeByPlaytime(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
+          </div>
+        )}
 
       {/* ── Graphisme ────────────────────────────────────────── */}
 
@@ -713,263 +822,357 @@ export function ReglagesContenu({ recherche }: Props) {
           qui veut. Le préréglage n'est pas stocké, il se déduit des valeurs —
           voir `features/settings/qualite.ts`. */}
 
-      {(tab === 'graphisme' || !!q) && matches('settings.graphismeTitle', 'settings.presetLabel', 'settings.presetHint', 'settings.echelleRenduLabel', 'settings.echelleRenduHint', 'settings.densiteCielLabel', 'settings.densiteCielHint', 'settings.debordementLabel', 'settings.debordementHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.graphismeTitle')}</div>
+      {(tab === 'graphisme' || !!q) &&
+        matches(
+          'settings.graphismeTitle',
+          'settings.presetLabel',
+          'settings.presetHint',
+          'settings.echelleRenduLabel',
+          'settings.echelleRenduHint',
+          'settings.densiteCielLabel',
+          'settings.densiteCielHint',
+          'settings.debordementLabel',
+          'settings.debordementHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.graphismeTitle')}</div>
 
-        <SettingRow labelKey="settings.presetLabel" hintKey="settings.presetHint" query={q}>
-          <select
-            className={css.langSelect}
-            value={preset}
-            onChange={(e) => appliquerPreset(e.target.value as Preset)}
-          >
-            {ORDRE_PRESETS.map((nom) => (
-              <option key={nom} value={nom}>{t(`settings.preset_${nom}`)}</option>
-            ))}
-            {/* « Personnalisé » n'est pas un choix, c'est un constat : il ne
+            <SettingRow labelKey="settings.presetLabel" hintKey="settings.presetHint" query={q}>
+              <select
+                className={css.langSelect}
+                value={preset}
+                onChange={(e) => appliquerPreset(e.target.value as Preset)}
+              >
+                {ORDRE_PRESETS.map((nom) => (
+                  <option key={nom} value={nom}>
+                    {t(`settings.preset_${nom}`)}
+                  </option>
+                ))}
+                {/* « Personnalisé » n'est pas un choix, c'est un constat : il ne
                 paraît que lorsqu'aucun préréglage ne décrit l'état courant. */}
-            {preset === 'perso' && (
-              <option value="perso" disabled>{t('settings.preset_perso')}</option>
-            )}
-          </select>
-        </SettingRow>
+                {preset === 'perso' && (
+                  <option value="perso" disabled>
+                    {t('settings.preset_perso')}
+                  </option>
+                )}
+              </select>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.echelleRenduLabel" hintKey="settings.echelleRenduHint" query={q}>
-          <select
-            className={css.langSelect}
-            value={settings.echelleRendu}
-            onChange={(e) => setEchelleRendu(Number(e.target.value))}
-          >
-            {ECHELLES.map((v) => (
-              <option key={v} value={v}>
-                {Math.round(v * 100)} %{v > 1 ? ` · ${t('settings.echelleSuper')}` : ''}
-              </option>
-            ))}
-          </select>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.echelleRenduLabel"
+              hintKey="settings.echelleRenduHint"
+              query={q}
+            >
+              <select
+                className={css.langSelect}
+                value={settings.echelleRendu}
+                onChange={(e) => setEchelleRendu(Number(e.target.value))}
+              >
+                {ECHELLES.map((v) => (
+                  <option key={v} value={v}>
+                    {Math.round(v * 100)} %{v > 1 ? ` · ${t('settings.echelleSuper')}` : ''}
+                  </option>
+                ))}
+              </select>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.densiteCielLabel" hintKey="settings.densiteCielHint" query={q}>
-          <select
-            className={css.langSelect}
-            value={densiteLaPlusProche(settings.densiteCiel)}
-            onChange={(e) => setDensiteCiel(Number(e.target.value))}
-          >
-            {DENSITES.map((d) => (
-              <option key={d.cle} value={d.valeur}>{t(`settings.densite_${d.cle}`)}</option>
-            ))}
-          </select>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.densiteCielLabel"
+              hintKey="settings.densiteCielHint"
+              query={q}
+            >
+              <select
+                className={css.langSelect}
+                value={densiteLaPlusProche(settings.densiteCiel)}
+                onChange={(e) => setDensiteCiel(Number(e.target.value))}
+              >
+                {DENSITES.map((d) => (
+                  <option key={d.cle} value={d.valeur}>
+                    {t(`settings.densite_${d.cle}`)}
+                  </option>
+                ))}
+              </select>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.debordementLabel" hintKey="settings.debordementHint" query={q}>
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.debordement}
-              onChange={(e) => setDebordement(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow
+              labelKey="settings.debordementLabel"
+              hintKey="settings.debordementHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.debordement}
+                  onChange={(e) => setDebordement(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
+          </div>
+        )}
 
       {/* Affichage */}
-      {(tab === 'graphisme' || !!q) && matches('settings.affichageTitle', 'settings.limiteIPSLabel', 'settings.limiteIPSHint', 'settings.afficherIPSLabel', 'settings.afficherIPSHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.affichageTitle')}</div>
+      {(tab === 'graphisme' || !!q) &&
+        matches(
+          'settings.affichageTitle',
+          'settings.limiteIPSLabel',
+          'settings.limiteIPSHint',
+          'settings.afficherIPSLabel',
+          'settings.afficherIPSHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.affichageTitle')}</div>
 
-        <SettingRow labelKey="settings.limiteIPSLabel" hintKey="settings.limiteIPSHint" query={q}>
-          <select
-            className={css.langSelect}
-            value={settings.limiteIPS}
-            onChange={(e) => setLimiteIPS(Number(e.target.value))}
-          >
-            {LIMITES_IPS.map((v) => (
-              <option key={v} value={v}>
-                {v === 0 ? t('settings.limiteIPSAucune') : `${v} IPS`}
-              </option>
-            ))}
-          </select>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.limiteIPSLabel"
+              hintKey="settings.limiteIPSHint"
+              query={q}
+            >
+              <select
+                className={css.langSelect}
+                value={settings.limiteIPS}
+                onChange={(e) => setLimiteIPS(Number(e.target.value))}
+              >
+                {LIMITES_IPS.map((v) => (
+                  <option key={v} value={v}>
+                    {v === 0 ? t('settings.limiteIPSAucune') : `${v} IPS`}
+                  </option>
+                ))}
+              </select>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.afficherIPSLabel" hintKey="settings.afficherIPSHint" query={q}>
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.afficherIPS}
-              onChange={(e) => setAfficherIPS(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow
+              labelKey="settings.afficherIPSLabel"
+              hintKey="settings.afficherIPSHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.afficherIPS}
+                  onChange={(e) => setAfficherIPS(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
+          </div>
+        )}
 
       {/* Ambiance de la scène : ce qui se passe dans le ciel, et non la façon
           dont on le dessine. */}
-      {(tab === 'graphisme' || !!q) && matches('settings.sceneTitle', 'settings.cielVivantLabel', 'settings.cielVivantHint', 'settings.evenementsLabel', 'settings.evenementsHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.sceneTitle')}</div>
+      {(tab === 'graphisme' || !!q) &&
+        matches(
+          'settings.sceneTitle',
+          'settings.cielVivantLabel',
+          'settings.cielVivantHint',
+          'settings.evenementsLabel',
+          'settings.evenementsHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.sceneTitle')}</div>
 
-        <SettingRow labelKey="settings.cielVivantLabel" hintKey="settings.cielVivantHint" query={q}>
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.cielVivant}
-              onChange={e => setCielVivant(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.cielVivantLabel"
+              hintKey="settings.cielVivantHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.cielVivant}
+                  onChange={(e) => setCielVivant(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
 
-        <SettingRow labelKey="settings.evenementsLabel" hintKey="settings.evenementsHint" query={q}>
-          <label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.evenementsCiel}
-              onChange={e => setEvenementsCiel(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow
+              labelKey="settings.evenementsLabel"
+              hintKey="settings.evenementsHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.evenementsCiel}
+                  onChange={(e) => setEvenementsCiel(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
+          </div>
+        )}
 
-      {(tab === 'params' || !!q) && matches('settings.navTitle', 'settings.showLibraryLabel', 'settings.showLibraryHint', 'settings.showLaunchersLabel', 'settings.showLaunchersHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.navTitle')}</div>
+      {(tab === 'params' || !!q) &&
+        matches(
+          'settings.navTitle',
+          'settings.showLibraryLabel',
+          'settings.showLibraryHint',
+          'settings.showLaunchersLabel',
+          'settings.showLaunchersHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.navTitle')}</div>
 
-        {PAGES_RAPPELABLES.map(({ reglage, labelKey, hintKey }) => (
-          <SettingRow key={reglage} labelKey={labelKey} hintKey={hintKey} query={q}><label className={css.toggle}>
-              <input
-                type="checkbox"
-                checked={settings[reglage]}
-                onChange={(e) => setPageVisible(reglage, e.target.checked)}
-              />
-              <span className={css.toggleSlider} />
-            </label>
-          </SettingRow>
-        ))}
-      </div>
-      )}
+            {PAGES_RAPPELABLES.map(({ reglage, labelKey, hintKey }) => (
+              <SettingRow key={reglage} labelKey={labelKey} hintKey={hintKey} query={q}>
+                <label className={css.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={settings[reglage]}
+                    onChange={(e) => setPageVisible(reglage, e.target.checked)}
+                  />
+                  <span className={css.toggleSlider} />
+                </label>
+              </SettingRow>
+            ))}
+          </div>
+        )}
 
       {/* Système */}
-      {(tab === 'params' || !!q) && matches('settings.systemTitle', 'settings.autostartLabel', 'settings.autostartHint', 'settings.runInBgLabel', 'settings.runInBgHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.systemTitle')}</div>
+      {(tab === 'params' || !!q) &&
+        matches(
+          'settings.systemTitle',
+          'settings.autostartLabel',
+          'settings.autostartHint',
+          'settings.runInBgLabel',
+          'settings.runInBgHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.systemTitle')}</div>
 
-        <SettingRow labelKey="settings.autostartLabel" hintKey="settings.autostartHint" query={q}><label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.autostart}
-              onChange={async (e) => {
-                const enabled = e.target.checked;
-                setAutostart(enabled);
-                try { await invoke('set_autostart', { enabled }); } catch { /* desktop only */ }
-              }}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.autostartLabel"
+              hintKey="settings.autostartHint"
+              query={q}
+            >
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.autostart}
+                  onChange={async (e) => {
+                    const enabled = e.target.checked;
+                    setAutostart(enabled);
+                    try {
+                      await invoke('set_autostart', { enabled });
+                    } catch {
+                      /* desktop only */
+                    }
+                  }}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
 
-
-        <SettingRow labelKey="settings.runInBgLabel" hintKey="settings.runInBgHint" query={q}><label className={css.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.runInBackground}
-              onChange={(e) => setRunInBackground(e.target.checked)}
-            />
-            <span className={css.toggleSlider} />
-          </label>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow labelKey="settings.runInBgLabel" hintKey="settings.runInBgHint" query={q}>
+              <label className={css.toggle}>
+                <input
+                  type="checkbox"
+                  checked={settings.runInBackground}
+                  onChange={(e) => setRunInBackground(e.target.checked)}
+                />
+                <span className={css.toggleSlider} />
+              </label>
+            </SettingRow>
+          </div>
+        )}
 
       {/* Zone de danger */}
-      {(tab === 'params' || !!q) && matches('settings.dangerTitle', 'settings.clearAllLabel', 'settings.clearAllHint', 'settings.clearWebviewCacheLabel', 'settings.clearWebviewCacheHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
+      {(tab === 'params' || !!q) &&
+        matches(
+          'settings.dangerTitle',
+          'settings.clearAllLabel',
+          'settings.clearAllHint',
+          'settings.clearWebviewCacheLabel',
+          'settings.clearWebviewCacheHint',
+        ) && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.dangerTitle')}</div>
 
-        <SettingRow labelKey="settings.clearWebviewCacheLabel" hintKey="settings.clearWebviewCacheHint" query={q}><button
-            type="button"
-            className={css.button}
-            onClick={() => { void handleClearWebviewCache(); }}
-          >
-            {webviewCacheCleared ? t('settings.clearWebviewCacheCleared') : t('settings.clearWebviewCacheButton')}
-          </button>
-        </SettingRow>
+            <SettingRow
+              labelKey="settings.clearWebviewCacheLabel"
+              hintKey="settings.clearWebviewCacheHint"
+              query={q}
+            >
+              <button
+                type="button"
+                className={css.button}
+                onClick={() => {
+                  void handleClearWebviewCache();
+                }}
+              >
+                {webviewCacheCleared
+                  ? t('settings.clearWebviewCacheCleared')
+                  : t('settings.clearWebviewCacheButton')}
+              </button>
+            </SettingRow>
 
-
-        <SettingRow labelKey="settings.clearAllLabel" hintKey="settings.clearAllHint" query={q}><button
-            type="button"
-            className={css.danger}
-            onClick={handleClearAllData}
-          >
-            {t('settings.clearAllButton')}
-          </button>
-        </SettingRow>
-      </div>
-      )}
+            <SettingRow labelKey="settings.clearAllLabel" hintKey="settings.clearAllHint" query={q}>
+              <button type="button" className={css.danger} onClick={handleClearAllData}>
+                {t('settings.clearAllButton')}
+              </button>
+            </SettingRow>
+          </div>
+        )}
 
       {/* Intégrations */}
-      {(tab === 'params' || !!q) && matches('settings.integrationsTitle', 'settings.sgdbLabel', 'settings.sgdbHint') && (
-      <div className={css.card}>
-        <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
+      {(tab === 'params' || !!q) &&
+        matches('settings.integrationsTitle', 'settings.sgdbLabel', 'settings.sgdbHint') && (
+          <div className={css.card}>
+            <div className={css.sectionTitle}>{t('settings.integrationsTitle')}</div>
 
-        <SettingRow
-          labelKey="settings.sgdbLabel"
-          hintKey="settings.sgdbHint"
-          query={q}
-          hint={
-            <>
-              {t('settings.sgdbHint')}{' '}
-              <a
-                href="https://www.steamgriddb.com/api/v2"
-                target="_blank"
-                rel="noreferrer"
-                className={css.link}
-              >
-                {t('settings.sgdbLink')}
-              </a>
-            </>
-          }
-        >
-          <div className={css.apiKeyRow}>
-            <input
-              type="password"
-              className={css.apiKeyInput}
-              placeholder={
-                settings.sgdbKeySet
-                  ? t('settings.sgdbKeySaved')
-                  : t('settings.sgdbPlaceholder')
+            <SettingRow
+              labelKey="settings.sgdbLabel"
+              hintKey="settings.sgdbHint"
+              query={q}
+              hint={
+                <>
+                  {t('settings.sgdbHint')}{' '}
+                  <a
+                    href="https://www.steamgriddb.com/api/v2"
+                    target="_blank"
+                    rel="noreferrer"
+                    className={css.link}
+                  >
+                    {t('settings.sgdbLink')}
+                  </a>
+                </>
               }
-              value={sgdbKeyInput}
-              onChange={(e) => {
-                setSgdbKeyInput(e.target.value);
-                setSgdbKeySaved(false);
-              }}
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              className={css.primary}
-              onClick={handleSaveSgdbKey}
-              disabled={!sgdbKeyInput.trim()}
             >
-              {sgdbKeySaved ? t('settings.sgdbSaved') : t('settings.sgdbSave')}
-            </button>
-            <button
-              type="button"
-              className={css.button}
-              onClick={handleClearCache}
-              title={t('settings.sgdbClearCache')}
-            >
-              {cacheCleared ? t('settings.sgdbCleared') : t('settings.sgdbClearCache')}
-            </button>
+              <div className={css.apiKeyRow}>
+                <input
+                  type="password"
+                  className={css.apiKeyInput}
+                  placeholder={
+                    settings.sgdbKeySet ? t('settings.sgdbKeySaved') : t('settings.sgdbPlaceholder')
+                  }
+                  value={sgdbKeyInput}
+                  onChange={(e) => {
+                    setSgdbKeyInput(e.target.value);
+                    setSgdbKeySaved(false);
+                  }}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className={css.primary}
+                  onClick={handleSaveSgdbKey}
+                  disabled={!sgdbKeyInput.trim()}
+                >
+                  {sgdbKeySaved ? t('settings.sgdbSaved') : t('settings.sgdbSave')}
+                </button>
+                <button
+                  type="button"
+                  className={css.button}
+                  onClick={handleClearCache}
+                  title={t('settings.sgdbClearCache')}
+                >
+                  {cacheCleared ? t('settings.sgdbCleared') : t('settings.sgdbClearCache')}
+                </button>
+              </div>
+            </SettingRow>
           </div>
-        </SettingRow>
-      </div>
-      )}
+        )}
     </>
   );
 }
@@ -1010,14 +1213,18 @@ function ChoixOuverture({ valeur, onChange }: { valeur: string; onChange: (v: st
       {options.launchers.length > 0 && (
         <optgroup label={t('settings.startSystemLaunchers')}>
           {options.launchers.map((o) => (
-            <option key={o.cle} value={o.cle}>{o.nom}</option>
+            <option key={o.cle} value={o.cle}>
+              {o.nom}
+            </option>
           ))}
         </optgroup>
       )}
       {options.perso.length > 0 && (
         <optgroup label={t('settings.startSystemCustom')}>
           {options.perso.map((o) => (
-            <option key={o.cle} value={o.cle}>{o.nom}</option>
+            <option key={o.cle} value={o.cle}>
+              {o.nom}
+            </option>
           ))}
         </optgroup>
       )}
