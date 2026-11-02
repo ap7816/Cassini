@@ -1,19 +1,19 @@
 // Analyse audio via AudioBufferSourceNode (fetch → decodeAudioData → analyser).
 // Évite createMediaElementSource (CORS) et l'élément shadow (problèmes de sync).
 
-let _ctx:    AudioContext      | null = null;
-let _analyser: AnalyserNode    | null = null;
-let _source:  AudioBufferSourceNode | null = null;
-let _buffer:  AudioBuffer      | null = null;
-let _mainEl:  HTMLAudioElement | null = null;
+let _ctx: AudioContext | null = null;
+let _analyser: AnalyserNode | null = null;
+let _source: AudioBufferSourceNode | null = null;
+let _buffer: AudioBuffer | null = null;
+let _mainEl: HTMLAudioElement | null = null;
 let _isPlaying = false;
-let _loadId  = 0; // annule les chargements obsolètes
+let _loadId = 0; // annule les chargements obsolètes
 
 function ensureCtx(): AudioContext {
   if (_ctx) return _ctx;
-  _ctx      = new AudioContext();
+  _ctx = new AudioContext();
   _analyser = _ctx.createAnalyser();
-  _analyser.fftSize              = 2048;
+  _analyser.fftSize = 2048;
   _analyser.smoothingTimeConstant = 0.78;
   // GainNode silencieux : le graphe reste actif (analyser fonctionne) sans sortie audio
   const silence = _ctx.createGain();
@@ -27,7 +27,11 @@ function stopSource(): void {
   if (_source) {
     _source.onended = null;
     _source.disconnect();
-    try { _source.stop(); } catch { /* déjà arrêté */ }
+    try {
+      _source.stop();
+    } catch {
+      /* déjà arrêté */
+    }
     _source = null;
   }
 }
@@ -39,7 +43,9 @@ function startSource(offset: number): void {
   src.buffer = _buffer;
   src.connect(_analyser);
   src.start(0, Math.max(0, Math.min(offset, _buffer.duration - 0.01)));
-  src.onended = () => { if (_source === src) _source = null; };
+  src.onended = () => {
+    if (_source === src) _source = null;
+  };
   _source = src;
 }
 
@@ -51,8 +57,8 @@ export function initMusicAnalyser(mainEl: HTMLAudioElement): void {
     if (_ctx?.state === 'suspended') void _ctx.resume();
     startSource(mainEl.currentTime);
   });
-  mainEl.addEventListener('pause',  stopSource);
-  mainEl.addEventListener('ended',  stopSource);
+  mainEl.addEventListener('pause', stopSource);
+  mainEl.addEventListener('ended', stopSource);
   mainEl.addEventListener('seeked', () => {
     if (!_buffer || mainEl.paused) return;
     startSource(mainEl.currentTime);
@@ -85,9 +91,15 @@ export async function loadTrackForAnalysis(assetUrl: string): Promise<void> {
   }
 }
 
-export function getAnalyser(): AnalyserNode | null { return _analyser; }
-export function setMusicPlaying(v: boolean): void  { _isPlaying = v; }
-export function getMusicPlaying(): boolean          { return _isPlaying; }
+export function getAnalyser(): AnalyserNode | null {
+  return _analyser;
+}
+export function setMusicPlaying(v: boolean): void {
+  _isPlaying = v;
+}
+export function getMusicPlaying(): boolean {
+  return _isPlaying;
+}
 export function resumeCtx(): void {
   if (_ctx?.state === 'suspended') void _ctx.resume();
 }

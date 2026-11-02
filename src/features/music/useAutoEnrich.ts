@@ -4,10 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import type { TrackMeta } from './useTrackMeta';
-import {
-  enrichTrack, getEnriched, needsEnrichment,
-  type EnrichedData,
-} from './enrichMeta';
+import { enrichTrack, getEnriched, needsEnrichment, type EnrichedData } from './enrichMeta';
 
 interface UseAutoEnrichOptions {
   paths: string[];
@@ -38,7 +35,7 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
     if (!enabled || !paths.length) return;
 
     // Filtre uniquement les pistes non encore tentées ET sans cover embarquée
-    const toEnrich = paths.filter(p => {
+    const toEnrich = paths.filter((p) => {
       if (!needsEnrichment(p)) return false;
       // Si la piste a déjà une cover dans ses tags (coverDataUrl), on skip
       const meta = getMeta(p);
@@ -51,24 +48,25 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
     let searchDone = 0;
     setProgress({ phase: 'searching', done: 0, total: toEnrich.length });
 
-    const enrichPromises = toEnrich.map(path => {
-      const meta    = getMeta(path);
+    const enrichPromises = toEnrich.map((path) => {
+      const meta = getMeta(path);
       const rawTitle =
         meta?.title ??
-        path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, '') ??
+        path
+          .split(/[\\/]/)
+          .pop()
+          ?.replace(/\.[^.]+$/, '') ??
         '';
       // Si on a un tag artiste ET que le titre ne contient pas déjà " - ", on préfixe l'artiste
       // pour que le scoreur Rust puisse vérifier les deux parties indépendamment (plus strict)
-      const hasDash  = rawTitle.includes(' - ');
-      const title    = (meta?.artist && !hasDash)
-        ? `${meta.artist} - ${rawTitle}`
-        : rawTitle;
+      const hasDash = rawTitle.includes(' - ');
+      const title = meta?.artist && !hasDash ? `${meta.artist} - ${rawTitle}` : rawTitle;
       return enrichTrack(path, title).then(() => {
         if (cancelled) return;
         searchDone++;
         setProgress({ phase: 'searching', done: searchDone, total: toEnrich.length });
         // Affiche chaque résultat dès qu'il arrive plutôt que d'attendre la fin du lot
-        setTick(n => n + 1);
+        setTick((n) => n + 1);
       });
     });
 
@@ -77,7 +75,9 @@ export function useAutoEnrich({ paths, getMeta, enabled }: UseAutoEnrichOptions)
       if (!cancelled) setProgress(null);
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, pathsKey]);
 

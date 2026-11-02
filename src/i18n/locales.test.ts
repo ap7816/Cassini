@@ -34,12 +34,17 @@ describe('catalogues de traduction', () => {
   });
 
   it('ne laissent aucun texte vide', () => {
-    for (const [langue, catalogue] of [['fr', fr], ['en', en]] as const) {
+    for (const [langue, catalogue] of [
+      ['fr', fr],
+      ['en', en],
+    ] as const) {
       const vides = clefs(catalogue).filter((chemin) => {
-        const valeur = chemin.split('.').reduce<unknown>(
-          (courant, part) => (courant as Record<string, unknown>)?.[part],
-          catalogue,
-        );
+        const valeur = chemin
+          .split('.')
+          .reduce<unknown>(
+            (courant, part) => (courant as Record<string, unknown>)?.[part],
+            catalogue,
+          );
         return typeof valeur === 'string' && valeur.trim() === '';
       });
       expect(vides, `textes vides en ${langue}`).toEqual([]);
@@ -53,12 +58,17 @@ describe('notes de version', () => {
   );
 
   it('ont un texte dans les deux langues', () => {
-    for (const [langue, catalogue] of [['fr', fr], ['en', en]] as const) {
+    for (const [langue, catalogue] of [
+      ['fr', fr],
+      ['en', en],
+    ] as const) {
       const manquantes = attendues.filter((chemin) => {
-        const valeur = chemin.split('.').reduce<unknown>(
-          (courant, part) => (courant as Record<string, unknown>)?.[part],
-          catalogue,
-        );
+        const valeur = chemin
+          .split('.')
+          .reduce<unknown>(
+            (courant, part) => (courant as Record<string, unknown>)?.[part],
+            catalogue,
+          );
         return typeof valeur !== 'string' || valeur.trim() === '';
       });
       expect(manquantes, `lignes sans texte en ${langue}`).toEqual([]);
@@ -77,7 +87,10 @@ describe('notes de version', () => {
     for (let i = 1; i < CHANGELOG.length; i++) {
       const avant = rang(CHANGELOG[i - 1].version);
       const apres = rang(CHANGELOG[i].version);
-      expect(plusRecente(avant, apres), `${CHANGELOG[i - 1].version} avant ${CHANGELOG[i].version}`).toBe(true);
+      expect(
+        plusRecente(avant, apres),
+        `${CHANGELOG[i - 1].version} avant ${CHANGELOG[i].version}`,
+      ).toBe(true);
     }
   });
 });

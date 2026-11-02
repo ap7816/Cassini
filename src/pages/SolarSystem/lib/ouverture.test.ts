@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { nouveauSysteme } from './customSystems';
 import { OUVERTURE_AUTO, OUVERTURE_DERNIER, systemeOuverture } from './ouverture';
 
-const favoris = nouveauSysteme({ id: 'fav', nom: 'Favoris', icone: 'etoile', couleur: '#fff', jeux: [] });
+const favoris = nouveauSysteme({
+  id: 'fav',
+  nom: 'Favoris',
+  icone: 'etoile',
+  couleur: '#fff',
+  jeux: [],
+});
 const launchers = ['Steam', 'Epic'];
 
 describe('systemeOuverture', () => {
@@ -12,7 +18,9 @@ describe('systemeOuverture', () => {
 
   it('rouvre le dernier système visité', () => {
     expect(systemeOuverture(OUVERTURE_DERNIER, 'Epic', launchers, [favoris])).toBe('Epic');
-    expect(systemeOuverture(OUVERTURE_DERNIER, 'perso:fav', launchers, [favoris])).toBe('perso:fav');
+    expect(systemeOuverture(OUVERTURE_DERNIER, 'perso:fav', launchers, [favoris])).toBe(
+      'perso:fav',
+    );
     expect(systemeOuverture(OUVERTURE_DERNIER, null, launchers, [favoris])).toBeNull();
   });
 

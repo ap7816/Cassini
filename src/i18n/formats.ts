@@ -29,14 +29,16 @@ function formateur(cle: string, creer: () => Intl.NumberFormat): Intl.NumberForm
 }
 
 function unite(langue: string, u: Unite, decimales: number): Intl.NumberFormat {
-  return formateur(`${langue}|${u}|${decimales}`, () =>
-    new Intl.NumberFormat(langue, {
-      style: 'unit',
-      unit: u,
-      unitDisplay: 'short',
-      minimumFractionDigits: decimales,
-      maximumFractionDigits: decimales,
-    }),
+  return formateur(
+    `${langue}|${u}|${decimales}`,
+    () =>
+      new Intl.NumberFormat(langue, {
+        style: 'unit',
+        unit: u,
+        unitDisplay: 'short',
+        minimumFractionDigits: decimales,
+        maximumFractionDigits: decimales,
+      }),
   );
 }
 
@@ -78,23 +80,27 @@ export function formaterDuree(secondes: number, langue: string): string {
 }
 
 function uniteSimple(langue: string, u: 'hour' | 'minute'): Intl.NumberFormat {
-  return formateur(`${langue}|${u}`, () =>
-    new Intl.NumberFormat(langue, {
-      style: 'unit',
-      unit: u,
-      unitDisplay: 'short',
-      maximumFractionDigits: 0,
-    }),
+  return formateur(
+    `${langue}|${u}`,
+    () =>
+      new Intl.NumberFormat(langue, {
+        style: 'unit',
+        unit: u,
+        unitDisplay: 'short',
+        maximumFractionDigits: 0,
+      }),
   );
 }
 
 /** Nombre à décimales fixes, avec le séparateur décimal de la langue. */
 export function formaterNombre(valeur: number, langue: string, decimales: number): string {
-  return formateur(`${langue}|nombre|${decimales}`, () =>
-    new Intl.NumberFormat(langue, {
-      minimumFractionDigits: decimales,
-      maximumFractionDigits: decimales,
-    }),
+  return formateur(
+    `${langue}|nombre|${decimales}`,
+    () =>
+      new Intl.NumberFormat(langue, {
+        minimumFractionDigits: decimales,
+        maximumFractionDigits: decimales,
+      }),
   ).format(valeur);
 }
 

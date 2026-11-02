@@ -59,7 +59,11 @@ export function ChoixImageIcone({ image, active, onImage, onActiver, onRetirer }
     <div className={css.bloc}>
       <button
         type="button"
-        className={[css.vignette, active && image ? css.vignetteActive : '', survol ? css.vignetteSurvol : '']
+        className={[
+          css.vignette,
+          active && image ? css.vignetteActive : '',
+          survol ? css.vignetteSurvol : '',
+        ]
           .filter(Boolean)
           .join(' ')}
         onClick={() => (image ? onActiver() : champ.current?.click())}

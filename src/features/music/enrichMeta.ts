@@ -4,10 +4,7 @@
 // La concurrence est limitée à MAX_CONCURRENT requêtes simultanées.
 
 import { invoke, isTauri } from '@tauri-apps/api/core';
-import {
-  readMusicEnrichedMetaRaw,
-  writeMusicEnrichedMetaRaw,
-} from '../../services/storage';
+import { readMusicEnrichedMetaRaw, writeMusicEnrichedMetaRaw } from '../../services/storage';
 
 export interface EnrichedData {
   artist: string | null;
@@ -99,10 +96,7 @@ async function queryMusicApi(title: string): Promise<Omit<EnrichedData, 'fetched
 
 // Écrit les tags trouvés directement dans le fichier audio (fire-and-forget, non bloquant)
 // En cas d'échec : pas de marquage persistant → nouvelle tentative à la prochaine session
-function writeTagsToFile(
-  path: string,
-  data: Omit<EnrichedData, 'fetchedAt'>,
-): void {
+function writeTagsToFile(path: string, data: Omit<EnrichedData, 'fetchedAt'>): void {
   if (!isTauri()) return;
   if (!data.artist && !data.album && !data.coverUrl) return;
 
@@ -146,7 +140,7 @@ export function resetEnrichment(path: string): void {
 export function enrichTrack(path: string, title: string): Promise<void> {
   if (_cache.has(path) || getPersistedEnriched().has(path)) return Promise.resolve();
 
-  return new Promise<void>(resolve => {
+  return new Promise<void>((resolve) => {
     const run = async () => {
       try {
         const data = await queryMusicApi(title);

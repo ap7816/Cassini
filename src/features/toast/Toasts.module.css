@@ -20,7 +20,9 @@
   background: rgb(var(--fond) / 0.97);
   border: 1px solid rgb(var(--hud) / 0.103);
   border-left-width: 3px;
-  box-shadow: 0 8px 28px rgb(var(--fond) / 0.55), 0 2px 8px rgb(var(--fond) / 0.35);
+  box-shadow:
+    0 8px 28px rgb(var(--fond) / 0.55),
+    0 2px 8px rgb(var(--fond) / 0.35);
   backdrop-filter: blur(14px);
   pointer-events: auto;
   animation: slideIn var(--ressort-duree) var(--ressort) both;
@@ -28,9 +30,18 @@
 }
 
 /* Couleur par variante via custom property --tc */
-.success { --tc: #4ade80; border-left-color: #4ade80; }
-.error   { --tc: #f87171; border-left-color: #f87171; }
-.info    { --tc: var(--accent, #6c8efb); border-left-color: var(--accent, #6c8efb); }
+.success {
+  --tc: #4ade80;
+  border-left-color: #4ade80;
+}
+.error {
+  --tc: #f87171;
+  border-left-color: #f87171;
+}
+.info {
+  --tc: var(--accent, #6c8efb);
+  border-left-color: var(--accent, #6c8efb);
+}
 
 .icon {
   font-size: 0.78rem;
@@ -61,9 +72,17 @@
   margin-top: 1px;
   transition: color 0.12s;
 }
-.close:hover { color: rgb(var(--encre) / 0.75); }
+.close:hover {
+  color: rgb(var(--encre) / 0.75);
+}
 
 @keyframes slideIn {
-  from { transform: translateX(24px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

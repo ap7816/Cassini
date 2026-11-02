@@ -58,7 +58,8 @@ export function EditeurTags({ tags, onChange, connus = [] }: Props) {
 
   const porte = (tag: string) => tags.some((x) => x.toLowerCase() === tag.toLowerCase());
   const suggestions = [...TAGS_PROPOSES, ...connus].filter(
-    (tag, i, tout) => !porte(tag) && tout.findIndex((x) => x.toLowerCase() === tag.toLowerCase()) === i,
+    (tag, i, tout) =>
+      !porte(tag) && tout.findIndex((x) => x.toLowerCase() === tag.toLowerCase()) === i,
   );
   const plein = tags.length >= TAGS_MAX;
 

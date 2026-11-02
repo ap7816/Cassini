@@ -22,10 +22,14 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.97);
+  background:
+    var(--hud-crochets), var(--hud-trame),
+    linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.97);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
-  box-shadow: 0 0 30px rgb(var(--hud) / 0.12), -12px 0 40px rgb(0 0 0 / 0.6);
+  box-shadow:
+    0 0 30px rgb(var(--hud) / 0.12),
+    -12px 0 40px rgb(0 0 0 / 0.6);
   border-left: 1px solid var(--hud-ligne-forte);
 }
 
@@ -36,7 +40,10 @@
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 10px;
-  background: repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100% 3px no-repeat, linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
+  background:
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100%
+      3px no-repeat,
+    linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
 }
 
 .titre {

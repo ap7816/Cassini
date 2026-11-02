@@ -71,7 +71,9 @@ const APPLICATIONS_STORE: Partial<Record<GamePlatform, string>> = { Xbox: 'Micro
 const cleStore = (prefixe: string) => `store:${prefixe}`;
 
 export function useLauncherIcons(): Record<string, string> {
-  const [icons, setIcons] = useState<Record<string, string>>(ICONES_FOURNIES as Record<string, string>);
+  const [icons, setIcons] = useState<Record<string, string>>(
+    ICONES_FOURNIES as Record<string, string>,
+  );
 
   useEffect(() => {
     if (!isTauri()) return;
@@ -124,7 +126,9 @@ export function useLauncherIcons(): Record<string, string> {
           try {
             const dataUrl = await invoke<string>('get_file_icon_data_url', { path: m.iconPath });
             obtenues.push({ id: m.id, iconPath: m.iconPath, dataUrl });
-          } catch { /* icône indisponible : pastille de couleur */ }
+          } catch {
+            /* icône indisponible : pastille de couleur */
+          }
         }),
       );
       if (obtenues.length === 0) return;
@@ -138,7 +142,9 @@ export function useLauncherIcons(): Record<string, string> {
       });
     })();
 
-    return () => { annule = true; };
+    return () => {
+      annule = true;
+    };
   }, []);
 
   return icons;

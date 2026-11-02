@@ -19,7 +19,10 @@
   background: rgb(0 0 0 / 0.22);
   color: var(--hud-texte-faible);
   cursor: pointer;
-  transition: border-color 100ms, background 100ms, color 100ms;
+  transition:
+    border-color 100ms,
+    background 100ms,
+    color 100ms;
 }
 
 .vignette:hover {

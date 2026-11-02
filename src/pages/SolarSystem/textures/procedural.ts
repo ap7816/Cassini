@@ -102,11 +102,7 @@ export function makeProcTexture(seed: number): THREE.CanvasTexture {
     for (let i = 0; i < 20; i++) {
       c.beginPath();
       c.moveTo(rng() * sz, rng() * sz);
-      c.bezierCurveTo(
-        rng() * sz, rng() * sz,
-        rng() * sz, rng() * sz,
-        rng() * sz, rng() * sz,
-      );
+      c.bezierCurveTo(rng() * sz, rng() * sz, rng() * sz, rng() * sz, rng() * sz, rng() * sz);
       c.strokeStyle = '#FF6600';
       c.lineWidth = 1 + rng() * 2.5;
       c.globalAlpha = 0.5 + rng() * 0.5;

@@ -4,11 +4,16 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { initMusicAnalyser, loadTrackForAnalysis, setMusicPlaying } from './musicAnalyser';
 import {
   readMusicFolder,
-  readMusicVolume, writeMusicVolume,
-  readMusicLastTrack, writeMusicLastTrack,
-  readMusicShuffle, writeMusicShuffle,
-  readMusicRepeat, writeMusicRepeat,
-  readMusicRecentlyPlayed, writeMusicRecentlyPlayed,
+  readMusicVolume,
+  writeMusicVolume,
+  readMusicLastTrack,
+  writeMusicLastTrack,
+  readMusicShuffle,
+  writeMusicShuffle,
+  readMusicRepeat,
+  writeMusicRepeat,
+  readMusicRecentlyPlayed,
+  writeMusicRecentlyPlayed,
   type RepeatMode,
 } from '../../services/storage';
 
@@ -49,7 +54,7 @@ const MusicContext = createContext<MusicContextType | null>(null);
 
 // Génère une file aléatoire de tous les indices sauf excludeIndex (algorithme Fisher-Yates)
 function buildShuffleQueue(total: number, excludeIndex: number): number[] {
-  const arr = Array.from({ length: total }, (_, i) => i).filter(i => i !== excludeIndex);
+  const arr = Array.from({ length: total }, (_, i) => i).filter((i) => i !== excludeIndex);
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -63,7 +68,10 @@ let _musicFadeTimer: ReturnType<typeof setInterval> | null = null;
 let _musicTargetVol = 1;
 
 function clearMusicFade(): void {
-  if (_musicFadeTimer) { clearInterval(_musicFadeTimer); _musicFadeTimer = null; }
+  if (_musicFadeTimer) {
+    clearInterval(_musicFadeTimer);
+    _musicFadeTimer = null;
+  }
 }
 
 function fadeInPlay(audio: HTMLAudioElement): void {
@@ -76,13 +84,19 @@ function fadeInPlay(audio: HTMLAudioElement): void {
   _musicFadeTimer = setInterval(() => {
     step++;
     audio.volume = Math.min(_musicTargetVol, (step / STEPS) * _musicTargetVol);
-    if (step >= STEPS) { audio.volume = _musicTargetVol; clearMusicFade(); }
+    if (step >= STEPS) {
+      audio.volume = _musicTargetVol;
+      clearMusicFade();
+    }
   }, 600 / STEPS);
 }
 
 function fadeOutPause(audio: HTMLAudioElement, onDone?: () => void): void {
   clearMusicFade();
-  if (audio.paused) { onDone?.(); return; }
+  if (audio.paused) {
+    onDone?.();
+    return;
+  }
   if (audio.volume > 0) _musicTargetVol = audio.volume;
   const startVol = audio.volume;
   let step = 0;
@@ -131,11 +145,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const recentlyPlayedRef = useRef<string[]>(readMusicRecentlyPlayed());
 
   // Synchronisation des refs avec les états correspondants
-  useEffect(() => { tracksRef.current = tracks; }, [tracks]);
-  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-  useEffect(() => { shuffleModeRef.current = shuffleMode; }, [shuffleMode]);
-  useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
-  useEffect(() => { recentlyPlayedRef.current = recentlyPlayed; }, [recentlyPlayed]);
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+  useEffect(() => {
+    shuffleModeRef.current = shuffleMode;
+  }, [shuffleMode]);
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+  useEffect(() => {
+    recentlyPlayedRef.current = recentlyPlayed;
+  }, [recentlyPlayed]);
 
   // Applique le volume sauvegardé à l'élément audio dès le montage + init analyser
   useEffect(() => {
@@ -173,7 +197,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (repeat === 'one') {
         audio.currentTime = 0;
         audio.play().catch(() => {});
-        setIsPlaying(true); setMusicPlaying(true);
+        setIsPlaying(true);
+        setMusicPlaying(true);
         return;
       }
 
@@ -211,7 +236,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
         // Ajoute la piste suivante dans l'historique récent (même logique que selectTrack)
         const nextPath = ts[next].path;
-        const updatedRecent = [nextPath, ...recentlyPlayedRef.current.filter(p => p !== nextPath)].slice(0, 10);
+        const updatedRecent = [
+          nextPath,
+          ...recentlyPlayedRef.current.filter((p) => p !== nextPath),
+        ].slice(0, 10);
         recentlyPlayedRef.current = updatedRecent;
         setRecentlyPlayed(updatedRecent);
         writeMusicRecentlyPlayed(updatedRecent);
@@ -221,11 +249,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           audio.src = assetUrl;
           audio.load();
           fadeInPlay(audio);
-          setIsPlaying(true); setMusicPlaying(true);
+          setIsPlaying(true);
+          setMusicPlaying(true);
           void loadTrackForAnalysis(assetUrl);
         }, 0);
       } else {
-        setIsPlaying(false); setMusicPlaying(false);
+        setIsPlaying(false);
+        setMusicPlaying(false);
       }
     }
 
@@ -291,14 +321,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     audio.src = assetUrl;
     audio.load();
     fadeInPlay(audio);
-    setIsPlaying(true); setMusicPlaying(true);
+    setIsPlaying(true);
+    setMusicPlaying(true);
     setProgress(0);
     void loadTrackForAnalysis(assetUrl);
 
     // Ajoute la piste en tête de l'historique récent (dédoublonnage + limite 10)
     const path = ts[index].path;
-    setRecentlyPlayed(prev => {
-      const next = [path, ...prev.filter(p => p !== path)].slice(0, 10);
+    setRecentlyPlayed((prev) => {
+      const next = [path, ...prev.filter((p) => p !== path)].slice(0, 10);
       writeMusicRecentlyPlayed(next);
       return next;
     });
@@ -331,11 +362,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!audio.paused) {
-      setIsPlaying(false); setMusicPlaying(false);
+      setIsPlaying(false);
+      setMusicPlaying(false);
       fadeOutPause(audio);
     } else {
       fadeInPlay(audio);
-      setIsPlaying(true); setMusicPlaying(true);
+      setIsPlaying(true);
+      setMusicPlaying(true);
     }
   }
 
@@ -414,8 +447,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Arrête la lecture, vide la source et remet l'état à zéro (y compris shuffle/historique)
   function stop() {
     const audio = audioRef.current;
-    setIsPlaying(false); setMusicPlaying(false); // déclenche le fondu entrant de l'ambiance immédiatement
-    fadeOutPause(audio, () => { audio.src = ''; });
+    setIsPlaying(false);
+    setMusicPlaying(false); // déclenche le fondu entrant de l'ambiance immédiatement
+    fadeOutPause(audio, () => {
+      audio.src = '';
+    });
     currentIndexRef.current = -1;
     setCurrentIndex(-1);
     setProgress(0);
@@ -432,7 +468,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     writeMusicShuffle(next);
     if (next) {
       // Construit la file shuffle initiale en excluant la piste courante
-      shuffleQueueRef.current = buildShuffleQueue(tracksRef.current.length, currentIndexRef.current);
+      shuffleQueueRef.current = buildShuffleQueue(
+        tracksRef.current.length,
+        currentIndexRef.current,
+      );
       shuffleHistoryRef.current = [];
     } else {
       // Réinitialise les structures shuffle quand on désactive le mode
@@ -482,24 +521,52 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     for (const [commande, action] of commandes) {
       // Une commande que le moteur ne connaît pas lève : on passe à la suivante
       // plutôt que de renoncer à toutes les autres.
-      try { session.setActionHandler(commande, action); } catch { /* non prise en charge */ }
+      try {
+        session.setActionHandler(commande, action);
+      } catch {
+        /* non prise en charge */
+      }
     }
 
     return () => {
       for (const [commande] of commandes) {
-        try { session.setActionHandler(commande, null); } catch { /* non prise en charge */ }
+        try {
+          session.setActionHandler(commande, null);
+        } catch {
+          /* non prise en charge */
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, isPlaying, tracks]);
 
   return (
-    <MusicContext.Provider value={{
-      tracks, folderPath, currentIndex, isPlaying, progress, duration, volume, loading, error,
-      shuffleMode, repeatMode, recentlyPlayed,
-      loadFolder, selectTrack, togglePlayPause, prevTrack, nextTrack, setVolume, seekTo, stop,
-      toggleShuffle, cycleRepeat,
-    }}>
+    <MusicContext.Provider
+      value={{
+        tracks,
+        folderPath,
+        currentIndex,
+        isPlaying,
+        progress,
+        duration,
+        volume,
+        loading,
+        error,
+        shuffleMode,
+        repeatMode,
+        recentlyPlayed,
+        loadFolder,
+        selectTrack,
+        togglePlayPause,
+        prevTrack,
+        nextTrack,
+        setVolume,
+        seekTo,
+        stop,
+        toggleShuffle,
+        cycleRepeat,
+      }}
+    >
       {children}
     </MusicContext.Provider>
   );

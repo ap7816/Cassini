@@ -1,5 +1,7 @@
 /* ── Reset & base ─────────────────────────────────────────── */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -58,11 +60,7 @@ html, body, #root {
 
   /* Trame de balayage, à peine visible : elle suffit à faire d'une surface
      sombre un écran plutôt qu'un aplat. */
-  --hud-trame: repeating-linear-gradient(
-    0deg,
-    rgb(var(--hud) / 0.028) 0 1px,
-    transparent 1px 3px
-  );
+  --hud-trame: repeating-linear-gradient(0deg, rgb(var(--hud) / 0.028) 0 1px, transparent 1px 3px);
 
   /* Jetons de thème. En composantes, comme `--hud`.
      - `--encre` : textes et reflets posés sur les vitres ;

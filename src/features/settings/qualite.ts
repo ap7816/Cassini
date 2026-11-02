@@ -78,10 +78,10 @@ export function presetDe(r: ReglagesQualite): NiveauQualite {
   for (const nom of ORDRE_PRESETS) {
     const p = PRESETS[nom];
     if (
-      memeNombre(p.echelleRendu, r.echelleRendu)
-      && memeNombre(p.densiteCiel, r.densiteCiel)
-      && p.debordement === r.debordement
-      && p.cielVivant === r.cielVivant
+      memeNombre(p.echelleRendu, r.echelleRendu) &&
+      memeNombre(p.densiteCiel, r.densiteCiel) &&
+      p.debordement === r.debordement &&
+      p.cielVivant === r.cielVivant
     ) {
       return nom;
     }

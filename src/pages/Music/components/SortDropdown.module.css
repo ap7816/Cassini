@@ -19,7 +19,10 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
   user-select: none;
 }
 
@@ -50,7 +53,9 @@
   border: 1px solid rgb(var(--hud) / 0.138);
   border-radius: 2px;
   padding: 4px;
-  box-shadow: 0 8px 32px rgb(var(--fond) / 0.6), 0 2px 8px rgb(var(--fond) / 0.35);
+  box-shadow:
+    0 8px 32px rgb(var(--fond) / 0.6),
+    0 2px 8px rgb(var(--fond) / 0.35);
   display: flex;
   flex-direction: column;
   gap: 1px;

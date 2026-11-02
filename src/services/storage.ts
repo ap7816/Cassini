@@ -19,29 +19,29 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 // bibliothèque, les réglages et le dossier musical de l'utilisateur. Le gain
 // serait nul : personne ne les voit. On les laisse donc tels quels.
 export const STORAGE_KEYS = {
-  settings:            'archive.settings.v1',
-  games:               'archive.library.games.v1',
-  coverCache:          'archive.coverArt.cache.v5',
-  launcherIcons:       'archive.launcherIcons.v1',
-  musicFolder:         'archive.music.folder',
-  musicVolume:         'archive.music.volume',
-  musicLastTrack:      'archive.music.lastTrack',
-  musicColors:         'archive.music.folderColors',
-  musicEnrichedMeta:   'archive.music.enrichedMeta',
-  musicShuffle:        'archive.music.shuffle',
-  musicRepeat:         'archive.music.repeat',
+  settings: 'archive.settings.v1',
+  games: 'archive.library.games.v1',
+  coverCache: 'archive.coverArt.cache.v5',
+  launcherIcons: 'archive.launcherIcons.v1',
+  musicFolder: 'archive.music.folder',
+  musicVolume: 'archive.music.volume',
+  musicLastTrack: 'archive.music.lastTrack',
+  musicColors: 'archive.music.folderColors',
+  musicEnrichedMeta: 'archive.music.enrichedMeta',
+  musicShuffle: 'archive.music.shuffle',
+  musicRepeat: 'archive.music.repeat',
   musicRecentlyPlayed: 'archive.music.recentlyPlayed',
-  ambientEnabled:      'archive.ambient.enabled',
-  ambientVolume:       'archive.ambient.volume',
-  language:            'archive.language',
-  patchNotesSeen:      'archive.patchNotes.seen',
-  patchNotesAuto:      'archive.patchNotes.auto',
-  solarFlyKeys:        'archive.solar.flyKeys.v1',
-  systemesPerso:       'archive.solar.customSystems.v1',
-  reglagesLaunchers:   'archive.solar.launcherSystems.v1',
-  dernierSysteme:      'archive.solar.lastSystem.v1',
-  solarLargeurs:       'archive.solar.largeurs.v1',
-  succes:              'archive.succes.v1',
+  ambientEnabled: 'archive.ambient.enabled',
+  ambientVolume: 'archive.ambient.volume',
+  language: 'archive.language',
+  patchNotesSeen: 'archive.patchNotes.seen',
+  patchNotesAuto: 'archive.patchNotes.auto',
+  solarFlyKeys: 'archive.solar.flyKeys.v1',
+  systemesPerso: 'archive.solar.customSystems.v1',
+  reglagesLaunchers: 'archive.solar.launcherSystems.v1',
+  dernierSysteme: 'archive.solar.lastSystem.v1',
+  solarLargeurs: 'archive.solar.largeurs.v1',
+  succes: 'archive.succes.v1',
 } as const;
 
 /**
@@ -58,22 +58,22 @@ export const STORAGE_KEYS = {
  * installation antérieure ne subsiste.
  */
 const LEGACY_KEYS: Record<string, string> = {
-  'archive.settings.v1':            'arctive.settings.v1',
-  'archive.library.games.v1':       'arctive.library.games.v1',
-  'archive.coverArt.cache.v5':      'arctive.rawg.cache.v5',
-  'archive.launcherIcons.v1':       'arctive.launcherIcons.v1',
-  'archive.language':               'arctive.language',
-  'archive.patchNotes.seen':        'arctive.patchNotes.seen',
-  'archive.music.folder':           'music_folder',
-  'archive.music.volume':           'music_volume',
-  'archive.music.lastTrack':        'music_last_track',
-  'archive.music.folderColors':     'music_folder_colors',
-  'archive.music.enrichedMeta':     'music_enriched_meta',
-  'archive.music.shuffle':          'music_shuffle',
-  'archive.music.repeat':           'music_repeat',
-  'archive.music.recentlyPlayed':   'music_recently_played',
-  'archive.ambient.enabled':        'ambient_enabled',
-  'archive.ambient.volume':         'ambient_volume',
+  'archive.settings.v1': 'arctive.settings.v1',
+  'archive.library.games.v1': 'arctive.library.games.v1',
+  'archive.coverArt.cache.v5': 'arctive.rawg.cache.v5',
+  'archive.launcherIcons.v1': 'arctive.launcherIcons.v1',
+  'archive.language': 'arctive.language',
+  'archive.patchNotes.seen': 'arctive.patchNotes.seen',
+  'archive.music.folder': 'music_folder',
+  'archive.music.volume': 'music_volume',
+  'archive.music.lastTrack': 'music_last_track',
+  'archive.music.folderColors': 'music_folder_colors',
+  'archive.music.enrichedMeta': 'music_enriched_meta',
+  'archive.music.shuffle': 'music_shuffle',
+  'archive.music.repeat': 'music_repeat',
+  'archive.music.recentlyPlayed': 'music_recently_played',
+  'archive.ambient.enabled': 'ambient_enabled',
+  'archive.ambient.volume': 'ambient_volume',
 };
 
 // Cache mémoire synchrone — toutes les lectures passent par ici pour éviter l'asynchronisme
@@ -135,7 +135,10 @@ export async function initStorage(): Promise<void> {
           if (old !== undefined) {
             val = old;
             // Réécrit sous le nouveau nom, puis retire l'ancienne entrée
-            renames.push(store.set(key, old), store.delete(legacy).then(() => undefined));
+            renames.push(
+              store.set(key, old),
+              store.delete(legacy).then(() => undefined),
+            );
           }
         }
       }
@@ -155,9 +158,7 @@ export async function initStorage(): Promise<void> {
     if (!hasData) {
       console.info('[storage] Store vierge — migration depuis localStorage');
       loadFromLocalStorage();
-      await Promise.all(
-        Object.entries(mem).map(([key, value]) => store!.set(key, value)),
-      );
+      await Promise.all(Object.entries(mem).map(([key, value]) => store!.set(key, value)));
     }
   } catch (err) {
     console.warn('[storage] Tauri store indisponible, fallback localStorage', err);
@@ -175,8 +176,7 @@ function loadFromLocalStorage(): void {
   for (const key of Object.values(STORAGE_KEYS)) {
     const legacy = LEGACY_KEYS[key];
     const v =
-      window.localStorage.getItem(key) ??
-      (legacy ? window.localStorage.getItem(legacy) : null);
+      window.localStorage.getItem(key) ?? (legacy ? window.localStorage.getItem(legacy) : null);
     if (v !== null) mem[key] = v;
   }
 }
@@ -190,9 +190,13 @@ function rawRead(key: string): string | null {
 // Toujours mirrée dans localStorage pour que le preloader HTML puisse la lire sans attendre le store.
 function rawWrite(key: string, value: string): void {
   mem[key] = value;
-  try { window.localStorage?.setItem(key, value); } catch { /* quota dépassé */ }
+  try {
+    window.localStorage?.setItem(key, value);
+  } catch {
+    /* quota dépassé */
+  }
   if (store) {
-    store.set(key, value).catch(err => console.error('[storage] write error', err));
+    store.set(key, value).catch((err) => console.error('[storage] write error', err));
   }
 }
 
@@ -202,9 +206,13 @@ function rawRemove(key: string): void {
   // Des deux côtés, toujours : `rawWrite` écrit dans les deux, et n'effacer que
   // le store laissait une valeur périmée dans le navigateur — que le
   // préchargeur lit avant lui.
-  try { window.localStorage?.removeItem(key); } catch { /* ignorer */ }
+  try {
+    window.localStorage?.removeItem(key);
+  } catch {
+    /* ignorer */
+  }
   if (store) {
-    store.delete(key).catch(err => console.error('[storage] delete error', err));
+    store.delete(key).catch((err) => console.error('[storage] delete error', err));
   }
 }
 
@@ -212,8 +220,11 @@ function rawRemove(key: string): void {
 export function readJSON<T>(key: string): T | null {
   const raw = rawRead(key);
   if (!raw) return null;
-  try { return JSON.parse(raw) as T; }
-  catch { return null; }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
 }
 
 // Sérialise et écrit une valeur JSON dans le stockage
@@ -222,38 +233,64 @@ export function writeJSON<T>(key: string, value: T): void {
 }
 
 // Lecture/écriture des paramètres de l'application
-export function readSettingsRaw(): string | null  { return rawRead(STORAGE_KEYS.settings); }
-export function writeSettingsRaw(json: string): void { rawWrite(STORAGE_KEYS.settings, json); }
+export function readSettingsRaw(): string | null {
+  return rawRead(STORAGE_KEYS.settings);
+}
+export function writeSettingsRaw(json: string): void {
+  rawWrite(STORAGE_KEYS.settings, json);
+}
 
 // Lecture/écriture de la bibliothèque de jeux
-export function readGamesRaw(): string | null  { return rawRead(STORAGE_KEYS.games); }
-export function writeGamesRaw(json: string): void { rawWrite(STORAGE_KEYS.games, json); }
+export function readGamesRaw(): string | null {
+  return rawRead(STORAGE_KEYS.games);
+}
+export function writeGamesRaw(json: string): void {
+  rawWrite(STORAGE_KEYS.games, json);
+}
 
 // Lecture/écriture/suppression du cache d'URLs de jaquettes
-export function readCoverCacheRaw(): string | null  { return rawRead(STORAGE_KEYS.coverCache); }
-export function writeCoverCacheRaw(json: string): void { rawWrite(STORAGE_KEYS.coverCache, json); }
-export function removeCoverCache(): void { rawRemove(STORAGE_KEYS.coverCache); }
+export function readCoverCacheRaw(): string | null {
+  return rawRead(STORAGE_KEYS.coverCache);
+}
+export function writeCoverCacheRaw(json: string): void {
+  rawWrite(STORAGE_KEYS.coverCache, json);
+}
+export function removeCoverCache(): void {
+  rawRemove(STORAGE_KEYS.coverCache);
+}
 
 // Lecture/écriture du cache des icônes de launchers
-export function readLauncherIconsRaw(): string | null  { return rawRead(STORAGE_KEYS.launcherIcons); }
-export function writeLauncherIconsRaw(json: string): void { rawWrite(STORAGE_KEYS.launcherIcons, json); }
+export function readLauncherIconsRaw(): string | null {
+  return rawRead(STORAGE_KEYS.launcherIcons);
+}
+export function writeLauncherIconsRaw(json: string): void {
+  rawWrite(STORAGE_KEYS.launcherIcons, json);
+}
 
 // Lecture/écriture du dossier musique sélectionné
-export function readMusicFolder(): string { return rawRead(STORAGE_KEYS.musicFolder) ?? ''; }
-export function writeMusicFolder(path: string): void { rawWrite(STORAGE_KEYS.musicFolder, path); }
+export function readMusicFolder(): string {
+  return rawRead(STORAGE_KEYS.musicFolder) ?? '';
+}
+export function writeMusicFolder(path: string): void {
+  rawWrite(STORAGE_KEYS.musicFolder, path);
+}
 
 // Lecture/écriture du volume du lecteur audio (entre 0 et 1)
 export function readMusicVolume(): number {
   const v = parseFloat(rawRead(STORAGE_KEYS.musicVolume) ?? '');
   return isNaN(v) ? 0.5 : v;
 }
-export function writeMusicVolume(v: number): void { rawWrite(STORAGE_KEYS.musicVolume, String(v)); }
+export function writeMusicVolume(v: number): void {
+  rawWrite(STORAGE_KEYS.musicVolume, String(v));
+}
 
 // Lecture/écriture de l'index de la dernière piste jouée (pour reprendre au redémarrage)
 export function readMusicLastTrack(): number {
   return parseInt(rawRead(STORAGE_KEYS.musicLastTrack) ?? '-1', 10);
 }
-export function writeMusicLastTrack(idx: number): void { rawWrite(STORAGE_KEYS.musicLastTrack, String(idx)); }
+export function writeMusicLastTrack(idx: number): void {
+  rawWrite(STORAGE_KEYS.musicLastTrack, String(idx));
+}
 
 // Lecture/écriture des couleurs associées à chaque dossier musical
 export function readMusicFolderColors(): Record<string, string> {
@@ -277,7 +314,7 @@ export type RepeatMode = 'none' | 'one' | 'all';
 // Lecture/écriture du mode de répétition ('none' | 'one' | 'all')
 export function readMusicRepeat(): RepeatMode {
   const v = rawRead(STORAGE_KEYS.musicRepeat);
-  return (v === 'one' || v === 'all') ? v : 'none';
+  return v === 'one' || v === 'all' ? v : 'none';
 }
 export function writeMusicRepeat(v: RepeatMode): void {
   rawWrite(STORAGE_KEYS.musicRepeat, v);
@@ -317,13 +354,17 @@ export function readAmbientEnabled(): boolean {
   const v = rawRead(STORAGE_KEYS.ambientEnabled);
   return v === null ? true : v === 'true';
 }
-export function writeAmbientEnabled(v: boolean): void { rawWrite(STORAGE_KEYS.ambientEnabled, String(v)); }
+export function writeAmbientEnabled(v: boolean): void {
+  rawWrite(STORAGE_KEYS.ambientEnabled, String(v));
+}
 
 export function readAmbientVolume(): number {
   const v = parseFloat(rawRead(STORAGE_KEYS.ambientVolume) ?? '');
   return isNaN(v) ? 0.25 : Math.max(0, Math.min(1, v));
 }
-export function writeAmbientVolume(v: number): void { rawWrite(STORAGE_KEYS.ambientVolume, String(v)); }
+export function writeAmbientVolume(v: number): void {
+  rawWrite(STORAGE_KEYS.ambientVolume, String(v));
+}
 
 // Lecture/écriture de la langue de l'interface
 /**
@@ -341,17 +382,27 @@ export function writeSucces(cles: string[]): void {
   rawWrite(STORAGE_KEYS.succes, cles.join(','));
 }
 
-export function readLanguage(): string | null { return rawRead(STORAGE_KEYS.language); }
-export function writeLanguage(lang: string): void { rawWrite(STORAGE_KEYS.language, lang); }
+export function readLanguage(): string | null {
+  return rawRead(STORAGE_KEYS.language);
+}
+export function writeLanguage(lang: string): void {
+  rawWrite(STORAGE_KEYS.language, lang);
+}
 
 // Retourne la version dont l'utilisateur a explicitement fermé le popup de notes de mise à jour
-export function readPatchNotesSeen(): string | null { return rawRead(STORAGE_KEYS.patchNotesSeen); }
+export function readPatchNotesSeen(): string | null {
+  return rawRead(STORAGE_KEYS.patchNotesSeen);
+}
 
 // Marque une version comme "ne plus afficher au démarrage"
-export function writePatchNotesSeen(version: string): void { rawWrite(STORAGE_KEYS.patchNotesSeen, version); }
+export function writePatchNotesSeen(version: string): void {
+  rawWrite(STORAGE_KEYS.patchNotesSeen, version);
+}
 
 // Réactive l'affichage au démarrage pour la version courante
-export function removePatchNotesSeen(): void { rawRemove(STORAGE_KEYS.patchNotesSeen); }
+export function removePatchNotesSeen(): void {
+  rawRemove(STORAGE_KEYS.patchNotesSeen);
+}
 
 /**
  * Les notes doivent-elles s'ouvrir d'elles-mêmes au démarrage ?
@@ -361,7 +412,9 @@ export function removePatchNotesSeen(): void { rawRemove(STORAGE_KEYS.patchNotes
  * les ramenait. Ce choix-ci est définitif jusqu'à ce qu'on le défasse — les
  * notes restent consultables depuis les réglages.
  */
-export function readPatchNotesAuto(): boolean { return rawRead(STORAGE_KEYS.patchNotesAuto) !== 'off'; }
+export function readPatchNotesAuto(): boolean {
+  return rawRead(STORAGE_KEYS.patchNotesAuto) !== 'off';
+}
 
 export function writePatchNotesAuto(auto: boolean): void {
   if (auto) rawRemove(STORAGE_KEYS.patchNotesAuto);

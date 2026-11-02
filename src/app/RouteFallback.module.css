@@ -16,15 +16,21 @@
      arrive plus vite que ça, et faire clignoter un spinner est pire que ne
      rien afficher. */
   opacity: 0;
-  animation: spin 700ms linear infinite, appear 120ms ease 180ms forwards;
+  animation:
+    spin 700ms linear infinite,
+    appear 120ms ease 180ms forwards;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes appear {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

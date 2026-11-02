@@ -16,7 +16,7 @@ export function Toasts() {
     // créée en même temps que son contenu n'est pas annoncée. Les erreurs
     // interrompent la lecture, le reste attend une pause.
     <div className={css.stack} role="status" aria-live="polite">
-      {toasts.map(item => (
+      {toasts.map((item) => (
         <div
           key={item.id}
           className={`${css.toast} ${css[item.kind]}`}
@@ -24,7 +24,13 @@ export function Toasts() {
         >
           <span className={css.icon}>{ICONS[item.kind]}</span>
           <span className={css.msg}>{item.message}</span>
-          <button className={css.close} onClick={() => dismiss(item.id)} aria-label={t('patchNotes.close')}>✕</button>
+          <button
+            className={css.close}
+            onClick={() => dismiss(item.id)}
+            aria-label={t('patchNotes.close')}
+          >
+            ✕
+          </button>
         </div>
       ))}
     </div>

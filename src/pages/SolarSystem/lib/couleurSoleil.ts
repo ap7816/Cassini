@@ -36,7 +36,11 @@ export function couronneDe(couleurPropre: string | null | undefined): number[] {
   const saturation = neutre ? hsl.s : Math.min(1, Math.max(hsl.s, 0.55) + 0.15);
   return [0.62, 0.52, 0.42, 0.34].map((l, i) =>
     new THREE.Color()
-      .setHSL(hsl.h, neutre ? saturation : Math.min(1, saturation + i * 0.05), Math.min(l, 0.2 + hsl.l * l))
+      .setHSL(
+        hsl.h,
+        neutre ? saturation : Math.min(1, saturation + i * 0.05),
+        Math.min(l, 0.2 + hsl.l * l),
+      )
       .getHex(),
   );
 }

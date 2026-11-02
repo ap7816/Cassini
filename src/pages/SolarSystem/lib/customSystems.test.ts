@@ -10,10 +10,18 @@ import {
 } from './customSystems';
 import type { Game } from '../../../features/types';
 
-const jeu = (id: string, title: string, extra: Partial<Game> = {}): Game => ({
-  id, title, platform: 'Steam', launchUrl: '', installed: true,
-  favorite: false, lastPlayedAt: null, customImageUrl: null, ...extra,
-} as Game);
+const jeu = (id: string, title: string, extra: Partial<Game> = {}): Game =>
+  ({
+    id,
+    title,
+    platform: 'Steam',
+    launchUrl: '',
+    installed: true,
+    favorite: false,
+    lastPlayedAt: null,
+    customImageUrl: null,
+    ...extra,
+  }) as Game;
 
 const systeme = (jeux: string[]) =>
   nouveauSysteme({ id: 's1', nom: 'Favoris', icone: 'etoile', couleur: '#f0c040', jeux });
@@ -70,8 +78,12 @@ describe('normaliserSystemes', () => {
   });
 
   it('garde une image préparée et écarte tout le reste', () => {
-    const [ok] = normaliserSystemes([{ id: '1', nom: 'A', image: 'data:image/png;base64,iVBORw0KGgo=' }]);
-    const [svg] = normaliserSystemes([{ id: '2', nom: 'B', image: 'data:image/svg+xml;base64,PHN2Zz4=' }]);
+    const [ok] = normaliserSystemes([
+      { id: '1', nom: 'A', image: 'data:image/png;base64,iVBORw0KGgo=' },
+    ]);
+    const [svg] = normaliserSystemes([
+      { id: '2', nom: 'B', image: 'data:image/svg+xml;base64,PHN2Zz4=' },
+    ]);
     const [url] = normaliserSystemes([{ id: '3', nom: 'C', image: 'https://exemple.com/a.png' }]);
 
     expect(ok.image).toBe('data:image/png;base64,iVBORw0KGgo=');
@@ -95,7 +107,11 @@ describe('normaliserSystemes', () => {
         id: '1',
         nom: 'A',
         jeux: ['a', 'b', 'c'],
-        placements: { a: { anneau: '#FF8800' }, b: { anneau: ANNEAU_AUCUN }, c: { anneau: 'rouge' } },
+        placements: {
+          a: { anneau: '#FF8800' },
+          b: { anneau: ANNEAU_AUCUN },
+          c: { anneau: 'rouge' },
+        },
       },
     ]);
 
@@ -112,7 +128,12 @@ describe('normaliserSystemes', () => {
 describe('normaliserReglagesLaunchers', () => {
   it('relit les réglages d’un launcher, placements compris', () => {
     const r = normaliserReglagesLaunchers({
-      Steam: { soleil: 2, couleurSoleil: '#FFAA00', etoiles: 1, placements: { '620': { taille: 2 } } },
+      Steam: {
+        soleil: 2,
+        couleurSoleil: '#FFAA00',
+        etoiles: 1,
+        placements: { '620': { taille: 2 } },
+      },
     });
 
     expect(r.Steam.soleil).toBe(2);
@@ -122,7 +143,11 @@ describe('normaliserReglagesLaunchers', () => {
   });
 
   it('borne les valeurs et ignore ce qui n’est pas un launcher', () => {
-    const r = normaliserReglagesLaunchers({ Epic: { soleil: 99 }, 'perso:x': { soleil: 2 }, Riot: 'n’importe quoi' });
+    const r = normaliserReglagesLaunchers({
+      Epic: { soleil: 99 },
+      'perso:x': { soleil: 2 },
+      Riot: 'n’importe quoi',
+    });
 
     expect(r.Epic.soleil).toBe(3);
     expect(Object.keys(r)).toEqual(['Epic']);

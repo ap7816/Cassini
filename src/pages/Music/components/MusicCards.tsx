@@ -17,7 +17,12 @@ type FolderCardProps = {
 
 /** Carte de dossier : compte les pistes, signale la lecture en cours. */
 export function FolderCard({
-  folder, color, currentIndex, isPlaying, onClick, onContextMenu,
+  folder,
+  color,
+  currentIndex,
+  isPlaying,
+  onClick,
+  onContextMenu,
 }: FolderCardProps) {
   const active = hasActive(folder, currentIndex);
   const total = countTracks(folder);
@@ -66,8 +71,15 @@ type TrackCardProps = {
 
 /** Carte de piste : pochette, artiste et durée. */
 export function TrackCard({
-  track, index, isActive, isPlaying, onSelect, onContextMenu,
-  meta, enriched, scrollTarget = false,
+  track,
+  index,
+  isActive,
+  isPlaying,
+  onSelect,
+  onContextMenu,
+  meta,
+  enriched,
+  scrollTarget = false,
 }: TrackCardProps) {
   const cardRef = useRef<HTMLButtonElement>(null);
   // La pochette ID3 n'est lue que lorsque la carte entre dans la vue
@@ -96,7 +108,9 @@ export function TrackCard({
         css.gridItem,
         isActive ? css.gridItemTrackActive : '',
         cover ? css.gridItemWithArt : '',
-      ].filter(Boolean).join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
       onClick={onSelect}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -106,13 +120,7 @@ export function TrackCard({
     >
       <div className={`${css.trackShape}${cover ? ` ${css.trackShapeWithArt}` : ''}`}>
         {cover && (
-          <img
-            src={cover}
-            className={css.trackArt}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-          />
+          <img src={cover} className={css.trackArt} alt="" aria-hidden="true" draggable={false} />
         )}
 
         <div

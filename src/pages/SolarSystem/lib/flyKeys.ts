@@ -91,7 +91,12 @@ export const TOUCHES_NOMMEES = [
   'Escape',
 ] as const;
 
-const FLECHES: Record<string, string> = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' };
+const FLECHES: Record<string, string> = {
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+  ArrowLeft: '←',
+  ArrowRight: '→',
+};
 
 /**
  * Caractère produit par chaque emplacement de touche sur le clavier de

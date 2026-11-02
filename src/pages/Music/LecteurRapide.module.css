@@ -85,7 +85,15 @@
   height: 5px;
   border-radius: 0;
   cursor: pointer;
-  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px),
+    linear-gradient(
+      to right,
+      rgb(var(--hud)) 0%,
+      rgb(var(--hud)) var(--part, 0%),
+      rgb(var(--hud) / 0.16) var(--part, 0%),
+      rgb(var(--hud) / 0.16) 100%
+    );
 }
 
 .barre {
@@ -154,7 +162,9 @@
   font-size: calc(13px * var(--ui-font-scale, 1));
   line-height: 1;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .bouton:hover:not(:disabled) {
@@ -195,7 +205,9 @@
   padding: 7px 10px;
   border-radius: calc(2px * var(--dbg-arrondi, 1));
   border: 1px solid var(--hud-ligne-moyenne);
-  background: linear-gradient(rgb(var(--hud) / 0.85) 0 0) 9px 50% / 2px 12px no-repeat, rgb(var(--hud) / 0.05);
+  background:
+    linear-gradient(rgb(var(--hud) / 0.85) 0 0) 9px 50% / 2px 12px no-repeat,
+    rgb(var(--hud) / 0.05);
   color: inherit;
   font-size: calc(12px * var(--ui-font-scale, 1));
   font-family: var(--ui-font-family, var(--police-ui));
@@ -254,7 +266,13 @@
 }
 
 .ligneActive {
-  background: var(--hud-crochets), linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent), transparent 85%);
+  background:
+    var(--hud-crochets),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent),
+      transparent 85%
+    );
 }
 
 /* Pochette à gauche, et la lecture en cours marquée dessus plutôt qu'à côté :
@@ -301,7 +319,6 @@
   flex: 1;
   min-width: 0;
 }
-
 
 .ligneTitre,
 .ligneDossier {

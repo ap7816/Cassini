@@ -52,7 +52,14 @@ type Props = {
  * d'un lecteur, et il évite un bouton de plus par ligne.
  */
 export function TrackRow({
-  track, rang, active, enLecture, meta, enriched, onSelect, onContextMenu,
+  track,
+  rang,
+  active,
+  enLecture,
+  meta,
+  enriched,
+  onSelect,
+  onContextMenu,
   cibleDefilement = false,
 }: Props) {
   const ligne = useRef<HTMLButtonElement>(null);

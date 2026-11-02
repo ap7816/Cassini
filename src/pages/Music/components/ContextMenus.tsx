@@ -30,7 +30,13 @@ type FolderMenuProps = {
 
 /** Menu contextuel d'un dossier : couleur, renommer, supprimer. */
 export function FolderContextMenu({
-  menu, currentColor, onClose, onRename, onDelete, onColorPreview, onColorSave,
+  menu,
+  currentColor,
+  onClose,
+  onRename,
+  onDelete,
+  onColorPreview,
+  onColorSave,
 }: FolderMenuProps) {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,7 +76,13 @@ export function FolderContextMenu({
       <div className={css.divider} />
 
       {onRename && (
-        <button className={css.item} onClick={() => { onClose(); onRename(menu.node); }}>
+        <button
+          className={css.item}
+          onClick={() => {
+            onClose();
+            onRename(menu.node);
+          }}
+        >
           {t('music.ctxRename')}
         </button>
       )}
@@ -78,7 +90,10 @@ export function FolderContextMenu({
       {onDelete && (
         <button
           className={`${css.item} ${css.itemDanger}`}
-          onClick={() => { onClose(); onDelete(menu.node); }}
+          onClick={() => {
+            onClose();
+            onDelete(menu.node);
+          }}
         >
           {t('music.ctxDelete')}
         </button>
@@ -109,10 +124,22 @@ export function TrackContextMenu({ x, y, onClose, onMove, onChangeArt }: TrackMe
       style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >
-      <button className={css.item} onClick={() => { onClose(); onMove(); }}>
+      <button
+        className={css.item}
+        onClick={() => {
+          onClose();
+          onMove();
+        }}
+      >
         {t('music.ctxMove')}
       </button>
-      <button className={css.item} onClick={() => { onClose(); onChangeArt(); }}>
+      <button
+        className={css.item}
+        onClick={() => {
+          onClose();
+          onChangeArt();
+        }}
+      >
         {t('music.ctxChangeArt')}
       </button>
     </div>

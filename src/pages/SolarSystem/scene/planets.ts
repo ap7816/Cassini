@@ -11,7 +11,12 @@ import { hashStr, seededRng } from '../lib/random';
 import { GOLDEN_ANGLE, makeRadiusScale, orbitPos, orbitRadius } from '../lib/orbits';
 import { atmosphereType, makePlaceholderTexture, makeProcTexture } from '../textures/procedural';
 import { loadArtImage, makeGameTexture } from '../textures/gameArt';
-import { makeRingTexture, radialRingGeometry, arcRingGeometry, type ProfilAnneau } from '../textures/rings';
+import {
+  makeRingTexture,
+  radialRingGeometry,
+  arcRingGeometry,
+  type ProfilAnneau,
+} from '../textures/rings';
 import type { PlanetEntry } from './types';
 import { lireReglages } from '../../../features/debug/tuning';
 
@@ -40,7 +45,13 @@ type Options = {
  * Renvoie les entrées ordonnées ainsi que les structures de sélection.
  */
 export function createPlanets({
-  scene, games, orbStep, orbBase, tint, isDisposed, onPlanet,
+  scene,
+  games,
+  orbStep,
+  orbBase,
+  tint,
+  isDisposed,
+  onPlanet,
 }: Options): {
   planets: PlanetEntry[];
   pickMeshes: THREE.Object3D[];
@@ -118,10 +129,22 @@ export function createPlanets({
     mesh.position.copy(tmp);
 
     const entry: PlanetEntry = {
-      game: g, mesh, orbitRadius: orbit, angle, speed,
-      paused: false, radius: pr, rayonVisuel, inc, node,
+      game: g,
+      mesh,
+      orbitRadius: orbit,
+      angle,
+      speed,
+      paused: false,
+      radius: pr,
+      rayonVisuel,
+      inc,
+      node,
       tint: new THREE.Color(PALETTES[atmType][0]),
-      orbiteBase: orbit, rayonBase: pr, rayonVisuelBase: rayonVisuel, incBase: inc, orbite,
+      orbiteBase: orbit,
+      rayonBase: pr,
+      rayonVisuelBase: rayonVisuel,
+      incBase: inc,
+      orbite,
     };
 
     // Anneaux choisis par l'utilisateur. Une planète qui n'en avait pas en
@@ -258,7 +281,11 @@ export function createPlanetGlow(planets: PlanetEntry[]): {
   return {
     points,
     update,
-    dispose: () => { geo.dispose(); mat.dispose(); map.dispose(); },
+    dispose: () => {
+      geo.dispose();
+      mat.dispose();
+      map.dispose();
+    },
   };
 }
 
@@ -443,10 +470,17 @@ function createPlanetRing(
   // sans l'écraser, les familles restent donc distinctes les unes des autres,
   // et le voile des arcs reste un voile quel que soit le curseur.
   const nappe = (geo: THREE.BufferGeometry, op: number, fondu: boolean) => {
-    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      map, transparent: true, opacity: op * lireReglages().anneauxOpacite,
-      side: THREE.DoubleSide, depthWrite: false, vertexColors: fondu,
-    }));
+    const mesh = new THREE.Mesh(
+      geo,
+      new THREE.MeshBasicMaterial({
+        map,
+        transparent: true,
+        opacity: op * lireReglages().anneauxOpacite,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        vertexColors: fondu,
+      }),
+    );
     mesh.userData.reglage = 'anneau';
     mesh.userData.opaciteBase = op;
     groupe.add(mesh);
@@ -516,8 +550,7 @@ function loadCoverArt(
   }
 
   const appId =
-    g.steamAppId ??
-    (g.platform === 'Steam' && g.id.startsWith('steam-') ? g.id.slice(6) : null);
+    g.steamAppId ?? (g.platform === 'Steam' && g.id.startsWith('steam-') ? g.id.slice(6) : null);
 
   void (async () => {
     if (g.customImageUrl && (await apply(g.customImageUrl))) return;

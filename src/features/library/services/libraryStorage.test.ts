@@ -11,13 +11,16 @@ import { normalizeGames } from './libraryStorage';
  */
 const base = { id: 'x', title: 'Jeu', platform: 'Xbox' };
 
-const cible = (launchUrl: unknown) => normalizeGames([{ ...base, launchUrl }])[0]?.launchUrl ?? null;
+const cible = (launchUrl: unknown) =>
+  normalizeGames([{ ...base, launchUrl }])[0]?.launchUrl ?? null;
 
 describe('normalizeGames : cible de lancement', () => {
   it('garde une application de paquet Xbox', () => {
     const t = 'shell:AppsFolder\\Microsoft.MinecraftUWP_8wekyb3d8bbwe!Game';
     expect(cible(t)).toBe(t);
-    expect(cible('shell:AppsFolder\\Microsoft.4297127D64EC6_8wekyb3d8bbwe!Minecraft')).not.toBeNull();
+    expect(
+      cible('shell:AppsFolder\\Microsoft.4297127D64EC6_8wekyb3d8bbwe!Minecraft'),
+    ).not.toBeNull();
   });
 
   it('écarte une adresse de paquet mal formée', () => {

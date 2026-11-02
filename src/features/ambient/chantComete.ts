@@ -49,8 +49,9 @@ export function createChantComete(): ChantComete {
 
   function demarrer(): void {
     if (contexte) return;
-    const Contexte = window.AudioContext
-      ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Contexte =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Contexte) return;
     contexte = new Contexte();
 
@@ -119,7 +120,11 @@ export function createChantComete(): ChantComete {
     // Trois partiels : la fondamentale, l'octave, et la quinte au-dessus, de
     // plus en plus faibles et de plus en plus brefs. C'est ce qui donne à une
     // célesta son attaque claire et sa queue douce.
-    for (const [facteur, poids, duree] of [[1, 1, 3.4], [2, 0.3, 2.2], [3, 0.12, 1.4]] as const) {
+    for (const [facteur, poids, duree] of [
+      [1, 1, 3.4],
+      [2, 0.3, 2.2],
+      [3, 0.12, 1.4],
+    ] as const) {
       const o = contexte.createOscillator();
       o.type = 'sine';
       o.frequency.value = frequence * facteur;

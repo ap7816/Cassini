@@ -111,15 +111,24 @@
       }
 
       @keyframes logoIn {
-        to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          filter: blur(0);
+        }
       }
 
       @keyframes wordIn {
-        to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .preloader-logo, .word {
+        .preloader-logo,
+        .word {
           animation: none !important;
           opacity: 1 !important;
           transform: none !important;
@@ -133,12 +142,7 @@
     <!-- Preloader affiché AVANT React -->
     <div id="app-preloader" aria-label="Loading">
       <div class="preloader-wrap">
-        <img
-          class="preloader-logo"
-          src="/src/assets/logo.svg"
-          alt="Cassini"
-          draggable="false"
-        />
+        <img class="preloader-logo" src="/src/assets/logo.svg" alt="Cassini" draggable="false" />
 
         <div class="brandLine" aria-label="Cassini">
           <span class="word word--cas">Cas</span><span class="word word--sini">sini</span>
@@ -148,7 +152,7 @@
     <!-- Audio d'ambiance démarré pendant le splash (adopté par ambientPlayer au montage React).
          Sans `src` ni `loop` : la piste est tirée au sort par preloader.ts, et le rebouclage
          empêcherait l'enchaînement vers la piste suivante. -->
-    <audio id="preloader-ambient" preload="auto" style="display:none"></audio>
+    <audio id="preloader-ambient" preload="auto" style="display: none"></audio>
 
     <div id="root"></div>
     <!-- Script externe et non inline : la CSP (script-src 'self') bloque

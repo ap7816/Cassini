@@ -84,7 +84,9 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
 
@@ -103,7 +105,10 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -176,7 +181,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 
 .backBtn:hover:not(:disabled) {
@@ -224,7 +232,9 @@
   scrollbar-color: rgba(108, 142, 251, 0.5) rgb(var(--hud) / 0.057);
 }
 
-.trackList::-webkit-scrollbar { width: 5px; }
+.trackList::-webkit-scrollbar {
+  width: 5px;
+}
 .trackList::-webkit-scrollbar-thumb {
   background: rgba(108, 142, 251, 0.3);
   border-radius: 2px;
@@ -243,7 +253,9 @@
   gap: 12px;
   padding: 9px 16px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
   border-radius: 2px;
   margin: 2px 8px;
   border: 1px solid transparent;
@@ -300,8 +312,10 @@
   text-align: right;
 }
 
-.trackDurationPlaceholder { min-width: 32px; flex-shrink: 0; }
-
+.trackDurationPlaceholder {
+  min-width: 32px;
+  flex-shrink: 0;
+}
 
 /* ─── New folder button ───────────────────────────────────── */
 .newFolderBtn {
@@ -315,7 +329,10 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 
 .newFolderBtn:hover {
@@ -343,18 +360,32 @@
 }
 
 @keyframes metaLoadingSweep {
-  0%   { left: -40%; }
-  100% { left: 100%; }
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.94) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* ─── Récemment écoutés ──────────────────────────────────── */
@@ -411,7 +442,9 @@
 }
 
 @keyframes enrichSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .enrichBarLabel {
@@ -460,8 +493,12 @@
 }
 
 @keyframes enrichIndeterminate {
-  0%   { left: -40%; }
-  100% { left: 100%; }
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .enrichBarCount {

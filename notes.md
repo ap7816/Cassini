@@ -83,95 +83,95 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 > 🟡 **Partiel** : une partie existe et fonctionne, une autre manque. Le détail
 > de ce qui manque est dans « Détail des idées à venir ».
 
-| Fonctionnalité                                                           | Statut     |
-| ------------------------------------------------------------------------ | ---------- |
-| Scan automatique (Steam, Epic, BattleNet, Ubisoft, Riot, Rockstar)       | ✅ Done    |
-| Déduplication intelligente des jeux multi-plateformes                    | ✅ Done    |
-| Lancement de jeux avec overlay d'animation                               | ✅ Done    |
-| Historique de dernière session par jeu                                   | ✅ Done    |
-| Système de favoris                                                       | ✅ Done    |
-| Images: CDN Steam (direct, même désinstallé) + SteamGridDB + perso       | ✅ Done    |
-| Cache des jaquettes dans le store                                        | ✅ Done    |
-| Vider le cache des jaquettes                                             | ✅ Done    |
-| Vider le cache WebView                                                   | ✅ Done    |
-| Recherche temps réel par titre                                           | ✅ Done    |
-| Onglet Favoris                                                           | ✅ Done    |
-| Ajout manuel d'un jeu via sélecteur de fichier `.exe`                    | ✅ Done    |
-| Export / import de la bibliothèque en JSON                               | ✅ Done    |
-| Onglet Launchers avec ouverture directe et accès au dossier              | ✅ Done    |
-| Mise à jour automatique (tauri-plugin-updater + GitHub Releases)         | ✅ Done    |
-| Interface multilingue FR / EN                                            | ✅ Done    |
-| Couleur d'accent personnalisable (palettes + color picker)               | ✅ Done    |
-| Image de fond personnalisée avec opacité réglable                        | ✅ Done    |
-| Réinitialisation complète de l'appli                                     | ✅ Done    |
-| Architecture deux-repos (`.exe` privé + `latest.json` public)            | ✅ Done    |
-| Lecteur de musique MP3 avec scan récursif des sous-dossiers              | ✅ Done    |
-| Lecteur: dossiers repliables, recherche, bandeau « ce qui joue »         | ✅ Done    |
-| Lecteur: mémorisation dernière piste + volume                            | ✅ Done    |
-| Lancement automatique au démarrage de Windows                            | ✅ Done    |
-| Rester en arrière-plan (icône tray)                                      | ✅ Done    |
-| Lecteur: section « Récemment écoutés » (10 dernières pistes)             | ✅ Done    |
-| Animations de transition entre pages                                     | ✅ Done    |
-| Mini-lecteur animé (slide-up/down)                                       | ✅ Done    |
-| Refonte visuelle globale (typo, scrollbars, animations)                  | ✅ Done    |
-| Taille des jeux sur disque                                               | ✅ Done    |
-| Vue Système Solaire                                                      | ✅ Done    |
-| Statistiques de jeu (temps joué, graphiques)                             | ❌ À faire |
-| Catégories / tags par genre ou état                                      | ✅ Done    |
-| Tri des jeux (A-Z, Z-A, joué récemment)                                  | ✅ Done    |
-| Filtres par plateforme et statut installé / non installé*                | ✅ Done    |
-| Tri avancé (par taille disque, temps joué total)                         | ❌ À faire |
-| Notifications (jeu prêt à jouer)                                         | ❌ À faire |
-| Mode sombre / clair                                                      | ✅ Done    |
-| Support _GOG_ Galaxy                                                     | ❌ À faire |
-| Support Ubisoft Connect                                                  | ✅ Done    |
-| Support Riot Games                                                       | ✅ Done    |
-| Support Rockstar Games Launcher                                          | ✅ Done    |
-| Support Xbox / Microsoft Store (Game Pass)                               | ✅ Done    |
-| Raccourcis clavier                                                       | ✅ Done    |
-| Vue liste (alternative à la grille)                                      | ❌ À faire |
-| Notes par jeu                                                            | ❌ À faire |
-| Scan en arrière-plan automatique                                         | ✅ Done    |
-| Mise à jour du statut installé en temps réel                             | ✅ Done    |
-| Cache des jaquettes avec TTL (SteamGridDB)                               | ❌ À faire |
-| Lecteur: couleur personnalisée par dossier (clic droit)                  | ✅ Done    |
-| Lecteur: déplacer une piste via clic droit → modale de sélection         | ✅ Done    |
-| Lecteur: clic sur le bandeau du bas → ouvre le lecteur                   | ✅ Done    |
-| Lecteur: affichage pochette d'album (ID3 tags embarqués)                 | ✅ Done    |
-| Lecteur: enrichissement iTunes (pochette en ligne pour toutes)           | ✅ Done    |
-| Lecteur: pochette enrichie visible dans le bandeau du bas                | ✅ Done    |
-| Lecteur: mode aléatoire / répétition                                     | ✅ Done    |
-| Lecteur: arborescence / grandes icônes de dossier                        | ❌ À faire |
-| Tests unitaires (déduplication, tri, scans)                              | ✅ Done    |
-| Rendre la taille des planètes flagrante pour un jeu très lourd           | ✅ Done    |
-| Petit évenement aléatoire, étoile filante, vaisseau alien etc            | ✅ Done    |
-| vaisseau promo steam, actualité etc                                      | ❌ À faire |
-| Événements visibles partout, quelle que soit la distance de rendu        | ✅ Done    |
-| Une musique par gros événement, au choix ou tirée d'un dossier          | ✅ Done    |
-| Onglet « Graphisme » dans les paramètres : la scène réglable par tous     | ✅ Done    |
-| Couper les événements du ciel sans couper le rideau de gaz              | ✅ Done    |
-| Trou noir : un événement énorme, à regarder et rien d'autre              | ✅ Done    |
-| Supernova : une vraie explosion, à la taille du trou noir                | ✅ Done    |
-| Régler le volume de la musique de chaque événement                       | ✅ Done    |
-| Succès à décrocher : voir chaque événement du ciel                        | ✅ Done    |
-| Choisir sa propre musique d'ambiance dans les paramètres                 | ❌ À faire |
-| Personnalisation d'une planète (taille, couleur des anneaux)              | ✅ Done    |
-| Anneaux d'orbite plus discrets vus de près                               | ❌ À faire |
-| Systèmes solaires personnalisés (favoris, jeux choisis)                  | ✅ Done    |
-| Déplacer les planètes en glissant (mode édition)                         | ✅ Done    |
-| Barre des launchers : icônes agrandies, bouton de création               | ✅ Done    |
-| Système solaire d'ouverture au choix                                     | ✅ Done    |
-| Taille de police augmentée                                               | ❌ À faire |
-| Musique en calque sur la scène + lecteur compact                         | ✅ Done    |
-| Réglages en calque sur la scène, barre latérale supprimée                | ✅ Done    |
-| Pages secondaires masquées, réactivables depuis les Réglages             | ✅ Done    |
-| Largeur réglable de la liste et de la barre des launchers                | ✅ Done    |
-| Quatre familles d'anneaux planétaires                                    | ✅ Done    |
-| Menu de débogage, absent des versions publiées                           | ✅ Done    |
-| Support HoYoverse (Genshin, Honkai, Zenless)                             | ✅ Done    |
-| Ajouter ses propres jeux et programmes (Word, Godot, Unity…)             | ❌ À faire |
-| Accessibilité : langue, contrastes, focus, mouvement réduit              | ✅ Done    |
-| Accessibilité : réglages de confort dans les Paramètres                  | ❌ À faire |
+| Fonctionnalité                                                        | Statut     |
+| --------------------------------------------------------------------- | ---------- |
+| Scan automatique (Steam, Epic, BattleNet, Ubisoft, Riot, Rockstar)    | ✅ Done    |
+| Déduplication intelligente des jeux multi-plateformes                 | ✅ Done    |
+| Lancement de jeux avec overlay d'animation                            | ✅ Done    |
+| Historique de dernière session par jeu                                | ✅ Done    |
+| Système de favoris                                                    | ✅ Done    |
+| Images: CDN Steam (direct, même désinstallé) + SteamGridDB + perso    | ✅ Done    |
+| Cache des jaquettes dans le store                                     | ✅ Done    |
+| Vider le cache des jaquettes                                          | ✅ Done    |
+| Vider le cache WebView                                                | ✅ Done    |
+| Recherche temps réel par titre                                        | ✅ Done    |
+| Onglet Favoris                                                        | ✅ Done    |
+| Ajout manuel d'un jeu via sélecteur de fichier `.exe`                 | ✅ Done    |
+| Export / import de la bibliothèque en JSON                            | ✅ Done    |
+| Onglet Launchers avec ouverture directe et accès au dossier           | ✅ Done    |
+| Mise à jour automatique (tauri-plugin-updater + GitHub Releases)      | ✅ Done    |
+| Interface multilingue FR / EN                                         | ✅ Done    |
+| Couleur d'accent personnalisable (palettes + color picker)            | ✅ Done    |
+| Image de fond personnalisée avec opacité réglable                     | ✅ Done    |
+| Réinitialisation complète de l'appli                                  | ✅ Done    |
+| Architecture deux-repos (`.exe` privé + `latest.json` public)         | ✅ Done    |
+| Lecteur de musique MP3 avec scan récursif des sous-dossiers           | ✅ Done    |
+| Lecteur: dossiers repliables, recherche, bandeau « ce qui joue »      | ✅ Done    |
+| Lecteur: mémorisation dernière piste + volume                         | ✅ Done    |
+| Lancement automatique au démarrage de Windows                         | ✅ Done    |
+| Rester en arrière-plan (icône tray)                                   | ✅ Done    |
+| Lecteur: section « Récemment écoutés » (10 dernières pistes)          | ✅ Done    |
+| Animations de transition entre pages                                  | ✅ Done    |
+| Mini-lecteur animé (slide-up/down)                                    | ✅ Done    |
+| Refonte visuelle globale (typo, scrollbars, animations)               | ✅ Done    |
+| Taille des jeux sur disque                                            | ✅ Done    |
+| Vue Système Solaire                                                   | ✅ Done    |
+| Statistiques de jeu (temps joué, graphiques)                          | ❌ À faire |
+| Catégories / tags par genre ou état                                   | ✅ Done    |
+| Tri des jeux (A-Z, Z-A, joué récemment)                               | ✅ Done    |
+| Filtres par plateforme et statut installé / non installé\*            | ✅ Done    |
+| Tri avancé (par taille disque, temps joué total)                      | ❌ À faire |
+| Notifications (jeu prêt à jouer)                                      | ❌ À faire |
+| Mode sombre / clair                                                   | ✅ Done    |
+| Support _GOG_ Galaxy                                                  | ❌ À faire |
+| Support Ubisoft Connect                                               | ✅ Done    |
+| Support Riot Games                                                    | ✅ Done    |
+| Support Rockstar Games Launcher                                       | ✅ Done    |
+| Support Xbox / Microsoft Store (Game Pass)                            | ✅ Done    |
+| Raccourcis clavier                                                    | ✅ Done    |
+| Vue liste (alternative à la grille)                                   | ❌ À faire |
+| Notes par jeu                                                         | ❌ À faire |
+| Scan en arrière-plan automatique                                      | ✅ Done    |
+| Mise à jour du statut installé en temps réel                          | ✅ Done    |
+| Cache des jaquettes avec TTL (SteamGridDB)                            | ❌ À faire |
+| Lecteur: couleur personnalisée par dossier (clic droit)               | ✅ Done    |
+| Lecteur: déplacer une piste via clic droit → modale de sélection      | ✅ Done    |
+| Lecteur: clic sur le bandeau du bas → ouvre le lecteur                | ✅ Done    |
+| Lecteur: affichage pochette d'album (ID3 tags embarqués)              | ✅ Done    |
+| Lecteur: enrichissement iTunes (pochette en ligne pour toutes)        | ✅ Done    |
+| Lecteur: pochette enrichie visible dans le bandeau du bas             | ✅ Done    |
+| Lecteur: mode aléatoire / répétition                                  | ✅ Done    |
+| Lecteur: arborescence / grandes icônes de dossier                     | ❌ À faire |
+| Tests unitaires (déduplication, tri, scans)                           | ✅ Done    |
+| Rendre la taille des planètes flagrante pour un jeu très lourd        | ✅ Done    |
+| Petit évenement aléatoire, étoile filante, vaisseau alien etc         | ✅ Done    |
+| vaisseau promo steam, actualité etc                                   | ❌ À faire |
+| Événements visibles partout, quelle que soit la distance de rendu     | ✅ Done    |
+| Une musique par gros événement, au choix ou tirée d'un dossier        | ✅ Done    |
+| Onglet « Graphisme » dans les paramètres : la scène réglable par tous | ✅ Done    |
+| Couper les événements du ciel sans couper le rideau de gaz            | ✅ Done    |
+| Trou noir : un événement énorme, à regarder et rien d'autre           | ✅ Done    |
+| Supernova : une vraie explosion, à la taille du trou noir             | ✅ Done    |
+| Régler le volume de la musique de chaque événement                    | ✅ Done    |
+| Succès à décrocher : voir chaque événement du ciel                    | ✅ Done    |
+| Choisir sa propre musique d'ambiance dans les paramètres              | ❌ À faire |
+| Personnalisation d'une planète (taille, couleur des anneaux)          | ✅ Done    |
+| Anneaux d'orbite plus discrets vus de près                            | ❌ À faire |
+| Systèmes solaires personnalisés (favoris, jeux choisis)               | ✅ Done    |
+| Déplacer les planètes en glissant (mode édition)                      | ✅ Done    |
+| Barre des launchers : icônes agrandies, bouton de création            | ✅ Done    |
+| Système solaire d'ouverture au choix                                  | ✅ Done    |
+| Taille de police augmentée                                            | ❌ À faire |
+| Musique en calque sur la scène + lecteur compact                      | ✅ Done    |
+| Réglages en calque sur la scène, barre latérale supprimée             | ✅ Done    |
+| Pages secondaires masquées, réactivables depuis les Réglages          | ✅ Done    |
+| Largeur réglable de la liste et de la barre des launchers             | ✅ Done    |
+| Quatre familles d'anneaux planétaires                                 | ✅ Done    |
+| Menu de débogage, absent des versions publiées                        | ✅ Done    |
+| Support HoYoverse (Genshin, Honkai, Zenless)                          | ✅ Done    |
+| Ajouter ses propres jeux et programmes (Word, Godot, Unity…)          | ❌ À faire |
+| Accessibilité : langue, contrastes, focus, mouvement réduit           | ✅ Done    |
+| Accessibilité : réglages de confort dans les Paramètres               | ❌ À faire |
 
 ---
 
@@ -252,7 +252,6 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   Deux pièges d'éclat, payés comptant : les éclats avaient été réglés **sans la passe de débordement**, dont le seuil vaut 0,85 — à l'écran, l'objet était un aplat blanc. Les grandes surfaces restent désormais sous le seuil et gardent leur couleur, seul l'anneau de photons a le droit de le franchir. Et le mélange additif multiplie déjà la couleur par l'opacité : fournir les deux revenait à peindre au carré.
 
   **Ce qui a été essayé avant, et retiré** — à ne pas reprendre par le même chemin :
-
   - **Avaler les systèmes un par un**, chaque étoile et chaque planète happée à son tour en spirale. Trente secondes de cérémonie qui tenaient la scène en otage et remuaient tout ce qu'elle porte, pour une chose qu'on voulait voir ailleurs.
   - **Aspirer l'écran lui-même** par un filtre SVG posé sur la coque. L'idée tord bien l'application entière, boutons compris, pour une dizaine de millisecondes par image à condition que la région du filtre colle à la coque (140 % de marge : 36 ms ; 104 % : 13,3 ms, pour 12,1 ms au repos). Mais sa carte de déplacement tient sur huit bits, et c'est elle qui décide de tout : au-delà d'environ trois pixels de décalage entre deux niveaux voisins, l'image ne glisse plus, elle se gaufre. Tramer l'arrondi change les marches en grain et repousse la limite sans la lever.
   - D'où le partage **tourner d'un côté, rassembler de l'autre** : un pixel qui tourne reste à sa distance du trou, donc à l'écran, tandis qu'un pixel qui glisse va chercher sa couleur hors de la fenêtre et vide l'image par les bords avant que rien n'ait été mangé. Le vissage par le filtre, le resserrement par une transformation CSS dont l'origine est le point lui-même — le filtre ne sait pas rapprocher l'image entière d'un seul endroit, cela demanderait des décalages de plusieurs diagonales.
@@ -291,7 +290,7 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 - **La vitesse du clavier suivait le mauvais système**
   **Réparé.** Le déplacement libre est rapporté au cadrage plutôt qu'exprimé en unités absolues — une bibliothèque de deux cents jeux s'étend sur des milliers d'unités, une de trois sur quelques dizaines, et une vitesse fixe serait inutilisable dans l'un ou l'autre cas. Mais ce cadrage était celui du système courant **au montage de la scène**, et rien ne le remettait à jour : on voyageait vers un launcher plus grand ou plus petit, et la vitesse du clavier restait celle d'avant. D'où l'impression de ramper dans un système vaste, ou de le traverser d'une pression dans un petit.
 
-  La vitesse se rapporte maintenant au système dont on est **le plus près**, relu à chaque image. C'est une autre grandeur que celle du système *désigné*, qui sert à calculer la durée d'un voyage et doit rester celle de la destination tout du long : les deux portent donc deux noms. La portée des étiquettes suit la même règle — elle en avait le même besoin, et pour la même raison.
+  La vitesse se rapporte maintenant au système dont on est **le plus près**, relu à chaque image. C'est une autre grandeur que celle du système _désigné_, qui sert à calculer la durée d'un voyage et doit rester celle de la destination tout du long : les deux portent donc deux noms. La portée des étiquettes suit la même règle — elle en avait le même besoin, et pour la même raison.
 
   Au passage, la traversée ralentit encore : de trois secondes deux à six, contre deux secondes quatre à quatre et demie.
 
@@ -495,7 +494,6 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
   **Corrigé au passage** : `react-router-dom` traînait deux alertes de gravité haute (7.13.0 → 7.18.3, `npm audit` à zéro). Les cinq avis concernaient le rendu côté serveur, que cette application n'utilise pas — mais un correctif mineur ne se discute pas.
 
   **Dépendances Rust** : `cargo audit` passe les 690 entrées du verrou. Huit alertes au premier passage, sept levées par une mise à jour du seul fichier de verrouillage — aucun changement de code, cinq versions déplacées :
-
   - `rustls-webpki` 0.103.10 → 0.103.15. La plus sérieuse : c'est la bibliothèque qui valide les certificats du **mise à jour automatique**. Trois avis — contraintes de nom acceptées à tort pour des URI, contraintes acceptées pour un certificat à nom générique, et une panique atteignable en lisant une liste de révocation.
   - `h2` 0.4.14 → 0.4.19. Trames DATA vides sans borne, sur le chemin HTTP/2 de `reqwest` — celui qui interroge iTunes et SteamGridDB.
   - `quick-xml` 0.38.4 → 0.41.0, via `plist` 1.8.0 → 1.10.0. Deux alertes de gravité 7,5 : temps quadratique sur les attributs en double, et allocation sans borne des déclarations d'espace de noms. `plist` ne se compile que sur macOS, la version publiée est Windows : l'exposition réelle était nulle, mais la contrainte `^0.38` de `plist` interdisait de bouger — le passage à 1.10 la lève.

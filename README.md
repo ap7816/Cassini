@@ -59,14 +59,14 @@ Build release :
 
 ---
 
-| Commande | Description |
-|---|---|
-| `npm run dev` | Frontend Vite seul (navigateur) |
-| `npm run tauri dev` | App desktop complète en mode dev |
-| `npm run tauri build` | Build l'installeur de release |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
-| `npm run typecheck` | Vérification TypeScript |
+| Commande              | Description                      |
+| --------------------- | -------------------------------- |
+| `npm run dev`         | Frontend Vite seul (navigateur)  |
+| `npm run tauri dev`   | App desktop complète en mode dev |
+| `npm run tauri build` | Build l'installeur de release    |
+| `npm run lint`        | ESLint                           |
+| `npm run format`      | Prettier                         |
+| `npm run typecheck`   | Vérification TypeScript          |
 
 ---
 

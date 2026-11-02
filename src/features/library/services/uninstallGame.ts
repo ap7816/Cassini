@@ -38,7 +38,11 @@ export async function trouverDesinstalleur(game: Game): Promise<string | null> {
  * lettre ni chiffre ne disent rien ici.
  */
 export function memeNom(a: string, b: string): boolean {
-  const reduire = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const reduire = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
   return reduire(a) === reduire(b);
 }
 

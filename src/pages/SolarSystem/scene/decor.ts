@@ -33,13 +33,14 @@ export function createStarfield(outerR: number): THREE.Points {
     // brillent le plus. La proportion suit celle du voisinage solaire ; l'éclat
     // moyen reste celui d'avant, pour ne pas éclaircir le ciel.
     const type = Math.random();
-    const [tr, tv, tb] = type < 0.74
-      ? [0.62, 0.5, 0.39]   // naines orangées : nombreuses, et sombres
-      : type < 0.9
-        ? [0.88, 0.84, 0.74]
-        : type < 0.97
-          ? [1, 1, 1]
-          : [0.82, 0.9, 1.05];
+    const [tr, tv, tb] =
+      type < 0.74
+        ? [0.62, 0.5, 0.39] // naines orangées : nombreuses, et sombres
+        : type < 0.9
+          ? [0.88, 0.84, 0.74]
+          : type < 0.97
+            ? [1, 1, 1]
+            : [0.82, 0.9, 1.05];
 
     const b = 0.7 + Math.random() * 0.3;
     col[i * 3] = b * tr;
@@ -167,7 +168,11 @@ export function createBelt(outerR: number, planetCount: number): THREE.Instanced
   // Le plancher de 120 ne doit pas contredire un plafond plus bas : à zéro,
   // il n'y a plus de ceinture du tout.
   const count = Math.round(
-    THREE.MathUtils.clamp(planetCount * reglages.asteroidesParPlanete, Math.min(120, plafond), plafond),
+    THREE.MathUtils.clamp(
+      planetCount * reglages.asteroidesParPlanete,
+      Math.min(120, plafond),
+      plafond,
+    ),
   );
   if (count <= 0) return null;
   const scale = THREE.MathUtils.clamp(outerR * 0.018, 0.22, 1.25);
@@ -212,7 +217,6 @@ export function createBelt(outerR: number, planetCount: number): THREE.Instanced
   return belt;
 }
 
-
 /** Pastille dégradée servant de balise. Une seule pour toute la galaxie. */
 function makeBeaconTexture(): THREE.CanvasTexture {
   const s = 64;
@@ -244,9 +248,7 @@ function makeBeaconTexture(): THREE.CanvasTexture {
  * sphère du soleil, bien plus large. Et un seul objet `Points` pour toute la
  * galaxie, donc un seul appel de dessin.
  */
-export function createSunBeacons(
-  soleils: Array<{ centre: THREE.Vector3; couleur: THREE.Color }>,
-): {
+export function createSunBeacons(soleils: Array<{ centre: THREE.Vector3; couleur: THREE.Color }>): {
   points: THREE.Points;
   /** Rapporte les balises trop lointaines autour de l'œil. */
   update: (camera: THREE.Camera, densitePixels?: number) => void;
@@ -354,7 +356,11 @@ export function createSunBeacons(
       if (bouge) attribut.needsUpdate = true;
       if (redimensionne) attrTaille.needsUpdate = true;
     },
-    dispose: () => { geo.dispose(); mat.dispose(); map.dispose(); },
+    dispose: () => {
+      geo.dispose();
+      mat.dispose();
+      map.dispose();
+    },
   };
 }
 
@@ -401,7 +407,11 @@ function pastilleEtoile(): THREE.CanvasTexture {
  * La graine rend le nuage stable d'une session à l'autre. Repéré comme les
  * autres étoiles, il suit les réglages de taille et d'opacité.
  */
-export function createNuageEtoiles(rayonSysteme: number, densite: number, graine: number): THREE.Points | null {
+export function createNuageEtoiles(
+  rayonSysteme: number,
+  densite: number,
+  graine: number,
+): THREE.Points | null {
   const n = Math.round(ETOILES_PAR_DENSITE * Math.max(0, densite));
   if (n === 0) return null;
 

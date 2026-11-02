@@ -69,8 +69,13 @@ async function fetchBasicBatch(paths: string[]): Promise<void> {
       if (!_cache.has(path)) {
         evict();
         _cache.set(path, {
-          path, title: null, artist: null, album: null,
-          durationSecs: null, coverDataUrl: null, coverLoaded: false,
+          path,
+          title: null,
+          artist: null,
+          album: null,
+          durationSecs: null,
+          coverDataUrl: null,
+          coverLoaded: false,
         });
       }
     }
@@ -96,7 +101,10 @@ async function fetchCover(path: string): Promise<string | null> {
       return coverDataUrl;
     } catch {
       const entry = _cache.get(path);
-      if (entry) { entry.coverLoaded = true; entry.coverDataUrl = null; }
+      if (entry) {
+        entry.coverLoaded = true;
+        entry.coverDataUrl = null;
+      }
       return null;
     }
   });
@@ -115,9 +123,12 @@ function subscribeCoverRefresh(path: string, fn: (url: string | null) => void): 
 // Force le rechargement de la pochette d'une piste depuis le fichier et notifie les composants abonnés
 export async function refreshCover(path: string): Promise<void> {
   const entry = _cache.get(path);
-  if (entry) { entry.coverLoaded = false; entry.coverDataUrl = null; }
+  if (entry) {
+    entry.coverLoaded = false;
+    entry.coverDataUrl = null;
+  }
   const dataUrl = await fetchCover(path);
-  _coverListeners.get(path)?.forEach(fn => fn(dataUrl));
+  _coverListeners.get(path)?.forEach((fn) => fn(dataUrl));
 }
 
 // Charge titre/artiste/album/durée pour toutes les pistes en un seul appel Rust parallèle
@@ -132,12 +143,12 @@ export function useBasicBatch(paths: string[]): {
 
   // Ne lance le fetch que pour les pistes absentes du cache
   useEffect(() => {
-    const missing = paths.filter(p => !_cache.has(p));
+    const missing = paths.filter((p) => !_cache.has(p));
     if (!missing.length) return;
     setLoading(true);
     fetchBasicBatch(missing).then(() => {
       setLoading(false);
-      bump(n => n + 1);
+      bump((n) => n + 1);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
@@ -161,9 +172,15 @@ export function useLazyCoverArt(
   });
 
   useEffect(() => {
-    if (!path) { setCover(null); return; }
+    if (!path) {
+      setCover(null);
+      return;
+    }
     const entry = _cache.get(path);
-    if (entry?.coverLoaded) { setCover(entry.coverDataUrl ?? null); return; }
+    if (entry?.coverLoaded) {
+      setCover(entry.coverDataUrl ?? null);
+      return;
+    }
     const el = ref.current;
     if (!el) return;
 
@@ -207,7 +224,9 @@ export function useSingleMeta(path: string | null): TrackMeta | null {
     fetchCover(path).then(() => {
       if (!cancelled) setFetched({ path, meta: _cache.get(path) ?? null });
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [path]);
 
   if (!path) return null;

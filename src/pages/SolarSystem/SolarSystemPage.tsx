@@ -92,7 +92,7 @@ function sceneSignature(games: Game[], critere: CritereTaille, avecTags: boolean
         g.steamAppId ?? '',
         // Seulement quand il fait la taille : sinon, rejouer à un jeu Steam
         // reconstruirait la galaxie au retour pour une donnée qu'elle ignore.
-        critere === 'tempsDeJeu' ? g.playtimeMinutes ?? 0 : '',
+        critere === 'tempsDeJeu' ? (g.playtimeMinutes ?? 0) : '',
         // Seulement quand un système suit un tag : sinon, taguer un jeu
         // reconstruirait la galaxie pour une donnée qu'elle n'affiche pas.
         avecTags ? (g.tags ?? []).join(',') : '',
@@ -209,24 +209,28 @@ export function SolarSystemPage() {
   // on retombe alors, comme sans choix, sur le launcher le plus fourni.
   const systemeCourant =
     chosenPlatform && estSystemePerso(chosenPlatform)
-      ? systemesPerso.find((s) => cleSysteme(s) === chosenPlatform) ?? null
+      ? (systemesPerso.find((s) => cleSysteme(s) === chosenPlatform) ?? null)
       : null;
   const platform =
     chosenPlatform && (!estSystemePerso(chosenPlatform) || systemeCourant)
       ? chosenPlatform
-      : platforms[0]?.name ?? '';
+      : (platforms[0]?.name ?? '');
 
   const critereTaille: CritereTaille = settings.planetSizeByPlaytime ? 'tempsDeJeu' : 'disque';
 
   // Le ciel vivant se coupe et se rallume sans reconstruire la scène : elle lit
   // la référence à chaque image.
   const cielRef = useRef(settings.cielVivant);
-  useEffect(() => { cielRef.current = settings.cielVivant; }, [settings.cielVivant]);
+  useEffect(() => {
+    cielRef.current = settings.cielVivant;
+  }, [settings.cielVivant]);
 
   // Les événements se coupent à part : on peut vouloir le ciel vivant sans que
   // rien ne vienne traverser le regard.
   const evenementsRef = useRef(settings.evenementsCiel);
-  useEffect(() => { evenementsRef.current = settings.evenementsCiel; }, [settings.evenementsCiel]);
+  useEffect(() => {
+    evenementsRef.current = settings.evenementsCiel;
+  }, [settings.evenementsCiel]);
 
   // Et la musique qui les accompagne, portée au module qui la joue — le
   // morceau de chacun, et le volume de chacun.
@@ -340,11 +344,22 @@ export function SolarSystemPage() {
           p,
           r.couleurSoleil ?? '',
           String(r.etoiles),
-          String(Math.ceil(rayonSysteme(parPlateforme.find((e) => e.platform === p)?.games.length ?? 0, r))),
+          String(
+            Math.ceil(
+              rayonSysteme(parPlateforme.find((e) => e.platform === p)?.games.length ?? 0, r),
+            ),
+          ),
         ].join('\u0000'),
       ),
     ].join('\u0001');
-  }, [sceneGames, systemesPerso, parPlateforme, reglagesLaunchers, critereTaille, systemesSuivantUnTag]);
+  }, [
+    sceneGames,
+    systemesPerso,
+    parPlateforme,
+    reglagesLaunchers,
+    critereTaille,
+    systemesSuivantUnTag,
+  ]);
 
   const parPlateformeRef = useRef(parPlateforme);
   const systemesPrecedentsRef = useRef(systemesPerso);
@@ -610,9 +625,9 @@ export function SolarSystemPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cible = e.target as HTMLElement | null;
-      const saisie = !!cible && (
-        cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA' || cible.isContentEditable
-      );
+      const saisie =
+        !!cible &&
+        (cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA' || cible.isContentEditable);
 
       // Chercher : la seule qui doit fonctionner **depuis** un champ, pour
       // revenir à la recherche quand on s'est égaré ailleurs.
@@ -766,7 +781,9 @@ export function SolarSystemPage() {
             />
           );
         }
-        const entree = parPlateforme.find((p) => p.platform === editeur && !estSystemePerso(p.platform));
+        const entree = parPlateforme.find(
+          (p) => p.platform === editeur && !estSystemePerso(p.platform),
+        );
         if (!entree) return null;
         return (
           <EditeurSysteme

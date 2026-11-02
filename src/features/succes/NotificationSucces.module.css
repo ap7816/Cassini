@@ -33,7 +33,9 @@
   border: 1px solid var(--hud-ligne-moyenne);
   border-left: 2px solid rgb(var(--hud) / 0.8);
   box-sizing: border-box;
-  box-shadow: 0 0 26px rgb(var(--hud) / 0.16), 0 10px 30px rgb(0 0 0 / 0.55);
+  box-shadow:
+    0 0 26px rgb(var(--hud) / 0.16),
+    0 10px 30px rgb(0 0 0 / 0.55);
   backdrop-filter: blur(14px);
   pointer-events: auto;
   min-width: 270px;
@@ -91,20 +93,37 @@
   line-height: 1;
   transition: color 0.12s;
 }
-.fermer:hover { color: rgb(var(--hud)); }
+.fermer:hover {
+  color: rgb(var(--hud));
+}
 
 @keyframes entree {
-  from { transform: translateX(-28px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+  from {
+    transform: translateX(-28px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Le numéro respire, comme un voyant qui vient de s'allumer. */
 @keyframes pulsation {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.55; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .carte { animation: none; }
-  .index { animation: none; }
+  .carte {
+    animation: none;
+  }
+  .index {
+    animation: none;
+  }
 }

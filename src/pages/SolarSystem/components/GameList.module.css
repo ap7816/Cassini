@@ -24,8 +24,7 @@
   /* Une vitre d'instrument : trame de balayage, un reflet froid qui descend
      du haut, puis la teinte. L'opacité de la teinte reste réglable. */
   background:
-    var(--hud-trame),
-    linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 140px),
+    var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 140px),
     rgb(var(--fond) / var(--liste-fond-opacite, 0.82));
   border-left: 1px solid var(--hud-ligne-moyenne);
   box-shadow:
@@ -42,8 +41,8 @@
   gap: 8px;
   padding: 0 2px 8px 14px;
   background:
-    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px)
-      0 100% / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100%
+      3px no-repeat,
     linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
 }
 
@@ -60,7 +59,6 @@
   text-overflow: ellipsis;
 }
 
-
 .search {
   flex-shrink: 0;
   padding: 7px 8px 7px 18px;
@@ -76,7 +74,10 @@
   letter-spacing: 0.04em;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
 }
 
 .search:focus {
@@ -85,7 +86,9 @@
   background:
     linear-gradient(rgb(var(--hud)) 0 0) 8px 50% / 2px 12px no-repeat,
     rgb(var(--hud) / 0.09);
-  box-shadow: var(--hud-lueur), inset 0 0 12px rgb(var(--hud) / 0.08);
+  box-shadow:
+    var(--hud-lueur),
+    inset 0 0 12px rgb(var(--hud) / 0.08);
 }
 
 /* La liste seule défile : l'en-tête et la recherche restent visibles. */
@@ -130,7 +133,10 @@
   color: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
 }
 
 .item:hover {
@@ -141,7 +147,11 @@
 .itemActive {
   background:
     var(--hud-crochets),
-    linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 26%, transparent), transparent 85%);
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent, rgb(var(--hud))) 26%, transparent),
+      transparent 85%
+    );
   border-left-color: var(--accent, rgb(var(--hud)));
   box-shadow: inset 12px 0 18px -14px var(--accent, rgb(var(--hud)));
 }
@@ -224,9 +234,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .item, .search, .railBtn { transition: none; }
+  .item,
+  .search,
+  .railBtn {
+    transition: none;
+  }
 }
-
 
 /* ── Barre des launchers ──────────────────────────────────────────────── */
 
@@ -256,9 +269,7 @@
   overflow-x: hidden;
   /* Plus sombre que la liste : c'est le montant du tableau de bord, pas une
      vitre qu'on consulte. */
-  background:
-    var(--hud-trame),
-    rgb(var(--fond) / calc(var(--dbg-rail-op, 0.42) + 0.45));
+  background: var(--hud-trame), rgb(var(--fond) / calc(var(--dbg-rail-op, 0.42) + 0.45));
   border-left: 1px solid var(--hud-ligne-moyenne);
   backdrop-filter: blur(calc(12px * var(--dbg-flou, 1)));
 }
@@ -279,7 +290,11 @@
   background: rgb(var(--hud) / 0.04);
   cursor: pointer;
   opacity: calc(var(--dbg-rail-repos, 0.55) + 0.15);
-  transition: opacity 130ms, background 130ms, border-color 130ms, box-shadow 130ms;
+  transition:
+    opacity 130ms,
+    background 130ms,
+    border-color 130ms,
+    box-shadow 130ms;
 }
 
 .railBtn:hover {
@@ -368,7 +383,6 @@
   border-radius: 50%;
   box-shadow: 0 0 6px currentColor;
 }
-
 
 /* ── Occupation du disque ─────────────────────────────────────────────── */
 
@@ -462,7 +476,11 @@
   background: transparent;
   color: rgb(var(--hud) / 0.7);
   cursor: pointer;
-  transition: color 130ms, border-color 130ms, background 130ms, box-shadow 130ms;
+  transition:
+    color 130ms,
+    border-color 130ms,
+    background 130ms,
+    box-shadow 130ms;
 }
 
 .railReglages:hover,
@@ -485,7 +503,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .railReglages { transition: none; }
+  .railReglages {
+    transition: none;
+  }
 }
 
 /* Numéro de version, sous le bouton des réglages : il vivait en pied du
@@ -514,7 +534,11 @@
   background: transparent;
   color: rgb(var(--hud) / 0.7);
   cursor: pointer;
-  transition: color 130ms, border-color 130ms, background 130ms, box-shadow 130ms;
+  transition:
+    color 130ms,
+    border-color 130ms,
+    background 130ms,
+    box-shadow 130ms;
 }
 
 .railAjout:hover {
@@ -558,7 +582,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .railAjout { transition: none; }
+  .railAjout {
+    transition: none;
+  }
 }
 
 /* ── Ajout et retrait à la volée ─────────────────────────────────────── */
@@ -586,7 +612,9 @@
   cursor: pointer;
   opacity: 0;
   transform: translateY(-50%);
-  transition: opacity 120ms, background 120ms;
+  transition:
+    opacity 120ms,
+    background 120ms;
 }
 
 .ligneAvecAction:hover .ligneAction,
@@ -600,8 +628,7 @@
 }
 
 /* Losange de repère, décoratif : pas de contenu textuel, rien n'est lu. */
-.head::before
-.head::before {
+.head::before .head::before {
   content: '';
   position: absolute;
   left: 2px;
@@ -613,8 +640,7 @@
   transform: rotate(45deg);
 }
 
-.search::placeholder
-.search::placeholder {
+.search::placeholder .search::placeholder {
   color: var(--hud-texte-faible);
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -641,7 +667,10 @@
   color: rgb(var(--hud) / 0.75);
   font-size: calc(13px * calc(var(--ui-font-scale, 1) * var(--txt-e, 1)));
   cursor: pointer;
-  transition: color 120ms, border-color 120ms, background 120ms;
+  transition:
+    color 120ms,
+    border-color 120ms,
+    background 120ms;
 }
 
 .headActualiser:hover:not(:disabled) {
@@ -661,7 +690,9 @@
 }
 
 @keyframes tourne {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -704,7 +735,10 @@
   color: var(--hud-texte-faible);
   font-size: calc(11px * calc(var(--ui-font-scale, 1) * var(--liste-e, 1)));
   cursor: pointer;
-  transition: color 120ms, border-color 120ms, background 120ms;
+  transition:
+    color 120ms,
+    border-color 120ms,
+    background 120ms;
 }
 
 .tagFiltre:hover {
@@ -725,5 +759,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tagFiltre { transition: none; }
+  .tagFiltre {
+    transition: none;
+  }
 }

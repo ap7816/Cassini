@@ -51,7 +51,16 @@ type Options = {
  *    chaque pixel parcouru, ce qui coûtait plus cher que le rendu 3D lui-même.
  */
 export function createPicker({
-  canvas, camera, planets, pickMeshes, meshToEntry, soleils, onHover, onClick, onSoleil, glisser,
+  canvas,
+  camera,
+  planets,
+  pickMeshes,
+  meshToEntry,
+  soleils,
+  onHover,
+  onClick,
+  onSoleil,
+  glisser,
 }: Options) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -91,9 +100,8 @@ export function createPicker({
   ): { planete: PlanetEntry | null; soleil: THREE.Object3D | null } {
     const rect = aim(clientX, clientY);
 
-    const surSoleil = soleils.length > 0
-      ? raycaster.intersectObjects(soleils, false)[0] ?? null
-      : null;
+    const surSoleil =
+      soleils.length > 0 ? (raycaster.intersectObjects(soleils, false)[0] ?? null) : null;
 
     // 1. Un impact géométrique exact sur une planète, s'il est plus proche que
     //    le portail.
@@ -137,7 +145,6 @@ export function createPicker({
 
     return { planete: null, soleil: surSoleil?.object ?? null };
   }
-
 
   // ── Glissement ──────────────────────────────────────────────────────────
   let saisie: PlanetEntry | null = null;
@@ -229,7 +236,8 @@ export function createPicker({
       const { planete, soleil } = designer(hoverX, hoverY);
       // Une main ouverte sur ce qu'on peut déplacer : sans elle, rien ne dit
       // qu'une planète se saisit.
-      canvas.style.cursor = planete && glisser?.peut(planete) ? 'grab' : planete || soleil ? 'pointer' : '';
+      canvas.style.cursor =
+        planete && glisser?.peut(planete) ? 'grab' : planete || soleil ? 'pointer' : '';
       setHover(planete);
     },
 

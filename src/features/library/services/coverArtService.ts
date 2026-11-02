@@ -9,7 +9,11 @@ import type { Game } from '../../types';
 // Deux sources aujourd'hui : le CDN de Valve pour les jeux Steam, dont l'URL
 // se calcule sans appel réseau, et SteamGridDB pour tous les autres.
 
-import { readCoverCacheRaw, writeCoverCacheRaw, removeCoverCache as storageRemoveCache } from '../../../services/storage';
+import {
+  readCoverCacheRaw,
+  writeCoverCacheRaw,
+  removeCoverCache as storageRemoveCache,
+} from '../../../services/storage';
 import { tauriInvoke } from '../../../services/tauri';
 import { estEnLigne, surEtatReseau, verifierLeReseau } from '../../system/reseau';
 
@@ -116,7 +120,7 @@ export function fetchCoverArt(
 ): Promise<string | null> {
   const { title } = jeu;
   const steamAppId = jeu.steamAppId ?? null;
-  const dossierXbox = jeu.platform === 'Xbox' ? jeu.installPath ?? null : null;
+  const dossierXbox = jeu.platform === 'Xbox' ? (jeu.installPath ?? null) : null;
   const cacheKey = steamAppId
     ? `steam:${steamAppId}`
     : dossierXbox

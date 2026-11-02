@@ -56,12 +56,10 @@ export function loadSettings(): AppSettings {
       typeof parsed.bgOverlayOpacity === 'number'
         ? parsed.bgOverlayOpacity
         : DEFAULT_SETTINGS.bgOverlayOpacity;
-    const autostart =
-      typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
+    const autostart = typeof parsed.autostart === 'boolean' ? parsed.autostart : false;
     const runInBackground =
       typeof parsed.runInBackground === 'boolean' ? parsed.runInBackground : false;
-    const cielVivant =
-      typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
+    const cielVivant = typeof parsed.cielVivant === 'boolean' ? parsed.cielVivant : true;
     const evenementsCiel =
       typeof parsed.evenementsCiel === 'boolean' ? parsed.evenementsCiel : true;
     // Un morceau par événement — et l'ancien réglage unique, s'il traîne
@@ -106,8 +104,7 @@ export function loadSettings(): AppSettings {
         ? Math.min(360, Math.max(0, Math.round(parsed.limiteIPS)))
         : 0;
     const afficherIPS = parsed.afficherIPS === true;
-    const debordement =
-      typeof parsed.debordement === 'boolean' ? parsed.debordement : true;
+    const debordement = typeof parsed.debordement === 'boolean' ? parsed.debordement : true;
     const densiteCiel =
       typeof parsed.densiteCiel === 'number' && Number.isFinite(parsed.densiteCiel)
         ? Math.min(1.6, Math.max(0.3, parsed.densiteCiel))
@@ -136,7 +133,9 @@ export function loadSettings(): AppSettings {
       showLaunchers: parsed.showLaunchers === true,
       planetSizeByPlaytime: parsed.planetSizeByPlaytime === true,
       startSystem:
-        typeof parsed.startSystem === 'string' && parsed.startSystem.length > 0 && parsed.startSystem.length <= 128
+        typeof parsed.startSystem === 'string' &&
+        parsed.startSystem.length > 0 &&
+        parsed.startSystem.length <= 128
           ? parsed.startSystem
           : 'auto',
       themeMode: estModeTheme(parsed.themeMode) ? parsed.themeMode : 'dark',
@@ -169,8 +168,11 @@ export async function migrateAndCheckKey(): Promise<boolean> {
         // SteamGridDB. Il est relu tel quel : renommer la lecture ferait
         // perdre sa clé à toute installation antérieure à ce changement.
         const legacy =
-          typeof parsed.sgdbApiKey === 'string' ? parsed.sgdbApiKey :
-          typeof parsed.rawgApiKey === 'string' ? parsed.rawgApiKey : '';
+          typeof parsed.sgdbApiKey === 'string'
+            ? parsed.sgdbApiKey
+            : typeof parsed.rawgApiKey === 'string'
+              ? parsed.rawgApiKey
+              : '';
 
         if (legacy.trim()) {
           await invoke('set_sgdb_key', { key: legacy.trim() });
@@ -183,10 +185,14 @@ export async function migrateAndCheckKey(): Promise<boolean> {
           try {
             window.localStorage?.removeItem(STORAGE_KEYS.settings);
             window.localStorage?.removeItem('arctive.settings.v1');
-          } catch { /* quota ou mode privé : sans conséquence ici */ }
+          } catch {
+            /* quota ou mode privé : sans conséquence ici */
+          }
         }
       }
-    } catch { /* réglages illisibles : rien à migrer */ }
+    } catch {
+      /* réglages illisibles : rien à migrer */
+    }
   }
 
   try {

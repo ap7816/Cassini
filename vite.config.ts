@@ -6,7 +6,9 @@ import { resolve } from 'path';
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
-const tauriConf = JSON.parse(readFileSync(resolve(__dirname, 'src-tauri/tauri.conf.json'), 'utf-8')) as { version: string };
+const tauriConf = JSON.parse(
+  readFileSync(resolve(__dirname, 'src-tauri/tauri.conf.json'), 'utf-8'),
+) as { version: string };
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({

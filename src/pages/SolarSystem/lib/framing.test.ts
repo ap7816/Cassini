@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  composerFiche,
-  elevationDeLaPose,
-  largeurFicheVoulue,
-  poseDuSysteme,
-} from './framing';
+import { composerFiche, elevationDeLaPose, largeurFicheVoulue, poseDuSysteme } from './framing';
 import { REGLAGES_DEFAUT } from '../../../features/debug/tuning';
 
 /**

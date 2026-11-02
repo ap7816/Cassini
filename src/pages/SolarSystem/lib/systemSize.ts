@@ -50,10 +50,8 @@ export function dimensionnerSysteme(nbJeux: number): TailleSysteme {
   // touche jamais sa voisine.
   const orbStep = Math.max(ORB_STEP, PLN_R_MAX * 2.3);
 
-  const rayonSoleil = (portee: number) =>
-    MathUtils.clamp(portee * 0.055, PLN_R_MAX * 1.3, 26);
-  const porteeDe = (base: number) =>
-    (nbJeux > 0 ? orbitRadius(nbJeux - 1, orbStep, base) : base);
+  const rayonSoleil = (portee: number) => MathUtils.clamp(portee * 0.055, PLN_R_MAX * 1.3, 26);
+  const porteeDe = (base: number) => (nbJeux > 0 ? orbitRadius(nbJeux - 1, orbStep, base) : base);
   /** Étendue réelle de la couronne, cap de `createSun` compris. */
   const couronneDe = (portee: number) =>
     Math.min(rayonSoleil(portee) * CORONA_SPAN, portee * CORONA_CAP);

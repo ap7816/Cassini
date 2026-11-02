@@ -38,7 +38,13 @@ export function DebugPanel() {
   // Le nombre de succès décrochés, pour savoir où l'on en est sans quitter le
   // panneau. Il monte tout seul quand un événement passe à l'écran.
   const [succes, setSucces] = useState(() => succesDecroches().length);
-  useEffect(() => abonnerSucces(() => { setSucces(succesDecroches().length); }), []);
+  useEffect(
+    () =>
+      abonnerSucces(() => {
+        setSucces(succesDecroches().length);
+      }),
+    [],
+  );
   // La révision change à chaque modification : c'est elle qui fait redessiner,
   // les réglages eux-mêmes étant un objet modifié sur place.
   useSyncExternalStore(abonnerReglages, revisionReglages);
@@ -83,7 +89,9 @@ export function DebugPanel() {
   const groupes = GROUPES.map((groupe) => {
     const tous = DEFINITIONS.filter((d) => d.groupe === groupe);
     const defs = q
-      ? tous.filter((d) => normaliser(`${d.libelle} ${d.groupe} ${d.aide ?? ''} ${d.cle}`).includes(q))
+      ? tous.filter((d) =>
+          normaliser(`${d.libelle} ${d.groupe} ${d.aide ?? ''} ${d.cle}`).includes(q),
+        )
       : tous;
     const modifies = tous.filter((d) => reglages[d.cle] !== REGLAGES_DEFAUT[d.cle]).length;
     return { groupe, defs, modifies };
@@ -113,7 +121,9 @@ export function DebugPanel() {
   }
 
   const sousTitre =
-    ecarts === 0 ? `${DEFINITIONS.length} réglages, tous par défaut` : `${ecarts} modifié${ecarts > 1 ? 's' : ''}`;
+    ecarts === 0
+      ? `${DEFINITIONS.length} réglages, tous par défaut`
+      : `${ecarts} modifié${ecarts > 1 ? 's' : ''}`;
 
   return (
     <>
@@ -136,7 +146,12 @@ export function DebugPanel() {
               <div className={css.titre}>Réglages</div>
               <div className={css.sousTitre}>{sousTitre}</div>
             </div>
-            <button type="button" className={css.fermer} onClick={() => setOuvert(false)} aria-label="Fermer">
+            <button
+              type="button"
+              className={css.fermer}
+              onClick={() => setOuvert(false)}
+              aria-label="Fermer"
+            >
               ✕
             </button>
           </header>
@@ -185,7 +200,10 @@ export function DebugPanel() {
                 <button
                   type="button"
                   className={css.evenement}
-                  onClick={() => { reinitialiserSucces(); setSucces(0); }}
+                  onClick={() => {
+                    reinitialiserSucces();
+                    setSucces(0);
+                  }}
                   title="Oublie tous les succès décrochés, pour revoir leurs notifications"
                 >
                   Réinitialiser les succès ({succes})
@@ -205,12 +223,15 @@ export function DebugPanel() {
                     onClick={() => basculerGroupe(groupe)}
                     aria-expanded={deplie}
                   >
-                    <span className={deplie ? `${css.chevron} ${css.chevronOuvert}` : css.chevron}>›</span>
+                    <span className={deplie ? `${css.chevron} ${css.chevronOuvert}` : css.chevron}>
+                      ›
+                    </span>
                     <span className={css.groupeTitre}>{groupe}</span>
                     {modifies > 0 && <span className={css.groupeModifies}>{modifies}</span>}
                     <span className={css.groupeNombre}>{defs.length}</span>
                   </button>
-                  {deplie && defs.map((d) => <Ligne key={d.cle} def={d} valeur={reglages[d.cle]} />)}
+                  {deplie &&
+                    defs.map((d) => <Ligne key={d.cle} def={d} valeur={reglages[d.cle]} />)}
                 </section>
               );
             })}
@@ -218,10 +239,20 @@ export function DebugPanel() {
           </div>
 
           <footer className={css.pied}>
-            <button type="button" className={css.action} onClick={() => void copierEcarts()} disabled={ecarts === 0}>
+            <button
+              type="button"
+              className={css.action}
+              onClick={() => void copierEcarts()}
+              disabled={ecarts === 0}
+            >
               Copier les écarts
             </button>
-            <button type="button" className={css.action} onClick={reinitialiserReglages} disabled={ecarts === 0}>
+            <button
+              type="button"
+              className={css.action}
+              onClick={reinitialiserReglages}
+              disabled={ecarts === 0}
+            >
               Tout réinitialiser
             </button>
             {message && (
@@ -445,7 +476,9 @@ function appliquerInterface() {
 function appliquerOutils(r: Readonly<Reglages>) {
   const regles: string[] = [];
   if (r.uiSansAnimations) {
-    regles.push('*, *::before, *::after { transition: none !important; animation: none !important; }');
+    regles.push(
+      '*, *::before, *::after { transition: none !important; animation: none !important; }',
+    );
   }
   if (r.uiContours) {
     regles.push(

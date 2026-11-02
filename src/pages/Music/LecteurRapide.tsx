@@ -20,7 +20,6 @@ function tempsCourt(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-
 /**
  * Au-delà, la liste cesse d'être consultable et coûterait à afficher : une
  * bibliothèque de plusieurs milliers de pistes se parcourt à la recherche, pas
@@ -60,7 +59,9 @@ function LigneRapide({ piste, active, enLecture, onJouer }: LigneProps) {
         {pochette ? (
           <img src={pochette} className={css.image} alt="" aria-hidden="true" draggable={false} />
         ) : (
-          <span className={css.imageVide} aria-hidden="true">♪</span>
+          <span className={css.imageVide} aria-hidden="true">
+            ♪
+          </span>
         )}
 
         {/* La lecture en cours se marque sur la pochette : une colonne de plus
@@ -104,8 +105,9 @@ export function LecteurRapide({ onFermer }: Props) {
 
   const piste = music.currentIndex >= 0 ? music.tracks[music.currentIndex] : null;
   const meta = useSingleMeta(piste?.path ?? null);
-  const pochette = meta?.coverDataUrl ?? (piste ? getEnriched(piste.path)?.coverUrl ?? null : null);
-  const artiste = meta?.artist ?? (piste ? getEnriched(piste.path)?.artist ?? null : null);
+  const pochette =
+    meta?.coverDataUrl ?? (piste ? (getEnriched(piste.path)?.coverUrl ?? null) : null);
+  const artiste = meta?.artist ?? (piste ? (getEnriched(piste.path)?.artist ?? null) : null);
 
   // `Espace` lit ou met en pause, sauf en train de taper dans la recherche.
   // En capture et propagation coupée : la scène écoute la même touche pour
@@ -135,7 +137,8 @@ export function LecteurRapide({ onFermer }: Props) {
       const trouves: number[] = [];
       for (let i = 0; i < music.tracks.length && trouves.length < MAX_LIGNES; i += 1) {
         const p = music.tracks[i];
-        if (p.title.toLowerCase().includes(q) || p.folder.toLowerCase().includes(q)) trouves.push(i);
+        if (p.title.toLowerCase().includes(q) || p.folder.toLowerCase().includes(q))
+          trouves.push(i);
       }
       return [{ titre: null as string | null, indices: trouves }];
     }
@@ -179,9 +182,17 @@ export function LecteurRapide({ onFermer }: Props) {
       {/* ── Ce qui joue ── */}
       <div className={css.enCours}>
         {pochette ? (
-          <img src={pochette} className={css.pochette} alt="" aria-hidden="true" draggable={false} />
+          <img
+            src={pochette}
+            className={css.pochette}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
         ) : (
-          <div className={`${css.pochette} ${css.pochetteVide}`} aria-hidden="true">♪</div>
+          <div className={`${css.pochette} ${css.pochetteVide}`} aria-hidden="true">
+            ♪
+          </div>
         )}
         <div className={css.enCoursTextes}>
           <span className={css.enCoursTitre} title={piste?.title}>
@@ -309,7 +320,9 @@ export function LecteurRapide({ onFermer }: Props) {
           />
 
           <div className={css.liste}>
-            {sections.length === 0 && <p className={css.aucun}>{t('music.noResults', { query: recherche })}</p>}
+            {sections.length === 0 && (
+              <p className={css.aucun}>{t('music.noResults', { query: recherche })}</p>
+            )}
 
             {sections.map((section) => (
               <div key={section.titre ?? 'resultats'}>

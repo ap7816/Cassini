@@ -15,15 +15,27 @@
   animation: eqBounce 0.8s ease-in-out infinite alternate;
 }
 
-.eqBar:nth-child(1) { height: 55%; }
-.eqBar:nth-child(2) { height: 100%; }
-.eqBar:nth-child(3) { height: 40%; }
+.eqBar:nth-child(1) {
+  height: 55%;
+}
+.eqBar:nth-child(2) {
+  height: 100%;
+}
+.eqBar:nth-child(3) {
+  height: 40%;
+}
 
 @keyframes eqBounce {
-  0%   { transform: scaleY(0.3); }
-  100% { transform: scaleY(1); }
+  0% {
+    transform: scaleY(0.3);
+  }
+  100% {
+    transform: scaleY(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eqBar { animation: none; }
+  .eqBar {
+    animation: none;
+  }
 }

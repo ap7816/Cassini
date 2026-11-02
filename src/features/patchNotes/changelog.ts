@@ -77,18 +77,11 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'fix',
-        itemKeys: [
-          'changelog.v6_0_0.fix_0',
-          'changelog.v6_0_0.fix_1',
-          'changelog.v6_0_0.fix_2',
-        ],
+        itemKeys: ['changelog.v6_0_0.fix_0', 'changelog.v6_0_0.fix_1', 'changelog.v6_0_0.fix_2'],
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v6_0_0.perf_0',
-          'changelog.v6_0_0.perf_1',
-        ],
+        itemKeys: ['changelog.v6_0_0.perf_0', 'changelog.v6_0_0.perf_1'],
       },
     ],
   },
@@ -107,9 +100,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'fix',
-        itemKeys: [
-          'changelog.v5_1_0.fix_0',
-        ],
+        itemKeys: ['changelog.v5_1_0.fix_0'],
       },
     ],
   },
@@ -145,10 +136,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'change',
-        itemKeys: [
-          'changelog.v5_0_0.change_0',
-          'changelog.v5_0_0.change_1',
-        ],
+        itemKeys: ['changelog.v5_0_0.change_0', 'changelog.v5_0_0.change_1'],
       },
     ],
   },
@@ -183,17 +171,11 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v4_0_0.perf_0',
-          'changelog.v4_0_0.perf_1',
-        ],
+        itemKeys: ['changelog.v4_0_0.perf_0', 'changelog.v4_0_0.perf_1'],
       },
       {
         type: 'change',
-        itemKeys: [
-          'changelog.v4_0_0.change_0',
-          'changelog.v4_0_0.change_1',
-        ],
+        itemKeys: ['changelog.v4_0_0.change_0', 'changelog.v4_0_0.change_1'],
       },
     ],
   },
@@ -231,18 +213,11 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v3_0_0.perf_0',
-          'changelog.v3_0_0.perf_1',
-          'changelog.v3_0_0.perf_2',
-        ],
+        itemKeys: ['changelog.v3_0_0.perf_0', 'changelog.v3_0_0.perf_1', 'changelog.v3_0_0.perf_2'],
       },
       {
         type: 'change',
-        itemKeys: [
-          'changelog.v3_0_0.change_0',
-          'changelog.v3_0_0.change_1',
-        ],
+        itemKeys: ['changelog.v3_0_0.change_0', 'changelog.v3_0_0.change_1'],
       },
     ],
   },
@@ -272,10 +247,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v2_1_0.perf_0',
-          'changelog.v2_1_0.perf_1',
-        ],
+        itemKeys: ['changelog.v2_1_0.perf_0', 'changelog.v2_1_0.perf_1'],
       },
     ],
   },
@@ -295,9 +267,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'fix',
-        itemKeys: [
-          'changelog.v1_2_0.fix_0',
-        ],
+        itemKeys: ['changelog.v1_2_0.fix_0'],
       },
     ],
   },
@@ -316,17 +286,11 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'fix',
-        itemKeys: [
-          'changelog.v1_1_3.fix_0',
-          'changelog.v1_1_3.fix_1',
-          'changelog.v1_1_3.fix_2',
-        ],
+        itemKeys: ['changelog.v1_1_3.fix_0', 'changelog.v1_1_3.fix_1', 'changelog.v1_1_3.fix_2'],
       },
       {
         type: 'change',
-        itemKeys: [
-          'changelog.v1_1_3.change_0',
-        ],
+        itemKeys: ['changelog.v1_1_3.change_0'],
       },
     ],
   },
@@ -357,9 +321,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v1_1_2.perf_0',
-        ],
+        itemKeys: ['changelog.v1_1_2.perf_0'],
       },
     ],
   },
@@ -369,23 +331,15 @@ export const CHANGELOG: ChangeEntry[] = [
     sections: [
       {
         type: 'new',
-        itemKeys: [
-          'changelog.v1_1_1.new_0',
-        ],
+        itemKeys: ['changelog.v1_1_1.new_0'],
       },
       {
         type: 'perf',
-        itemKeys: [
-          'changelog.v1_1_1.perf_0',
-          'changelog.v1_1_1.perf_1',
-          'changelog.v1_1_1.perf_2',
-        ],
+        itemKeys: ['changelog.v1_1_1.perf_0', 'changelog.v1_1_1.perf_1', 'changelog.v1_1_1.perf_2'],
       },
       {
         type: 'fix',
-        itemKeys: [
-          'changelog.v1_1_1.fix_0',
-        ],
+        itemKeys: ['changelog.v1_1_1.fix_0'],
       },
     ],
   },
@@ -421,10 +375,7 @@ export const CHANGELOG: ChangeEntry[] = [
       },
       {
         type: 'change',
-        itemKeys: [
-          'changelog.v1_0_51.change_0',
-          'changelog.v1_0_51.change_1',
-        ],
+        itemKeys: ['changelog.v1_0_51.change_0', 'changelog.v1_0_51.change_1'],
       },
     ],
   },

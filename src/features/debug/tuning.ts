@@ -132,7 +132,6 @@ export const REGLAGES_DEFAUT: Readonly<Reglages> = Object.freeze({
   uiArrondi: 1,
   uiFlou: 1,
 
-
   enteteOpacite: 0.6,
   rechercheLargeur: 480,
 

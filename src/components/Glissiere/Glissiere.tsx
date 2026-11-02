@@ -1,4 +1,10 @@
-import { useRef, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import {
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 
 /** Pas par défaut d'une flèche, en fraction de la course. */
 const PAS_DEFAUT = 0.05;
@@ -38,7 +44,14 @@ type Props = {
  * comme elle l'entend — dégradé, largeur, ou rien.
  */
 export function Glissiere({
-  valeur, onChange, label, texteValeur, className, pas = PAS_DEFAUT, children, style,
+  valeur,
+  onChange,
+  label,
+  texteValeur,
+  className,
+  pas = PAS_DEFAUT,
+  children,
+  style,
 }: Props) {
   const piste = useRef<HTMLDivElement>(null);
   const fraction = Math.min(1, Math.max(0, valeur));
@@ -63,8 +76,12 @@ export function Glissiere({
 
   const auClavier = (e: KeyboardEvent<HTMLDivElement>) => {
     const delta: Record<string, number> = {
-      ArrowLeft: -pas, ArrowDown: -pas, ArrowRight: pas, ArrowUp: pas,
-      PageDown: -pas * BOND, PageUp: pas * BOND,
+      ArrowLeft: -pas,
+      ArrowDown: -pas,
+      ArrowRight: pas,
+      ArrowUp: pas,
+      PageDown: -pas * BOND,
+      PageUp: pas * BOND,
     };
 
     let cible: number;

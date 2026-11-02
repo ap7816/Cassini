@@ -84,9 +84,11 @@ export function CalquesProvider({ children }: { children: ReactNode }) {
       {children}
       {ouvert !== null && (
         <Suspense fallback={null}>
-          {ouvert === 'reglages'
-            ? <PanneauReglages onFermer={valeur.fermer} />
-            : <PanneauMusique onFermer={valeur.fermer} />}
+          {ouvert === 'reglages' ? (
+            <PanneauReglages onFermer={valeur.fermer} />
+          ) : (
+            <PanneauMusique onFermer={valeur.fermer} />
+          )}
         </Suspense>
       )}
     </CalquesContext.Provider>

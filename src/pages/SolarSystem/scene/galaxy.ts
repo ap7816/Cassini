@@ -80,7 +80,6 @@ export type EntreeGalaxie = {
 
 /** Rayon visuel le plus grand possible pour une planète, anneaux compris. */
 
-
 type Options = {
   scene: THREE.Scene;
   /**
@@ -126,12 +125,22 @@ type Options = {
  * supprimer au démarrage.
  */
 export function createGalaxy({
-  scene, parPlateforme, isDisposed, planets, pickMeshes, meshToEntry,
-  onPlanet, onSystemeLibere, reglageDe,
+  scene,
+  parPlateforme,
+  isDisposed,
+  planets,
+  pickMeshes,
+  meshToEntry,
+  onPlanet,
+  onSystemeLibere,
+  reglageDe,
 }: Options) {
   const tailleDe = (p: EntreeGalaxie) => {
     const base = dimensionnerSysteme(p.games.length);
-    return { base, taille: etendreTaille(base, reglageDe?.(p.platform) ?? null, RAYON_PLANETE_MAX) };
+    return {
+      base,
+      taille: etendreTaille(base, reglageDe?.(p.platform) ?? null, RAYON_PLANETE_MAX),
+    };
   };
 
   const astres: Astre[] = parPlateforme.map((p) => ({
@@ -141,7 +150,14 @@ export function createGalaxy({
 
   // Graine tirée des noms de launchers : la galaxie garde la même forme d'une
   // session à l'autre tant que la bibliothèque ne change pas de launchers.
-  const rng = seededRng(hashStr([...astres].map((a) => a.platform).sort().join('|')));
+  const rng = seededRng(
+    hashStr(
+      [...astres]
+        .map((a) => a.platform)
+        .sort()
+        .join('|'),
+    ),
+  );
   const positions = placerSystemes(astres, rng);
 
   const systemes: SystemeGalaxie[] = parPlateforme.map((p) => {

@@ -71,10 +71,7 @@ export function placerSystemes(
 
     // Départ au bord du système déjà le plus éloigné : inutile de sonder
     // l'intérieur du disque, il est occupé.
-    const occupe = poses.reduce(
-      (m, q) => Math.max(m, Math.hypot(q.p.x, q.p.z) + q.rayon),
-      0,
-    );
+    const occupe = poses.reduce((m, q) => Math.max(m, Math.hypot(q.p.x, q.p.z) + q.rayon), 0);
 
     let k = 0;
     for (;;) {
@@ -88,9 +85,7 @@ export function placerSystemes(
         z: Math.sin(angle) * rayon,
       };
 
-      const degage = poses.every(
-        (q) => distance(p, q.p) >= (astre.rayon + q.rayon) * MARGE,
-      );
+      const degage = poses.every((q) => distance(p, q.p) >= (astre.rayon + q.rayon) * MARGE);
       if (degage) {
         positions.set(astre.platform, p);
         poses.push({ p, rayon: astre.rayon });
@@ -117,10 +112,7 @@ function distance(a: Position, b: Position): number {
 }
 
 /** Rayon englobant toute la galaxie, systèmes compris. */
-export function rayonGalaxie(
-  astres: Astre[],
-  positions: Map<string, Position>,
-): number {
+export function rayonGalaxie(astres: Astre[], positions: Map<string, Position>): number {
   let max = 0;
   for (const a of astres) {
     const p = positions.get(a.platform);

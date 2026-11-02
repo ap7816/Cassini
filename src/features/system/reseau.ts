@@ -111,10 +111,7 @@ function replanifier(): void {
   // jaquettes, et une sonde toutes les dix secondes dans le vide n'a aucun
   // sens. On reprendra en revenant.
   if (!fenetreDevant) return;
-  minuterie = setTimeout(
-    () => void sonder(),
-    estEnLigne() ? SONDE_EN_LIGNE : SONDE_HORS_LIGNE,
-  );
+  minuterie = setTimeout(() => void sonder(), estEnLigne() ? SONDE_EN_LIGNE : SONDE_HORS_LIGNE);
 }
 
 function brancher(): void {

@@ -402,7 +402,9 @@
 }
 
 @keyframes spinPlay {
-  to { transform: translateY(-50%) rotate(360deg); }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
 .folder {

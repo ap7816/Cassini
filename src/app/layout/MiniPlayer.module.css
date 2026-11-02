@@ -19,7 +19,9 @@
   background: var(--hud-crochets), var(--hud-trame), rgb(var(--fond) / 0.94);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
-  box-shadow: 0 0 24px rgb(var(--hud) / 0.12), 0 8px 26px rgb(0 0 0 / 0.5);
+  box-shadow:
+    0 0 24px rgb(var(--hud) / 0.12),
+    0 8px 26px rgb(0 0 0 / 0.5);
   animation: playerSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -110,7 +112,9 @@
   font-size: calc(11px * var(--ui-font-scale, 1));
   line-height: 1;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .btn:hover:not(:disabled),
@@ -182,7 +186,15 @@
   transition: height 0.12s;
   /* La part lue est posée en `--part` par la course elle-même: un dégradé
      recalculé chaque seconde coûte moins qu'un élément de plus à composer. */
-  background: repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px), linear-gradient(to right, rgb(var(--hud)) 0%, rgb(var(--hud)) var(--part, 0%), rgb(var(--hud) / 0.16) var(--part, 0%), rgb(var(--hud) / 0.16) 100%);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgb(var(--fond)) 6px 7px),
+    linear-gradient(
+      to right,
+      rgb(var(--hud)) 0%,
+      rgb(var(--hud)) var(--part, 0%),
+      rgb(var(--hud) / 0.16) var(--part, 0%),
+      rgb(var(--hud) / 0.16) 100%
+    );
 }
 
 /* Le contour de focus, sinon invisible sur un fil de 3 px collé au bord. */
@@ -216,7 +228,9 @@
   box-shadow: 0 0 8px rgb(var(--hud) / 0.9);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  transition: width 0.12s, height 0.12s;
+  transition:
+    width 0.12s,
+    height 0.12s;
 }
 
 .progressBar:hover .poignee,

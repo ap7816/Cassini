@@ -18,7 +18,9 @@
   border-radius: 2px;
   background: var(--hud-crochets), var(--hud-trame), var(--hud-vitre-forte);
   border: 1px solid rgb(var(--hud-alerte) / 0.45);
-  box-shadow: 0 0 22px rgb(var(--hud-alerte) / 0.14), 0 8px 24px rgb(0 0 0 / 0.5);
+  box-shadow:
+    0 0 22px rgb(var(--hud-alerte) / 0.14),
+    0 8px 24px rgb(0 0 0 / 0.5);
   backdrop-filter: blur(12px);
   pointer-events: none;
   animation: descendre var(--ressort-duree) var(--ressort) both;
@@ -51,16 +53,31 @@
 }
 
 @keyframes descendre {
-  from { transform: translate(-50%, -14px); opacity: 0; }
-  to   { transform: translate(-50%, 0);     opacity: 1; }
+  from {
+    transform: translate(-50%, -14px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
 }
 
 @keyframes battre {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bandeau { animation: none; }
-  .voyant { animation: none; }
+  .bandeau {
+    animation: none;
+  }
+  .voyant {
+    animation: none;
+  }
 }

@@ -43,7 +43,9 @@
   line-height: 1;
   transition: color 0.12s;
 }
-.dismiss:hover { color: rgb(var(--encre) / 0.7); }
+.dismiss:hover {
+  color: rgb(var(--encre) / 0.7);
+}
 
 .version {
   font-size: 0.75rem;
@@ -74,7 +76,9 @@
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .btn:hover {
   background: var(--accent, #6c8efb);
@@ -101,6 +105,12 @@
 }
 
 @keyframes bannerSlide {
-  from { transform: translateX(16px) translateY(-6px); opacity: 0; }
-  to   { transform: translateX(0) translateY(0);       opacity: 1; }
+  from {
+    transform: translateX(16px) translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
 }

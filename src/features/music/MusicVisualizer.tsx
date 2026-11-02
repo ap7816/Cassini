@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 
 interface Star {
-  x: number; y: number;
-  vx: number; vy: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   radius: number;
   baseOpacity: number;
   twinkleSpeed: number;
@@ -31,8 +33,8 @@ function makeStars(w: number, h: number): Star[] {
 
 export function MusicVisualizer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stars     = useRef<Star[]>([]);
-  const rafRef    = useRef<number>(0);
+  const stars = useRef<Star[]>([]);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,7 +42,7 @@ export function MusicVisualizer() {
     const ctx = canvas.getContext('2d')!;
 
     const resize = () => {
-      canvas.width  = window.innerWidth;
+      canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       if (stars.current.length === 0) {
         stars.current = makeStars(canvas.width, canvas.height);

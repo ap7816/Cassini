@@ -1,7 +1,18 @@
 import type { ModeTheme } from './settings/theme';
 import type { MusiquesEvenements, VolumesEvenements } from './evenements/musiqueEvenement';
 // Plateformes de jeu supportées par Cassini
-export type GamePlatform = 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Xbox' | 'GOG' | 'Other';
+export type GamePlatform =
+  | 'Steam'
+  | 'Epic'
+  | 'BattleNet'
+  | 'Riot'
+  | 'Rockstar'
+  | 'Ubisoft'
+  | 'Hytale'
+  | 'HoYoPlay'
+  | 'Xbox'
+  | 'GOG'
+  | 'Other';
 
 // Représentation d'un jeu dans la bibliothèque — lastPlayedAt est une date ISO 8601
 export type Game = {

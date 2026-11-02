@@ -37,7 +37,13 @@ export function IconeSysteme({
   }
   const dessin = iconeParNom(nom);
   return (
-    <svg className={className} width={taille} height={taille} viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      className={className}
+      width={taille}
+      height={taille}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
       {dessin.calques.map((c, i) =>
         c.trait ? (
           <path

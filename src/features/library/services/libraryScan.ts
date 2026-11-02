@@ -112,7 +112,10 @@ async function scanner(): Promise<ResultatScan> {
     SCANNERS.map(async (s) => {
       try {
         const jeux = await tauriInvoke<Game[]>(s.commande);
-        return { platform: s.platform, jeux: s.platform === 'Steam' ? await avecTempsDeJeu(jeux) : jeux };
+        return {
+          platform: s.platform,
+          jeux: s.platform === 'Steam' ? await avecTempsDeJeu(jeux) : jeux,
+        };
       } catch {
         return { platform: s.platform, jeux: null };
       }
@@ -153,9 +156,7 @@ function empreinte(games: Game[]): string {
   return games
     .map((g) => {
       const cles = Object.keys(g).sort() as Array<keyof Game>;
-      return cles
-        .map((k) => String(k) + '=' + JSON.stringify(g[k] ?? null))
-        .join(' | ');
+      return cles.map((k) => String(k) + '=' + JSON.stringify(g[k] ?? null)).join(' | ');
     })
     .sort()
     .join(String.fromCharCode(10));

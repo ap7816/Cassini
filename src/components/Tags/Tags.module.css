@@ -41,7 +41,10 @@
   cursor: pointer;
   border-radius: 2px;
   padding: 0 4px;
-  transition: color 120ms, border-color 120ms, background 120ms;
+  transition:
+    color 120ms,
+    border-color 120ms,
+    background 120ms;
 }
 
 .retirer:hover {

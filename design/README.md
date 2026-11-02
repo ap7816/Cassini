@@ -2,10 +2,10 @@
 
 ## Sources
 
-| Fichier | Usage |
-| --- | --- |
-| `logo.svg` | La marque nue, sur fond sombre. Copiée dans `src/assets/` (sidebar, écran de démarrage) et dans `public/` (favicon web). |
-| `app-icon.svg` | Source des icônes système : la marque sur une tuile sombre. |
+| Fichier        | Usage                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `logo.svg`     | La marque nue, sur fond sombre. Copiée dans `src/assets/` (sidebar, écran de démarrage) et dans `public/` (favicon web). |
+| `app-icon.svg` | Source des icônes système : la marque sur une tuile sombre.                                                              |
 
 Les deux sont volontairement séparés. Une marque claire seule disparaît sur
 une barre des tâches Windows en thème clair ; la tuile garantit le contraste

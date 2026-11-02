@@ -5,11 +5,14 @@ import { usePiegeFocus } from '../../hooks/useFocus';
 import css from './AppDialog.module.css';
 
 export type DialogState =
-  | { type: 'prompt';  title: string; defaultValue?: string; resolve: (v: string | null) => void }
-  | { type: 'confirm'; message: string; danger?: boolean;    resolve: (v: boolean) => void };
+  | { type: 'prompt'; title: string; defaultValue?: string; resolve: (v: string | null) => void }
+  | { type: 'confirm'; message: string; danger?: boolean; resolve: (v: boolean) => void };
 
 // Dialogue modal in-app utilisé comme remplacement de window.prompt / window.confirm
-export function AppDialog({ state, onClose }: {
+export function AppDialog({
+  state,
+  onClose,
+}: {
   state: DialogState;
   onClose: (value: string | boolean | null) => void;
 }) {
@@ -71,7 +74,9 @@ export function AppDialog({ state, onClose }: {
   return createPortal(
     <div
       className={css.overlay}
-      onMouseDown={e => { if (e.target === e.currentTarget) handleCancel(); }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) handleCancel();
+      }}
     >
       <div
         ref={fenetreRef}
@@ -80,7 +85,6 @@ export function AppDialog({ state, onClose }: {
         aria-modal="true"
         aria-label={state.type === 'prompt' ? state.title : state.message}
       >
-
         {state.type === 'prompt' && (
           <form onSubmit={handleSubmit}>
             <p className={css.title}>{state.title}</p>
@@ -89,7 +93,7 @@ export function AppDialog({ state, onClose }: {
               className={css.input}
               aria-label={state.title}
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              onChange={(e) => setInputValue(e.target.value)}
               autoComplete="off"
               spellCheck={false}
             />
@@ -121,7 +125,6 @@ export function AppDialog({ state, onClose }: {
             </div>
           </>
         )}
-
       </div>
     </div>,
     document.body,

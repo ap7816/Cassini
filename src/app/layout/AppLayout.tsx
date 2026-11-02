@@ -59,7 +59,9 @@ export function AppLayout() {
 
   // Ref toujours à jour — permet au listener (créé une seule fois) de lire la valeur courante
   const runInBgRef = useRef(settings.runInBackground);
-  useEffect(() => { runInBgRef.current = settings.runInBackground; }, [settings.runInBackground]);
+  useEffect(() => {
+    runInBgRef.current = settings.runInBackground;
+  }, [settings.runInBackground]);
 
   // Minimize to tray instead of closing when runInBackground is enabled
   // Listener enregistré une seule fois au montage pour éviter les doublons liés à l'async
@@ -80,15 +82,23 @@ export function AppLayout() {
           }
         })
         .then((fn) => {
-          if (!mounted) { fn(); return; }
+          if (!mounted) {
+            fn();
+            return;
+          }
           unlisten = fn;
         });
     });
-    return () => { mounted = false; unlisten?.(); };
+    return () => {
+      mounted = false;
+      unlisten?.();
+    };
   }, []);
 
   // Démarre la musique d'ambiance une seule fois après le premier rendu
-  useEffect(() => { initAmbient(); }, []);
+  useEffect(() => {
+    initAmbient();
+  }, []);
 
   // Détecte les jeux installés, une fois par lancement.
   //
@@ -107,8 +117,8 @@ export function AppLayout() {
       void scannerTousLesLaunchers().then((r) => {
         if (r.modifiee) {
           console.info(
-            `[bibliothèque] ${raison} : ${r.ajoutes} jeu(x) découvert(s)`
-            + (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
+            `[bibliothèque] ${raison} : ${r.ajoutes} jeu(x) découvert(s)` +
+              (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
           );
         }
       });
@@ -212,7 +222,9 @@ export function AppLayout() {
   // fois, et le rattacher à chaque changement de piste multiplierait les
   // abonnements.
   const musicRef = useRef(music);
-  useEffect(() => { musicRef.current = music; }, [music]);
+  useEffect(() => {
+    musicRef.current = music;
+  }, [music]);
 
   useEffect(() => {
     if (!isTauri()) return;
@@ -225,7 +237,10 @@ export function AppLayout() {
       if (fini) fn();
       else stop = fn;
     });
-    return () => { fini = true; stop?.(); };
+    return () => {
+      fini = true;
+      stop?.();
+    };
   }, []);
 
   // Tient ces entrées à jour : libellé de la bascule selon ce que fait le
@@ -255,12 +270,14 @@ export function AppLayout() {
   //
   // Le lecteur, lui, continue — c'est une piste qu'on a choisie, et `MusicContext`
   // dit pourquoi on ne décide pas à sa place de l'interrompre.
-  useEffect(() =>
-    surEtatFenetre((masquee) => {
-      if (masquee) suspendAmbient('window');
-      else resumeAmbient('window');
-    }),
-  []);
+  useEffect(
+    () =>
+      surEtatFenetre((masquee) => {
+        if (masquee) suspendAmbient('window');
+        else resumeAmbient('window');
+      }),
+    [],
+  );
   type CSSVarStyle = React.CSSProperties & {
     ['--app-bg-image']?: string;
     ['--accent']?: string;
@@ -298,8 +315,10 @@ export function AppLayout() {
                 <svg width="11" height="18" viewBox="0 0 11 18" fill="none" aria-hidden="true">
                   <path
                     d="M8.5 2L2 9l6.5 7"
-                    stroke="currentColor" strokeWidth="2.2"
-                    strokeLinecap="round" strokeLinejoin="round"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
               </button>

@@ -44,7 +44,10 @@ describe('appliquerPlacements', () => {
     });
     const sans = planete('b');
 
-    appliquerPlacements([p, sans], 5, { ...REGLAGE_DEFAUT, placements: { a: { distance: 1 }, b: { distance: 1 } } });
+    appliquerPlacements([p, sans], 5, {
+      ...REGLAGE_DEFAUT,
+      placements: { a: { distance: 1 }, b: { distance: 1 } },
+    });
 
     expect(p.rayonVisuel).toBe(6);
     expect(p.orbitRadius).toBeGreaterThan(sans.orbitRadius);

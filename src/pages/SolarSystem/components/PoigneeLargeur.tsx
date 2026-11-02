@@ -28,7 +28,16 @@ type Props = {
  * Utilisable au clavier — c'est un `separator` que l'on déplace aux flèches,
  * comme n'importe quel séparateur de volets.
  */
-export function PoigneeLargeur({ valeur, min, max, libelle, droite, onChange, onFin, onDefaut }: Props) {
+export function PoigneeLargeur({
+  valeur,
+  min,
+  max,
+  libelle,
+  droite,
+  onChange,
+  onFin,
+  onDefaut,
+}: Props) {
   const { t } = useTranslation();
   const depart = useRef<{ x: number; valeur: number } | null>(null);
   const dernier = useRef(valeur);

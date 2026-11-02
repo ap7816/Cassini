@@ -4,7 +4,12 @@ import type { Game } from '../../types';
 import css from './GameCard.module.css';
 import { useDialog } from '../../../hooks/useDialog';
 import { AppDialog } from '../../../components/AppDialog/AppDialog';
-import { fetchCoverArt, clearCoverCacheEntry, steamCdnUrl, steamPortraitUrl } from '../services/coverArtService';
+import {
+  fetchCoverArt,
+  clearCoverCacheEntry,
+  steamCdnUrl,
+  steamPortraitUrl,
+} from '../services/coverArtService';
 import { tauriInvoke } from '../../../services/tauri';
 import { useEnLigne, useEpoqueReseau } from '../../system/useReseau';
 import { formaterDate, formaterTaille } from '../../../i18n/formats';
@@ -27,8 +32,15 @@ type Props = {
 };
 
 export function GameCard({
-  game, onRemove, onPlay, onToggleFavorite, onSetImageUrl, onSetTags, tagsConnus,
-  sgdbKeySet, isLaunching = false,
+  game,
+  onRemove,
+  onPlay,
+  onToggleFavorite,
+  onSetImageUrl,
+  onSetTags,
+  tagsConnus,
+  sgdbKeySet,
+  isLaunching = false,
 }: Props) {
   const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
@@ -66,20 +78,20 @@ export function GameCard({
   // relançait, même en actualisant la bibliothèque.
   const enLigne = useEnLigne();
   const epoque = useEpoqueReseau();
-  const [resolved, setResolved] = useState<
-    { id: string; epoque: number; src: string | null } | null
-  >(null);
-  const imgSrc = resolved?.id === game.id && resolved.epoque === epoque
-    ? resolved.src
-    : steamDirectUrl;
+  const [resolved, setResolved] = useState<{
+    id: string;
+    epoque: number;
+    src: string | null;
+  } | null>(null);
+  const imgSrc =
+    resolved?.id === game.id && resolved.epoque === epoque ? resolved.src : steamDirectUrl;
 
   // Image personnalisée qui ne se charge pas : retenue par son adresse, pour
   // qu'on cesse de la réclamer. Sans cela le cadre restait vide — la bannière
   // s'obstinait sur une URL morte et la lettre de repli n'apparaissait jamais.
   const [imageKo, setImageKo] = useState<string | null>(null);
-  const imagePerso = game.customImageUrl && game.customImageUrl !== imageKo
-    ? game.customImageUrl
-    : null;
+  const imagePerso =
+    game.customImageUrl && game.customImageUrl !== imageKo ? game.customImageUrl : null;
 
   const bannerUrl = imagePerso ?? imgSrc;
   const showFallback = !bannerUrl;
@@ -99,7 +111,9 @@ export function GameCard({
       fetchCoverArt(game).then((url) => {
         if (!cancelled) setResolved({ id: game.id, epoque, src: url ?? null });
       });
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }
     // `epoque` relance la demande au retour du réseau.
   }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbKeySet, epoque]);
@@ -112,7 +126,10 @@ export function GameCard({
       setImgSrc(null);
       return;
     }
-    if (imagePerso) { setImageKo(imagePerso); return; }
+    if (imagePerso) {
+      setImageKo(imagePerso);
+      return;
+    }
 
     if (isSteam && resolvedSteamAppId) {
       // header.jpg a échoué → essayer library_600x900.jpg en fallback
@@ -155,12 +172,7 @@ export function GameCard({
     <article className={[css.card, isFav ? css.cardFavorite : ''].join(' ')}>
       {!showFallback ? (
         <div className={css.banner}>
-          <img
-            className={css.bannerImg}
-            src={bannerUrl!}
-            alt=""
-            onError={handleImgError}
-          />
+          <img className={css.bannerImg} src={bannerUrl!} alt="" onError={handleImgError} />
           {game.customImageUrl && (
             <button
               type="button"
@@ -207,14 +219,20 @@ export function GameCard({
             <div className={css.meta}>
               <span className={css.badge}>{nomPlateforme(game.platform, t)}</span>
               {isFav && <span className={css.favPill}>{t('gameCard.favorite')}</span>}
-              <span className={css.dot} aria-hidden="true">•</span>
+              <span className={css.dot} aria-hidden="true">
+                •
+              </span>
               <span className={css.muted}>
                 {game.installed ? t('gameCard.installed') : t('gameCard.notInstalled')}
               </span>
               {game.sizeOnDisk != null && game.sizeOnDisk > 0 && (
                 <>
-                  <span className={css.dot} aria-hidden="true">•</span>
-                  <span className={css.muted}>{formaterTaille(game.sizeOnDisk, i18n.language)}</span>
+                  <span className={css.dot} aria-hidden="true">
+                    •
+                  </span>
+                  <span className={css.muted}>
+                    {formaterTaille(game.sizeOnDisk, i18n.language)}
+                  </span>
                 </>
               )}
             </div>
@@ -252,7 +270,12 @@ export function GameCard({
             <button
               type="button"
               className={css.remove}
-              onClick={async () => { const ok = await confirm(t('gameCard.removeConfirm', { name: game.title }), { danger: true }); if (ok) onRemove(game.id); }}
+              onClick={async () => {
+                const ok = await confirm(t('gameCard.removeConfirm', { name: game.title }), {
+                  danger: true,
+                });
+                if (ok) onRemove(game.id);
+              }}
               aria-label={t('gameCard.remove')}
               title={t('gameCard.remove')}
             >

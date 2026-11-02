@@ -17,7 +17,9 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
     void migrateAndCheckKey().then((present) => {
       if (!cancelled) setSettings((prev) => ({ ...prev, sgdbKeySet: present }));
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Au démarrage : demande à Windows ce qu'il en est vraiment du démarrage
@@ -36,7 +38,9 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
       })
       // Hors Tauri : il n'y a pas de démarrage automatique à refléter.
       .catch(() => {});
-    return () => { annule = true; };
+    return () => {
+      annule = true;
+    };
   }, []);
 
   // Thème : posé sur <html> avant la peinture, pour qu'aucune image ne sorte

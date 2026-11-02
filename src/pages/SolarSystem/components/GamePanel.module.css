@@ -27,10 +27,7 @@
 
      Les crochets et la trame sont peints par-dessus la teinte opaque : ils ne
      laissent rien transparaître de la scène. */
-  background:
-    var(--hud-crochets),
-    var(--hud-trame),
-    rgb(var(--fond) / var(--dbg-fiche-op, 1));
+  background: var(--hud-crochets), var(--hud-trame), rgb(var(--fond) / var(--dbg-fiche-op, 1));
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
   box-shadow:
@@ -44,8 +41,12 @@
    à l'ancre (voir .popupAnchor::after), tout mouvement de la carte pendant
    l'animation l'en décollerait. */
 @keyframes panelIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ── Bannière (ratio 460/215, identique à la carte bibliothèque) ─────────── */
@@ -111,7 +112,9 @@
   transition: opacity 120ms;
 }
 
-.banner:hover .bannerEdit { opacity: 1; }
+.banner:hover .bannerEdit {
+  opacity: 1;
+}
 
 .bannerEditFallback {
   font-size: calc(11px * var(--ui-font-scale, 1));
@@ -129,14 +132,15 @@
   transition: opacity 120ms;
 }
 
-.bannerFallback:hover .bannerEditFallback { opacity: 1; }
+.bannerFallback:hover .bannerEditFallback {
+  opacity: 1;
+}
 
 .bannerGrad {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, transparent 45%, rgb(var(--fond) / 0.85) 100%),
-    var(--hud-trame);
+    linear-gradient(to bottom, transparent 45%, rgb(var(--fond) / 0.85) 100%), var(--hud-trame);
   pointer-events: none;
 }
 
@@ -156,7 +160,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .close:hover {
@@ -229,8 +236,13 @@
   color: rgb(var(--hud-alerte));
 }
 
-.dot        { color: rgb(var(--hud) / 0.45); }
-.muted      { color: var(--hud-texte-doux); font-size: calc(12px * var(--ui-font-scale, 1)); }
+.dot {
+  color: rgb(var(--hud) / 0.45);
+}
+.muted {
+  color: var(--hud-texte-doux);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+}
 .lastPlayed {
   font-family: var(--police-donnee);
   font-size: calc(12px * var(--ui-font-scale, 1));
@@ -262,7 +274,11 @@
   box-shadow: none;
   font-size: calc(18px * var(--ui-font-scale, 1));
   line-height: 1;
-  transition: transform 120ms, background 120ms, border-color 120ms, filter 120ms;
+  transition:
+    transform 120ms,
+    background 120ms,
+    border-color 120ms,
+    filter 120ms;
 }
 
 .favBtn:hover {
@@ -282,7 +298,8 @@
 }
 
 @keyframes favPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1.08);
     filter: drop-shadow(0 0 6px rgba(255, 213, 106, 0.55))
       drop-shadow(0 0 14px rgba(255, 213, 106, 0.25));
@@ -301,8 +318,11 @@
   padding: 0 12px;
   border-radius: 2px;
   border: 1px solid var(--accent, rgb(var(--hud)));
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent), color-mix(in srgb, var(--accent, rgb(var(--hud))) 12%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent),
+    color-mix(in srgb, var(--accent, rgb(var(--hud))) 12%, transparent)
+  );
   color: rgb(var(--encre));
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -315,12 +335,18 @@
     0 0 16px color-mix(in srgb, var(--accent, rgb(var(--hud))) 30%, transparent),
     inset 0 0 12px color-mix(in srgb, var(--accent, rgb(var(--hud))) 18%, transparent);
   position: relative;
-  transition: background 120ms, transform 120ms, box-shadow 120ms;
+  transition:
+    background 120ms,
+    transform 120ms,
+    box-shadow 120ms;
 }
 
 .play:hover {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent, rgb(var(--hud))) 48%, transparent), color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent, rgb(var(--hud))) 48%, transparent),
+    color-mix(in srgb, var(--accent, rgb(var(--hud))) 22%, transparent)
+  );
   box-shadow:
     0 0 24px color-mix(in srgb, var(--accent, rgb(var(--hud))) 50%, transparent),
     inset 0 0 14px color-mix(in srgb, var(--accent, rgb(var(--hud))) 26%, transparent);
@@ -356,7 +382,9 @@
 }
 
 @keyframes spinPlay {
-  to { transform: translateY(-50%) rotate(360deg); }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
 .folder,
@@ -375,7 +403,10 @@
   padding: 0;
   font-size: calc(15px * var(--ui-font-scale, 1));
   box-shadow: none;
-  transition: background 120ms, transform 120ms, border-color 120ms;
+  transition:
+    background 120ms,
+    transform 120ms,
+    border-color 120ms;
 }
 
 .folder:hover,
@@ -387,16 +418,24 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel { animation: none; }
-  .favBtnActive { animation: none; }
-  .play, .folder, .remove, .favBtn { transition: none; }
+  .panel {
+    animation: none;
+  }
+  .favBtnActive {
+    animation: none;
+  }
+  .play,
+  .folder,
+  .remove,
+  .favBtn {
+    transition: none;
+  }
 }
 
 /* Réticule de visée sur la bannière : quatre crochets en retrait, décoratifs.
    Posés au-dessus de l'image et sous les boutons, sans capter le pointeur. */
 
-.banner::after
-.banner::after {
+.banner::after .banner::after {
   content: '';
   position: absolute;
   inset: 8px;
@@ -410,8 +449,7 @@
   filter: drop-shadow(0 0 3px rgb(var(--hud) / 0.8));
 }
 
-.remove:hover
-.remove:hover {
+.remove:hover .remove:hover {
   background: rgb(var(--hud-danger) / 0.16);
   border-color: rgb(var(--hud-danger) / 0.7);
   color: rgb(var(--hud-danger));
@@ -457,8 +495,14 @@
 }
 
 @keyframes lanceApparait {
-  from { opacity: 0; transform: scale(0.9); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

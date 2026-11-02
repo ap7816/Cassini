@@ -39,7 +39,8 @@ export function etendreTaille(
   const sunR = t.sunR * reglage.soleil;
   let outerR = Math.max(t.outerR, distanceMini(t.sunR, reglage.soleil, rayonMax));
   for (const p of Object.values(reglage.placements)) {
-    if (p.distance !== undefined) outerR = Math.max(outerR, p.distance + rayonMax * (p.taille ?? 1));
+    if (p.distance !== undefined)
+      outerR = Math.max(outerR, p.distance + rayonMax * (p.taille ?? 1));
   }
 
   return {

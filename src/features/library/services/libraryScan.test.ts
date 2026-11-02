@@ -38,10 +38,16 @@ describe('appliquerScan', () => {
   });
 
   it('conserve favori, dernière partie et image choisie après désinstallation', () => {
-    const avant = [jeu({
-      id: 'steam-1', title: 'Portal', platform: 'Steam',
-      favorite: true, lastPlayedAt: '2026-04-04T00:00:00.000Z', customImageUrl: 'p.png',
-    })];
+    const avant = [
+      jeu({
+        id: 'steam-1',
+        title: 'Portal',
+        platform: 'Steam',
+        favorite: true,
+        lastPlayedAt: '2026-04-04T00:00:00.000Z',
+        customImageUrl: 'p.png',
+      }),
+    ];
 
     const [g] = appliquerScan(avant, [], 'Steam');
     expect(g.favorite).toBe(true);

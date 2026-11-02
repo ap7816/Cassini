@@ -4,7 +4,12 @@ import { PLN_R_MAX, PLN_R_MIN } from '../constants';
 import * as THREE from 'three';
 import { makeRadiusScale, normaleOrbite, orbitPos, positionSurOrbite } from './orbits';
 
-const jeu = (id: string, champs: Partial<Game>): Game => ({ id, title: id, platform: 'Steam', ...champs });
+const jeu = (id: string, champs: Partial<Game>): Game => ({
+  id,
+  title: id,
+  platform: 'Steam',
+  ...champs,
+});
 
 describe('makeRadiusScale', () => {
   const jeux = [
@@ -25,7 +30,10 @@ describe('makeRadiusScale', () => {
   });
 
   it('garde l’espace disque pour un système sans temps de jeu', () => {
-    const epic = [jeu('a', { platform: 'Epic', sizeOnDisk: 50e9 }), jeu('b', { platform: 'Epic', sizeOnDisk: 5e9 })];
+    const epic = [
+      jeu('a', { platform: 'Epic', sizeOnDisk: 50e9 }),
+      jeu('b', { platform: 'Epic', sizeOnDisk: 5e9 }),
+    ];
     const r = makeRadiusScale(epic, 'tempsDeJeu');
     expect(r(epic[0])).toBeGreaterThan(r(epic[1]));
   });

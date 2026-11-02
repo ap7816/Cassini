@@ -10,7 +10,11 @@ import {
 } from './imageIcone';
 
 /** Image RGBA de test : fond transparent, un rectangle opaque. */
-function imageAvecRectangle(l: number, h: number, r: { x: number; y: number; l: number; h: number }) {
+function imageAvecRectangle(
+  l: number,
+  h: number,
+  r: { x: number; y: number; l: number; h: number },
+) {
   const px = new Uint8ClampedArray(l * h * 4);
   for (let y = r.y; y < r.y + r.h; y++) {
     for (let x = r.x; x < r.x + r.l; x++) px[(y * l + x) * 4 + 3] = 255;
@@ -95,7 +99,12 @@ describe('planDessin', () => {
   });
 
   it('ne sort jamais du carré, quelle que soit la forme de l’image', () => {
-    for (const [l, h] of [[3000, 200], [200, 3000], [48, 12], [900, 901]]) {
+    for (const [l, h] of [
+      [3000, 200],
+      [200, 3000],
+      [48, 12],
+      [900, 901],
+    ]) {
       const p = planDessin(l, h, null);
 
       expect(p.cible.x).toBeGreaterThanOrEqual(0);

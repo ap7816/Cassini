@@ -80,7 +80,10 @@ export type SystemePerso = {
 };
 
 /** Ce que la scène doit savoir d'un système pour en placer les astres. */
-export type ReglageSysteme = Pick<SystemePerso, 'soleil' | 'vitesse' | 'aPlat' | 'placements' | 'couleurSoleil' | 'etoiles'>;
+export type ReglageSysteme = Pick<
+  SystemePerso,
+  'soleil' | 'vitesse' | 'aPlat' | 'placements' | 'couleurSoleil' | 'etoiles'
+>;
 
 /**
  * Préfixe des clés de système personnalisé dans la galaxie.
@@ -122,7 +125,9 @@ export function estSystemePerso(cle: string): boolean {
 }
 
 function borne(v: unknown, b: { min: number; max: number; defaut: number }): number {
-  return typeof v === 'number' && Number.isFinite(v) ? Math.min(b.max, Math.max(b.min, v)) : b.defaut;
+  return typeof v === 'number' && Number.isFinite(v)
+    ? Math.min(b.max, Math.max(b.min, v))
+    : b.defaut;
 }
 
 /** Angle ramené dans [0, 360[. */
@@ -134,9 +139,11 @@ function normaliserPlacement(brut: unknown): PlacementPlanete | null {
   if (!brut || typeof brut !== 'object') return null;
   const o = brut as Record<string, unknown>;
   const p: PlacementPlanete = {};
-  if (typeof o.distance === 'number' && Number.isFinite(o.distance) && o.distance > 0) p.distance = o.distance;
+  if (typeof o.distance === 'number' && Number.isFinite(o.distance) && o.distance > 0)
+    p.distance = o.distance;
   if (typeof o.angle === 'number' && Number.isFinite(o.angle)) p.angle = angleNormal(o.angle);
-  if (typeof o.taille === 'number' && Number.isFinite(o.taille)) p.taille = borne(o.taille, BORNES.taille);
+  if (typeof o.taille === 'number' && Number.isFinite(o.taille))
+    p.taille = borne(o.taille, BORNES.taille);
   if (o.anneau === ANNEAU_AUCUN) p.anneau = ANNEAU_AUCUN;
   else if (typeof o.anneau === 'string' && HEX.test(o.anneau)) p.anneau = o.anneau.toLowerCase();
   return Object.keys(p).length > 0 ? p : null;
@@ -168,7 +175,9 @@ export function normaliserSystemes(brut: unknown): SystemePerso[] {
         ? o.icone
         : ICONE_PAR_DEFAUT;
     const couleur =
-      typeof o.couleur === 'string' && HEX.test(o.couleur) ? o.couleur.toLowerCase() : COULEURS_SYSTEME[0];
+      typeof o.couleur === 'string' && HEX.test(o.couleur)
+        ? o.couleur.toLowerCase()
+        : COULEURS_SYSTEME[0];
     const jeux = Array.isArray(o.jeux)
       ? [...new Set(o.jeux.filter((j): j is string => typeof j === 'string' && j.length > 0))]
       : [];

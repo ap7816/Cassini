@@ -23,7 +23,10 @@ export function ListeSucces() {
   const [decroches, setDecroches] = useState(() => new Set(succesDecroches()));
 
   useEffect(
-    () => abonnerSucces(() => { setDecroches(new Set(succesDecroches())); }),
+    () =>
+      abonnerSucces(() => {
+        setDecroches(new Set(succesDecroches()));
+      }),
     [],
   );
 

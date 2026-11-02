@@ -51,11 +51,7 @@ export function orbitPos(
   const z2 = z * Math.cos(inc);
 
   // Ry(node)
-  out.set(
-    x * Math.cos(node) + z2 * Math.sin(node),
-    y,
-    -x * Math.sin(node) + z2 * Math.cos(node),
-  );
+  out.set(x * Math.cos(node) + z2 * Math.sin(node), y, -x * Math.sin(node) + z2 * Math.cos(node));
   return out;
 }
 
@@ -122,7 +118,10 @@ export function definirCritereTaille(c: CritereTaille): void {
  * `tailleContraste`, dont 0,7 est le défaut.
  */
 
-export function makeRadiusScale(games: Game[], critere: CritereTaille = critereCourant): (g: Game) => number {
+export function makeRadiusScale(
+  games: Game[],
+  critere: CritereTaille = critereCourant,
+): (g: Game) => number {
   // Au temps de jeu, seulement si ce système en connaît un : un système Epic
   // n'a que l'espace disque, et le garde plutôt que de tout mettre à la même
   // taille. Un jeu Steam jamais lancé retombe alors parmi les petits.

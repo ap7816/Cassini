@@ -7,7 +7,13 @@ import { nouveauSysteme } from './customSystems';
  * ce qui élargit vraiment un système, et rester stable sinon.
  */
 describe('rayonSysteme', () => {
-  const base = nouveauSysteme({ id: 's', nom: 'S', icone: 'etoile', couleur: '#fff', jeux: ['a', 'b', 'c'] });
+  const base = nouveauSysteme({
+    id: 's',
+    nom: 'S',
+    icone: 'etoile',
+    couleur: '#fff',
+    jeux: ['a', 'b', 'c'],
+  });
 
   it('ne bouge pas sans placement', () => {
     expect(rayonSysteme(3, base)).toBe(rayonSysteme(3, null));

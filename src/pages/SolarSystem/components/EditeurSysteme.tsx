@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../../features/types';
 import { AppDialog, type DialogState } from '../../../components/AppDialog/AppDialog';
@@ -101,7 +110,9 @@ export function EditeurSysteme({
       const e = etatRef.current?.planetes.find((p) => p.id === g.id);
       const max = Math.max(etatRef.current?.distanceMax ?? g.distance, e?.distance ?? 0);
       const distance = Math.min(Math.max(g.distance, e?.distanceMin ?? 0), max);
-      modifierRef.current(placer(brouillonRef.current, g.id, { distance, angle: Math.round(g.angle) % 360 }));
+      modifierRef.current(
+        placer(brouillonRef.current, g.id, { distance, angle: Math.round(g.angle) % 360 }),
+      );
       // Les réglages de la planète s'ouvrent : on voit ses curseurs suivre.
       setOuverte(g.id);
     });
@@ -113,11 +124,17 @@ export function EditeurSysteme({
   const listeFigee = launcher || brouillon.tag !== null;
   const nomPropre = brouillon.nom.trim();
   const modifie = JSON.stringify(brouillon) !== JSON.stringify(systeme);
-  const manque = !nomPropre ? t('systems.missingName') : jeux.length === 0 ? t('systems.missingGames') : null;
+  const manque = !nomPropre
+    ? t('systems.missingName')
+    : jeux.length === 0
+      ? t('systems.missingGames')
+      : null;
 
   const q = recherche.trim().toLowerCase();
   const candidats = q
-    ? games.filter((g) => !brouillon.jeux.includes(g.id) && g.title.toLowerCase().includes(q)).slice(0, 30)
+    ? games
+        .filter((g) => !brouillon.jeux.includes(g.id) && g.title.toLowerCase().includes(q))
+        .slice(0, 30)
     : [];
 
   function enregistrer() {
@@ -152,7 +169,12 @@ export function EditeurSysteme({
           <h2 className={css.nom}>{systeme.nom}</h2>
         ) : (
           <>
-            <IconeSysteme nom={brouillon.icone} image={brouillon.image} couleur={brouillon.couleur} taille={26} />
+            <IconeSysteme
+              nom={brouillon.icone}
+              image={brouillon.image}
+              couleur={brouillon.couleur}
+              taille={26}
+            />
             <input
               className={css.nom}
               value={brouillon.nom}
@@ -162,7 +184,12 @@ export function EditeurSysteme({
             />
           </>
         )}
-        <button type="button" className={css.fermer} onClick={fermer} aria-label={t('common.close')}>
+        <button
+          type="button"
+          className={css.fermer}
+          onClick={fermer}
+          aria-label={t('common.close')}
+        >
           ✕
         </button>
       </header>
@@ -170,63 +197,77 @@ export function EditeurSysteme({
       <div className={css.corps}>
         {launcher && <p className={css.note}>{t('systems.editor.launcherNote')}</p>}
         {!launcher && brouillon.tag !== null && (
-          <p className={css.note}>{t('systems.editor.tagNote', { tag: libelleTag(brouillon.tag, t) })}</p>
+          <p className={css.note}>
+            {t('systems.editor.tagNote', { tag: libelleTag(brouillon.tag, t) })}
+          </p>
         )}
         {!launcher && (
-        <Section titre={t('systems.editor.appearance')}>
-          <div className={css.icones}>
-            {ICONES_SYSTEME.map((i) => (
-              <button
-                key={i.nom}
-                type="button"
-                title={t(`systems.icons.${i.nom}`)}
-                aria-pressed={!brouillon.image && i.nom === brouillon.icone}
-                className={!brouillon.image && i.nom === brouillon.icone ? `${css.icone} ${css.iconeChoisie}` : css.icone}
-                onClick={() => modifier({ ...brouillon, icone: i.nom, image: null })}
-              >
-                <IconeSysteme
-                  nom={i.nom}
-                  couleur={!brouillon.image && i.nom === brouillon.icone ? brouillon.couleur : 'currentColor'}
-                  taille={16}
-                />
-              </button>
-            ))}
-          </div>
-          <ChoixImageIcone
-            image={imageGardee}
-            active={brouillon.image !== null}
-            onImage={(nouvelle) => {
-              setImageGardee(nouvelle);
-              modifier({ ...brouillon, image: nouvelle });
-            }}
-            onActiver={() => modifier({ ...brouillon, image: imageGardee })}
-            onRetirer={() => {
-              setImageGardee(null);
-              modifier({ ...brouillon, image: null });
-            }}
-          />
-          <div className={css.couleurs}>
-            {COULEURS_SYSTEME.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={c === brouillon.couleur ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
-                style={{ background: c }}
-                aria-label={t('systems.colorNamed', { color: c })}
-                aria-pressed={c === brouillon.couleur}
-                onClick={() => modifier({ ...brouillon, couleur: c })}
-              />
-            ))}
-            <input
-              type="color"
-              className={css.couleurLibre}
-              value={brouillon.couleur}
-              onChange={(e) => modifier({ ...brouillon, couleur: e.target.value })}
-              aria-label={t('systems.otherColor')}
+          <Section titre={t('systems.editor.appearance')}>
+            <div className={css.icones}>
+              {ICONES_SYSTEME.map((i) => (
+                <button
+                  key={i.nom}
+                  type="button"
+                  title={t(`systems.icons.${i.nom}`)}
+                  aria-pressed={!brouillon.image && i.nom === brouillon.icone}
+                  className={
+                    !brouillon.image && i.nom === brouillon.icone
+                      ? `${css.icone} ${css.iconeChoisie}`
+                      : css.icone
+                  }
+                  onClick={() => modifier({ ...brouillon, icone: i.nom, image: null })}
+                >
+                  <IconeSysteme
+                    nom={i.nom}
+                    couleur={
+                      !brouillon.image && i.nom === brouillon.icone
+                        ? brouillon.couleur
+                        : 'currentColor'
+                    }
+                    taille={16}
+                  />
+                </button>
+              ))}
+            </div>
+            <ChoixImageIcone
+              image={imageGardee}
+              active={brouillon.image !== null}
+              onImage={(nouvelle) => {
+                setImageGardee(nouvelle);
+                modifier({ ...brouillon, image: nouvelle });
+              }}
+              onActiver={() => modifier({ ...brouillon, image: imageGardee })}
+              onRetirer={() => {
+                setImageGardee(null);
+                modifier({ ...brouillon, image: null });
+              }}
             />
-          </div>
-          <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
-        </Section>
+            <div className={css.couleurs}>
+              {COULEURS_SYSTEME.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={
+                    c === brouillon.couleur
+                      ? `${css.pastille} ${css.pastilleChoisie}`
+                      : css.pastille
+                  }
+                  style={{ background: c }}
+                  aria-label={t('systems.colorNamed', { color: c })}
+                  aria-pressed={c === brouillon.couleur}
+                  onClick={() => modifier({ ...brouillon, couleur: c })}
+                />
+              ))}
+              <input
+                type="color"
+                className={css.couleurLibre}
+                value={brouillon.couleur}
+                onChange={(e) => modifier({ ...brouillon, couleur: e.target.value })}
+                aria-label={t('systems.otherColor')}
+              />
+            </div>
+            <p className={css.note}>{t('systems.editor.appliesOnSave')}</p>
+          </Section>
         )}
 
         <Section titre={t('systems.editor.sun')}>
@@ -262,7 +303,11 @@ export function EditeurSysteme({
                 <button
                   key={c}
                   type="button"
-                  className={brouillon.couleurSoleil === c ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
+                  className={
+                    brouillon.couleurSoleil === c
+                      ? `${css.pastille} ${css.pastilleChoisie}`
+                      : css.pastille
+                  }
                   style={{ background: c }}
                   onClick={() => modifier({ ...brouillon, couleurSoleil: c })}
                   aria-label={t('systems.colorNamed', { color: c })}
@@ -316,12 +361,14 @@ export function EditeurSysteme({
             <div className={css.tri}>
               <span className={css.triTitre}>{t('systems.editor.sort')}</span>
               <div className={css.triBoutons}>
-                {([
-                  ['az', 'systems.editor.sortAz'],
-                  ['za', 'systems.editor.sortZa'],
-                  ['taille', 'systems.editor.sortSize'],
-                  ['recent', 'systems.editor.sortRecent'],
-                ] as Array<[TriSysteme, string]>).map(([critere, cle]) => (
+                {(
+                  [
+                    ['az', 'systems.editor.sortAz'],
+                    ['za', 'systems.editor.sortZa'],
+                    ['taille', 'systems.editor.sortSize'],
+                    ['recent', 'systems.editor.sortRecent'],
+                  ] as Array<[TriSysteme, string]>
+                ).map(([critere, cle]) => (
                   <button
                     key={critere}
                     type="button"
@@ -340,7 +387,10 @@ export function EditeurSysteme({
             const place = brouillon.placements[g.id] !== undefined;
             const deplie = ouverte === g.id;
             return (
-              <div key={g.id} className={deplie ? `${css.planete} ${css.planeteOuverte}` : css.planete}>
+              <div
+                key={g.id}
+                className={deplie ? `${css.planete} ${css.planeteOuverte}` : css.planete}
+              >
                 <div className={css.planeteTete}>
                   <button
                     type="button"
@@ -351,20 +401,25 @@ export function EditeurSysteme({
                   >
                     <span className={css.rang}>{i + 1}</span>
                     <span className={css.titreJeu}>{g.title}</span>
-                    {place && <span className={css.marquePlace} title={t('systems.editor.customPlacement')} />}
+                    {place && (
+                      <span
+                        className={css.marquePlace}
+                        title={t('systems.editor.customPlacement')}
+                      />
+                    )}
                   </button>
                   {!listeFigee && (
-                  <>
-                  <button
-                    type="button"
-                    className={`${css.petit} ${css.retirer}`}
-                    onClick={() => modifier(retirerJeu(brouillon, g.id))}
-                    aria-label={t('systems.editor.removeGame', { title: g.title })}
-                    title={t('systems.editor.removeFromSystem')}
-                  >
-                    ✕
-                  </button>
-                  </>
+                    <>
+                      <button
+                        type="button"
+                        className={`${css.petit} ${css.retirer}`}
+                        onClick={() => modifier(retirerJeu(brouillon, g.id))}
+                        aria-label={t('systems.editor.removeGame', { title: g.title })}
+                        title={t('systems.editor.removeFromSystem')}
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -425,34 +480,39 @@ export function EditeurSysteme({
           })}
 
           {!listeFigee && (
-          <>
-          <input
-            type="search"
-            className={css.recherche}
-            placeholder={t('systems.editor.addGamePlaceholder')}
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            aria-label={t('systems.editor.addGame')}
-          />
-          {candidats.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              className={css.candidat}
-              onClick={() => {
-                modifier(ajouterJeu(brouillon, g.id));
-                setRecherche('');
-              }}
-            >
-              <span className={css.plus}>+</span>
-              <span className={css.titreJeu}>{g.title}</span>
-              <span className={css.launcher} style={{ color: PLATFORM_CSS[g.platform || 'Other'] ?? '#7a8a9a' }}>
-                {nomPlateforme(g.platform, t)}
-              </span>
-            </button>
-          ))}
-          {q && candidats.length === 0 && <p className={css.note}>{t('systems.editor.noOtherGame')}</p>}
-          </>
+            <>
+              <input
+                type="search"
+                className={css.recherche}
+                placeholder={t('systems.editor.addGamePlaceholder')}
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                aria-label={t('systems.editor.addGame')}
+              />
+              {candidats.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={css.candidat}
+                  onClick={() => {
+                    modifier(ajouterJeu(brouillon, g.id));
+                    setRecherche('');
+                  }}
+                >
+                  <span className={css.plus}>+</span>
+                  <span className={css.titreJeu}>{g.title}</span>
+                  <span
+                    className={css.launcher}
+                    style={{ color: PLATFORM_CSS[g.platform || 'Other'] ?? '#7a8a9a' }}
+                  >
+                    {nomPlateforme(g.platform, t)}
+                  </span>
+                </button>
+              ))}
+              {q && candidats.length === 0 && (
+                <p className={css.note}>{t('systems.editor.noOtherGame')}</p>
+              )}
+            </>
           )}
         </Section>
       </div>
@@ -487,7 +547,12 @@ export function EditeurSysteme({
         <button type="button" className={css.secondaire} onClick={fermer}>
           {t('dialog.cancel')}
         </button>
-        <button type="button" className={css.principal} onClick={enregistrer} disabled={!modifie || manque !== null}>
+        <button
+          type="button"
+          className={css.principal}
+          onClick={enregistrer}
+          disabled={!modifie || manque !== null}
+        >
           {t('common.save')}
         </button>
       </footer>
@@ -511,7 +576,13 @@ export function EditeurSysteme({
  * « Automatique » laisse la planète telle que la scène l'a tirée — un anneau
  * sur trois environ. Une couleur en donne à une planète qui n'en avait pas.
  */
-function ChoixAnneau({ valeur, onChange }: { valeur: string | undefined; onChange: (v: string | undefined) => void }) {
+function ChoixAnneau({
+  valeur,
+  onChange,
+}: {
+  valeur: string | undefined;
+  onChange: (v: string | undefined) => void;
+}) {
   const { t } = useTranslation();
   const couleur = valeur !== undefined && valeur !== ANNEAU_AUCUN ? valeur : null;
   return (
@@ -528,7 +599,9 @@ function ChoixAnneau({ valeur, onChange }: { valeur: string | undefined; onChang
         </button>
         <button
           type="button"
-          className={valeur === ANNEAU_AUCUN ? `${css.petitLarge} ${css.petitChoisi}` : css.petitLarge}
+          className={
+            valeur === ANNEAU_AUCUN ? `${css.petitLarge} ${css.petitChoisi}` : css.petitLarge
+          }
           aria-pressed={valeur === ANNEAU_AUCUN}
           onClick={() => onChange(ANNEAU_AUCUN)}
         >

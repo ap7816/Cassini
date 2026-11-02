@@ -21,7 +21,10 @@
   letter-spacing: 0.2em;
   cursor: pointer;
   box-shadow: none;
-  transition: background 140ms, color 140ms, border-color 140ms;
+  transition:
+    background 140ms,
+    color 140ms,
+    border-color 140ms;
   text-transform: uppercase;
   text-shadow: 0 0 8px rgb(var(--hud) / 0.5);
 }
@@ -39,7 +42,9 @@
   border-radius: 2px;
   border: 1px solid var(--hud-ligne-moyenne);
   background: var(--hud-crochets), var(--hud-trame), rgb(var(--fond) / 0.95);
-  box-shadow: 0 0 26px rgb(var(--hud) / 0.12), 0 10px 34px rgb(0 0 0 / 0.55);
+  box-shadow:
+    0 0 26px rgb(var(--hud) / 0.12),
+    0 10px 34px rgb(0 0 0 / 0.55);
 }
 
 .head {
@@ -111,7 +116,9 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   box-shadow: none;
-  transition: background 120ms, border-color 120ms;
+  transition:
+    background 120ms,
+    border-color 120ms;
   border-bottom-width: 2px;
 }
 

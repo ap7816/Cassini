@@ -32,7 +32,9 @@ describe('le trajet entre deux systèmes', () => {
     const t = trajet();
     const angles: number[] = [];
     for (let i = 0; i <= 40; i++) {
-      angles.push(plongee(POSE_A, t.controle, POSE_B, CENTRE_A, t.controleRegard, CENTRE_B, i / 40));
+      angles.push(
+        plongee(POSE_A, t.controle, POSE_B, CENTRE_A, t.controleRegard, CENTRE_B, i / 40),
+      );
     }
 
     // L'inclinaison des deux bouts : la caméra y est posée en retrait et au-
@@ -66,7 +68,10 @@ describe('le trajet entre deux systèmes', () => {
 
   it('part et arrive exactement où il faut', () => {
     const t = trajet();
-    for (const [p, attendu] of [[0, POSE_A], [1, POSE_B]] as const) {
+    for (const [p, attendu] of [
+      [0, POSE_A],
+      [1, POSE_B],
+    ] as const) {
       const got = pointDuTrajet(POSE_A, t.controle, POSE_B, p);
       expect(got.x).toBeCloseTo(attendu.x, 6);
       expect(got.y).toBeCloseTo(attendu.y, 6);

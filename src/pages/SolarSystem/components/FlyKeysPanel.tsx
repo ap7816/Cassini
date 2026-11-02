@@ -129,7 +129,9 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
       <div className={css.sensRow}>
         <span className={css.label}>
           {t('flyKeys.sensitivity')}
-          <span className={css.sensValue}>{formaterNombre(settings.sensibilite, i18n.language, 2)}×</span>
+          <span className={css.sensValue}>
+            {formaterNombre(settings.sensibilite, i18n.language, 2)}×
+          </span>
         </span>
         <input
           type="range"
@@ -138,16 +140,16 @@ export function FlyKeysPanel({ settings, onChange }: Props) {
           max={SENSIBILITE_MAX}
           step={0.05}
           value={settings.sensibilite}
-          onChange={(e) =>
-            onChange({ ...settings, sensibilite: Number(e.target.value) })
-          }
+          onChange={(e) => onChange({ ...settings, sensibilite: Number(e.target.value) })}
         />
       </div>
 
       <div className={css.sensRow}>
         <span className={css.label}>
           {t('flyKeys.speed')}
-          <span className={css.sensValue}>{formaterNombre(settings.vitesse, i18n.language, 2)}×</span>
+          <span className={css.sensValue}>
+            {formaterNombre(settings.vitesse, i18n.language, 2)}×
+          </span>
         </span>
         <input
           type="range"

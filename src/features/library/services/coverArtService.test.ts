@@ -22,7 +22,12 @@ vi.mock('../../../services/tauri', () => ({
 
 const { clearCoverCache, fetchCoverArt, steamCdnUrl } = await import('./coverArtService');
 
-const jeu = { title: 'VRCFaceTracking', steamAppId: '3329480', platform: 'Steam' as const, installPath: null };
+const jeu = {
+  title: 'VRCFaceTracking',
+  steamAppId: '3329480',
+  platform: 'Steam' as const,
+  installPath: null,
+};
 
 beforeEach(() => {
   clearCoverCache();

@@ -79,7 +79,9 @@
   place-items: center;
   padding: 0;
   flex-shrink: 0;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .retour:hover {
@@ -100,7 +102,10 @@
   background: rgb(var(--hud) / 0.046);
   color: rgb(var(--encre) / 0.85);
   font-size: 0.875rem;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
 }
 
 .search::placeholder {
@@ -144,16 +149,26 @@
 }
 
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .retour { transition: none; }
+  .retour {
+    transition: none;
+  }
   /* Pas `animation: none` : la page resterait à son état de départ, c'est-à-dire
      transparente. La feuille des animations écourte déjà toutes les durées. */
 }
 
 @media (max-width: 900px) {
-  .search { width: min(380px, 56vw); }
+  .search {
+    width: min(380px, 56vw);
+  }
 }

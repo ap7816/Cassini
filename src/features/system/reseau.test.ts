@@ -74,9 +74,7 @@ vi.mock('../../services/tauri', () => ({
     cmd === 'reseau_joignable' ? Promise.resolve(true) : invoque(cmd, args),
 }));
 
-const { clearCoverCache, fetchCoverArt } = await import(
-  '../library/services/coverArtService'
-);
+const { clearCoverCache, fetchCoverArt } = await import('../library/services/coverArtService');
 
 const jeuSansSteam = {
   title: 'Un jeu sans identifiant',

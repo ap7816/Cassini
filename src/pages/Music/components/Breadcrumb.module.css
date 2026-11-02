@@ -35,7 +35,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 160px;
-  transition: color 0.12s, background 0.12s;
+  transition:
+    color 0.12s,
+    background 0.12s;
 }
 
 .btn:hover:not(:disabled) {

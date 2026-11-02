@@ -91,11 +91,7 @@ export function composerTrajet(
   regardDepart: Point,
   regardArrivee: Point,
 ): Trajet {
-  const distance = Math.hypot(
-    arrivee.x - depart.x,
-    arrivee.y - depart.y,
-    arrivee.z - depart.z,
-  );
+  const distance = Math.hypot(arrivee.x - depart.x, arrivee.y - depart.y, arrivee.z - depart.z);
   const recul = Math.max(distance * RECUL_TRAJET, rayonGalaxie * RECUL_GALAXIE);
 
   return {
@@ -108,8 +104,10 @@ export function composerTrajet(
     },
     controleRegard: {
       x: regardDepart.x + (regardArrivee.x - regardDepart.x) * REGARD_AVANCE,
-      y: regardDepart.y + (regardArrivee.y - regardDepart.y) * REGARD_AVANCE
-        + recul * REGARD_HAUTEUR,
+      y:
+        regardDepart.y +
+        (regardArrivee.y - regardDepart.y) * REGARD_AVANCE +
+        recul * REGARD_HAUTEUR,
       z: regardDepart.z + (regardArrivee.z - regardDepart.z) * REGARD_AVANCE,
     },
     duree: Math.min(
@@ -120,12 +118,7 @@ export function composerTrajet(
 }
 
 /** Position sur le trajet, `t` allant de 0 à 1. Bézier quadratique. */
-export function pointDuTrajet(
-  depart: Point,
-  controle: Point,
-  arrivee: Point,
-  t: number,
-): Point {
+export function pointDuTrajet(depart: Point, controle: Point, arrivee: Point, t: number): Point {
   const u = 1 - t;
   const a = u * u;
   const b = 2 * u * t;
@@ -182,11 +175,7 @@ export function degagement(
   let mini = Infinity;
   for (let i = 0; i <= echantillons; i += 1) {
     const p = pointDuTrajet(depart, controle, arrivee, i / echantillons);
-    const d = Math.hypot(
-      p.x - obstacle.centre.x,
-      p.y - obstacle.centre.y,
-      p.z - obstacle.centre.z,
-    );
+    const d = Math.hypot(p.x - obstacle.centre.x, p.y - obstacle.centre.y, p.z - obstacle.centre.z);
     mini = Math.min(mini, d / Math.max(1e-9, obstacle.rayon));
   }
   return mini;

@@ -160,7 +160,10 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Battle.net' });
+      const msg =
+        err instanceof Error
+          ? err.message
+          : i18n.t('errors.scanFailed', { platform: 'Battle.net' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -202,7 +205,8 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Epic' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Epic' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -244,7 +248,8 @@ export function useLibraryGames() {
 
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Steam' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Steam' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -278,7 +283,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Riot' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Riot' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -312,7 +318,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Rockstar' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Rockstar' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -346,7 +353,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Hytale' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Hytale' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -379,7 +387,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'HoYoPlay' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'HoYoPlay' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -412,7 +421,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Xbox' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Xbox' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -446,7 +456,8 @@ export function useLibraryGames() {
       });
       return { ok: true, added };
     } catch (err) {
-      const msg = err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Ubisoft' });
+      const msg =
+        err instanceof Error ? err.message : i18n.t('errors.scanFailed', { platform: 'Ubisoft' });
       setScanError(msg);
       return { ok: false, message: msg };
     } finally {

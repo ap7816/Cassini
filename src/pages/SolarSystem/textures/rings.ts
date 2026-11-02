@@ -40,7 +40,8 @@ export function makeRingTexture(
   base: THREE.Color,
   profil: ProfilAnneau = PROFIL_DEFAUT,
 ): THREE.CanvasTexture {
-  const w = 1024, h = 1;
+  const w = 1024,
+    h = 1;
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
@@ -48,9 +49,11 @@ export function makeRingTexture(
   const img = c.createImageData(w, h);
 
   const rng = seededRng(seed);
-  const p1 = rng() * 6.28, p2 = rng() * 6.28, p3 = rng() * 6.28;
-  const f1 = 42 + rng() * 46;         // fréquence de rubanage fin
-  const f2 = 11 + rng() * 12;         // fréquence de rubanage large
+  const p1 = rng() * 6.28,
+    p2 = rng() * 6.28,
+    p3 = rng() * 6.28;
+  const f1 = 42 + rng() * 46; // fréquence de rubanage fin
+  const f2 = 11 + rng() * 12; // fréquence de rubanage large
 
   // Divisions réparties sur la largeur utile, à distance des deux bords où
   // l'atténuation les rendrait invisibles. Une seule division retombe au
@@ -65,10 +68,7 @@ export function makeRingTexture(
   // lisent comme des cercles distincts
   const bands = 160;
   const ampJitter = 0.5 * profil.contraste;
-  const jitter = Array.from(
-    { length: bands },
-    () => 1 - ampJitter / 2 + rng() * ampJitter,
-  );
+  const jitter = Array.from({ length: bands }, () => 1 - ampJitter / 2 + rng() * ampJitter);
 
   const hsl = { h: 0, s: 0, l: 0 };
   base.getHSL(hsl);
@@ -84,10 +84,10 @@ export function makeRingTexture(
     let a = Math.pow(Math.sin(Math.PI * t), profil.douceur);
     // Deux fréquences de rubanage superposées, d'autant plus marquées que le
     // profil est contrasté — à contraste nul les deux facteurs valent 1.
-    a *= 1 - 0.55 * profil.contraste
-       + 0.55 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f1 + p1));
-    a *= 1 - 0.38 * profil.contraste
-       + 0.38 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f2 + p2));
+    a *=
+      1 - 0.55 * profil.contraste + 0.55 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f1 + p1));
+    a *=
+      1 - 0.38 * profil.contraste + 0.38 * profil.contraste * (0.5 + 0.5 * Math.sin(t * f2 + p2));
     // Variation discrète par bande
     a *= jitter[Math.min(bands - 1, Math.floor(t * bands))];
 

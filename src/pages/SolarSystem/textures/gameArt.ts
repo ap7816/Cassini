@@ -56,7 +56,10 @@ function averageColor(img: HTMLImageElement): { r: number; g: number; b: number 
 
   try {
     const d = c.getImageData(0, 0, s, s).data;
-    let r = 0, g = 0, b = 0, n = 0;
+    let r = 0,
+      g = 0,
+      b = 0,
+      n = 0;
     for (let i = 0; i < d.length; i += 4) {
       r += d[i];
       g += d[i + 1];
@@ -71,7 +74,8 @@ function averageColor(img: HTMLImageElement): { r: number; g: number; b: number 
 }
 
 export function makeGameTexture(img: HTMLImageElement, seed: number): THREE.CanvasTexture {
-  const w = 1024, h = 512;
+  const w = 1024,
+    h = 512;
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;

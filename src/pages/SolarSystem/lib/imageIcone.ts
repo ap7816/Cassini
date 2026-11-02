@@ -71,8 +71,15 @@ export function verifierFichier(f: { type: string; size: number }): ErreurImage 
  * Plus petit rectangle contenant tous les pixels visibles, dans une image RGBA.
  * `null` si l'image est entièrement transparente.
  */
-export function boiteVisible(rgba: ArrayLike<number>, largeur: number, hauteur: number): Boite | null {
-  let x0 = largeur, y0 = hauteur, x1 = -1, y1 = -1;
+export function boiteVisible(
+  rgba: ArrayLike<number>,
+  largeur: number,
+  hauteur: number,
+): Boite | null {
+  let x0 = largeur,
+    y0 = hauteur,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < hauteur; y++) {
     for (let x = 0; x < largeur; x++) {
       if (rgba[(y * largeur + x) * 4 + 3] > SEUIL_ALPHA) {
@@ -110,10 +117,16 @@ export function planDessin(
   if (Math.max(largeur, hauteur) <= COTE_PIXEL_ART) {
     const zone = visible ?? { x: 0, y: 0, largeur, hauteur };
     const facteur = Math.max(1, Math.floor(cote / Math.max(zone.largeur, zone.hauteur)));
-    const l = zone.largeur * facteur, h = zone.hauteur * facteur;
+    const l = zone.largeur * facteur,
+      h = zone.hauteur * facteur;
     return {
       source: zone,
-      cible: { x: Math.round((cote - l) / 2), y: Math.round((cote - h) / 2), largeur: l, hauteur: h },
+      cible: {
+        x: Math.round((cote - l) / 2),
+        y: Math.round((cote - h) / 2),
+        largeur: l,
+        hauteur: h,
+      },
       lisser: false,
     };
   }
@@ -122,7 +135,8 @@ export function planDessin(
   if (visible) {
     const utile = cote * (1 - 2 * MARGE_LOGO);
     const echelle = utile / Math.max(visible.largeur, visible.hauteur);
-    const l = visible.largeur * echelle, h = visible.hauteur * echelle;
+    const l = visible.largeur * echelle,
+      h = visible.hauteur * echelle;
     return {
       source: visible,
       cible: { x: (cote - l) / 2, y: (cote - h) / 2, largeur: l, hauteur: h },
@@ -226,7 +240,8 @@ export async function preparerImageIcone(
   const largeurNat = img.naturalWidth || (estSvg ? 512 : 0);
   const hauteurNat = img.naturalHeight || (estSvg ? 512 : 0);
   if (!largeurNat || !hauteurNat) return { erreur: 'illisible' };
-  if (!estSvg && Math.max(largeurNat, hauteurNat) < REGLES_IMAGE.coteMin) return { erreur: 'petite' };
+  if (!estSvg && Math.max(largeurNat, hauteurNat) < REGLES_IMAGE.coteMin)
+    return { erreur: 'petite' };
 
   // Toute la suite part d'une toile de dimensions connues, et non de l'image.
   //

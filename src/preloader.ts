@@ -21,7 +21,13 @@ if (ambientAudio) {
     ambientAudio.volume = isNaN(volume) ? 0.25 : Math.max(0, Math.min(1, volume));
     ambientAudio.play().catch(() => {
       // Retry sur la première interaction si l'autoplay est bloqué
-      window.addEventListener('click', () => { void ambientAudio.play().catch(() => {}); }, { once: true });
+      window.addEventListener(
+        'click',
+        () => {
+          void ambientAudio.play().catch(() => {});
+        },
+        { once: true },
+      );
     });
   }
 }

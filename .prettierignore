@@ -6,3 +6,9 @@ src-tauri
 *.min.*
 src-tauri/target
 src-tauri/gen
+# Produits par les tests, jamais relus a la main.
+.rapports
+rapport-tests.html
+
+# Verrou npm : reecrit par npm, pas par nous.
+package-lock.json

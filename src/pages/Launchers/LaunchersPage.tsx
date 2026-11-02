@@ -121,7 +121,9 @@ export function LaunchersPage() {
           try {
             const dataUrl = await invoke<string>('get_file_icon_data_url', { path: m.iconPath });
             fetched.push({ id: m.id, iconPath: m.iconPath, dataUrl });
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }),
       );
 
@@ -137,7 +139,9 @@ export function LaunchersPage() {
       });
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [launchers, desktop]);
 
   // Lance un launcher et affiche un feedback d'état (ouverture / succès / erreur)
@@ -148,11 +152,17 @@ export function LaunchersPage() {
     try {
       await openTarget(l.launchTarget);
       setOpenStatus('done');
-      window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 900);
+      window.setTimeout(() => {
+        setOpenStatus('idle');
+        setOpeningId(null);
+      }, 900);
     } catch (e) {
       setOpenStatus('error');
       const msg = e instanceof Error ? e.message : t('errors.openLauncherFailed');
-      window.setTimeout(() => { setOpenStatus('idle'); setOpeningId(null); }, 1200);
+      window.setTimeout(() => {
+        setOpenStatus('idle');
+        setOpeningId(null);
+      }, 1200);
       toast.error(msg);
     }
   }
@@ -168,11 +178,17 @@ export function LaunchersPage() {
       info(`Opening folder for path: ${folderPath}`);
       await invoke('open_folder', { path: folderPath });
       setFolderStatus('done');
-      window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 900);
+      window.setTimeout(() => {
+        setFolderStatus('idle');
+        setFolderOpeningId(null);
+      }, 900);
     } catch (e) {
       setFolderStatus('error');
       const msg = e instanceof Error ? e.message : t('errors.openFolderFailed');
-      window.setTimeout(() => { setFolderStatus('idle'); setFolderOpeningId(null); }, 1200);
+      window.setTimeout(() => {
+        setFolderStatus('idle');
+        setFolderOpeningId(null);
+      }, 1200);
       toast.error(msg);
     }
   }
@@ -260,9 +276,7 @@ export function LaunchersPage() {
             return (
               <section
                 key={l.id}
-                className={[css.card, l.installed ? '' : css.cardMissing]
-                  .filter(Boolean)
-                  .join(' ')}
+                className={[css.card, l.installed ? '' : css.cardMissing].filter(Boolean).join(' ')}
                 aria-label={l.name}
               >
                 <div className={css.cardTop}>
@@ -286,28 +300,28 @@ export function LaunchersPage() {
                     grisés laisseraient croire qu'il y a quelque chose à
                     débloquer, alors qu'il n'y a simplement rien à ouvrir. */}
                 {l.installed && (
-                <div className={css.cardActions}>
-                  <button
-                    type="button"
-                    className={css.primaryButton}
-                    onClick={() => handleOpen(l)}
-                    disabled={disabled}
-                  >
-                    {isThisOpening && openStatus === 'opening'
-                      ? t('launchers.opening')
-                      : t('launchers.open')}
-                  </button>
-                  <button
-                    type="button"
-                    className={css.primaryButton}
-                    onClick={() => void handleOpenFolder(l)}
-                    disabled={disabled}
-                  >
-                    {isFolderOpening && folderStatus === 'opening'
-                      ? t('launchers.opening')
-                      : t('launchers.folder')}
-                  </button>
-                </div>
+                  <div className={css.cardActions}>
+                    <button
+                      type="button"
+                      className={css.primaryButton}
+                      onClick={() => handleOpen(l)}
+                      disabled={disabled}
+                    >
+                      {isThisOpening && openStatus === 'opening'
+                        ? t('launchers.opening')
+                        : t('launchers.open')}
+                    </button>
+                    <button
+                      type="button"
+                      className={css.primaryButton}
+                      onClick={() => void handleOpenFolder(l)}
+                      disabled={disabled}
+                    >
+                      {isFolderOpening && folderStatus === 'opening'
+                        ? t('launchers.opening')
+                        : t('launchers.folder')}
+                    </button>
+                  </div>
                 )}
 
                 {isThisOpening && (
@@ -319,12 +333,16 @@ export function LaunchersPage() {
                           ? t('launchers.launcherOpened')
                           : t('launchers.failedToOpen')}
                     </div>
-                    <div className={[
-                      css.progressTrack,
-                      openStatus === 'opening' ? css.progressIndeterminate
-                        : openStatus === 'done' ? css.progressDone
-                        : css.progressError,
-                    ].join(' ')}>
+                    <div
+                      className={[
+                        css.progressTrack,
+                        openStatus === 'opening'
+                          ? css.progressIndeterminate
+                          : openStatus === 'done'
+                            ? css.progressDone
+                            : css.progressError,
+                      ].join(' ')}
+                    >
                       <div className={css.progressFill} />
                     </div>
                   </div>
@@ -338,12 +356,16 @@ export function LaunchersPage() {
                           ? t('launchers.folderOpened')
                           : t('launchers.failedToOpen')}
                     </div>
-                    <div className={[
-                      css.progressTrack,
-                      folderStatus === 'opening' ? css.progressIndeterminate
-                        : folderStatus === 'done' ? css.progressDone
-                        : css.progressError,
-                    ].join(' ')}>
+                    <div
+                      className={[
+                        css.progressTrack,
+                        folderStatus === 'opening'
+                          ? css.progressIndeterminate
+                          : folderStatus === 'done'
+                            ? css.progressDone
+                            : css.progressError,
+                      ].join(' ')}
+                    >
                       <div className={css.progressFill} />
                     </div>
                   </div>

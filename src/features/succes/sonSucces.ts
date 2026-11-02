@@ -121,10 +121,7 @@ export function jouerSonSucces(): void {
         // minuscule au départ. Huit millisecondes d'attaque — assez pour ne
         // pas claquer, assez peu pour que le coup se sente.
         g.gain.setValueAtTime(0.0001, depart);
-        g.gain.exponentialRampToValueAtTime(
-          (niveau * part) / voix.length,
-          depart + 0.008,
-        );
+        g.gain.exponentialRampToValueAtTime((niveau * part) / voix.length, depart + 0.008);
         // L'extinction est une constante de temps, et non une rampe jusqu'à
         // zéro. Une rampe exponentielle vers une valeur presque nulle tombe en
         // ligne droite vers sa cible : mesurée, elle ne laissait plus rien au

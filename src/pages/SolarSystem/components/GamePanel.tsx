@@ -8,7 +8,11 @@ import {
   steamPortraitUrl,
 } from '../../../features/library/services/coverArtService';
 import { launchGame } from '../../../features/library/services/launchGame';
-import { desinstallerJeu, memeNom, trouverDesinstalleur } from '../../../features/library/services/uninstallGame';
+import {
+  desinstallerJeu,
+  memeNom,
+  trouverDesinstalleur,
+} from '../../../features/library/services/uninstallGame';
 import { useToast } from '../../../features/toast/ToastContext';
 import { useEnLigne, useEpoqueReseau } from '../../../features/system/useReseau';
 import { useDialog } from '../../../hooks/useDialog';
@@ -38,7 +42,14 @@ type Props = {
  * l'affaire de la scène 3D (updatePopupAnchor dans useSolarScene) : elle-même
  * ne connaît que son contenu.
  */
-export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsConnus = [] }: Props) {
+export function GamePanel({
+  game,
+  sgdbKeySet,
+  onClose,
+  onUpdate,
+  onRemove,
+  tagsConnus = [],
+}: Props) {
   const { t, i18n } = useTranslation();
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
   const toast = useToast();
@@ -72,9 +83,8 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
   // Image personnalisée qui ne se charge pas : retenue par son adresse, pour
   // qu'on cesse de la réclamer (voir `GameCard`, même repli).
   const [imageKo, setImageKo] = useState<string | null>(null);
-  const imagePerso = game.customImageUrl && game.customImageUrl !== imageKo
-    ? game.customImageUrl
-    : null;
+  const imagePerso =
+    game.customImageUrl && game.customImageUrl !== imageKo ? game.customImageUrl : null;
 
   const bannerUrl = imagePerso ?? imgSrc;
   const showFallback = !bannerUrl;
@@ -97,7 +107,6 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
       };
     }
   }, [game.id, game.title, game.customImageUrl, resolvedAppId, isSteam, sgdbKeySet]);
-
 
   function handleImgError() {
     // Hors ligne, l'image n'a pas échoué : elle n'a pas pu être demandée.
@@ -335,7 +344,11 @@ export function GamePanel({ game, sgdbKeySet, onClose, onUpdate, onRemove, tagsC
         <div className={css.actions}>
           <button
             type="button"
-            className={[css.play, launching ? css.playLaunching : '', lance ? css.playLance : ''].join(' ')}
+            className={[
+              css.play,
+              launching ? css.playLaunching : '',
+              lance ? css.playLance : '',
+            ].join(' ')}
             onClick={handlePlay}
             disabled={!canPlay || launching}
             title={!canPlay ? t('gameCard.notAvailable') : t('gameCard.launch')}

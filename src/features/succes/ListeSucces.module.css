@@ -13,7 +13,8 @@
   /* Le même filet segmenté que l'en-tête du panneau : c'est la ligne qui dit
      « ceci est un instrument ». */
   background:
-    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, rgb(var(--hud) / 0.5) 0 1px, transparent 1px 6px) 0 100% / 100%
+      3px no-repeat,
     linear-gradient(rgb(var(--hud) / 0.35) 0 0) 0 100% / 100% 1px no-repeat;
 }
 

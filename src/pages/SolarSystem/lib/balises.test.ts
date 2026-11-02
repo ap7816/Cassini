@@ -30,7 +30,9 @@ describe('la balise d’un soleil lointain', () => {
     const p = placerBalise(centre, oeil);
 
     const vers = (q: { x: number; y: number; z: number }) => {
-      const dx = q.x - oeil.x, dy = q.y - oeil.y, dz = q.z - oeil.z;
+      const dx = q.x - oeil.x,
+        dy = q.y - oeil.y,
+        dz = q.z - oeil.z;
       const n = Math.hypot(dx, dy, dz);
       return [dx / n, dy / n, dz / n];
     };

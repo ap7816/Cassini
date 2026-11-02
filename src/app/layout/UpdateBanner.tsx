@@ -22,11 +22,7 @@ export function UpdateBanner({ u }: { u: UpdaterState }) {
         <>
           <div className={css.header}>
             <span className={css.title}>{t('updater.available')}</span>
-            <button
-              className={css.dismiss}
-              onClick={u.dismiss}
-              aria-label={t('updater.dismiss')}
-            >
+            <button className={css.dismiss} onClick={u.dismiss} aria-label={t('updater.dismiss')}>
               ✕
             </button>
           </div>

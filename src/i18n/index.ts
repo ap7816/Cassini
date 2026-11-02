@@ -29,7 +29,9 @@ function languePreferee(): Langue {
 }
 
 void i18n.use(initReactI18next).init({
-  resources: Object.fromEntries(LANGUES.map(({ code }) => [code, { translation: TRADUCTIONS[code] }])),
+  resources: Object.fromEntries(
+    LANGUES.map(({ code }) => [code, { translation: TRADUCTIONS[code] }]),
+  ),
   // Provisoire : à l'import de ce module, le stockage n'est pas encore chargé.
   // `appliquerLangueEnregistree` corrige avant le premier rendu.
   lng: languePreferee(),

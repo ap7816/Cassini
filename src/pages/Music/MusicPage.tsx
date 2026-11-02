@@ -42,21 +42,23 @@ export function MusicPage() {
   const { t, i18n } = useTranslation();
   const music = useMusicPlayer();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query   = (searchParams.get('q') ?? '').toLowerCase().trim();
-  const sortBy  = (searchParams.get('sb')  ?? 'name') as SortBy;
-  const sortDir = (searchParams.get('sd')  ?? 'asc')  as SortDir;
-  const trackPaths = useMemo(() => music.tracks.map(t => t.path), [music.tracks]);
+  const query = (searchParams.get('q') ?? '').toLowerCase().trim();
+  const sortBy = (searchParams.get('sb') ?? 'name') as SortBy;
+  const sortDir = (searchParams.get('sd') ?? 'asc') as SortDir;
+  const trackPaths = useMemo(() => music.tracks.map((t) => t.path), [music.tracks]);
   const { getMeta, loading: metaLoading } = useBasicBatch(trackPaths);
   const { getEnriched, progress: enrichProgress } = useAutoEnrich({
-    paths: trackPaths, getMeta, enabled: !metaLoading,
+    paths: trackPaths,
+    getMeta,
+    enabled: !metaLoading,
   });
 
   // État de la barre de progression d'enrichissement dérivé d'enrichProgress
-  const showBar          = enrichProgress !== null;
-  const barLabel         = t('music.enrichSearching');
-  const barDone          = enrichProgress?.done  ?? 0;
-  const barTotal         = enrichProgress?.total ?? 1;
-  const barPct           = barTotal > 0 ? Math.round((barDone / barTotal) * 100) : 0;
+  const showBar = enrichProgress !== null;
+  const barLabel = t('music.enrichSearching');
+  const barDone = enrichProgress?.done ?? 0;
+  const barTotal = enrichProgress?.total ?? 1;
+  const barPct = barTotal > 0 ? Math.round((barDone / barTotal) * 100) : 0;
   const barIndeterminate = barDone === 0;
 
   const { dlgState, closeDialog, prompt, confirm } = useDialog();
@@ -73,7 +75,9 @@ export function MusicPage() {
   const [moveTarget, setMoveTarget] = useState<TrackWithIdx | null>(null);
 
   // Réinitialise la navigation quand le dossier racine change
-  useEffect(() => { setCurrentPath([]); }, [music.folderPath]);
+  useEffect(() => {
+    setCurrentPath([]);
+  }, [music.folderPath]);
 
   // Charge tous les sous-dossiers (y compris les vides) pour les afficher dans l'arbre
   useEffect(() => {
@@ -111,8 +115,10 @@ export function MusicPage() {
   // Met à jour le critère et la direction de tri dans les paramètres d'URL
   function setSort(by: SortBy, dir: SortDir) {
     const p = new URLSearchParams(searchParams);
-    if (by  === 'name') p.delete('sb'); else p.set('sb', by);
-    if (dir === 'asc')  p.delete('sd'); else p.set('sd', dir);
+    if (by === 'name') p.delete('sb');
+    else p.set('sb', by);
+    if (dir === 'asc') p.delete('sd');
+    else p.set('sd', dir);
     setSearchParams(p, { replace: true });
   }
 
@@ -133,12 +139,12 @@ export function MusicPage() {
 
   // Prévisualisation live pendant la sélection : met à jour React uniquement, sans persister
   function previewFolderColor(folderPath: string, color: string) {
-    setFolderColors(prev => ({ ...prev, [folderPath]: color }));
+    setFolderColors((prev) => ({ ...prev, [folderPath]: color }));
   }
 
   // Appelé à la fermeture du sélecteur natif : persiste la couleur dans le stockage
   function saveFolderColor(folderPath: string, color: string) {
-    setFolderColors(prev => {
+    setFolderColors((prev) => {
       const next = { ...prev, [folderPath]: color };
       writeMusicFolderColors(next);
       return next;
@@ -155,7 +161,9 @@ export function MusicPage() {
     try {
       await invoke('create_music_folder', { path: targetAbs });
       await music.loadFolder(root);
-    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
+    } catch (e) {
+      toast.error(t('music.errorGeneric', { error: String(e) }));
+    }
   }
 
   // Renomme un dossier et met à jour le chemin de navigation si celui-ci est un ancêtre courant
@@ -169,7 +177,8 @@ export function MusicPage() {
 
       // Met à jour le chemin de navigation si le dossier renommé est un ancêtre du chemin courant
       const nodeSegs = node.fullPath ? node.fullPath.split('/') : [];
-      const matchesPrefix = nodeSegs.length > 0 && nodeSegs.every((seg, i) => currentPath[i] === seg);
+      const matchesPrefix =
+        nodeSegs.length > 0 && nodeSegs.every((seg, i) => currentPath[i] === seg);
       if (matchesPrefix) {
         const updated = [...currentPath];
         updated[nodeSegs.length - 1] = newName;
@@ -177,15 +186,18 @@ export function MusicPage() {
       }
 
       await music.loadFolder(root);
-    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
+    } catch (e) {
+      toast.error(t('music.errorGeneric', { error: String(e) }));
+    }
   }
 
   // Demande confirmation et supprime récursivement un dossier avec tout son contenu
   async function handleDeleteFolder(node: FolderNode) {
     const n = countTracks(node);
-    const msg = n > 0
-      ? t('music.deleteFolderWithTracks', { name: node.name, count: n })
-      : t('music.deleteFolderEmpty', { name: node.name });
+    const msg =
+      n > 0
+        ? t('music.deleteFolderWithTracks', { name: node.name, count: n })
+        : t('music.deleteFolderEmpty', { name: node.name });
     const ok = await confirm(msg, { danger: true });
     if (!ok) return;
     const root = music.folderPath;
@@ -193,7 +205,9 @@ export function MusicPage() {
     try {
       await invoke('delete_music_folder', { path: absPath(root, node.fullPath) });
       await music.loadFolder(root);
-    } catch (e) { toast.error(t('music.errorGeneric', { error: String(e) })); }
+    } catch (e) {
+      toast.error(t('music.errorGeneric', { error: String(e) }));
+    }
   }
 
   // Déplace une piste vers le dossier sélectionné dans la modale
@@ -205,14 +219,18 @@ export function MusicPage() {
       await invoke('move_music_file', { src: track.path, dstFolder: dstAbs });
       setMoveTarget(null);
       await music.loadFolder(root);
-    } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
+    } catch (err) {
+      toast.error(t('music.errorGeneric', { error: String(err) }));
+    }
   }
 
   // Ouvre un sélecteur de fichier image, embede la pochette choisie dans le fichier audio
   // et met à jour l'affichage immédiatement sans rechargement
   async function handleChangeArtwork(track: TrackWithIdx) {
     const selected = await open({
-      filters: [{ name: t('files.images'), extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }],
+      filters: [
+        { name: t('files.images'), extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] },
+      ],
       multiple: false,
     });
     if (!selected || typeof selected !== 'string') return;
@@ -220,11 +238,16 @@ export function MusicPage() {
       await invoke('write_audio_cover_from_file', { audioPath: track.path, imagePath: selected });
       resetEnrichment(track.path);
       await refreshCover(track.path);
-    } catch (err) { toast.error(t('music.errorGeneric', { error: String(err) })); }
+    } catch (err) {
+      toast.error(t('music.errorGeneric', { error: String(err) }));
+    }
   }
 
   // Construction de l'arbre, du nœud courant et des listes triées
-  const allTracks = useMemo(() => music.tracks.map((t, i) => ({ ...t, originalIndex: i })), [music.tracks]);
+  const allTracks = useMemo(
+    () => music.tracks.map((t, i) => ({ ...t, originalIndex: i })),
+    [music.tracks],
+  );
   const tree = useMemo(() => buildTree(allTracks, allDirs), [allTracks, allDirs]);
   const currentNode = useMemo(() => getNodeAtPath(tree, currentPath), [tree, currentPath]);
 
@@ -233,8 +256,8 @@ export function MusicPage() {
 
   const sortedFolders = useMemo(() => {
     const dir = sortDir === 'desc' ? -1 : 1;
-    return [...currentNode.children].sort((a, b) =>
-      dir * a.name.localeCompare(b.name)  // dossiers toujours par nom
+    return [...currentNode.children].sort(
+      (a, b) => dir * a.name.localeCompare(b.name), // dossiers toujours par nom
     );
   }, [currentNode.children, sortDir]);
 
@@ -247,7 +270,8 @@ export function MusicPage() {
         return dir * (da - db);
       }
       if (sortBy === 'ext') {
-        const ea = trackExt(a.path), eb = trackExt(b.path);
+        const ea = trackExt(a.path),
+          eb = trackExt(b.path);
         return dir * (ea.localeCompare(eb) || a.title.localeCompare(b.title));
       }
       return dir * a.title.localeCompare(b.title); // 'name' (défaut)
@@ -280,7 +304,9 @@ export function MusicPage() {
   const searchResults = useMemo(() => {
     if (!query) return [];
     return allTracks
-      .filter(t => t.title.toLowerCase().includes(query) || t.folder.toLowerCase().includes(query))
+      .filter(
+        (t) => t.title.toLowerCase().includes(query) || t.folder.toLowerCase().includes(query),
+      )
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [allTracks, query]);
 
@@ -288,12 +314,21 @@ export function MusicPage() {
   const isEmpty = !music.loading && music.tracks.length === 0;
 
   return (
-    <div className={css.page} style={{ position: 'relative' }} onClick={() => { setCtxMenu(null); setTrackCtxMenu(null); }}>
+    <div
+      className={css.page}
+      style={{ position: 'relative' }}
+      onClick={() => {
+        setCtxMenu(null);
+        setTrackCtxMenu(null);
+      }}
+    >
       {/* ── En-tête ── */}
       <div className={css.header}>
         <div className={css.enteteTitre}>
           <h1 className={css.titrePage} title={music.folderPath}>
-            {currentPath.length > 0 ? currentPath[currentPath.length - 1] : folderName ?? t('nav.music')}
+            {currentPath.length > 0
+              ? currentPath[currentPath.length - 1]
+              : (folderName ?? t('nav.music'))}
           </h1>
           <p className={css.sousTitre}>
             {music.loading
@@ -323,9 +358,13 @@ export function MusicPage() {
               onClick={() => music.loadFolder(music.folderPath)}
               disabled={music.loading}
               title={t('music.refresh')}
-            >{t('music.refresh')}</button>
+            >
+              {t('music.refresh')}
+            </button>
           )}
-          <button className={css.refreshBtn} onClick={handleChooseFolder}>{t('music.chooseFolder')}</button>
+          <button className={css.refreshBtn} onClick={handleChooseFolder}>
+            {t('music.chooseFolder')}
+          </button>
         </div>
       </div>
 
@@ -334,13 +373,27 @@ export function MusicPage() {
       {/* ── Nav bar ── */}
       {music.tracks.length > 0 && folderName && (
         <div className={css.navBar}>
-          <button className={css.backBtn} onClick={() => setCurrentPath(p => p.slice(0, -1))} disabled={currentPath.length === 0}>←</button>
+          <button
+            className={css.backBtn}
+            onClick={() => setCurrentPath((p) => p.slice(0, -1))}
+            disabled={currentPath.length === 0}
+          >
+            ←
+          </button>
           <Breadcrumb
             rootName={folderName}
             path={currentPath}
-            onNavigate={idx => idx < 0 ? setCurrentPath([]) : setCurrentPath(currentPath.slice(0, idx + 1))}
+            onNavigate={(idx) =>
+              idx < 0 ? setCurrentPath([]) : setCurrentPath(currentPath.slice(0, idx + 1))
+            }
           />
-          <button className={css.newFolderBtn} onClick={handleCreateFolder} title={t('music.newFolderPrompt')}>{t('music.newFolderBtn')}</button>
+          <button
+            className={css.newFolderBtn}
+            onClick={handleCreateFolder}
+            title={t('music.newFolderPrompt')}
+          >
+            {t('music.newFolderBtn')}
+          </button>
           <SortDropdown sortBy={sortBy} sortDir={sortDir} onChange={setSort} />
         </div>
       )}
@@ -353,59 +406,67 @@ export function MusicPage() {
       )}
 
       {/* ── Récemment écoutés ── */}
-      {!query && music.recentlyPlayed.length > 0 && (() => {
-        // Résout les chemins en pistes valides (filtre les pistes supprimées ou non chargées)
-        const recentTracks = music.recentlyPlayed
-          .map(path => allTracks.find(t => t.path === path))
-          .filter((t): t is TrackWithIdx => t !== undefined);
-        if (recentTracks.length === 0) return null;
-        return (
-          <div className={css.recentSection}>
-            <div className={css.recentTitle}>{t('music.recentlyPlayed')}</div>
-            <div className={css.recentStrip}>
-              {recentTracks.map((track, idx) => (
-                <TrackCard
-                  key={track.path}
-                  track={track}
-                  index={idx}
-                  isActive={track.originalIndex === music.currentIndex}
-                  isPlaying={music.isPlaying}
-                  onSelect={() => music.selectTrack(track.originalIndex)}
-                  onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
-                  meta={getMeta(track.path)}
-                  enriched={getEnriched(track.path)}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {isEmpty && <div className={css.emptyState}>{music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}</div>}
-
-      {/* ── Search results ── */}
-      {!isEmpty && query && (
-        searchResults.length === 0
-          ? <div className={css.emptyState}>{t('music.noResults', { query })}</div>
-          : <div className={css.gridScroll}>
-              <EnTeteColonnes />
-              <div className={css.liste}>
-                {searchResults.map((track, idx) => (
-                  <TrackRow
+      {!query &&
+        music.recentlyPlayed.length > 0 &&
+        (() => {
+          // Résout les chemins en pistes valides (filtre les pistes supprimées ou non chargées)
+          const recentTracks = music.recentlyPlayed
+            .map((path) => allTracks.find((t) => t.path === path))
+            .filter((t): t is TrackWithIdx => t !== undefined);
+          if (recentTracks.length === 0) return null;
+          return (
+            <div className={css.recentSection}>
+              <div className={css.recentTitle}>{t('music.recentlyPlayed')}</div>
+              <div className={css.recentStrip}>
+                {recentTracks.map((track, idx) => (
+                  <TrackCard
                     key={track.path}
                     track={track}
-                    rang={idx + 1}
-                    active={track.originalIndex === music.currentIndex}
-                    enLecture={music.isPlaying}
+                    index={idx}
+                    isActive={track.originalIndex === music.currentIndex}
+                    isPlaying={music.isPlaying}
                     onSelect={() => music.selectTrack(track.originalIndex)}
-                    onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
+                    onContextMenu={(e) => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                     meta={getMeta(track.path)}
                     enriched={getEnriched(track.path)}
                   />
                 ))}
               </div>
             </div>
+          );
+        })()}
+
+      {isEmpty && (
+        <div className={css.emptyState}>
+          {music.folderPath ? t('music.noAudio') : t('music.chooseFirst')}
+        </div>
       )}
+
+      {/* ── Search results ── */}
+      {!isEmpty &&
+        query &&
+        (searchResults.length === 0 ? (
+          <div className={css.emptyState}>{t('music.noResults', { query })}</div>
+        ) : (
+          <div className={css.gridScroll}>
+            <EnTeteColonnes />
+            <div className={css.liste}>
+              {searchResults.map((track, idx) => (
+                <TrackRow
+                  key={track.path}
+                  track={track}
+                  rang={idx + 1}
+                  active={track.originalIndex === music.currentIndex}
+                  enLecture={music.isPlaying}
+                  onSelect={() => music.selectTrack(track.originalIndex)}
+                  onContextMenu={(e) => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
+                  meta={getMeta(track.path)}
+                  enriched={getEnriched(track.path)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
 
       {/* ── Dossiers, puis pistes ──
 
@@ -418,7 +479,7 @@ export function MusicPage() {
             <section className={css.section}>
               <h2 className={css.sectionTitre}>{t('music.folders')}</h2>
               <div className={css.fileGrid} data-maingrid="true">
-                {sortedFolders.map(folder => (
+                {sortedFolders.map((folder) => (
                   <FolderCard
                     key={folder.fullPath}
                     folder={folder}
@@ -426,7 +487,7 @@ export function MusicPage() {
                     currentIndex={music.currentIndex}
                     isPlaying={music.isPlaying}
                     onClick={() => setCurrentPath([...currentPath, folder.name])}
-                    onContextMenu={e => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
+                    onContextMenu={(e) => setCtxMenu({ x: e.clientX, y: e.clientY, node: folder })}
                   />
                 ))}
               </div>
@@ -435,7 +496,9 @@ export function MusicPage() {
 
           {sortedTracks.length > 0 && (
             <section className={css.section}>
-              {sortedFolders.length > 0 && <h2 className={css.sectionTitre}>{t('music.tracks')}</h2>}
+              {sortedFolders.length > 0 && (
+                <h2 className={css.sectionTitre}>{t('music.tracks')}</h2>
+              )}
               <EnTeteColonnes />
               <div className={css.liste}>
                 {sortedTracks.map((track, idx) => (
@@ -446,7 +509,7 @@ export function MusicPage() {
                     active={track.originalIndex === music.currentIndex}
                     enLecture={music.isPlaying}
                     onSelect={() => music.selectTrack(track.originalIndex)}
-                    onContextMenu={e => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
+                    onContextMenu={(e) => setTrackCtxMenu({ x: e.clientX, y: e.clientY, track })}
                     meta={getMeta(track.path)}
                     enriched={getEnriched(track.path)}
                     cibleDefilement
@@ -475,8 +538,20 @@ export function MusicPage() {
       {showBar && (
         <div className={css.enrichBar}>
           <svg className={css.enrichSpinner} viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.2" />
-            <path d="M10 3 a7 7 0 0 1 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <circle
+              cx="10"
+              cy="10"
+              r="7"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeOpacity="0.2"
+            />
+            <path
+              d="M10 3 a7 7 0 0 1 7 7"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
           </svg>
 
           <span className={css.enrichBarLabel}>{barLabel}</span>
@@ -493,7 +568,9 @@ export function MusicPage() {
             )}
           </div>
 
-          <span className={css.enrichBarCount}>{barDone} / {barTotal}</span>
+          <span className={css.enrichBarCount}>
+            {barDone} / {barTotal}
+          </span>
         </div>
       )}
 
@@ -516,7 +593,7 @@ export function MusicPage() {
           rootName={folderName}
           folderPath={music.folderPath}
           onClose={() => setMoveTarget(null)}
-          onConfirm={dest => void handleMoveTrack(moveTarget, dest)}
+          onConfirm={(dest) => void handleMoveTrack(moveTarget, dest)}
         />
       )}
 

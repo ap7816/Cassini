@@ -5,8 +5,10 @@
 // suivante à chaque fin de morceau. Les crédits y sont recensés.
 
 import {
-  readAmbientEnabled, writeAmbientEnabled,
-  readAmbientVolume, writeAmbientVolume,
+  readAmbientEnabled,
+  writeAmbientEnabled,
+  readAmbientVolume,
+  writeAmbientVolume,
 } from '../../services/storage';
 import { AMBIENT_TRACKS, ambientIndexOf, randomAmbientIndex } from './tracks';
 
@@ -27,7 +29,7 @@ export function isAmbientPlaying(): boolean {
 }
 
 function notify(): void {
-  _listeners.forEach(fn => fn());
+  _listeners.forEach((fn) => fn());
 }
 
 function getAudio(): HTMLAudioElement {
@@ -78,7 +80,9 @@ function wire(audio: HTMLAudioElement): void {
     playNext();
   });
 
-  audio.addEventListener('playing', () => { _misses = 0; });
+  audio.addEventListener('playing', () => {
+    _misses = 0;
+  });
 
   // Fondu de fin de piste, armé à l'approche de la fin.
   //
@@ -131,11 +135,14 @@ export function initAmbient(): void {
   } else {
     audio.pause();
   }
-
 }
 
-export function getAmbientEnabled(): boolean { return _enabled; }
-export function getAmbientVolume(): number   { return _volume; }
+export function getAmbientEnabled(): boolean {
+  return _enabled;
+}
+export function getAmbientVolume(): number {
+  return _volume;
+}
 
 export function setAmbientEnabled(v: boolean): void {
   _enabled = v;
@@ -173,7 +180,10 @@ const FADE_TICK_MS = 20;
 let _fadeTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearFade(): void {
-  if (_fadeTimer) { clearInterval(_fadeTimer); _fadeTimer = null; }
+  if (_fadeTimer) {
+    clearInterval(_fadeTimer);
+    _fadeTimer = null;
+  }
 }
 
 /**
@@ -193,9 +203,7 @@ function fadeTo(target: number, ms: number, onDone?: () => void): void {
 
   _fadeTimer = setInterval(() => {
     left -= 1;
-    audio.volume = left <= 0
-      ? target
-      : Math.min(1, Math.max(0, audio.volume + step));
+    audio.volume = left <= 0 ? target : Math.min(1, Math.max(0, audio.volume + step));
     if (left <= 0) {
       clearFade();
       onDone?.();

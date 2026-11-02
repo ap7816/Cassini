@@ -19,7 +19,6 @@ function tempsCourt(sec: number): string {
 /** Durée de l'animation de sortie, doit rester alignée sur le CSS. */
 const LEAVE_MS = 280;
 
-
 /**
  * Ce qui joue, en bas à gauche.
  *
@@ -69,7 +68,6 @@ export function MiniPlayer() {
   const enrichedCover = track ? (getEnriched(track.path)?.coverUrl ?? null) : null;
   const cover = meta?.coverDataUrl ?? enrichedCover;
 
-
   if (!visible) return null;
 
   const atFirst = !music.shuffleMode && music.currentIndex <= 0 && music.repeatMode !== 'all';
@@ -92,7 +90,9 @@ export function MiniPlayer() {
         {cover ? (
           <img src={cover} className={css.art} alt="" aria-hidden="true" draggable={false} />
         ) : (
-          <span className={`${css.art} ${css.artPlaceholder}`} aria-hidden="true">♪</span>
+          <span className={`${css.art} ${css.artPlaceholder}`} aria-hidden="true">
+            ♪
+          </span>
         )}
 
         <span className={css.textes}>

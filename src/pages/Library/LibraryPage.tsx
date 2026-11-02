@@ -16,7 +16,18 @@ import { aLeTag, tagsDeLaBibliotheque } from '../../features/library/services/ta
 import { libelleTag } from '../../components/Tags/Tags';
 
 type ViewMode = 'games' | 'favorites';
-type PlatformFilter = 'all' | 'Steam' | 'Epic' | 'BattleNet' | 'Riot' | 'Rockstar' | 'Ubisoft' | 'Hytale' | 'HoYoPlay' | 'Xbox' | 'Other';
+type PlatformFilter =
+  | 'all'
+  | 'Steam'
+  | 'Epic'
+  | 'BattleNet'
+  | 'Riot'
+  | 'Rockstar'
+  | 'Ubisoft'
+  | 'Hytale'
+  | 'HoYoPlay'
+  | 'Xbox'
+  | 'Other';
 type InstalledFilter = 'all' | 'yes' | 'no';
 type SortMode = 'recent' | 'az' | 'za';
 
@@ -122,9 +133,7 @@ export function LibraryPage() {
     ];
     return [
       { value: 'all' as PlatformFilter, label: t('filters.all') },
-      ...libelles
-        .filter(([v]) => presentes.has(v))
-        .map(([value, label]) => ({ value, label })),
+      ...libelles.filter(([v]) => presentes.has(v)).map(([value, label]) => ({ value, label })),
     ];
   }, [games, t]);
 
@@ -149,7 +158,10 @@ export function LibraryPage() {
   }
 
   const [launchingId, setLaunchingId] = useState<string | null>(null);
-  const [launchOverlay, setLaunchOverlay] = useState<{ title: string; phase: 'opening' | 'launched' } | null>(null);
+  const [launchOverlay, setLaunchOverlay] = useState<{
+    title: string;
+    phase: 'opening' | 'launched';
+  } | null>(null);
 
   // Lance un jeu et affiche un overlay de feedback pendant le démarrage
   async function handlePlay(game: Game) {
@@ -188,13 +200,10 @@ export function LibraryPage() {
   // Applique la recherche, les filtres de plateforme/installation et le tri
   const filteredGames = useMemo(() => {
     let list = deferredQ ? baseList.filter((g) => g.titleLower.includes(deferredQ)) : baseList;
-    if (platformFilter !== 'all')
-      list = list.filter((g) => g.game.platform === platformFilter);
+    if (platformFilter !== 'all') list = list.filter((g) => g.game.platform === platformFilter);
     if (tagFilter !== 'all') list = list.filter((g) => aLeTag(g.game, tagFilter));
-    if (installedFilter === 'yes')
-      list = list.filter((g) => g.game.installed !== false);
-    if (installedFilter === 'no')
-      list = list.filter((g) => g.game.installed === false);
+    if (installedFilter === 'yes') list = list.filter((g) => g.game.installed !== false);
+    if (installedFilter === 'no') list = list.filter((g) => g.game.installed === false);
     return list
       .slice()
       .sort((a, b) => {
@@ -216,8 +225,8 @@ export function LibraryPage() {
       ? t('library.subtitleFavorites', { count: favoritesCount, total: games.length })
       : q
         ? t('library.subtitleSearch', { count: filteredGames.length, total: games.length })
-        // Deux nombres, donc deux accords : chacun porte son propre pluriel.
-        : `${t('library.gameCount', { count: games.length })} • ${t('library.installedCount', { count: installedCount })}`;
+        : // Deux nombres, donc deux accords : chacun porte son propre pluriel.
+          `${t('library.gameCount', { count: games.length })} • ${t('library.installedCount', { count: installedCount })}`;
 
   return (
     <div className={css.page}>
@@ -227,9 +236,11 @@ export function LibraryPage() {
           <p className={css.subtitle}>{subtitleText}</p>
           {(totalSizeBytes > 0 || disque) && (
             <p className={css.diskLine}>
-              {totalSizeBytes > 0 && t('library.diskUsed', { size: formaterTaille(totalSizeBytes, i18n.language) })}
+              {totalSizeBytes > 0 &&
+                t('library.diskUsed', { size: formaterTaille(totalSizeBytes, i18n.language) })}
               {totalSizeBytes > 0 && disque && ' · '}
-              {disque && t('library.diskFree', { free: formaterTaille(disque.libre, i18n.language) })}
+              {disque &&
+                t('library.diskFree', { free: formaterTaille(disque.libre, i18n.language) })}
             </p>
           )}
         </div>

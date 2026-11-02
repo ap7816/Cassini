@@ -102,9 +102,7 @@ function saisieEnCours(e: KeyboardEvent): boolean {
   const el = e.target as HTMLElement | null;
   if (!el) return false;
   const tag = el.tagName;
-  return (
-    tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable
-  );
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 }
 
 /**
@@ -207,9 +205,7 @@ function logRenderer(renderer: THREE.WebGLRenderer): void {
   try {
     const gl = renderer.getContext();
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    const nom = ext
-      ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
-      : gl.getParameter(gl.RENDERER);
+    const nom = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
     console.info('[système solaire] rendu par :', nom);
   } catch {
     /* information de diagnostic : son absence ne doit rien interrompre */
@@ -383,7 +379,6 @@ export function useSolarScene({
     container.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
-
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       lireReglages().camChamp,
@@ -395,7 +390,11 @@ export function useSolarScene({
     // Débordement lumineux et courbe de rendu filmique. Toute la scène passe
     // par cette chaîne : plus aucun appel direct à `renderer.render`.
     const post = createPostprocess(
-      renderer, scene, camera, container.clientWidth, container.clientHeight,
+      renderer,
+      scene,
+      camera,
+      container.clientWidth,
+      container.clientHeight,
     );
 
     // ── Mouvement réduit ─────────────────────────────────────────────────
@@ -404,7 +403,9 @@ export function useSolarScene({
     // rotations et voyages de caméra sont calculés image par image.
     const prefMouvement = window.matchMedia('(prefers-reduced-motion: reduce)');
     let mouvementReduit = prefMouvement.matches;
-    const surPreference = (e: MediaQueryListEvent) => { mouvementReduit = e.matches; };
+    const surPreference = (e: MediaQueryListEvent) => {
+      mouvementReduit = e.matches;
+    };
     prefMouvement.addEventListener('change', surPreference);
 
     const controls = new OrbitControls(camera, canvas);
@@ -473,7 +474,9 @@ export function useSolarScene({
       };
     };
 
-    const cadrage = courant ? cadrageDe(courant) : { frameR: 400, position: new THREE.Vector3(0, 420, 380) };
+    const cadrage = courant
+      ? cadrageDe(courant)
+      : { frameR: 400, position: new THREE.Vector3(0, 420, 380) };
     const frameR = cadrage.frameR;
     const homeCam = cadrage.position;
     const homeLook = courant ? courant.centre.clone() : new THREE.Vector3();
@@ -519,8 +522,14 @@ export function useSolarScene({
     /** Position du pointeur, en pixels de la fenêtre. */
     let pointeurX = -1;
     let pointeurY = -1;
-    const surPointeur = (e: PointerEvent) => { pointeurX = e.clientX; pointeurY = e.clientY; };
-    const surSortie = () => { pointeurX = -1; pointeurY = -1; };
+    const surPointeur = (e: PointerEvent) => {
+      pointeurX = e.clientX;
+      pointeurY = e.clientY;
+    };
+    const surSortie = () => {
+      pointeurX = -1;
+      pointeurY = -1;
+    };
     canvas.addEventListener('pointermove', surPointeur);
     canvas.addEventListener('pointerleave', surSortie);
     /** Pour projeter un point du monde sur l'écran. */
@@ -539,7 +548,10 @@ export function useSolarScene({
       // La cible est posée à la distance où elle était : l'orbite garde son
       // rayon, et la molette continue de se comporter comme avant.
       const rayon = Math.max(1, camera.position.distanceTo(controls.target));
-      const vise = endroit.clone().sub(camera.position).normalize()
+      const vise = endroit
+        .clone()
+        .sub(camera.position)
+        .normalize()
         .multiplyScalar(rayon)
         .add(camera.position);
       animateCam(camera.position.clone(), vise, 0.7, lissageQuintique);
@@ -670,10 +682,9 @@ export function useSolarScene({
     // ── Caméra ───────────────────────────────────────────────────────────
     // Entrée en scène : on arrive de loin et l'on se resserre sur le système
     // courant, ce qui montre au passage ses voisins dans la galaxie.
-    camera.position.copy(homeLook).addScaledVector(
-      new THREE.Vector3().subVectors(homeCam, homeLook),
-      ARRIVAL_ZOOM,
-    );
+    camera.position
+      .copy(homeLook)
+      .addScaledVector(new THREE.Vector3().subVectors(homeCam, homeLook), ARRIVAL_ZOOM);
     camera.lookAt(homeLook);
     controls.target.copy(homeLook);
     // Assez loin pour embrasser toute la galaxie : c'est la vue d'ensemble qui
@@ -735,13 +746,7 @@ export function useSolarScene({
      * l'étendue horizontale, ce facteur doit être compensé en amont sous peine
      * d'étirer la scène pendant tout le repli.
      */
-    const applyView = (
-      left: number,
-      right: number,
-      w: number,
-      h: number,
-      force = false,
-    ) => {
+    const applyView = (left: number, right: number, w: number, h: number, force = false) => {
       if (w === 0 || h === 0) return;
       if (!force && left === viewLeft && right === viewRight) return;
 
@@ -915,9 +920,7 @@ export function useSolarScene({
       p.mesh.getWorldPosition(camMonde);
       // Distance déduite de la place à laisser, et non d'un multiple fixe du
       // rayon : c'est la largeur de la bande qui manque, pas la profondeur.
-      const distance = distanceApproche(
-        p.rayonVisuel, derniereBande, dernierViewH, camera.fov,
-      );
+      const distance = distanceApproche(p.rayonVisuel, derniereBande, dernierViewH, camera.fov);
 
       // Le point visé n'est pas la planète, mais un point décalé sur le côté.
       //
@@ -930,9 +933,7 @@ export function useSolarScene({
       // elle tenait déjà : inutile de décentrer sans raison.
       const place = composerFiche({
         bande: derniereBande,
-        demiPlanete: demiLargeurApparente(
-          p.rayonVisuel, distance, dernierViewH, camera.fov,
-        ),
+        demiPlanete: demiLargeurApparente(p.rayonVisuel, distance, dernierViewH, camera.fov),
       });
       // Seul le décalage sert ici : la largeur est recalculée à chaque frame
       // par `updatePopupAnchor`, qui seul connaît la bande du moment.
@@ -943,9 +944,9 @@ export function useSolarScene({
         // Viser à droite de la planète la fait apparaître à gauche, et la fiche
         // trouve sa place à droite.
         camDroite.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-        camLateral.copy(camDroite).multiplyScalar(
-          pixelsEnMonde(decalage, distance, dernierViewH, camera.fov),
-        );
+        camLateral
+          .copy(camDroite)
+          .multiplyScalar(pixelsEnMonde(decalage, distance, dernierViewH, camera.fov));
       }
 
       const pose = poserCamera(camMonde, camOffset, distance, camLateral);
@@ -1031,17 +1032,26 @@ export function useSolarScene({
       // Trajet en arc plutôt qu'en ligne droite — voir lib/flightPath, où sa
       // composition est vérifiée, notamment qu'il ne traverse aucun soleil.
       const trajet = composerTrajet(
-        depart, c.position, galaxie.rayon, controls.target.clone(), s.centre,
+        depart,
+        c.position,
+        galaxie.rayon,
+        controls.target.clone(),
+        s.centre,
       );
-      const controle = new THREE.Vector3(
-        trajet.controle.x, trajet.controle.y, trajet.controle.z,
-      );
+      const controle = new THREE.Vector3(trajet.controle.x, trajet.controle.y, trajet.controle.z);
       const controleRegard = new THREE.Vector3(
-        trajet.controleRegard.x, trajet.controleRegard.y, trajet.controleRegard.z,
+        trajet.controleRegard.x,
+        trajet.controleRegard.y,
+        trajet.controleRegard.z,
       );
 
       animateCam(
-        c.position, s.centre.clone(), trajet.duree, lissageQuintique, controle, controleRegard,
+        c.position,
+        s.centre.clone(),
+        trajet.duree,
+        lissageQuintique,
+        controle,
+        controleRegard,
       );
       onSysteme(s.platform);
     }
@@ -1061,8 +1071,8 @@ export function useSolarScene({
       // les systèmes personnalisés où on l'a rangé. Celui qu'on regarde passe
       // d'abord — choisir un jeu dans la liste de « Favoris » ne doit pas
       // renvoyer vers son launcher.
-      const proprietaire = (vise && contient(vise) ? vise : undefined)
-        ?? galaxie.systemes.find(contient);
+      const proprietaire =
+        (vise && contient(vise) ? vise : undefined) ?? galaxie.systemes.find(contient);
       if (!proprietaire) return;
 
       if (proprietaire !== vise) allerVers(proprietaire);
@@ -1077,11 +1087,16 @@ export function useSolarScene({
     // ── Édition d'un système personnalisé ────────────────────────────────
     // Session d'aperçu : le brouillon est appliqué à chaque image, orbites
     // figées à l'angle où chaque planète se trouvait quand on l'a ouverte.
-    let apercu: { cle: string; reglage: ReglageSysteme; angles: Map<PlanetEntry, number> } | null = null;
+    let apercu: { cle: string; reglage: ReglageSysteme; angles: Map<PlanetEntry, number> } | null =
+      null;
 
     const REGLAGE_NEUTRE: ReglageSysteme = {
-      soleil: BORNES.soleil.defaut, vitesse: BORNES.vitesse.defaut, aPlat: false,
-      couleurSoleil: null, etoiles: BORNES.etoiles.defaut, placements: {},
+      soleil: BORNES.soleil.defaut,
+      vitesse: BORNES.vitesse.defaut,
+      aPlat: false,
+      couleurSoleil: null,
+      etoiles: BORNES.etoiles.defaut,
+      placements: {},
     };
 
     const appliquerApercu = (sys: SystemeGalaxie, a: NonNullable<typeof apercu>) => {
@@ -1127,13 +1142,16 @@ export function useSolarScene({
     const pointGlisse = new THREE.Vector3();
     const centreGlisse = new THREE.Vector3();
 
-    const systemeEdite = () => (apercu ? galaxie.get(apercu.cle) ?? null : null);
+    const systemeEdite = () => (apercu ? (galaxie.get(apercu.cle) ?? null) : null);
 
     editionRef.current = {
       lire(cle) {
         const sys = galaxie.forcer(cle);
         if (!sys) return null;
-        return etatDe(sys, apercu?.cle === cle ? apercu.reglage : entreeDe(cle)?.reglage ?? REGLAGE_NEUTRE);
+        return etatDe(
+          sys,
+          apercu?.cle === cle ? apercu.reglage : (entreeDe(cle)?.reglage ?? REGLAGE_NEUTRE),
+        );
       },
 
       apercu(cle, jeux, reglage) {
@@ -1186,7 +1204,9 @@ export function useSolarScene({
       pickMeshes,
       meshToEntry,
       soleils: galaxie.systemes.map((s) => s.hitSoleil),
-      onHover: (hit) => { hoveredEntry = hit; },
+      onHover: (hit) => {
+        hoveredEntry = hit;
+      },
       glisser: {
         peut: (p) => surGlissement !== null && (systemeEdite()?.planets.includes(p) ?? false),
         debut: () => {
@@ -1202,7 +1222,11 @@ export function useSolarScene({
           normaleOrbite(p.inc, p.node, normaleGlisse);
           planGlisse.setFromNormalAndCoplanarPoint(normaleGlisse, centreGlisse);
           if (!rayon.intersectPlane(planGlisse, pointGlisse)) return;
-          const { distance, angle } = positionSurOrbite(pointGlisse.sub(centreGlisse), p.inc, p.node);
+          const { distance, angle } = positionSurOrbite(
+            pointGlisse.sub(centreGlisse),
+            p.inc,
+            p.node,
+          );
           surGlissement({ id: p.game.id, distance, angle: THREE.MathUtils.radToDeg(angle) });
         },
         fin: () => {
@@ -1283,7 +1307,8 @@ export function useSolarScene({
       // donc perpendiculaire au regard quel que soit l'angle de vue.
       // Le rayon visuel, et non la seule sphère : un système d'anneaux porte
       // jusqu'à près de quatre rayons, et la carte se posait dessus.
-      popupEdge.setFromMatrixColumn(camera.matrixWorld, 0)
+      popupEdge
+        .setFromMatrixColumn(camera.matrixWorld, 0)
         .multiplyScalar(selectedEntry.rayonVisuel)
         .add(c)
         .project(camera);
@@ -1374,7 +1399,13 @@ export function useSolarScene({
       // Ne concerne plus que les vrais redimensionnements de fenêtre : le
       // repli de la liste ne change plus la taille de la canvas.
       const host = labelsRef.current;
-      labelLayer.update(camera, cadreProche, host?.clientWidth ?? w, host?.clientHeight ?? h, hoveredEntry);
+      labelLayer.update(
+        camera,
+        cadreProche,
+        host?.clientWidth ?? w,
+        host?.clientHeight ?? h,
+        hoveredEntry,
+      );
       updatePopupAnchor(host?.clientWidth ?? w, host?.clientHeight ?? h);
       post.render();
     });
@@ -1434,11 +1465,11 @@ export function useSolarScene({
         // vite qu'une seule.
         .normalize()
         .multiplyScalar(
-          cadreProche
-            * FLY_SPEED
-            * flySettingsRef.current.vitesse
-            * dt
-            * (enfoncees.has(k.accelerer) ? FLY_BOOST : 1),
+          cadreProche *
+            FLY_SPEED *
+            flySettingsRef.current.vitesse *
+            dt *
+            (enfoncees.has(k.accelerer) ? FLY_BOOST : 1),
         );
 
       // Distance du pivot **avant** de bouger : on ne le repousse jamais, on
@@ -1619,7 +1650,8 @@ export function useSolarScene({
         brume.density = densiteBrume(vise.taille.systemR) * reglages.brumeFacteur;
         // Seule la ceinture du système regardé tourne : celles des autres sont
         // trop loin pour qu'on distingue le mouvement.
-        if (vise.ceinture && !paused) vise.ceinture.rotation.y += 0.0015 * dt * reglages.vitesseOrbites * allure;
+        if (vise.ceinture && !paused)
+          vise.ceinture.rotation.y += 0.0015 * dt * reglages.vitesseOrbites * allure;
       }
 
       if (animating) {
@@ -1637,7 +1669,8 @@ export function useSolarScene({
           // Bézier quadratique : (1−e)²·départ + 2(1−e)e·contrôle + e²·arrivée.
           const u = 1 - e;
           camera.position
-            .copy(camFromPos).multiplyScalar(u * u)
+            .copy(camFromPos)
+            .multiplyScalar(u * u)
             .addScaledVector(camArc, 2 * u * e)
             .addScaledVector(camTargetPos, e * e);
         } else {
@@ -1650,7 +1683,8 @@ export function useSolarScene({
           // — jusqu'à soixante-trois degrés de plongée au milieu du trajet.
           const u = 1 - e;
           controls.target
-            .copy(camFromLook).multiplyScalar(u * u)
+            .copy(camFromLook)
+            .multiplyScalar(u * u)
             .addScaledVector(camArcRegard, 2 * u * e)
             .addScaledVector(camTargetLook, e * e);
         } else {
@@ -1711,7 +1745,14 @@ export function useSolarScene({
 
       galaxie.updateLueurs();
 
-      ciel.update(dt, cielRef.current, evenementsRef.current, mouvementReduit, camera, lumiere.position);
+      ciel.update(
+        dt,
+        cielRef.current,
+        evenementsRef.current,
+        mouvementReduit,
+        camera,
+        lumiere.position,
+      );
       // Et les matrices de la scène : les planètes viennent de bouger sur leur
       // orbite, et tout ce qui suit lit leur position **monde**. Sans ce
       // recalcul, elle daterait de la frame précédente — le rendu la met bien à
@@ -1775,10 +1816,27 @@ export function useSolarScene({
     // `platformRef` est volontairement absent : c'est une référence, sa valeur
     // change sans que la scène doive être reconstruite — et la reconstruire à
     // chaque voyage était précisément le défaut.
-    cleScene, parPlateformeRef, editionRef, labelClass, orbitLabelClass,
-    mountRef, labelsRef, onSelect, clearRef, focusRef, flyToRef, popupRef, cielRef,
+    cleScene,
+    parPlateformeRef,
+    editionRef,
+    labelClass,
+    orbitLabelClass,
+    mountRef,
+    labelsRef,
+    onSelect,
+    clearRef,
+    focusRef,
+    flyToRef,
+    popupRef,
+    cielRef,
     graphismeRef,
-    sideProbeRef, navProbeRef, fpsRef, pauseRef, onSysteme, flySettingsRef, platformRef,
+    sideProbeRef,
+    navProbeRef,
+    fpsRef,
+    pauseRef,
+    onSysteme,
+    flySettingsRef,
+    platformRef,
     structure,
   ]);
 }

@@ -1,32 +1,32 @@
 import { useEffect, useRef } from 'react';
 import { getMusicPlaying, getAnalyser, resumeCtx } from './musicAnalyser';
 
-const N_BARS      = 120;
-const MAX_H       = 20;   // px
-const SPREAD      = 35;   // barres touchées de chaque côté
-const IDLE_SPEED  = 1.0;  // rad/s en veille
+const N_BARS = 120;
+const MAX_H = 20; // px
+const SPREAD = 35; // barres touchées de chaque côté
+const IDLE_SPEED = 1.0; // rad/s en veille
 
 export function MusicBarsVisualizer() {
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const rafRef        = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
 
   // Initialisés dans l'effet et non ici : `performance.now()` et `Math.random()`
   // sont impurs, les appeler pendant le rendu casse l'idempotence attendue par
   // React (et empêche le compilateur de mémoïser le composant).
-  const prevTime      = useRef(0);
+  const prevTime = useRef(0);
 
   // État du pic courant — position tirée au hasard au premier passage
-  const peakPos       = useRef(-1);
-  const energy        = useRef(0);      // énergie actuelle 0-1 (lerpée)
-  const heights       = useRef<Float32Array>(new Float32Array(N_BARS).fill(0));
+  const peakPos = useRef(-1);
+  const energy = useRef(0); // énergie actuelle 0-1 (lerpée)
+  const heights = useRef<Float32Array>(new Float32Array(N_BARS).fill(0));
 
   // Détection de beat
-  const freqData      = useRef<Uint8Array>(new Uint8Array(1024));
-  const avgBass       = useRef(0.05);
-  const beatCooldown  = useRef(0);
+  const freqData = useRef<Uint8Array>(new Uint8Array(1024));
+  const avgBass = useRef(0.05);
+  const beatCooldown = useRef(0);
 
   // Animation en veille
-  const idlePhase     = useRef(0);
+  const idlePhase = useRef(0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -40,12 +40,12 @@ export function MusicBarsVisualizer() {
     function frame() {
       rafRef.current = requestAnimationFrame(frame);
       const now = performance.now();
-      const dt  = Math.min((now - prevTime.current) / 1000, 0.05);
+      const dt = Math.min((now - prevTime.current) / 1000, 0.05);
       prevTime.current = now;
 
-      const playing  = getMusicPlaying();
+      const playing = getMusicPlaying();
       const analyser = getAnalyser();
-      let   targetE  = 0;
+      let targetE = 0;
 
       if (playing && analyser) {
         // ── Données réelles ──────────────────────────────────────
@@ -65,12 +65,11 @@ export function MusicBarsVisualizer() {
         // Beat détecté : énergie significativement > moyenne ET cooldown écoulé
         const isBeat = bass > avgBass.current * 1.5 && bass > 0.05 && beatCooldown.current === 0;
         if (isBeat) {
-          peakPos.current    = Math.floor(Math.random() * N_BARS);
+          peakPos.current = Math.floor(Math.random() * N_BARS);
           beatCooldown.current = 0.18; // max ~5-6 pics/s
         }
 
         targetE = Math.min(1, bass * 2.2); // amplifié pour que ce soit visible
-
       } else if (!playing) {
         // ── Animation veille ────────────────────────────────────
         idlePhase.current += IDLE_SPEED * dt;
@@ -82,7 +81,7 @@ export function MusicBarsVisualizer() {
       }
 
       // Lerp de l'énergie (attaque rapide, déclin progressif)
-      const lerpUp   = playing ? 0.45 : 0.12;
+      const lerpUp = playing ? 0.45 : 0.12;
       const lerpDown = playing ? 0.12 : 0.05;
       energy.current += (targetE - energy.current) * (targetE > energy.current ? lerpUp : lerpDown);
 
@@ -90,18 +89,18 @@ export function MusicBarsVisualizer() {
       const p = peakPos.current;
 
       for (let i = 0; i < N_BARS; i++) {
-        const dist  = Math.abs(i - p);
+        const dist = Math.abs(i - p);
         // Chaque barre est strictement plus basse que la précédente vers le centre
         const decay = Math.max(0, 1 - dist / SPREAD);
         const target = E * decay;
 
-        heights.current[i] += (target - heights.current[i]) * (playing ? 0.30 : 0.07);
+        heights.current[i] += (target - heights.current[i]) * (playing ? 0.3 : 0.07);
 
         const hh = heights.current[i] * MAX_H;
-        const op = 0.10 + heights.current[i] * 0.72;
+        const op = 0.1 + heights.current[i] * 0.72;
 
         if (bars[i]) {
-          bars[i].style.height  = `${Math.max(1, hh)}px`;
+          bars[i].style.height = `${Math.max(1, hh)}px`;
           bars[i].style.opacity = `${Math.min(1, op).toFixed(3)}`;
         }
       }
@@ -129,7 +128,13 @@ export function MusicBarsVisualizer() {
       {Array.from({ length: N_BARS }, (_, i) => (
         <div
           key={i}
-          style={{ flex: 1, minWidth: 1, height: '1px', background: 'white', borderRadius: '1px 1px 0 0' }}
+          style={{
+            flex: 1,
+            minWidth: 1,
+            height: '1px',
+            background: 'white',
+            borderRadius: '1px 1px 0 0',
+          }}
         />
       ))}
     </div>

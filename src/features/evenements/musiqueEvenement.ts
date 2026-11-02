@@ -85,7 +85,9 @@ export function musiqueEnCours(): EvenementMusical | null {
 /** Prévient quand la musique démarre, s'arrête, ou se termine d'elle-même. */
 export function abonnerMusiqueEvenement(fn: () => void): () => void {
   abonnes.add(fn);
-  return () => { abonnes.delete(fn); };
+  return () => {
+    abonnes.delete(fn);
+  };
 }
 
 function changer(quoi: EvenementMusical | null): void {

@@ -14,16 +14,26 @@
   display: flex;
   flex-direction: column;
   color: rgb(var(--encre) / 0.92);
-  background: var(--hud-crochets), var(--hud-trame), linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.96);
+  background:
+    var(--hud-crochets), var(--hud-trame),
+    linear-gradient(180deg, rgb(var(--hud) / 0.07), transparent 180px), rgb(var(--fond) / 0.96);
   border: 1px solid var(--hud-ligne-moyenne);
   border-radius: 2px;
-  box-shadow: 0 0 30px rgb(var(--hud) / 0.12), 0 14px 44px rgb(0 0 0 / 0.6);
+  box-shadow:
+    0 0 30px rgb(var(--hud) / 0.12),
+    0 14px 44px rgb(0 0 0 / 0.6);
   animation: panneauIn 0.18s ease-out;
 }
 
 @keyframes panneauIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .entete {
@@ -378,7 +388,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panneau { animation: none; }
+  .panneau {
+    animation: none;
+  }
 }
 
 /* ── Rangement automatique des planètes ────────────────────────────────── */

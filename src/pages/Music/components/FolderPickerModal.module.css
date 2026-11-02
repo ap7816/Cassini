@@ -29,13 +29,23 @@
 /* Les animations vivaient dans le module de la page ; elles sont redéfinies
    ici pour que ce module soit autonome. */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.94) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .header {
@@ -56,7 +66,9 @@
   font-size: 0.85rem;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .search:focus {
@@ -149,7 +161,9 @@
   color: rgb(var(--encre) / 0.6);
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .cancel:hover {
@@ -166,7 +180,9 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .confirm:disabled {
@@ -175,5 +191,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .overlay, .modal { animation: none; }
+  .overlay,
+  .modal {
+    animation: none;
+  }
 }

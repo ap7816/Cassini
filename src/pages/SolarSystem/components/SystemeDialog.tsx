@@ -1,11 +1,25 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import type { Game } from '../../../features/types';
 import { AppDialog, type DialogState } from '../../../components/AppDialog/AppDialog';
 import { usePiegeFocus } from '../../../hooks/useFocus';
 import { PLATFORM_CSS } from '../constants';
-import { COULEURS_SYSTEME, NOM_MAX, nouveauSysteme, nouvelId, type SystemePerso } from '../lib/customSystems';
+import {
+  COULEURS_SYSTEME,
+  NOM_MAX,
+  nouveauSysteme,
+  nouvelId,
+  type SystemePerso,
+} from '../lib/customSystems';
 import { ICONES_SYSTEME, ICONE_PAR_DEFAUT } from '../lib/iconesSysteme';
 import { IconeSysteme } from './IconeSysteme';
 import { libelleTag } from '../../../components/Tags/Tags';
@@ -33,7 +47,14 @@ type Props = {
  * animé par `transform`, qui deviendrait sinon le bloc conteneur de ce calque
  * en position fixe et l'enfermerait.
  */
-export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupprimer, onFermer }: Props) {
+export function SystemeDialog({
+  systeme,
+  existants,
+  games,
+  onEnregistrer,
+  onSupprimer,
+  onFermer,
+}: Props) {
   const titreId = useId();
   const champNom = useRef<HTMLInputElement>(null);
   const fenetreRef = useRef<HTMLFormElement>(null);
@@ -55,14 +76,13 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   );
   // Les jeux retirés de la bibliothèque depuis sont écartés d'emblée : on ne
   // pourrait ni les voir ni les décocher.
-  const [jeux, setJeux] = useState<string[]>(() => (systeme?.jeux ?? []).filter((id) => parId.has(id)));
+  const [jeux, setJeux] = useState<string[]>(() =>
+    (systeme?.jeux ?? []).filter((id) => parId.has(id)),
+  );
   // Source des jeux : une liste choisie, ou tous ceux d'un tag.
   const [tag, setTag] = useState<string | null>(systeme?.tag ?? null);
   const tagsConnus = useMemo(() => tagsDeLaBibliotheque(games), [games]);
-  const jeuxDuTag = useMemo(
-    () => (tag ? games.filter((g) => aLeTag(g, tag)) : []),
-    [games, tag],
-  );
+  const jeuxDuTag = useMemo(() => (tag ? games.filter((g) => aLeTag(g, tag)) : []), [games, tag]);
   const [recherche, setRecherche] = useState('');
   const [confirmation, setConfirmation] = useState<DialogState | null>(null);
 
@@ -111,7 +131,14 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
   function valider(e: FormEvent) {
     e.preventDefault();
     if (manque) return;
-    const champs = { nom: nomPropre.slice(0, NOM_MAX), icone, image: imageRetenue, couleur, jeux, tag };
+    const champs = {
+      nom: nomPropre.slice(0, NOM_MAX),
+      icone,
+      image: imageRetenue,
+      couleur,
+      jeux,
+      tag,
+    };
     onEnregistrer(
       systeme ? { ...systeme, ...champs } : nouveauSysteme({ id: nouvelId(existants), ...champs }),
     );
@@ -167,7 +194,12 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
               <span>{t('library.gameCount', { count: nombreJeux })}</span>
             </p>
           </div>
-          <button type="button" className={css.fermer} onClick={onFermer} aria-label={t('common.close')}>
+          <button
+            type="button"
+            className={css.fermer}
+            onClick={onFermer}
+            aria-label={t('common.close')}
+          >
             ✕
           </button>
         </header>
@@ -203,7 +235,11 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                       setAvecImage(false);
                     }}
                   >
-                    <IconeSysteme nom={i.nom} couleur={choisie ? couleur : 'currentColor'} taille={20} />
+                    <IconeSysteme
+                      nom={i.nom}
+                      couleur={choisie ? couleur : 'currentColor'}
+                      taille={20}
+                    />
                   </button>
                 );
               })}
@@ -230,7 +266,9 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                 <button
                   key={c}
                   type="button"
-                  className={c === couleur ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille}
+                  className={
+                    c === couleur ? `${css.pastille} ${css.pastilleChoisie}` : css.pastille
+                  }
                   style={{ background: c }}
                   onClick={() => setCouleur(c)}
                   aria-label={t('systems.colorNamed', { color: c })}
@@ -260,7 +298,9 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
               <div className={css.source} role="group" aria-label={t('systems.source')}>
                 <button
                   type="button"
-                  className={tag === null ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix}
+                  className={
+                    tag === null ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix
+                  }
                   onClick={() => setTag(null)}
                   aria-pressed={tag === null}
                 >
@@ -270,7 +310,9 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                   <button
                     key={nom}
                     type="button"
-                    className={tag === nom ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix}
+                    className={
+                      tag === nom ? `${css.sourceChoix} ${css.sourceActif}` : css.sourceChoix
+                    }
                     onClick={() => setTag(nom)}
                     aria-pressed={tag === nom}
                   >
@@ -287,32 +329,42 @@ export function SystemeDialog({ systeme, existants, games, onEnregistrer, onSupp
                   {jeuxDuTag.map((g, i) => (
                     <LigneJeu key={g.id} game={g} rang={i + 1} choisi onBasculer={() => {}} fige />
                   ))}
-                  {jeuxDuTag.length === 0 && <li className={css.vide}>{t('systems.noGameWithTag')}</li>}
+                  {jeuxDuTag.length === 0 && (
+                    <li className={css.vide}>{t('systems.noGameWithTag')}</li>
+                  )}
                 </ul>
               </>
             ) : (
-            <>
-            <input
-              className={css.saisie}
-              type="search"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder={t('systems.searchLibrary')}
-              aria-label={t('systems.searchGame')}
-            />
-            <ul className={css.jeux}>
-              {selection.map((g, i) => (
-                <LigneJeu key={g.id} game={g} rang={i + 1} choisi onBasculer={basculer} />
-              ))}
-              {selection.length > 0 && reste.length > 0 && <li className={css.separation} aria-hidden="true" />}
-              {reste.map((g) => (
-                <LigneJeu key={g.id} game={g} rang={null} choisi={false} onBasculer={basculer} />
-              ))}
-              {selection.length === 0 && reste.length === 0 && (
-                <li className={css.vide}>{t('systems.noGameMatches')}</li>
-              )}
-            </ul>
-            </>
+              <>
+                <input
+                  className={css.saisie}
+                  type="search"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder={t('systems.searchLibrary')}
+                  aria-label={t('systems.searchGame')}
+                />
+                <ul className={css.jeux}>
+                  {selection.map((g, i) => (
+                    <LigneJeu key={g.id} game={g} rang={i + 1} choisi onBasculer={basculer} />
+                  ))}
+                  {selection.length > 0 && reste.length > 0 && (
+                    <li className={css.separation} aria-hidden="true" />
+                  )}
+                  {reste.map((g) => (
+                    <LigneJeu
+                      key={g.id}
+                      game={g}
+                      rang={null}
+                      choisi={false}
+                      onBasculer={basculer}
+                    />
+                  ))}
+                  {selection.length === 0 && reste.length === 0 && (
+                    <li className={css.vide}>{t('systems.noGameMatches')}</li>
+                  )}
+                </ul>
+              </>
             )}
           </div>
         </div>

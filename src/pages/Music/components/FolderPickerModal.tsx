@@ -15,7 +15,12 @@ type Props = {
 
 /** Modale de choix de dossier, pour déplacer une piste. */
 export function FolderPickerModal({
-  track, allDirs, rootName, folderPath, onClose, onConfirm,
+  track,
+  allDirs,
+  rootName,
+  folderPath,
+  onClose,
+  onConfirm,
 }: Props) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');

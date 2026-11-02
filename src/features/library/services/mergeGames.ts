@@ -10,11 +10,24 @@ import { fusionnerTags } from './tags';
  */
 
 // Ordre de priorité pour la déduplication : Steam prime sur Epic, puis BattleNet, etc.
-const PLATFORM_PRIORITY: Record<string, number> = { Steam: 0, Epic: 1, BattleNet: 2, Riot: 3, Rockstar: 4, Ubisoft: 5, HoYoPlay: 6, Xbox: 7 };
+const PLATFORM_PRIORITY: Record<string, number> = {
+  Steam: 0,
+  Epic: 1,
+  BattleNet: 2,
+  Riot: 3,
+  Rockstar: 4,
+  Ubisoft: 5,
+  HoYoPlay: 6,
+  Xbox: 7,
+};
 
 // Normalise un titre pour la comparaison de doublons : minuscules, sans ponctuation
 function normalizeName(title: string): string {
-  return title.toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
 /**
@@ -25,7 +38,10 @@ function normalizeName(title: string): string {
  * sans passer par Cassini. Garder toujours la première rendait la seconde
  * inutile dès qu'on avait lancé le jeu une fois d'ici.
  */
-export function plusRecente(a: string | null | undefined, b: string | null | undefined): string | null {
+export function plusRecente(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): string | null {
   const ta = a ? Date.parse(a) : NaN;
   const tb = b ? Date.parse(b) : NaN;
   if (Number.isNaN(ta)) return Number.isNaN(tb) ? null : (b as string);
@@ -46,9 +62,14 @@ export function deduplicateGames(games: Game[]): Game[] {
 
   const result: Game[] = [];
   for (const group of groups.values()) {
-    if (group.length === 1) { result.push(group[0]); continue; }
+    if (group.length === 1) {
+      result.push(group[0]);
+      continue;
+    }
 
-    group.sort((a, b) => (PLATFORM_PRIORITY[a.platform] ?? 99) - (PLATFORM_PRIORITY[b.platform] ?? 99));
+    group.sort(
+      (a, b) => (PLATFORM_PRIORITY[a.platform] ?? 99) - (PLATFORM_PRIORITY[b.platform] ?? 99),
+    );
     const winner = { ...group[0] };
     for (const g of group.slice(1)) {
       if (!winner.favorite && g.favorite) winner.favorite = true;

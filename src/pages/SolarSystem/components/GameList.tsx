@@ -14,7 +14,12 @@ import { formaterTaille } from '../../../i18n/formats';
 import { nomPlateforme } from '../../../i18n/plateformes';
 import { useCalques } from '../../../features/calques/useCalques';
 import { useAppSettings } from '../../../features/settings/context/useAppSettings';
-import { cleSysteme, estSystemePerso, jeuxDuSysteme, type SystemePerso } from '../lib/customSystems';
+import {
+  cleSysteme,
+  estSystemePerso,
+  jeuxDuSysteme,
+  type SystemePerso,
+} from '../lib/customSystems';
 import { IconeSysteme } from './IconeSysteme';
 import { IconeHud } from '../../../components/IconeHud/IconeHud';
 import { libelleTag } from '../../../components/Tags/Tags';
@@ -68,7 +73,9 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
     fetchCoverArt(game).then((url) => {
       if (!cancelled && url) setSrc(url);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // `epoque` est dans les dépendances pour que le retour du réseau relance la
     // demande, et non pour être lu.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,9 +119,7 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
     );
   }
 
-  return (
-    <img src={src} alt="" className={css.thumb} onError={handleError} draggable={false} />
-  );
+  return <img src={src} alt="" className={css.thumb} onError={handleError} draggable={false} />;
 }
 
 type Props = {
@@ -186,11 +191,27 @@ const PAGES_RAPPELABLES = [
  * planète : la caméra s'en approche et le panneau de détail s'ouvre.
  */
 export function GameList({
-  games, allGames, selectedId, platform, platforms, icons,
-  sgdbKeySet, onPickGame, onPickPlatform,
-  titre, teinte, systemes, onCreerSysteme, onModifierSysteme,
-  onAjouterAuSysteme, onRetirerDuSysteme,
-  largeurListe, largeurRail, onLargeurListe, onLargeurRail, onLargeursParDefaut,
+  games,
+  allGames,
+  selectedId,
+  platform,
+  platforms,
+  icons,
+  sgdbKeySet,
+  onPickGame,
+  onPickPlatform,
+  titre,
+  teinte,
+  systemes,
+  onCreerSysteme,
+  onModifierSysteme,
+  onAjouterAuSysteme,
+  onRetirerDuSysteme,
+  largeurListe,
+  largeurRail,
+  onLargeurListe,
+  onLargeurRail,
+  onLargeursParDefaut,
   rechercheRef,
 }: Props) {
   const { t, i18n } = useTranslation();
@@ -216,12 +237,14 @@ export function GameList({
   const [query, setQuery] = useState('');
   const color = teinte;
   const perso = estSystemePerso(platform);
-  const retrait: ActionLigne | undefined = perso && onRetirerDuSysteme
-    ? { symbole: '−', libelle: t('solar.removeFromSystem'), faire: onRetirerDuSysteme }
-    : undefined;
-  const ajout: ActionLigne | undefined = perso && onAjouterAuSysteme
-    ? { symbole: '+', libelle: t('solar.addToSystem'), faire: onAjouterAuSysteme }
-    : undefined;
+  const retrait: ActionLigne | undefined =
+    perso && onRetirerDuSysteme
+      ? { symbole: '−', libelle: t('solar.removeFromSystem'), faire: onRetirerDuSysteme }
+      : undefined;
+  const ajout: ActionLigne | undefined =
+    perso && onAjouterAuSysteme
+      ? { symbole: '+', libelle: t('solar.addToSystem'), faire: onAjouterAuSysteme }
+      : undefined;
   const disque = useDiskSpace();
 
   // Même ordre que les orbites : la n-ième entrée est la n-ième planète.
@@ -328,7 +351,11 @@ export function GameList({
                 et ne veut pas attendre. */}
             <button
               type="button"
-              className={actualisation ? `${css.headActualiser} ${css.headActualiserEnCours}` : css.headActualiser}
+              className={
+                actualisation
+                  ? `${css.headActualiser} ${css.headActualiserEnCours}`
+                  : css.headActualiser
+              }
               onClick={() => void actualiser()}
               disabled={actualisation}
               title={actualisation ? t('solar.refreshing') : t('solar.refresh')}
@@ -344,14 +371,22 @@ export function GameList({
         {disque && disque.total > 0 && (
           <div className={css.disque} title={t('solar.drive', { drive: disque.lecteur })}>
             <div className={css.disqueLigne}>
-              <span>{t('library.diskUsed', { size: formaterTaille(disque.total - disque.libre, i18n.language) })}</span>
+              <span>
+                {t('library.diskUsed', {
+                  size: formaterTaille(disque.total - disque.libre, i18n.language),
+                })}
+              </span>
               <span className={css.disqueLibre}>
                 {t('library.diskFree', { free: formaterTaille(disque.libre, i18n.language) })}
               </span>
             </div>
             <div
               className={css.disqueJauge}
-              style={{ '--part': `${((disque.total - disque.libre) / disque.total) * 100}%` } as CSSProperties}
+              style={
+                {
+                  '--part': `${((disque.total - disque.libre) / disque.total) * 100}%`,
+                } as CSSProperties
+              }
               aria-hidden="true"
             />
           </div>
@@ -370,7 +405,9 @@ export function GameList({
           <div className={css.tags} role="group" aria-label={t('filters.tag')}>
             <button
               type="button"
-              className={tagActif === null ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre}
+              className={
+                tagActif === null ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre
+              }
               onClick={() => setTagChoisi(null)}
               aria-pressed={tagActif === null}
             >
@@ -380,7 +417,9 @@ export function GameList({
               <button
                 key={tag}
                 type="button"
-                className={tagActif === tag ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre}
+                className={
+                  tagActif === tag ? `${css.tagFiltre} ${css.tagFiltreActif}` : css.tagFiltre
+                }
                 onClick={() => setTagChoisi(tagActif === tag ? null : tag)}
                 aria-pressed={tagActif === tag}
               >
@@ -427,7 +466,9 @@ export function GameList({
 
           {ailleurs.length > 0 && (
             <>
-              <li className={css.groupe}>{perso ? t('solar.outsideSystem') : t('solar.otherLaunchers')}</li>
+              <li className={css.groupe}>
+                {perso ? t('solar.outsideSystem') : t('solar.otherLaunchers')}
+              </li>
               {ailleurs.map((g) => (
                 <Ligne
                   key={g.id}
@@ -460,10 +501,9 @@ export function GameList({
             <button
               key={p.name}
               type="button"
-              className={[
-                css.railBtn,
-                p.name === platform ? css.railBtnActive : '',
-              ].filter(Boolean).join(' ')}
+              className={[css.railBtn, p.name === platform ? css.railBtnActive : '']
+                .filter(Boolean)
+                .join(' ')}
               style={{ '--teinte': teinte } as CSSProperties}
               onClick={() => onPickPlatform(p.name)}
               aria-current={p.name === platform}
@@ -482,9 +522,13 @@ export function GameList({
                 games: t('library.gameCount', { count: p.count }),
               })}
             >
-              {icone
-                ? <img src={icone} alt="" className={css.railIcon} draggable={false} />
-                : <span className={css.railInitiale}>{nomPlateforme(p.name, t).slice(0, 1).toUpperCase()}</span>}
+              {icone ? (
+                <img src={icone} alt="" className={css.railIcon} draggable={false} />
+              ) : (
+                <span className={css.railInitiale}>
+                  {nomPlateforme(p.name, t).slice(0, 1).toUpperCase()}
+                </span>
+              )}
             </button>
           );
         })}
@@ -497,7 +541,9 @@ export function GameList({
             <button
               key={cle}
               type="button"
-              className={[css.railBtn, cle === platform ? css.railBtnActive : ''].filter(Boolean).join(' ')}
+              className={[css.railBtn, cle === platform ? css.railBtnActive : '']
+                .filter(Boolean)
+                .join(' ')}
               style={{ '--teinte': s.couleur } as CSSProperties}
               onClick={() => onPickPlatform(cle)}
               aria-current={cle === platform}
@@ -510,7 +556,12 @@ export function GameList({
                 games: t('library.gameCount', { count: comptesSystemes.get(cle) ?? 0 }),
               })}
             >
-              <IconeSysteme nom={s.icone} image={s.image} couleur={s.couleur} className={css.railIcon} />
+              <IconeSysteme
+                nom={s.icone}
+                image={s.image}
+                couleur={s.couleur}
+                className={css.railIcon}
+              />
             </button>
           );
         })}
@@ -523,7 +574,13 @@ export function GameList({
           aria-label={t('solar.createSystem')}
         >
           <svg viewBox="0 0 24 24" className={css.railAjoutIcone} aria-hidden="true">
-            <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            <path
+              d="M12 5v14M5 12h14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
 
@@ -598,7 +655,12 @@ export function GameList({
  * couleur de son launcher, seule information utile pour situer le jeu.
  */
 function Ligne({
-  game, orbit, selected, sgdbKeySet, onPick, action,
+  game,
+  orbit,
+  selected,
+  sgdbKeySet,
+  onPick,
+  action,
 }: {
   game: Game;
   orbit: number | null;
@@ -614,11 +676,9 @@ function Ligne({
     <li className={action ? css.ligneAvecAction : undefined}>
       <button
         type="button"
-        className={[
-          css.item,
-          selected ? css.itemActive : '',
-          absent ? css.itemAbsent : '',
-        ].filter(Boolean).join(' ')}
+        className={[css.item, selected ? css.itemActive : '', absent ? css.itemAbsent : '']
+          .filter(Boolean)
+          .join(' ')}
         onClick={() => onPick(game)}
         title={game.title}
         style={selected ? { borderColor: teinte + '88' } : undefined}

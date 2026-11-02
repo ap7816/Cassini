@@ -190,8 +190,14 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const RIDEAU_DEPART = -Math.PI * 0.25;
   const RIDEAU_ARC = Math.PI * 0.66;
   const geoRideau = new THREE.CylinderGeometry(
-    RAYON_RIDEAU, RAYON_RIDEAU, RAYON_RIDEAU * 1.1, 48, 1, true,
-    RIDEAU_DEPART, RIDEAU_ARC,
+    RAYON_RIDEAU,
+    RAYON_RIDEAU,
+    RAYON_RIDEAU * 1.1,
+    48,
+    1,
+    true,
+    RIDEAU_DEPART,
+    RIDEAU_ARC,
   );
 
   const bas = OIII.clone().lerp(teinte, 0.25);
@@ -369,7 +375,6 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   const supernova = createSupernova(RAYON_CIEL * 0.24);
   const nova = supernova.objet;
   groupe.add(nova);
-
 
   // ── La comète ────────────────────────────────────────────────────────────
   //
@@ -946,8 +951,13 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
 
   /** Le temps déjà passé à regarder chaque événement en cours. */
   const regarde: Record<CleSucces, number> = {
-    trainee: 0, tempete: 0, comete: 0, vaisseau: 0,
-    cometeBleue: 0, supernova: 0, trouNoir: 0,
+    trainee: 0,
+    tempete: 0,
+    comete: 0,
+    vaisseau: 0,
+    cometeBleue: 0,
+    supernova: 0,
+    trouNoir: 0,
   };
 
   /**
@@ -1028,14 +1038,16 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     // L'arrivée est proche du départ : une traînée file, elle ne fait pas le
     // tour du ciel. D'où un écart tiré autour du départ, et non un second point
     // tiré sur toute la sphère — qui l'enverrait à l'autre bout.
-    finTrainee
-      .copy(departTrainee)
-      .addScaledVector(tmpAlea.randomDirection(), distance * 0.3);
+    finTrainee.copy(departTrainee).addScaledVector(tmpAlea.randomDirection(), distance * 0.3);
 
     courseTrainee.subVectors(finTrainee, departTrainee).normalize();
     vraieTrainee.copy(departTrainee);
     poserDansLeCiel(trainee.position, vraieTrainee, camera);
-    orienter(trainee, capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee, camera);
+    orienter(
+      trainee,
+      capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee,
+      camera,
+    );
     trainee.visible = true;
     trainéeRestante = DUREE_TRAINEE;
   }
@@ -1101,7 +1113,11 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
     // le côté. On ne montre donc que l'approche, en biais pour qu'elle traverse
     // le champ plutôt que de foncer droit sur l'étoile.
     const fuite = new THREE.Vector3().subVectors(departComete, soleil).normalize();
-    const travers = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+    const travers = new THREE.Vector3(
+      Math.random() - 0.5,
+      Math.random() - 0.5,
+      Math.random() - 0.5,
+    );
     travers.addScaledVector(fuite, -travers.dot(fuite)).normalize();
     const course = travers.multiplyScalar(0.4).addScaledVector(fuite, -0.9).normalize();
     finComete.copy(departComete).addScaledVector(course, distance * 0.55);
@@ -1199,9 +1215,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
   function lancerVaisseau(camera: THREE.Camera): void {
     ailleursDansLeCiel(departVaisseau, camera, distance * 0.7);
     // Une course franche, mais pas le tour du ciel en quarante secondes.
-    finVaisseau
-      .copy(departVaisseau)
-      .addScaledVector(tmpAlea.randomDirection(), distance * 0.9);
+    finVaisseau.copy(departVaisseau).addScaledVector(tmpAlea.randomDirection(), distance * 0.9);
     vaisseau.visible = true;
     vaisseauRestant = DUREE_VAISSEAU;
   }
@@ -1290,7 +1304,11 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // près de l'œil, la chose tourne avec la tête.
       vraieTrainee.lerpVectors(departTrainee, finTrainee, t);
       poserDansLeCiel(trainee.position, vraieTrainee, camera);
-      orienter(trainee, capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee, camera);
+      orienter(
+        trainee,
+        capApparent(capTrainee, courseTrainee, vraieTrainee, camera) ?? courseTrainee,
+        camera,
+      );
       // S'allume net, s'éteint doucement.
       matTrainee.uniforms.uEclat.value = Math.max(0, Math.sin(Math.min(1, t) * Math.PI) ** 0.55);
       if (trainéeRestante <= 0) trainee.visible = false;
@@ -1417,11 +1435,12 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // Le palier qui suit n'est pas de la physique : c'est le temps d'aller
       // chercher quelqu'un, ou simplement de tourner la tête — sans lui,
       // l'événement serait fini pour qui n'avait pas les yeux dessus.
-      novaEclat = ecoule < 2.6
-        ? (ecoule / 2.6) ** 1.6
-        : ecoule < 8
-          ? 1
-          : Math.max(0, 1 - (ecoule - 8) / (DUREE_NOVA - 8)) ** 2.4;
+      novaEclat =
+        ecoule < 2.6
+          ? (ecoule / 2.6) ** 1.6
+          : ecoule < 8
+            ? 1
+            : Math.max(0, 1 - (ecoule - 8) / (DUREE_NOVA - 8)) ** 2.4;
       novaAge = Math.min(1, ecoule / DUREE_NOVA);
       // Et à la fin, plus rien.
       //
@@ -1532,9 +1551,7 @@ export function createCiel(rayon: number, teinte: THREE.Color): Ciel {
       // Il ne suit pas l'œil, il ne s'en éloigne pas — il est là, en haut, et
       // n'en bouge pas. Et il n'est jamais tourné vers nous : c'est un volume,
       // et son orientation appartient au monde.
-      trouNoir.objet.position
-        .copy(camera.position)
-        .addScaledVector(directionTrou, RAYON_CIEL);
+      trouNoir.objet.position.copy(camera.position).addScaledVector(directionTrou, RAYON_CIEL);
       trouNoir.regler(Math.max(0, eclat), temps, camera);
       if (trouRestant <= 0) {
         trouNoir.objet.visible = false;

@@ -118,25 +118,30 @@ export function normalizeGames(input: unknown): Game[] {
 
     // Le titre est affiché tel quel : on borne sa longueur et on retire les
     // caractères de contrôle pour éviter tout affichage dégradé.
-    // eslint-disable-next-line no-control-regex
-    const safeTitle = title.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 256).trim();
+    const safeTitle = title
+      // eslint-disable-next-line no-control-regex -- la classe est là pour ça
+      .replace(/[\u0000-\u001f\u007f]/g, '')
+      .slice(0, 256)
+      .trim();
     if (!safeTitle) continue;
 
     out.push({
-      id:              id.slice(0, 256),
-      title:           safeTitle,
+      id: id.slice(0, 256),
+      title: safeTitle,
       platform: platform as Game['platform'],
-      launchUrl:       sanitizeLaunchUrl(r.launchUrl),
-      lastPlayedAt:    asString(r.lastPlayedAt),
-      installed:       asBool(r.installed) ?? false,
-      favorite:        asBool(r.favorite) ?? false,
-      customImageUrl:  sanitizeImageUrl(r.customImageUrl),
-      installPath:     sanitizeInstallPath(r.installPath),
-      steamAppId:      asString(r.steamAppId),
-      sizeOnDisk:      typeof r.sizeOnDisk === 'number' && r.sizeOnDisk >= 0 ? r.sizeOnDisk : null,
+      launchUrl: sanitizeLaunchUrl(r.launchUrl),
+      lastPlayedAt: asString(r.lastPlayedAt),
+      installed: asBool(r.installed) ?? false,
+      favorite: asBool(r.favorite) ?? false,
+      customImageUrl: sanitizeImageUrl(r.customImageUrl),
+      installPath: sanitizeInstallPath(r.installPath),
+      steamAppId: asString(r.steamAppId),
+      sizeOnDisk: typeof r.sizeOnDisk === 'number' && r.sizeOnDisk >= 0 ? r.sizeOnDisk : null,
       tags: normaliserTags(r.tags),
       playtimeMinutes:
-        typeof r.playtimeMinutes === 'number' && Number.isFinite(r.playtimeMinutes) && r.playtimeMinutes >= 0
+        typeof r.playtimeMinutes === 'number' &&
+        Number.isFinite(r.playtimeMinutes) &&
+        r.playtimeMinutes >= 0
           ? r.playtimeMinutes
           : null,
     });
@@ -176,5 +181,7 @@ const abonnes = new Set<() => void>();
 
 export function subscribeGames(fn: () => void): () => void {
   abonnes.add(fn);
-  return () => { abonnes.delete(fn); };
+  return () => {
+    abonnes.delete(fn);
+  };
 }

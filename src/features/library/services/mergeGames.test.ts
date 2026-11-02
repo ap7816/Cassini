@@ -104,10 +104,15 @@ describe('deduplicateGames', () => {
 
 describe('mergeById', () => {
   it('préserve les données utilisateur quand un scan renvoie le même jeu', () => {
-    const avant = [jeu({
-      title: 'Elden Ring', platform: 'Steam',
-      favorite: true, lastPlayedAt: '2026-02-02T00:00:00.000Z', customImageUrl: 'a.png',
-    })];
+    const avant = [
+      jeu({
+        title: 'Elden Ring',
+        platform: 'Steam',
+        favorite: true,
+        lastPlayedAt: '2026-02-02T00:00:00.000Z',
+        customImageUrl: 'a.png',
+      }),
+    ];
     const scan = [jeu({ title: 'Elden Ring', platform: 'Steam' })];
 
     const [g] = mergeById(avant, scan);
@@ -117,16 +122,24 @@ describe('mergeById', () => {
   });
 
   it('retient la partie la plus récente, que Cassini ou le launcher la connaisse', () => {
-    const avant = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' })];
+    const avant = [
+      jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' }),
+    ];
     // Steam sait qu'on y a rejoué depuis, sans passer par Cassini.
-    const scan = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-01T00:00:00.000Z' })];
+    const scan = [
+      jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-01T00:00:00.000Z' }),
+    ];
 
     expect(mergeById(avant, scan)[0].lastPlayedAt).toBe('2026-09-01T00:00:00.000Z');
   });
 
   it('ne recule pas la date quand le launcher en connaît une plus ancienne', () => {
-    const avant = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-18T12:00:00.000Z' })];
-    const scan = [jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' })];
+    const avant = [
+      jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-09-18T12:00:00.000Z' }),
+    ];
+    const scan = [
+      jeu({ title: 'Portal 2', platform: 'Steam', lastPlayedAt: '2026-01-01T00:00:00.000Z' }),
+    ];
 
     expect(mergeById(avant, scan)[0].lastPlayedAt).toBe('2026-09-18T12:00:00.000Z');
   });
@@ -141,8 +154,12 @@ describe('mergeById', () => {
 
 describe('plusRecente', () => {
   it('rend la plus récente des deux', () => {
-    expect(plusRecente('2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
-    expect(plusRecente('2026-02-01T00:00:00Z', '2026-01-01T00:00:00Z')).toBe('2026-02-01T00:00:00Z');
+    expect(plusRecente('2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z')).toBe(
+      '2026-02-01T00:00:00Z',
+    );
+    expect(plusRecente('2026-02-01T00:00:00Z', '2026-01-01T00:00:00Z')).toBe(
+      '2026-02-01T00:00:00Z',
+    );
   });
 
   it('se contente de celle qui existe, et ignore une date illisible', () => {
