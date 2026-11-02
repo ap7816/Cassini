@@ -75,7 +75,7 @@ pub fn scan_steam_games() -> Result<Vec<GameDto>, String> {
         }
     }
 
-    games.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
+    games.sort_by_key(|g| g.title.to_lowercase());
     Ok(games)
 }
 

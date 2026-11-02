@@ -152,7 +152,8 @@ unsafe fn png_depuis_bitmap(bitmap: HBITMAP, taille: i32) -> Result<String, Stri
     }
 
     let mut rgba = Vec::with_capacity(bgra.len());
-    for px in bgra.chunks_exact(4) {
+    let (pixels, _reste) = bgra.as_chunks::<4>();
+    for px in pixels {
         rgba.extend_from_slice(&[px[2], px[1], px[0], px[3]]);
     }
 

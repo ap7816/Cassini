@@ -82,7 +82,7 @@ pub fn scan_rockstar_games() -> Result<Vec<GameDto>, String> {
         }
     }
 
-    games.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
+    games.sort_by_key(|g| g.title.to_lowercase());
     // Déduplique au cas où un jeu apparaît dans les deux branches du registre
     games.dedup_by_key(|g| g.id.clone());
     Ok(games)

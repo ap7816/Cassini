@@ -104,7 +104,11 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
     let src = unsafe { std::slice::from_raw_parts(bits_ptr as *const u8, byte_len) };
     let mut rgba = Vec::with_capacity(byte_len);
 
-    for px in src.chunks_exact(4) {
+    // `as_chunks` plutôt que `chunks_exact(4)` : la taille étant connue à la
+    // compilation, chaque pixel arrive en `[u8; 4]` et les quatre accès
+    // ci-dessous se passent de vérification de bornes.
+    let (pixels, _reste) = src.as_chunks::<4>();
+    for px in pixels {
         // Permutation des canaux : BGRA (Windows GDI) → RGBA (PNG)
         rgba.push(px[2]); // R
         rgba.push(px[1]); // G
