@@ -2,95 +2,79 @@
 
 # Cassini
 
-**Tous tes jeux, sur toutes tes plateformes, dans une galaxie que tu traverses.**
+**A game launcher for Windows that shows your library as a 3D galaxy.**
 
 [![CI](https://github.com/ap7816/Cassini/actions/workflows/ci.yml/badge.svg)](https://github.com/ap7816/Cassini/actions/workflows/ci.yml)
-[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
-[![Tauri v2](https://img.shields.io/badge/Tauri-v2-24C8DB.svg)](https://tauri.app)
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6.svg)](#installation)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tauri](https://img.shields.io/badge/Tauri-v2-24C8DB.svg)](https://tauri.app)
+[![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6.svg)](#download)
 
-![La galaxie de Cassini](docs/images/galaxie.png)
+[Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Development](#development)
+
+![Cassini galaxy view](docs/images/galaxie.png)
 
 </div>
 
----
+## What it is
 
-Cassini trouve les jeux installés sur une machine Windows — Steam, Epic, Battle.net,
-Ubisoft, Riot, Rockstar, GOG, Xbox, HoYoPlay — et les range dans **une galaxie en
-trois dimensions**. Chaque launcher devient un système solaire, chaque jeu une
-planète dont la taille suit son poids sur le disque et dont la surface porte son
-affiche. Changer de launcher, c'est voyager : la caméra quitte un soleil et rejoint
-l'autre en trois à six secondes selon la distance.
+Cassini finds the games installed on your PC across Steam, Epic, Battle.net, Ubisoft,
+Riot, Rockstar, Xbox, HoYoPlay and Hytale, then puts them all in one place.
 
-C'est une application de bureau native, pas un site web : **Tauri v2** pour la
-fenêtre et le côté Rust, **React** et **three.js** pour ce qui s'affiche dedans.
+Instead of a grid, the main view is a galaxy. Each launcher is a solar system, each
+game is a planet, and planet size follows how much disk space the game takes. Clicking
+another launcher flies the camera there.
 
-![Voyage d'un système à l'autre](docs/images/voyage.gif)
+It's a native desktop app built with Tauri v2 (Rust) and React, not a web page in a
+window.
 
----
+![Flying between two systems](docs/images/voyage.gif)
 
-## Ce qu'elle fait
+## Features
 
-**Elle trouve les jeux toute seule.** Neuf launchers, chacun avec sa méthode : les
-fichiers `.acf` de Steam, les manifestes d'Epic, la base de Battle.net, le registre
-Windows pour les autres. Un surveillant de fichiers repère les installations et les
-désinstallations sans qu'on relance quoi que ce soit.
+- **Automatic scanning** of 9 launchers, with a file watcher that picks up installs
+  and uninstalls without a manual refresh
+- **Cover art** from the Steam CDN (computed from the AppID, no API key needed),
+  SteamGridDB (optional key), or the game's own Windows icon as a fallback
+- **Launch and uninstall** games directly, with the uninstaller named in the
+  confirmation dialog when it isn't the game's own
+- **Built-in music player** for MP3, FLAC, WAV, OGG, M4A and Opus, with recursive
+  folder scanning, iTunes album art lookup, an equalizer, and a mini player that
+  follows you across pages
+- **Ambient soundtrack** and a living sky with auroras, shooting stars, comets,
+  supernovas and black holes, all of which can be turned off
+- **Auto-updates** through GitHub Releases
+- **Custom systems** so you can group games your own way
+- Favorites, tags, playtime, system tray, launch on startup, English and French
 
-**Elle montre les jaquettes.** Pour Steam, l'URL du CDN se calcule depuis l'AppID —
-toujours disponible, même quand le jeu est désinstallé. Ailleurs, SteamGridDB prend
-le relais si l'on fournit une clé, et l'icône de l'exécutable sert de dernier
-recours. Rien n'est embarqué dans l'application : tout arrive à l'exécution et reste
-sur la machine.
+## Screenshots
 
-**Elle lance et désinstalle.** Lancer passe par le protocole du launcher quand il en
-a un. Désinstaller cherche le désinstalleur dans le registre, et **nomme le
-programme qui va s'ouvrir** quand ce n'est pas celui du jeu — une précaution qui
-vient d'un vrai incident, où désinstaller un jeu Epic retirait le launcher Epic.
+|                                            |                                                  |
+| :----------------------------------------: | :----------------------------------------------: |
+| ![Game details](docs/images/fiche-jeu.png) |  ![Library grid](docs/images/bibliotheque.png)   |
+|    Game details, opened over its planet    |      Library grid, for when you want a list      |
+|   ![Settings](docs/images/reglages.png)    | ![Music player](docs/images/lecteur-musique.png) |
+|                  Settings                  |                   Music player                   |
 
-**Elle fait aussi lecteur de musique.** MP3, FLAC, WAV, OGG, M4A, Opus ; scan
-récursif, pochettes cherchées chez iTunes, égaliseur, visualiseur, et un mini-lecteur
-qui suit d'une page à l'autre. Une musique d'ambiance accompagne la galaxie, et
-s'efface quand on écoute la sienne.
+## Download
 
-**Et elle vit.** Aurores, tempêtes, étoiles filantes, comètes, supernovas, trous
-noirs — le ciel bouge, avec sa propre musique, et tout se coupe depuis les réglages.
+Windows 10 or 11. Grab the installer from the
+[latest release](https://github.com/ap7816/ArcHive-updates/releases/latest). The app
+updates itself after that.
 
-<table>
-<tr>
-<td width="50%"><img src="docs/images/fiche-jeu.png" alt="La fiche d'un jeu"></td>
-<td width="50%"><img src="docs/images/bibliotheque.png" alt="La bibliothèque en grille"></td>
-</tr>
-<tr>
-<td align="center"><em>La fiche d'un jeu, ouverte sur sa planète</em></td>
-<td align="center"><em>La bibliothèque, pour qui préfère une grille</em></td>
-</tr>
-<tr>
-<td width="50%"><img src="docs/images/reglages.png" alt="Les réglages"></td>
-<td width="50%"><img src="docs/images/lecteur-musique.png" alt="Le lecteur de musique"></td>
-</tr>
-<tr>
-<td align="center"><em>Les réglages, onglet Graphisme</em></td>
-<td align="center"><em>Le lecteur de musique</em></td>
-</tr>
-</table>
+## Development
 
----
+### Requirements
 
-## Installation
+- Node.js LTS
+- Rust (via [rustup](https://rustup.rs))
+- Visual Studio Build Tools 2022 with "Desktop development with C++", MSVC v143 and
+  the Windows SDK
+- WebView2, which ships with Windows 10 and 11
 
-Windows 10 ou 11. L'installeur se télécharge depuis
-[**ArcHive-updates**](https://github.com/ap7816/ArcHive-updates/releases/latest) —
-l'application se met à jour toute seule ensuite.
+Run the commands below from "Developer PowerShell for VS 2022", otherwise the MSVC
+linker won't be on your PATH.
 
----
-
-## Développement
-
-**Prérequis :** Node.js LTS, Rust (rustup), et Visual Studio Build Tools 2022 avec
-« Desktop development with C++ », MSVC v143 et le SDK Windows. WebView2 est déjà là
-sur Windows 10 et 11.
-
-Depuis « Developer PowerShell for VS 2022 » :
+### Setup
 
 ```bash
 git clone https://github.com/ap7816/Cassini.git
@@ -100,87 +84,78 @@ git clone https://github.com/ap7816/Cassini.git
 cd Cassini; npm install; npm run tauri dev
 ```
 
-| Commande                                | Ce qu'elle fait                                       |
-| --------------------------------------- | ----------------------------------------------------- |
-| `npm run tauri dev`                     | L'application complète, en développement              |
-| `npm run dev`                           | Le front seul, dans un navigateur — sans le côté Rust |
-| `npm run tauri build`                   | L'installeur de release                               |
-| `npm test`                              | Les tests TypeScript                                  |
-| `npm run test:rapport`                  | Les tests unitaires et un rapport HTML                |
-| `npm run test:e2e`                      | Les parcours filmés                                   |
-| `npm run captures`                      | Refabrique les images de ce README                    |
-| `npm run typecheck` · `lint` · `format` | Types, lint, mise en forme                            |
+### Scripts
 
----
+| Command                                 | What it does                                               |
+| --------------------------------------- | ---------------------------------------------------------- |
+| `npm run tauri dev`                     | Run the full desktop app                                   |
+| `npm run dev`                           | Run the frontend only, in a browser, without the Rust side |
+| `npm run tauri build`                   | Build the release installer                                |
+| `npm test`                              | TypeScript unit tests                                      |
+| `npm run test:e2e`                      | End-to-end runs, recorded as video                         |
+| `npm run test:rapport:tout`             | All three suites in one HTML report                        |
+| `npm run captures`                      | Regenerate the screenshots in this README                  |
+| `npm run typecheck` / `lint` / `format` | Types, linting, formatting                                 |
 
-## Tests
+## Testing
 
-**261 cas**, en trois suites, toutes jouées par la
-[CI](.github/workflows/ci.yml) à chaque poussée.
+261 tests in three suites, all run by [CI](.github/workflows/ci.yml) on every push.
 
-| Suite                     | Cas | Ce qu'elle tient                                                                               |
-| ------------------------- | --- | ---------------------------------------------------------------------------------------------- |
-| **TypeScript** (Vitest)   | 204 | Fusion des bibliothèques, stockage, traductions, géométrie des orbites, trajectoires de caméra |
-| **Rust** (cargo)          | 50  | Scans de launchers, lecture du registre, choix du désinstalleur, extraction d'icônes           |
-| **Parcours** (Playwright) | 7   | L'application ouverte et traversée, de bout en bout                                            |
+| Suite      | Tests | Covers                                                                   |
+| ---------- | ----- | ------------------------------------------------------------------------ |
+| Vitest     | 204   | Library merging, storage, i18n, orbit geometry, camera paths             |
+| Cargo      | 50    | Launcher scanners, registry reads, uninstaller matching, icon extraction |
+| Playwright | 7     | Full user journeys through the running app                               |
 
-Les parcours **laissent une vidéo et des captures de chaque cas**. Ils ne comparent
-aucun pixel : un rendu 3D change avec la carte graphique, et un test qui échouerait
-pour cette raison-là ne dirait rien d'utile. Les films servent à regarder, pas à
-juger. La CI les garde en artefact téléchargeable, y compris quand tout passe.
+The Playwright runs record a video and screenshots of each journey. They don't compare
+pixels: a 3D render changes with the GPU and driver, so a test that failed over that
+wouldn't tell you anything useful. The videos are there to watch, not to assert on.
 
-`npm run test:rapport:tout` réunit les trois suites dans une page HTML : l'échec en
-premier, sa pile débarrassée du bruit, la comparaison avec l'exécution précédente,
-et les vidéos repliées en bas de chaque cas.
+Video recording is disabled on CI, where no GPU is available and reading frames back
+from the software renderer took minutes per test. CI keeps Playwright traces for
+failed runs instead, which you can replay with `npx playwright show-trace`.
 
----
-
-## Comment c'est fait
+## Project structure
 
 ```
 src/
-  pages/SolarSystem/   la galaxie — scène three.js, orbites, trajectoires, textures
-  features/            bibliothèque, musique, réglages, succès, événements du ciel
-  services/            pont vers Tauri, et repli navigateur pour le développement
+  pages/SolarSystem/   three.js scene, orbits, camera paths, textures
+  features/            library, music, settings, achievements, sky events
+  services/            Tauri bridge, with a browser fallback for dev
 src-tauri/src/
-  *_scan.rs            un fichier par launcher
-  uninstall.rs         le choix du désinstalleur, et ses garde-fous
-  security.rs          ce que le front a le droit de demander au système
-e2e/                   les parcours filmés
-scripts/               le rapport de tests, les captures du README
+  *_scan.rs            one module per launcher
+  uninstall.rs         uninstaller lookup and its safety checks
+  security.rs          what the frontend is allowed to ask the OS for
+e2e/                   Playwright journeys
+scripts/               test report and README screenshot generators
 ```
 
-Le front ne touche jamais au système directement : il passe par des commandes Tauri,
-et `security.rs` décide ce qui est permis. Un chemin de musique est confiné à une
-racine choisie par l'utilisateur ; une désinstallation est refusée si l'entrée du
-registre désigne autre chose que le jeu demandé.
+The frontend never touches the OS directly. Everything goes through Tauri commands,
+and `security.rs` decides what's allowed. Music paths are confined to a root the user
+picked, and an uninstall is refused if the registry entry points at something other
+than the game you asked for.
 
-Hors de Tauri — `npm run dev` —, le même code lit `localStorage` au lieu du magasin
-natif. C'est ce qui permet aux parcours Playwright d'ouvrir une vraie galaxie dans un
-navigateur, avec une bibliothèque semée.
+Outside Tauri (`npm run dev`), the same code reads `localStorage` instead of the
+native store. That's what lets the Playwright tests open a real galaxy in a plain
+browser with a seeded library.
 
----
+## Releasing
 
-## Publier une version
+1. Bump the version in `package.json`, `src-tauri/tauri.conf.json` and
+   `src-tauri/Cargo.toml`. The Tauri config is the one the updater reads.
+2. Write the release notes in `src/features/patchNotes/changelog.ts`, in both
+   languages.
+3. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-1. Monter le numéro dans `package.json`, `src-tauri/tauri.conf.json` et
-   `src-tauri/Cargo.toml` — c'est le deuxième qui fait foi pour la mise à jour
-   automatique
-2. Écrire les notes dans `src/features/patchNotes/changelog.ts`, en français et en
-   anglais
-3. Commit, puis `git tag vX.Y.Z && git push origin vX.Y.Z`
+GitHub Actions builds the installer, signs it, and publishes the update manifest to
+the `ArcHive-updates` repo. Takes about 20 minutes.
 
-GitHub Actions construit l'installeur, le signe, et publie le manifeste sur
-`ArcHive-updates`, d'où les copies installées se mettent à jour. Compter vingt
-minutes.
+> [!NOTE]
+> The update repo keeps its old name on purpose. Its URL is baked into every copy of
+> the app already installed, so renaming it would cut those copies off from updates
+> with no warning.
 
-> Le dépôt de mises à jour garde son ancien nom : son adresse est gravée dans chaque
-> copie déjà installée. Le renommer priverait toute la base installée de mises à jour,
-> et sans message.
+## License
 
----
-
-## Licence
-
-Code sous [licence MIT](LICENSE). Les musiques et les images ont leurs propres
-conditions, rassemblées dans [CREDITS.md](CREDITS.md).
+MIT, see [LICENSE](LICENSE). Bundled music and artwork have their own terms, listed in
+[CREDITS.md](CREDITS.md).
