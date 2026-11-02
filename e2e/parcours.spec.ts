@@ -1,6 +1,12 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import { semer, attendreLaGalaxie } from './semer';
 
+/** Voir l'en-tête de `playwright.config.ts` : sur coureur, on ne filme pas. */
+const SUR_CI = !!process.env.CI;
+
+/** Le temps qu'on laisse à la caméra, pour le film. Sans film, rien à laisser. */
+const POSE_MS = SUR_CI ? 0 : 1;
+
 /**
  * Des parcours, pas des pièges.
  *
@@ -24,6 +30,11 @@ import { semer, attendreLaGalaxie } from './semer';
  * en entier. Sur le disque, le rapport ne porte qu'un lien.
  */
 async function capturer(page: Page, info: TestInfo, nom: string): Promise<void> {
+  // Rien à poser sur un coureur d'intégration continue : il ne filme pas, et
+  // personne n'y regarde de capture d'un cas qui passe. Photographier une
+  // scène WebGL rendue en logiciel oblige à relire tout le tampon, et cela
+  // seul mettait les cas à plusieurs minutes.
+  if (SUR_CI) return;
   const fichier = info.outputPath(`${nom}.png`);
   await page.screenshot({ path: fichier });
   await info.attach(nom, { path: fichier, contentType: 'image/png' });
@@ -53,16 +64,19 @@ test('voyager d’un système à l’autre', async ({ page }, info) => {
   await capturer(page, info, '1-depart-steam');
 
   await page.getByRole('button', { name: /^Epic/ }).click();
-  // Le voyage lui-même : c'est ce qu'on est venu voir.
-  await page.waitForTimeout(3000);
+  // Le voyage lui-même : c'est ce qu'on est venu voir. Les attentes sont là
+  // pour le filmer — couper le film à l'arrivée du premier point reviendrait à
+  // ne rien montrer du voyage. Sans film, elles n'attendent rien : l'assertion
+  // qui suit attend déjà, et mieux, que le système d'arrivée soit là.
+  await page.waitForTimeout(3000 * POSE_MS);
   await capturer(page, info, '2-en-vol');
-  await page.waitForTimeout(3500);
+  await page.waitForTimeout(3500 * POSE_MS);
   await capturer(page, info, '3-arrivee-epic');
 
   await expect(page.getByRole('button', { name: 'Fortnite' })).toBeVisible();
 
   await page.getByRole('button', { name: /^Riot/ }).click();
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(5000 * POSE_MS);
   await capturer(page, info, '4-arrivee-riot');
   await expect(page.getByRole('button', { name: 'VALORANT' })).toBeVisible();
 });
