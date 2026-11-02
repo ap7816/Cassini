@@ -19,7 +19,16 @@ export default [
   {
     files: ['scripts/**/*.{js,mjs}'],
     languageOptions: {
-      globals: { process: 'readonly', console: 'readonly' },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+        // `captures-readme.mjs` passe des fonctions au navigateur via
+        // `addInitScript` : elles s'exécutent dans la page, pas sous Node.
+        window: 'readonly',
+      },
       parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
     },
   },
