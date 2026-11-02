@@ -17,7 +17,6 @@ mod uninstall;
 mod watcher;
 mod xbox_scan;
 use security::MusicRoot;
-use tauri_plugin_log;
 
 // Métadonnées audio renvoyées au frontend pour chaque piste
 #[derive(serde::Serialize)]

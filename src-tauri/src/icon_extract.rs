@@ -67,7 +67,7 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
             biHeight: -size, // Valeur négative = orientation top-down (ligne 0 en haut)
             biPlanes: 1,
             biBitCount: 32,
-            biCompression: BI_RGB.0 as u32,
+            biCompression: BI_RGB.0,
             biSizeImage: 0,
             biXPelsPerMeter: 0,
             biYPelsPerMeter: 0,

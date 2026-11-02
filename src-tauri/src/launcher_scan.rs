@@ -92,8 +92,7 @@ fn parse_uninstall_string_exe(raw: &str) -> Option<PathBuf> {
     }
 
     // Extrait le chemin selon le format : avec guillemets ou sans
-    let path_str = if s.starts_with('"') {
-        let rest = &s[1..];
+    let path_str = if let Some(rest) = s.strip_prefix('"') {
         let end = rest.find('"')?;
         &rest[..end]
     } else {

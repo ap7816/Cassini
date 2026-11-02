@@ -236,13 +236,7 @@ fn find_steam_path() -> Option<PathBuf> {
         PathBuf::from(r"C:\Program Files\Steam"),
     ];
 
-    for c in candidates {
-        if c.is_dir() {
-            return Some(c);
-        }
-    }
-
-    None
+    candidates.into_iter().find(|c| c.is_dir())
 }
 
 /// Temps de jeu Steam, en minutes, par identifiant d'application.
