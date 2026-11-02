@@ -21,11 +21,98 @@
         "cwd": "${workspaceFolder}"
       },
       "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Cassini: Tests (TypeScript)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm test"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
       "group": {
         "kind": "test",
         "isDefault": true
       }
+    },
+    {
+      "label": "Cassini: Tests (Rust)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "cd src-tauri && cargo test --lib"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$rustc"],
+      "group": "test"
+    },
+    {
+      "label": "Cassini: Tests unitaires (TypeScript + Rust)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm test && cd src-tauri && cargo test --lib"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Cassini: Tests — interface (Vitest UI)",
+      "detail": "Ouvre l'adresse affichée dans le terminal : elle porte un jeton, sans lui l'interface renvoie une erreur 403.",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run test:ui"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Cassini: Tests — rapport HTML",
+      "detail": "Lance les tests unitaires, écrit rapport-tests.html et l'ouvre. Le rapport s'ouvre aussi quand un test échoue : c'est là qu'il sert.",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "npm run test:rapport; code=$?; explorer.exe \"$(cygpath -w \"$PWD/rapport-tests.html\")\" >/dev/null 2>&1; exit $code"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Cassini: Parcours filmés (Playwright)",
+      "detail": "Ouvre l'application, la parcourt, et garde une vidéo et des captures de chaque parcours. Deux minutes environ.",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run test:e2e"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Cassini: Tests — rapport complet, films compris",
+      "detail": "Les trois suites — TypeScript, Rust et les parcours filmés — dans un seul rapport, puis l'ouvre. Deux minutes environ.",
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "npm run test:rapport:tout; code=$?; explorer.exe \"$(cygpath -w \"$PWD/rapport-tests.html\")\" >/dev/null 2>&1; exit $code"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
     },
     {
       "label": "Cassini: Build (tauri)",

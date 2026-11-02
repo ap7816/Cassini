@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rapport de tests et historique des runs, produits par `npm run test:rapport`.
+rapport-tests.html
+.rapports/

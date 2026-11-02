@@ -14,6 +14,16 @@ export default [
 
   ...tseslint.configs.recommended,
 
+  // Les outils de `scripts/` tournent sous Node, et non dans le navigateur :
+  // `process`, `console` et les modules `node:` y sont chez eux.
+  {
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+    },
+  },
+
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
