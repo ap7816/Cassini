@@ -467,6 +467,16 @@ export function GameList({
               style={{ '--teinte': teinte } as CSSProperties}
               onClick={() => onPickPlatform(p.name)}
               aria-current={p.name === platform}
+              // Le `title` ne suffit pas : le bouton porte un contenu — l'icône
+              // du launcher, ou son initiale faute d'icône —, et le nom
+              // accessible se calcule d'abord sur ce contenu. Un lecteur
+              // d'écran annonçait donc « S » pour Steam. Ses voisins de la
+              // barre portaient déjà les deux attributs ; ces deux-là étaient
+              // l'exception.
+              aria-label={t('solar.railItem', {
+                name: nomPlateforme(p.name, t),
+                games: t('library.gameCount', { count: p.count }),
+              })}
               title={t('solar.railItem', {
                 name: nomPlateforme(p.name, t),
                 games: t('library.gameCount', { count: p.count }),
@@ -491,6 +501,10 @@ export function GameList({
               style={{ '--teinte': s.couleur } as CSSProperties}
               onClick={() => onPickPlatform(cle)}
               aria-current={cle === platform}
+              aria-label={t('solar.railItem', {
+                name: s.nom,
+                games: t('library.gameCount', { count: comptesSystemes.get(cle) ?? 0 }),
+              })}
               title={t('solar.railItem', {
                 name: s.nom,
                 games: t('library.gameCount', { count: comptesSystemes.get(cle) ?? 0 }),
