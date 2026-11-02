@@ -5,11 +5,10 @@
 // donc s'accorder sur la liste et savoir retrouver la piste en cours, sans
 // quoi la première transition sauterait à un morceau arbitraire.
 //
-// Crédits — licence Pixabay (aucune attribution requise) :
-//   ambiant1 : "Space Galaxy Universe Music" — viacheslavstarostin (ID 473849)
-//   ambiant2 : à compléter
-//   ambiant3 : à compléter
-//   ambiant4 : à compléter — origine et licence à confirmer avant publication
+// Les quatre viennent de Pixabay, dont la licence autorise l'usage commercial
+// et n'exige aucune attribution. Les crédits, et ce qui manque à deux d'entre
+// eux, se tiennent dans CREDITS.md à la racine — un seul endroit pour tout ce
+// que l'application distribue sans en être l'auteur.
 
 /**
  * Servies depuis `public/`, donc résolues à la racine de l'application.

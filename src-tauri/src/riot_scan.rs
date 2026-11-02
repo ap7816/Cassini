@@ -12,17 +12,30 @@ pub fn scan_riot_games() -> Result<Vec<GameDto>, String> {
 
     // Cherche dans les trois emplacements standards du registre (HKLM 64 bits, HKLM 32 bits, HKCU)
     let roots = [
-        (HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-        (HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
-        (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (
+            HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            HKEY_CURRENT_USER,
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
     ];
 
     for (hive, path) in roots {
         let root = RegKey::predef(hive);
-        let Ok(uninstall) = root.open_subkey(path) else { continue };
+        let Ok(uninstall) = root.open_subkey(path) else {
+            continue;
+        };
 
         for key_name in uninstall.enum_keys().flatten() {
-            let Ok(sk) = uninstall.open_subkey(&key_name) else { continue };
+            let Ok(sk) = uninstall.open_subkey(&key_name) else {
+                continue;
+            };
 
             // Filtre par éditeur : ne retient que les entrées Riot Games
             let publisher: String = sk.get_value("Publisher").unwrap_or_default();
@@ -52,9 +65,7 @@ pub fn scan_riot_games() -> Result<Vec<GameDto>, String> {
             let install_location: String = sk.get_value("InstallLocation").unwrap_or_default();
 
             // Vérifie que le dossier existe si une installation est référencée
-            if !install_location.is_empty()
-                && !std::path::Path::new(&install_location).is_dir()
-            {
+            if !install_location.is_empty() && !std::path::Path::new(&install_location).is_dir() {
                 continue;
             }
 
@@ -66,11 +77,19 @@ pub fn scan_riot_games() -> Result<Vec<GameDto>, String> {
 
             let size_on_disk = if !install_location.is_empty() {
                 let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_location));
-                if sz > 0 { Some(sz) } else { None }
+                if sz > 0 {
+                    Some(sz)
+                } else {
+                    None
+                }
             } else {
                 None
             };
-            let install_path = if !install_location.is_empty() { Some(install_location.clone()) } else { None };
+            let install_path = if !install_location.is_empty() {
+                Some(install_location.clone())
+            } else {
+                None
+            };
 
             games.push(GameDto {
                 id: id_key,
@@ -113,17 +132,30 @@ pub fn find_riot_client_exe() -> Option<PathBuf> {
 
     // 2) Cherche dans les clés Uninstall du registre l'entrée "Riot Client"
     let roots = [
-        (HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-        (HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
-        (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (
+            HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            HKEY_CURRENT_USER,
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
     ];
 
     for (hive, path) in roots {
         let root = RegKey::predef(hive);
-        let Ok(uninstall) = root.open_subkey(path) else { continue };
+        let Ok(uninstall) = root.open_subkey(path) else {
+            continue;
+        };
 
         for key_name in uninstall.enum_keys().flatten() {
-            let Ok(sk) = uninstall.open_subkey(&key_name) else { continue };
+            let Ok(sk) = uninstall.open_subkey(&key_name) else {
+                continue;
+            };
             let dn: String = sk.get_value("DisplayName").unwrap_or_default();
             if !dn.to_lowercase().contains("riot client") {
                 continue;
@@ -150,7 +182,9 @@ pub fn find_main_exe_in_dir(dir: &str) -> Option<String> {
         return None;
     }
 
-    let Ok(entries) = std::fs::read_dir(base) else { return None };
+    let Ok(entries) = std::fs::read_dir(base) else {
+        return None;
+    };
 
     for entry in entries.flatten() {
         let p = entry.path();

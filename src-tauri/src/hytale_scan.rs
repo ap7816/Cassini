@@ -20,7 +20,8 @@ use winreg::RegKey;
 
 /// Le lanceur n'expose pas d'`InstallLocation` : seule `DisplayIcon` porte le
 /// chemin de son exécutable.
-const LAUNCHER_DEFAUT: &str = r"C:\Program Files\Hypixel Studios\Hytale Launcher\hytale-launcher.exe";
+const LAUNCHER_DEFAUT: &str =
+    r"C:\Program Files\Hypixel Studios\Hytale Launcher\hytale-launcher.exe";
 
 #[derive(Deserialize)]
 struct Patchline {
@@ -54,17 +55,26 @@ fn chemin_lanceur() -> Option<String> {
             r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         ] {
-            let Ok(uninstall) = hive.open_subkey(chemin) else { continue };
+            let Ok(uninstall) = hive.open_subkey(chemin) else {
+                continue;
+            };
 
             for nom in uninstall.enum_keys().flatten() {
-                let Ok(sk) = uninstall.open_subkey(&nom) else { continue };
+                let Ok(sk) = uninstall.open_subkey(&nom) else {
+                    continue;
+                };
                 let affiche: String = sk.get_value("DisplayName").unwrap_or_default();
                 if !affiche.to_lowercase().contains("hytale") {
                     continue;
                 }
                 // `DisplayIcon` peut porter un suffixe d'index d'icône.
                 let icone: String = sk.get_value("DisplayIcon").unwrap_or_default();
-                let exe = icone.split(',').next().unwrap_or("").trim().trim_matches('"');
+                let exe = icone
+                    .split(',')
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .trim_matches('"');
                 if !exe.is_empty() && Path::new(exe).is_file() {
                     return Some(exe.to_string());
                 }
@@ -194,7 +204,9 @@ mod tests {
 
                 let chemin = j.install_path.as_deref().expect("dossier d'installation");
                 assert!(
-                    std::path::Path::new(chemin).join("HytaleClient.exe").is_file(),
+                    std::path::Path::new(chemin)
+                        .join("HytaleClient.exe")
+                        .is_file(),
                     "le client doit se trouver dans {chemin}"
                 );
 
@@ -214,7 +226,10 @@ mod tests {
                     eprintln!("Hytale : fichiers présents, lanceur désinstallé");
                 }
 
-                assert!(j.size_on_disk.unwrap_or(0) > 0, "taille sur disque non nulle");
+                assert!(
+                    j.size_on_disk.unwrap_or(0) > 0,
+                    "taille sur disque non nulle"
+                );
                 eprintln!(
                     "Hytale détecté — {} Go, lancé par {}",
                     j.size_on_disk.unwrap_or(0) / 1_073_741_824,

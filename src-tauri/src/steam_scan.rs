@@ -136,7 +136,11 @@ fn parse_appmanifest(content: &str, steamapps: &Path) -> Option<GameDto> {
     let title = name.unwrap_or_else(|| format!("Steam App {}", appid));
 
     let install_path = install_dir.map(|d| {
-        steamapps.join("common").join(d).to_string_lossy().to_string()
+        steamapps
+            .join("common")
+            .join(d)
+            .to_string_lossy()
+            .to_string()
     });
 
     Some(GameDto {
@@ -157,7 +161,9 @@ fn parse_appmanifest(content: &str, steamapps: &Path) -> Option<GameDto> {
 
 /// Les dossiers `steamapps` de toutes les bibliothèques Steam, pour la veille.
 pub fn dossiers_steamapps() -> Vec<PathBuf> {
-    let Some(steam) = find_steam_path() else { return Vec::new() };
+    let Some(steam) = find_steam_path() else {
+        return Vec::new();
+    };
     collect_library_paths(&steam)
         .into_iter()
         .map(|l| l.join("steamapps"))
@@ -248,11 +254,17 @@ fn find_steam_path() -> Option<PathBuf> {
 /// mélangerait leurs habitudes.
 pub fn temps_de_jeu() -> std::collections::HashMap<String, u64> {
     let mut total = std::collections::HashMap::new();
-    let Some(steam) = find_steam_path() else { return total };
-    let Ok(comptes) = fs::read_dir(steam.join("userdata")) else { return total };
+    let Some(steam) = find_steam_path() else {
+        return total;
+    };
+    let Ok(comptes) = fs::read_dir(steam.join("userdata")) else {
+        return total;
+    };
     for compte in comptes.flatten() {
         let fichier = compte.path().join("config").join("localconfig.vdf");
-        let Ok(texte) = fs::read_to_string(&fichier) else { continue };
+        let Ok(texte) = fs::read_to_string(&fichier) else {
+            continue;
+        };
         for (id, minutes) in lire_temps_de_jeu(&texte) {
             let e = total.entry(id).or_insert(0);
             *e = (*e).max(minutes);

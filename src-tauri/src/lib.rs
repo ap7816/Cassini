@@ -33,14 +33,17 @@ pub struct TrackMetadata {
 
 // Implémentation partagée : with_cover=false saute l'encodage base64 de la pochette (mode batch rapide)
 fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
+    use base64::Engine;
     use lofty::prelude::*;
     use lofty::probe::Probe;
-    use base64::Engine;
 
     let empty = TrackMetadata {
         path: path.to_string(),
-        title: None, artist: None, album: None,
-        cover_data_url: None, duration_secs: None,
+        title: None,
+        artist: None,
+        album: None,
+        cover_data_url: None,
+        duration_secs: None,
     };
 
     let tagged = {
@@ -61,12 +64,21 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
     // Durée en secondes depuis les propriétés audio — lecture rapide sans décodage des tags
     let duration_secs = {
         let d = tagged.properties().duration().as_secs_f64();
-        if d > 0.0 { Some(d) } else { None }
+        if d > 0.0 {
+            Some(d)
+        } else {
+            None
+        }
     };
 
     let tag = match tagged.primary_tag().or_else(|| tagged.first_tag()) {
         Some(t) => t,
-        None => return TrackMetadata { duration_secs, ..empty },
+        None => {
+            return TrackMetadata {
+                duration_secs,
+                ..empty
+            }
+        }
     };
 
     let title = tag.title().map(|s| s.to_string());
@@ -80,8 +92,11 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
             .or_else(|| tag.pictures().first())
             .and_then(|p| {
                 let data = p.data();
-                if data.len() > 1_500_000 { return None; }
-                let mime = p.mime_type()
+                if data.len() > 1_500_000 {
+                    return None;
+                }
+                let mime = p
+                    .mime_type()
                     .map(|m| m.to_string())
                     .unwrap_or_else(|| "image/jpeg".to_string());
                 let encoded = base64::engine::general_purpose::STANDARD.encode(data);
@@ -91,7 +106,14 @@ fn read_track_metadata(path: &str, with_cover: bool) -> TrackMetadata {
         None
     };
 
-    TrackMetadata { path: path.to_string(), title, artist, album, cover_data_url, duration_secs }
+    TrackMetadata {
+        path: path.to_string(),
+        title,
+        artist,
+        album,
+        cover_data_url,
+        duration_secs,
+    }
 }
 
 /// Exécute un travail bloquant hors du fil de la fenêtre.
@@ -129,20 +151,26 @@ async fn get_track_metadata(app: tauri::AppHandle, path: String) -> TrackMetadat
     use tauri::Manager;
     let music_root = security::current_root(&app.state::<MusicRoot>());
     let chemin = path.clone();
-    let lecture = hors_fil_principal(move || match security::readable_path_with(&chemin, music_root) {
-        Ok(p) => Some(read_track_metadata(&p.to_string_lossy(), true)),
-        // Chemin hors périmètre : on renvoie une fiche vide plutôt qu'une
-        // erreur, pour ne pas révéler l'existence ou non du fichier.
-        Err(_) => None,
-    })
-    .await
-    .ok()
-    .flatten();
+    let lecture =
+        hors_fil_principal(
+            move || match security::readable_path_with(&chemin, music_root) {
+                Ok(p) => Some(read_track_metadata(&p.to_string_lossy(), true)),
+                // Chemin hors périmètre : on renvoie une fiche vide plutôt qu'une
+                // erreur, pour ne pas révéler l'existence ou non du fichier.
+                Err(_) => None,
+            },
+        )
+        .await
+        .ok()
+        .flatten();
 
     lecture.unwrap_or(TrackMetadata {
         path,
-        title: None, artist: None, album: None,
-        cover_data_url: None, duration_secs: None,
+        title: None,
+        artist: None,
+        album: None,
+        cover_data_url: None,
+        duration_secs: None,
     })
 }
 
@@ -152,7 +180,9 @@ async fn get_track_metadata(app: tauri::AppHandle, path: String) -> TrackMetadat
 async fn get_tracks_basic_batch(app: tauri::AppHandle, paths: Vec<String>) -> Vec<TrackMetadata> {
     use tauri::Manager;
     let music_root = security::current_root(&app.state::<MusicRoot>());
-    hors_fil_principal(move || lire_pistes(paths, music_root)).await.unwrap_or_default()
+    hors_fil_principal(move || lire_pistes(paths, music_root))
+        .await
+        .unwrap_or_default()
 }
 
 /// Titre, artiste, album et durée de chaque piste — sans pochette.
@@ -161,15 +191,21 @@ async fn get_tracks_basic_batch(app: tauri::AppHandle, paths: Vec<String>) -> Ve
 /// répartition n'ait pas lieu sur le fil de la fenêtre, qui attendait la fin.
 fn lire_pistes(paths: Vec<String>, music_root: Option<std::path::PathBuf>) -> Vec<TrackMetadata> {
     use rayon::prelude::*;
-    paths.par_iter()
-        .map(|p| match security::readable_path_with(p, music_root.clone()) {
-            Ok(safe) => read_track_metadata(&safe.to_string_lossy(), false),
-            Err(_) => TrackMetadata {
-                path: p.clone(),
-                title: None, artist: None, album: None,
-                cover_data_url: None, duration_secs: None,
+    paths
+        .par_iter()
+        .map(
+            |p| match security::readable_path_with(p, music_root.clone()) {
+                Ok(safe) => read_track_metadata(&safe.to_string_lossy(), false),
+                Err(_) => TrackMetadata {
+                    path: p.clone(),
+                    title: None,
+                    artist: None,
+                    album: None,
+                    cover_data_url: None,
+                    duration_secs: None,
+                },
             },
-        })
+        )
         .collect()
 }
 
@@ -192,12 +228,18 @@ fn parcourir_dossier_musique(path: String) -> Result<Vec<TrackDto>, String> {
     let mut tracks: Vec<TrackDto> = Vec::new();
 
     // Fonction récursive interne : descend dans les sous-dossiers et collecte les fichiers audio
-    fn walk_dir(root: &std::path::Path, dir: &std::path::Path, audio_exts: &[&str], tracks: &mut Vec<TrackDto>) {
+    fn walk_dir(
+        root: &std::path::Path,
+        dir: &std::path::Path,
+        audio_exts: &[&str],
+        tracks: &mut Vec<TrackDto>,
+    ) {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(_) => return,
         };
-        let folder = dir.strip_prefix(root)
+        let folder = dir
+            .strip_prefix(root)
             .map(|p| p.to_string_lossy().replace('\\', "/"))
             .unwrap_or_default();
         for entry in entries.flatten() {
@@ -216,7 +258,11 @@ fn parcourir_dossier_musique(path: String) -> Result<Vec<TrackDto>, String> {
                         .unwrap_or(path.clone())
                         .to_string_lossy()
                         .to_string();
-                    tracks.push(TrackDto { path: abs_path, title, folder: folder.clone() });
+                    tracks.push(TrackDto {
+                        path: abs_path,
+                        title,
+                        folder: folder.clone(),
+                    });
                 }
             }
         }
@@ -227,13 +273,14 @@ fn parcourir_dossier_musique(path: String) -> Result<Vec<TrackDto>, String> {
         return Err(format!("Not a directory: {path}"));
     }
     walk_dir(root, root, &audio_exts, &mut tracks);
-    tracks.sort_by(|a, b| {
-        match (a.folder.is_empty(), b.folder.is_empty()) {
-            (true, false) => std::cmp::Ordering::Greater,
-            (false, true) => std::cmp::Ordering::Less,
-            _ => a.folder.to_lowercase().cmp(&b.folder.to_lowercase())
-                .then(a.title.to_lowercase().cmp(&b.title.to_lowercase())),
-        }
+    tracks.sort_by(|a, b| match (a.folder.is_empty(), b.folder.is_empty()) {
+        (true, false) => std::cmp::Ordering::Greater,
+        (false, true) => std::cmp::Ordering::Less,
+        _ => a
+            .folder
+            .to_lowercase()
+            .cmp(&b.folder.to_lowercase())
+            .then(a.title.to_lowercase().cmp(&b.title.to_lowercase())),
     });
     Ok(tracks)
 }
@@ -296,7 +343,9 @@ async fn scan_steam_games() -> Result<Vec<steam_scan::GameDto>, String> {
 // Commande Tauri : temps de jeu Steam, en minutes, par identifiant d'application
 #[tauri::command]
 async fn steam_playtimes() -> std::collections::HashMap<String, u64> {
-    hors_fil_principal(steam_scan::temps_de_jeu).await.unwrap_or_default()
+    hors_fil_principal(steam_scan::temps_de_jeu)
+        .await
+        .unwrap_or_default()
 }
 
 // Commande Tauri : scanne les jeux Epic Games via les fichiers .item du launcher
@@ -343,7 +392,9 @@ async fn scan_xbox_games() -> Result<Vec<steam_scan::GameDto>, String> {
 async fn store_app_icon(prefix: String) -> Option<String> {
     if prefix.is_empty()
         || prefix.len() > 128
-        || !prefix.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+        || !prefix
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
     {
         return None;
     }
@@ -361,7 +412,10 @@ async fn store_app_icon(prefix: String) -> Option<String> {
 // Commande Tauri : jaquette d'un jeu du Store, tirée de son propre logo
 #[tauri::command]
 async fn xbox_cover(path: String) -> Option<String> {
-    hors_fil_principal(move || xbox_scan::cover_xbox(&path)).await.ok().flatten()
+    hors_fil_principal(move || xbox_scan::cover_xbox(&path))
+        .await
+        .ok()
+        .flatten()
 }
 
 // Commande Tauri : scanne les jeux Rockstar Games via le registre Windows
@@ -398,7 +452,9 @@ fn lister_dossiers_musique(root: String) -> Result<Vec<String>, String> {
 
     // Fonction récursive interne : collecte les chemins relatifs de tous les sous-dossiers
     fn walk(root: &std::path::Path, dir: &std::path::Path, dirs: &mut Vec<String>) {
-        let Ok(entries) = std::fs::read_dir(dir) else { return };
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
@@ -453,14 +509,14 @@ fn rename_music_folder(
     let src = security::within_root(&root, &path)?;
 
     // Le nouveau nom ne doit pas pouvoir remonter l'arborescence
-    if new_name.trim().is_empty()
-        || new_name.contains(['/', '\\', ':'])
-        || new_name.contains("..")
+    if new_name.trim().is_empty() || new_name.contains(['/', '\\', ':']) || new_name.contains("..")
     {
         return Err("Nom de dossier invalide".into());
     }
 
-    let parent = src.parent().ok_or_else(|| "Dossier sans parent".to_string())?;
+    let parent = src
+        .parent()
+        .ok_or_else(|| "Dossier sans parent".to_string())?;
     let dst = parent.join(new_name.trim());
     if dst.exists() {
         return Err(format!("Un dossier « {} » existe déjà", new_name));
@@ -489,7 +545,10 @@ fn move_music_file(
 
     // Résoudre les conflits de noms en ajoutant un compteur numérique "(1)", "(2)"…
     if dst_path.exists() {
-        let stem = src_path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
+        let stem = src_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("file");
         let ext = src_path.extension().and_then(|e| e.to_str()).unwrap_or("");
         let mut i = 1u32;
         loop {
@@ -575,7 +634,9 @@ fn get_autostart() -> bool {
         }
     }
     #[cfg(not(target_os = "windows"))]
-    { false }
+    {
+        false
+    }
 }
 
 // Commande Tauri : active ou désactive le démarrage automatique de Cassini via la clé Run du registre
@@ -602,7 +663,9 @@ fn set_autostart(enabled: bool) -> Result<(), String> {
         let _ = run.delete_value(AUTOSTART_LEGACY);
     }
     #[cfg(not(target_os = "windows"))]
-    { let _ = enabled; }
+    {
+        let _ = enabled;
+    }
     Ok(())
 }
 
@@ -776,14 +839,17 @@ fn word_recall(needle_lc: &str, haystack_lc: &str) -> f32 {
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
         .collect();
-    if needle_words.is_empty() { return 0.0; }
+    if needle_words.is_empty() {
+        return 0.0;
+    }
 
     let hay_words: Vec<&str> = haystack_lc
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| !w.is_empty())
         .collect();
 
-    let matched = needle_words.iter()
+    let matched = needle_words
+        .iter()
         .filter(|&&w| hay_words.contains(&w))
         .count();
 
@@ -801,19 +867,18 @@ fn strip_parens(s: &str) -> &str {
 // Format "Artiste - Titre" : titre pondéré à 65 %, artiste à 35 %
 // Sans artiste dans le terme de recherche : retourne 0.0 pour éviter les faux positifs
 fn match_score(term: &str, result_title: &str, result_artist: &str) -> f32 {
-    let term_lc   = term.to_lowercase();
-    let title_lc  = result_title.to_lowercase();
+    let term_lc = term.to_lowercase();
+    let title_lc = result_title.to_lowercase();
     let artist_lc = result_artist.to_lowercase();
 
     // Format "Artiste - Titre" : calcule le score séparément pour chaque partie
     if let Some(dash) = term_lc.find(" - ") {
         let t_artist = &term_lc[..dash];
-        let t_title  = &term_lc[dash + 3..];
+        let t_title = &term_lc[dash + 3..];
 
         // Compare avec et sans suffixe entre parenthèses pour tolérer les remixes/remasters
         let t_title_clean = strip_parens(t_title);
-        let tr = word_recall(t_title,       &title_lc)
-            .max(word_recall(t_title_clean, &title_lc));
+        let tr = word_recall(t_title, &title_lc).max(word_recall(t_title_clean, &title_lc));
         let ar = word_recall(t_artist, &artist_lc);
 
         // Si l'artiste du terme contient des mots mais qu'aucun ne correspond → résultat suspect
@@ -846,22 +911,29 @@ async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
         .await
         .ok()?;
 
-    if !resp.status().is_success() { return None; }
+    if !resp.status().is_success() {
+        return None;
+    }
 
     let json: serde_json::Value = resp.json().await.ok()?;
     let results = json["results"].as_array()?;
-    if results.is_empty() { return None; }
+    if results.is_empty() {
+        return None;
+    }
 
     // Sélectionne le candidat avec le meilleur score parmi les 5 résultats
-    let (best_score, best) = results.iter()
+    let (best_score, best) = results
+        .iter()
         .map(|r| {
-            let title  = r["trackName"].as_str().unwrap_or("");
+            let title = r["trackName"].as_str().unwrap_or("");
             let artist = r["artistName"].as_str().unwrap_or("");
             (match_score(term, title, artist), r)
         })
         .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))?;
 
-    if best_score < MIN_SCORE { return None; }
+    if best_score < MIN_SCORE {
+        return None;
+    }
 
     // Remplace la taille 100×100 par 600×600 pour une pochette haute résolution
     let cover_url = best["artworkUrl100"]
@@ -869,10 +941,10 @@ async fn try_itunes(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
         .map(|u| u.replacen("100x100bb", "600x600bb", 1));
 
     Some(MusicMetaResult {
-        artist:    best["artistName"].as_str().map(String::from),
-        album:     best["collectionName"].as_str().map(String::from),
+        artist: best["artistName"].as_str().map(String::from),
+        album: best["collectionName"].as_str().map(String::from),
         cover_url,
-        source:    "itunes".into(),
+        source: "itunes".into(),
     })
 }
 
@@ -885,31 +957,38 @@ async fn try_deezer(client: &reqwest::Client, term: &str) -> Option<MusicMetaRes
         .await
         .ok()?;
 
-    if !resp.status().is_success() { return None; }
+    if !resp.status().is_success() {
+        return None;
+    }
 
     let json: serde_json::Value = resp.json().await.ok()?;
     let data = json["data"].as_array()?;
-    if data.is_empty() { return None; }
+    if data.is_empty() {
+        return None;
+    }
 
     // Sélectionne le candidat avec le meilleur score parmi les 5 résultats
-    let (best_score, best) = data.iter()
+    let (best_score, best) = data
+        .iter()
         .map(|r| {
-            let title  = r["title"].as_str().unwrap_or("");
+            let title = r["title"].as_str().unwrap_or("");
             let artist = r["artist"]["name"].as_str().unwrap_or("");
             (match_score(term, title, artist), r)
         })
         .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))?;
 
-    if best_score < MIN_SCORE { return None; }
+    if best_score < MIN_SCORE {
+        return None;
+    }
 
     // cover_xl = 1000×1000 — meilleure résolution disponible chez Deezer
     let cover_url = best["album"]["cover_xl"].as_str().map(String::from);
 
     Some(MusicMetaResult {
-        artist:    best["artist"]["name"].as_str().map(String::from),
-        album:     best["album"]["title"].as_str().map(String::from),
+        artist: best["artist"]["name"].as_str().map(String::from),
+        album: best["album"]["title"].as_str().map(String::from),
         cover_url,
-        source:    "deezer".into(),
+        source: "deezer".into(),
     })
 }
 
@@ -935,9 +1014,13 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
     // Supprime les suffixes entre parenthèses (remix, remaster…) pour améliorer le match
     let title_clean = {
         let cut = title_part.find('(').or_else(|| title_part.find('['));
-        cut.map(|i| title_part[..i].trim_end()).unwrap_or(title_part)
+        cut.map(|i| title_part[..i].trim_end())
+            .unwrap_or(title_part)
     };
-    let query = format!("recording:\"{}\" AND artist:\"{}\"", title_clean, artist_part);
+    let query = format!(
+        "recording:\"{}\" AND artist:\"{}\"",
+        title_clean, artist_part
+    );
 
     let resp = client
         .get("https://musicbrainz.org/ws/2/recording/")
@@ -956,13 +1039,16 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
         .await
         .ok()?;
 
-    if !resp.status().is_success() { return None; }
+    if !resp.status().is_success() {
+        return None;
+    }
 
     let json: serde_json::Value = resp.json().await.ok()?;
     let recordings = json["recordings"].as_array()?;
 
     // Score MusicBrainz : 0-100 — seuil 80 pour limiter les faux positifs
-    let best = recordings.iter()
+    let best = recordings
+        .iter()
         .filter(|r| r["score"].as_u64().unwrap_or(0) >= 80)
         .max_by_key(|r| r["score"].as_u64().unwrap_or(0))?;
 
@@ -973,9 +1059,7 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
         .map(String::from);
 
     let release = best["releases"].as_array().and_then(|r| r.first());
-    let album = release
-        .and_then(|r| r["title"].as_str())
-        .map(String::from);
+    let album = release.and_then(|r| r["title"].as_str()).map(String::from);
 
     // Cover Art Archive : pochette 500px depuis l'ID de release MusicBrainz
     let cover_url = release
@@ -983,9 +1067,16 @@ async fn try_musicbrainz(client: &reqwest::Client, term: &str) -> Option<MusicMe
         .map(|rid| format!("https://coverartarchive.org/release/{}/front-500", rid));
 
     // Rejette si pas d'artiste ni de pochette (résultat inutile)
-    if artist.is_none() && cover_url.is_none() { return None; }
+    if artist.is_none() && cover_url.is_none() {
+        return None;
+    }
 
-    Some(MusicMetaResult { artist, album, cover_url, source: "musicbrainz".into() })
+    Some(MusicMetaResult {
+        artist,
+        album,
+        cover_url,
+        source: "musicbrainz".into(),
+    })
 }
 
 // Commande Tauri : enrichit les métadonnées d'une piste via iTunes, Deezer puis MusicBrainz en fallback
@@ -1027,10 +1118,10 @@ async fn write_audio_tags(
     album: Option<String>,
     cover_url: Option<String>,
 ) -> Result<(), String> {
+    use lofty::config::WriteOptions;
+    use lofty::picture::{MimeType, Picture, PictureType};
     use lofty::prelude::*;
     use lofty::probe::Probe;
-    use lofty::picture::{Picture, PictureType, MimeType};
-    use lofty::config::WriteOptions;
 
     // Écriture sur disque : confinée au dossier musique de l'utilisateur
     let path = security::within_root(&root, &path)?
@@ -1054,10 +1145,17 @@ async fn write_audio_tags(
             .map_err(|e| e.to_string())?;
         match dl_client.get(url).send().await {
             Ok(resp) if resp.status().is_success() => {
-                let mime = resp.headers()
+                let mime = resp
+                    .headers()
                     .get(reqwest::header::CONTENT_TYPE)
                     .and_then(|v| v.to_str().ok())
-                    .map(|s| if s.contains("png") { MimeType::Png } else { MimeType::Jpeg })
+                    .map(|s| {
+                        if s.contains("png") {
+                            MimeType::Png
+                        } else {
+                            MimeType::Jpeg
+                        }
+                    })
                     .unwrap_or(MimeType::Jpeg);
                 match resp.bytes().await {
                     Ok(b) if !b.is_empty() => Some((b.to_vec(), mime)),
@@ -1097,8 +1195,12 @@ async fn write_audio_tags(
     } else {
         tagged_file.first_tag_mut()
     } {
-        if let Some(a) = artist { tag.set_artist(a); }
-        if let Some(a) = album  { tag.set_album(a);  }
+        if let Some(a) = artist {
+            tag.set_artist(a);
+        }
+        if let Some(a) = album {
+            tag.set_album(a);
+        }
         if let Some((bytes, mime)) = cover_bytes {
             tag.remove_picture_type(PictureType::CoverFront);
             tag.push_picture(Picture::new_unchecked(
@@ -1116,7 +1218,6 @@ async fn write_audio_tags(
         .map_err(|e| format!("Écriture échouée ({path}): {e}"))
 }
 
-
 // Commande Tauri : remplace la pochette d'un fichier audio par une image choisie localement
 // Lit l'image depuis le disque (pas de réseau), supportée sur tous les formats gérés par lofty
 #[tauri::command]
@@ -1125,10 +1226,10 @@ fn write_audio_cover_from_file(
     audio_path: String,
     image_path: String,
 ) -> Result<(), String> {
+    use lofty::config::WriteOptions;
+    use lofty::picture::{MimeType, Picture, PictureType};
     use lofty::prelude::*;
     use lofty::probe::Probe;
-    use lofty::picture::{Picture, PictureType, MimeType};
-    use lofty::config::WriteOptions;
 
     // Le fichier modifié doit être dans le dossier musique ; l'image source
     // peut venir d'ailleurs mais reste cantonnée aux dossiers lisibles.
@@ -1140,8 +1241,8 @@ fn write_audio_cover_from_file(
         .to_string();
 
     // Lit les octets de l'image depuis le disque local
-    let image_data = std::fs::read(&image_path)
-        .map_err(|e| format!("Lecture image impossible : {e}"))?;
+    let image_data =
+        std::fs::read(&image_path).map_err(|e| format!("Lecture image impossible : {e}"))?;
     if image_data.is_empty() {
         return Err("Fichier image vide".to_string());
     }
@@ -1156,7 +1257,7 @@ fn write_audio_cover_from_file(
         Some("png") => MimeType::Png,
         Some("gif") => MimeType::Gif,
         Some("bmp") => MimeType::Bmp,
-        _           => MimeType::Jpeg, // jpg, jpeg, webp…
+        _ => MimeType::Jpeg, // jpg, jpeg, webp…
     };
 
     // Lit le fichier audio existant
@@ -1208,7 +1309,10 @@ async fn sgdb_search_and_fetch(
     api_key: &str,
 ) -> Result<Option<String>, String> {
     let encoded = urlencoding::encode(title);
-    let search_url = format!("https://www.steamgriddb.com/api/v2/search/autocomplete/{}", encoded);
+    let search_url = format!(
+        "https://www.steamgriddb.com/api/v2/search/autocomplete/{}",
+        encoded
+    );
 
     let resp = client
         .get(&search_url)
@@ -1242,7 +1346,10 @@ async fn sgdb_search_and_fetch(
         return Err("résultat sans identifiant".to_string());
     };
     let matched_name = first["name"].as_str().unwrap_or("?");
-    eprintln!("[sgdb] «{}» → matched «{}» (id {})", title, matched_name, game_id);
+    eprintln!(
+        "[sgdb] «{}» → matched «{}» (id {})",
+        title, matched_name, game_id
+    );
 
     // Tentative 1 : bannières paysage standard (460×215 ou 920×430)
     let grids_url = format!(
@@ -1262,7 +1369,11 @@ async fn sgdb_search_and_fetch(
             .json()
             .await
             .map_err(|e| format!("réponse illisible : {e}"))?;
-        if let Some(url) = data["data"].as_array().and_then(|a| a.first()).and_then(|g| g["url"].as_str()) {
+        if let Some(url) = data["data"]
+            .as_array()
+            .and_then(|a| a.first())
+            .and_then(|g| g["url"].as_str())
+        {
             eprintln!("[sgdb] «{}» → image found ✓", title);
             return Ok(Some(url.to_string()));
         }
@@ -1423,7 +1534,9 @@ async fn fetch_sgdb_image(title: String) -> Result<Option<String>, String> {
     }
 
     // 2ème tentative sans les chiffres finaux (ex: "Call of Duty 2" → "Call of Duty")
-    let stripped = title.trim_end_matches(|c: char| c.is_ascii_digit()).trim_end();
+    let stripped = title
+        .trim_end_matches(|c: char| c.is_ascii_digit())
+        .trim_end();
     if !stripped.is_empty() && stripped != title.as_str() {
         eprintln!("[sgdb] «{}» → retrying as «{}»", title, stripped);
         if let Some(url) = sgdb_search_and_fetch(&client, stripped, &api_key).await? {
@@ -1479,7 +1592,10 @@ fn espace_disque() -> Result<DiskInfo, String> {
             .map_err(|e| e.to_string())?;
         }
 
-        Ok(DiskInfo { free_bytes, total_bytes })
+        Ok(DiskInfo {
+            free_bytes,
+            total_bytes,
+        })
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -1529,7 +1645,9 @@ fn set_tray_music(
     arret: String,
 ) -> Result<(), String> {
     tray.musique.set_text(bascule).map_err(|e| e.to_string())?;
-    tray.musique.set_enabled(active).map_err(|e| e.to_string())?;
+    tray.musique
+        .set_enabled(active)
+        .map_err(|e| e.to_string())?;
     tray.arret.set_text(arret).map_err(|e| e.to_string())?;
     tray.arret.set_enabled(active).map_err(|e| e.to_string())
 }
@@ -1563,7 +1681,11 @@ fn annoncer_plan<R: tauri::Runtime, E: tauri::Emitter<R>>(emetteur: &E, masquee:
     // n'est pas la nôtre, si la fenêtre a bien été vue partir.
     tauri_plugin_log::log::info!(
         "fenêtre {}",
-        if masquee { "hors de vue" } else { "à l'écran" }
+        if masquee {
+            "hors de vue"
+        } else {
+            "à l'écran"
+        }
     );
     let _ = emetteur.emit("fenetre-plan", Plan { masquee });
 }
@@ -1584,7 +1706,9 @@ fn surveiller_plan(app: tauri::AppHandle) {
 
     std::thread::spawn(move || loop {
         std::thread::sleep(std::time::Duration::from_millis(500));
-        let Some(fenetre) = app.get_webview_window("main") else { continue };
+        let Some(fenetre) = app.get_webview_window("main") else {
+            continue;
+        };
         let Some(masquee) = etat_de_la_fenetre(&fenetre) else {
             // La fenêtre ne répond plus : l'application se ferme.
             return;
@@ -1633,7 +1757,10 @@ pub fn run() {
     //
     // Sans seconde carte, l'indicateur est sans effet.
     #[cfg(target_os = "windows")]
-    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--force_high_performance_gpu");
+    std::env::set_var(
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+        "--force_high_performance_gpu",
+    );
 
     tauri::Builder::default()
         // Instance unique — enregistré en premier, avant tout autre plugin.
@@ -1693,10 +1820,20 @@ pub fn run() {
                 let quit_i = MenuItem::with_id(app, "quit", "Quitter", true, None::<&str>)?;
                 // Commandes du lecteur, la fenêtre fût-elle réduite. Grisées
                 // tant que l'interface n'a pas dit qu'une piste est chargée.
-                let music_i =
-                    MenuItem::with_id(app, "music_toggle", "Musique en pause", false, None::<&str>)?;
-                let stop_i =
-                    MenuItem::with_id(app, "music_stop", "Arrêter la musique", false, None::<&str>)?;
+                let music_i = MenuItem::with_id(
+                    app,
+                    "music_toggle",
+                    "Musique en pause",
+                    false,
+                    None::<&str>,
+                )?;
+                let stop_i = MenuItem::with_id(
+                    app,
+                    "music_stop",
+                    "Arrêter la musique",
+                    false,
+                    None::<&str>,
+                )?;
                 // Deux séparateurs distincts : un même élément de menu ne peut
                 // pas figurer deux fois dans le même menu.
                 let haut = PredefinedMenuItem::separator(app)?;
@@ -1737,7 +1874,8 @@ pub fn run() {
                             button: MouseButton::Left,
                             button_state: MouseButtonState::Up,
                             ..
-                        } = event {
+                        } = event
+                        {
                             let app = tray.app_handle();
                             if let Some(w) = app.get_webview_window("main") {
                                 let _ = w.show();
@@ -1772,26 +1910,50 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
-            scan_steam_games, steam_playtimes, scan_epic_games, scan_battlenet_games,
+            scan_steam_games,
+            steam_playtimes,
+            scan_epic_games,
+            scan_battlenet_games,
             scan_hytale_games,
-            scan_riot_games, scan_rockstar_games, scan_ubisoft_games, scan_hoyoplay_games,
-            scan_xbox_games, xbox_cover, store_app_icon,
-            scan_launchers, get_file_icon_data_url, open_folder,
-            launch_battlenet_game, launch_riot_game, launch_ubisoft_game,
+            scan_riot_games,
+            scan_rockstar_games,
+            scan_ubisoft_games,
+            scan_hoyoplay_games,
+            scan_xbox_games,
+            xbox_cover,
+            store_app_icon,
+            scan_launchers,
+            get_file_icon_data_url,
+            open_folder,
+            launch_battlenet_game,
+            launch_riot_game,
+            launch_ubisoft_game,
             launch_target,
             find_uninstaller,
             uninstall_game,
-            scan_music_folder, get_autostart, set_autostart, list_music_dirs,
+            scan_music_folder,
+            get_autostart,
+            set_autostart,
+            list_music_dirs,
             set_music_root,
-            create_music_folder, delete_music_folder, rename_music_folder,
-            move_music_file, get_track_metadata, get_tracks_basic_batch,
-            search_itunes, write_audio_tags, write_audio_cover_from_file,
+            create_music_folder,
+            delete_music_folder,
+            rename_music_folder,
+            move_music_file,
+            get_track_metadata,
+            get_tracks_basic_batch,
+            search_itunes,
+            write_audio_tags,
+            write_audio_cover_from_file,
             get_disk_free_space,
-            fetch_sgdb_image, set_sgdb_key, has_sgdb_key, fetch_image_base64,
+            fetch_sgdb_image,
+            set_sgdb_key,
+            has_sgdb_key,
+            fetch_image_base64,
             reseau_joignable,
-            set_tray_labels, set_tray_music
+            set_tray_labels,
+            set_tray_music
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
 }

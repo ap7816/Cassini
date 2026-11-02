@@ -25,8 +25,8 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED};
 use windows::Win32::UI::Shell::{
-    IEnumShellItems, IShellItem, IShellItemImageFactory, SHCreateItemFromParsingName,
-    SHGetKnownFolderItem, BHID_EnumItems, FOLDERID_AppsFolder, KF_FLAG_DEFAULT,
+    BHID_EnumItems, FOLDERID_AppsFolder, IEnumShellItems, IShellItem, IShellItemImageFactory,
+    SHCreateItemFromParsingName, SHGetKnownFolderItem, KF_FLAG_DEFAULT,
     SIGDN_PARENTRELATIVEPARSING, SIIGBF_BIGGERSIZEOK, SIIGBF_ICONONLY,
 };
 
@@ -72,7 +72,9 @@ pub fn cible_application(prefixe_famille: &str) -> Option<String> {
                 return None;
             }
             let entree = lot[0].take()?;
-            let Ok(nom) = entree.GetDisplayName(SIGDN_PARENTRELATIVEPARSING) else { continue };
+            let Ok(nom) = entree.GetDisplayName(SIGDN_PARENTRELATIVEPARSING) else {
+                continue;
+            };
             let texte = chaine(nom);
             if texte.starts_with(prefixe_famille) {
                 return Some(texte);
@@ -102,7 +104,13 @@ pub fn icone_application(cible: &str, taille: i32) -> Result<String, String> {
         // `BIGGERSIZEOK` : mieux vaut une image plus grande, que l'on réduira à
         // l'affichage, qu'une petite étirée.
         let bitmap: HBITMAP = fabrique
-            .GetImage(SIZE { cx: taille, cy: taille }, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK)
+            .GetImage(
+                SIZE {
+                    cx: taille,
+                    cy: taille,
+                },
+                SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK,
+            )
             .map_err(|e| format!("image indisponible : {e}"))?;
 
         let resultat = png_depuis_bitmap(bitmap, taille);
@@ -152,7 +160,10 @@ unsafe fn png_depuis_bitmap(bitmap: HBITMAP, taille: i32) -> Result<String, Stri
     PngEncoder::new(&mut png)
         .write_image(&rgba, taille as u32, taille as u32, ColorType::Rgba8.into())
         .map_err(|e| format!("encodage PNG impossible : {e}"))?;
-    Ok(format!("data:image/png;base64,{}", general_purpose::STANDARD.encode(png)))
+    Ok(format!(
+        "data:image/png;base64,{}",
+        general_purpose::STANDARD.encode(png)
+    ))
 }
 
 #[cfg(test)]

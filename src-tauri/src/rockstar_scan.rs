@@ -14,10 +14,14 @@ pub fn scan_rockstar_games() -> Result<Vec<GameDto>, String> {
         r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
     ] {
-        let Ok(uninstall) = hklm.open_subkey(uninstall_path) else { continue };
+        let Ok(uninstall) = hklm.open_subkey(uninstall_path) else {
+            continue;
+        };
 
         for key_name in uninstall.enum_keys().flatten() {
-            let Ok(sk) = uninstall.open_subkey(&key_name) else { continue };
+            let Ok(sk) = uninstall.open_subkey(&key_name) else {
+                continue;
+            };
 
             // Filtre par éditeur : ne retient que les entrées Rockstar Games
             let publisher: String = sk.get_value("Publisher").unwrap_or_default();
@@ -39,27 +43,30 @@ pub fn scan_rockstar_games() -> Result<Vec<GameDto>, String> {
             let install_location: String = sk.get_value("InstallLocation").unwrap_or_default();
 
             // Vérifie que le dossier d'installation existe sur le disque
-            if !install_location.is_empty()
-                && !std::path::Path::new(&install_location).is_dir()
-            {
+            if !install_location.is_empty() && !std::path::Path::new(&install_location).is_dir() {
                 continue;
             }
 
             // Cherche l'exécutable du jeu : noms connus en priorité, puis heuristique générique
             let launch_url = find_rockstar_exe(&dn_lc, &install_location);
 
-            let id = format!(
-                "rockstar-{}",
-                dn_lc.replace([' ', ':', '.', '\''], "-")
-            );
+            let id = format!("rockstar-{}", dn_lc.replace([' ', ':', '.', '\''], "-"));
 
             let size_on_disk = if !install_location.is_empty() {
                 let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_location));
-                if sz > 0 { Some(sz) } else { None }
+                if sz > 0 {
+                    Some(sz)
+                } else {
+                    None
+                }
             } else {
                 None
             };
-            let install_path = if !install_location.is_empty() { Some(install_location.clone()) } else { None };
+            let install_path = if !install_location.is_empty() {
+                Some(install_location.clone())
+            } else {
+                None
+            };
 
             games.push(GameDto {
                 id,
@@ -86,17 +93,18 @@ fn find_rockstar_exe(name_lc: &str, install_dir: &str) -> Option<String> {
     use std::path::PathBuf;
 
     // Table de correspondance jeu → nom d'exécutable connu
-    let known_exe: Option<&str> = if name_lc.contains("grand theft auto v") || name_lc.contains("gta v") {
-        Some("PlayGTAV.exe")
-    } else if name_lc.contains("red dead redemption 2") || name_lc.contains("rdr2") {
-        Some("RDR2.exe")
-    } else if name_lc.contains("max payne 3") {
-        Some("MaxPayne3.exe")
-    } else if name_lc.contains("l.a. noire") || name_lc.contains("la noire") {
-        Some("LANoire.exe")
-    } else {
-        None
-    };
+    let known_exe: Option<&str> =
+        if name_lc.contains("grand theft auto v") || name_lc.contains("gta v") {
+            Some("PlayGTAV.exe")
+        } else if name_lc.contains("red dead redemption 2") || name_lc.contains("rdr2") {
+            Some("RDR2.exe")
+        } else if name_lc.contains("max payne 3") {
+            Some("MaxPayne3.exe")
+        } else if name_lc.contains("l.a. noire") || name_lc.contains("la noire") {
+            Some("LANoire.exe")
+        } else {
+            None
+        };
 
     // Vérifie que l'exe connu existe bien dans le dossier d'installation
     if let Some(exe_name) = known_exe {

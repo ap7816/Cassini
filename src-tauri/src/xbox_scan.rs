@@ -20,15 +20,14 @@
 //!
 //! Rien n'est lu dans `WindowsApps` : tout est accessible sans élévation.
 
-use base64::Engine as _;
 use crate::steam_scan::{dir_size, GameDto};
+use base64::Engine as _;
 use std::path::{Path, PathBuf};
 use winreg::enums::*;
 use winreg::RegKey;
 
 /// Inventaire des paquets installés, lisible par l'utilisateur courant.
-const PAQUETS: &str =
-    r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
+const PAQUETS: &str = r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
 
 /// Valeur d'un attribut XML, cherchée dans la première balise de ce nom.
 ///
@@ -84,12 +83,17 @@ pub fn cible_de_lancement(famille: &str, application: &str) -> String {
 /// espace, ni séparateur, ni guillemet.
 pub fn est_cible_appsfolder(cible: &str) -> bool {
     const PREFIXE: &str = r"shell:AppsFolder\";
-    let Some(reste) = cible.strip_prefix(PREFIXE) else { return false };
-    let Some((famille, application)) = reste.split_once('!') else { return false };
+    let Some(reste) = cible.strip_prefix(PREFIXE) else {
+        return false;
+    };
+    let Some((famille, application)) = reste.split_once('!') else {
+        return false;
+    };
     let admis = |s: &str| {
         !s.is_empty()
             && s.len() <= 128
-            && s.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
     };
     admis(famille) && admis(application)
 }
@@ -212,17 +216,25 @@ pub fn scan_xbox_games() -> Result<Vec<GameDto>, String> {
 
     let mut sortie = Vec::new();
     for racine in dossiers {
-        let Ok(entrees) = std::fs::read_dir(&racine) else { continue };
+        let Ok(entrees) = std::fs::read_dir(&racine) else {
+            continue;
+        };
         for entree in entrees.flatten() {
             let jeu = entree.path();
             let contenu = jeu.join("Content");
             if !contenu.is_dir() {
                 continue;
             }
-            let Some(config) = fichier_insensible(&contenu, "MicrosoftGame.Config") else { continue };
-            let Ok(texte) = std::fs::read_to_string(&config) else { continue };
+            let Some(config) = fichier_insensible(&contenu, "MicrosoftGame.Config") else {
+                continue;
+            };
+            let Ok(texte) = std::fs::read_to_string(&config) else {
+                continue;
+            };
 
-            let Some(identite) = attribut(&texte, "Identity", "Name") else { continue };
+            let Some(identite) = attribut(&texte, "Identity", "Name") else {
+                continue;
+            };
             let titre = attribut(&texte, "ShellVisuals", "DefaultDisplayName")
                 .or_else(|| jeu.file_name().and_then(|n| n.to_str()).map(String::from))
                 .unwrap_or_else(|| identite.clone());
@@ -233,7 +245,8 @@ pub fn scan_xbox_games() -> Result<Vec<GameDto>, String> {
             let manifeste = fichier_insensible(&contenu, "appxmanifest.xml")
                 .and_then(|p| std::fs::read_to_string(p).ok())
                 .unwrap_or_default();
-            let application = attribut(&manifeste, "Application", "Id").unwrap_or_else(|| "App".into());
+            let application =
+                attribut(&manifeste, "Application", "Id").unwrap_or_else(|| "App".into());
 
             // Sans nom complet, le jeu reste listé : on sait le montrer et
             // dire son poids, mais pas le lancer.
@@ -280,20 +293,32 @@ mod tests {
 
     #[test]
     fn lit_les_attributs_sur_plusieurs_lignes() {
-        assert_eq!(attribut(CONFIG, "Identity", "Name").as_deref(), Some("Microsoft.MinecraftUWP"));
+        assert_eq!(
+            attribut(CONFIG, "Identity", "Name").as_deref(),
+            Some("Microsoft.MinecraftUWP")
+        );
         assert_eq!(
             attribut(CONFIG, "ShellVisuals", "DefaultDisplayName").as_deref(),
             Some("Minecraft for Windows")
         );
-        assert_eq!(attribut(MANIFESTE, "Application", "Id").as_deref(), Some("Game"));
+        assert_eq!(
+            attribut(MANIFESTE, "Application", "Id").as_deref(),
+            Some("Game")
+        );
     }
 
     #[test]
     fn ne_confond_pas_une_balise_avec_celle_qui_la_contient() {
         // « <Applications> » ne porte pas d'attribut : c'est « <Application »
         // qu'il faut trouver.
-        assert_eq!(attribut(MANIFESTE, "Application", "Id").as_deref(), Some("Game"));
-        assert_eq!(attribut(MANIFESTE, "Identity", "Name").as_deref(), Some("Microsoft.MinecraftUWP"));
+        assert_eq!(
+            attribut(MANIFESTE, "Application", "Id").as_deref(),
+            Some("Game")
+        );
+        assert_eq!(
+            attribut(MANIFESTE, "Identity", "Name").as_deref(),
+            Some("Microsoft.MinecraftUWP")
+        );
     }
 
     #[test]
@@ -319,16 +344,22 @@ mod tests {
 
     #[test]
     fn n_ouvre_que_les_dossiers_de_jeux_du_store() {
-        assert!(est_dossier_de_jeu_xbox(r"C:\XboxGames\Minecraft for Windows"));
+        assert!(est_dossier_de_jeu_xbox(
+            r"C:\XboxGames\Minecraft for Windows"
+        ));
         assert!(est_dossier_de_jeu_xbox(r"D:\xboxgames\Un jeu"));
         assert!(!est_dossier_de_jeu_xbox(r"C:\Users\anton\Documents"));
-        assert!(!est_dossier_de_jeu_xbox(r"C:\XboxGames\..\Windows\System32"));
+        assert!(!est_dossier_de_jeu_xbox(
+            r"C:\XboxGames\..\Windows\System32"
+        ));
         assert!(!est_dossier_de_jeu_xbox("XboxGames"));
     }
 
     #[test]
     fn n_admet_que_la_forme_attendue_de_cible() {
-        assert!(est_cible_appsfolder(r"shell:AppsFolder\Microsoft.MinecraftUWP_8wekyb3d8bbwe!Game"));
+        assert!(est_cible_appsfolder(
+            r"shell:AppsFolder\Microsoft.MinecraftUWP_8wekyb3d8bbwe!Game"
+        ));
         assert!(!est_cible_appsfolder(r"shell:AppsFolderamille"));
         assert!(!est_cible_appsfolder(r"shell:AppsFolderamille!"));
         assert!(!est_cible_appsfolder(r"shell:AppsFolderam ille!App"));

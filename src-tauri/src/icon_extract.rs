@@ -46,7 +46,9 @@ pub fn file_icon_png_data_url(path: &str, size: i32) -> Result<String, String> {
 
     let screen_dc = unsafe { GetDC(hwnd) };
     if screen_dc.0.is_null() {
-        unsafe { let _ = DestroyIcon(hicon); }
+        unsafe {
+            let _ = DestroyIcon(hicon);
+        }
         return Err("GetDC failed.".to_string());
     }
 

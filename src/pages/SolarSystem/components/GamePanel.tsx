@@ -106,6 +106,12 @@ export function GamePanel({
         cancelled = true;
       };
     }
+    // Deux absences voulues. `game`, dont seuls les champs cités comptent :
+    // l'objet est recréé à chaque scan et dépendre de son identité
+    // relancerait la requête pour rien. Et `setImgSrc`, qui n'est pas un
+    // `useState` mais une fonction redéfinie à chaque rendu (voir sa
+    // définition plus haut) : la citer ferait tourner l'effet sans fin.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, game.title, game.customImageUrl, resolvedAppId, isSteam, sgdbKeySet]);
 
   function handleImgError() {

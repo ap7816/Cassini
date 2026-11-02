@@ -110,8 +110,8 @@ fn canonical_parent_of(path: &str) -> Result<PathBuf, String> {
     }
 
     let parent = p.parent().ok_or("Chemin sans parent")?;
-    let parent_canon = std::fs::canonicalize(parent)
-        .map_err(|e| format!("Dossier parent introuvable : {e}"))?;
+    let parent_canon =
+        std::fs::canonicalize(parent).map_err(|e| format!("Dossier parent introuvable : {e}"))?;
     Ok(parent_canon.join(p.file_name().unwrap()))
 }
 

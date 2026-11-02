@@ -136,7 +136,11 @@ fn veiller_cle(machine: bool, chemin: &str, tx: Sender<()>) {
         HKEY_LOCAL_MACHINE, KEY_NOTIFY, REG_NOTIFY_CHANGE_NAME,
     };
 
-    let racine = if machine { HKEY_LOCAL_MACHINE } else { HKEY_CURRENT_USER };
+    let racine = if machine {
+        HKEY_LOCAL_MACHINE
+    } else {
+        HKEY_CURRENT_USER
+    };
     let mut cle = HKEY::default();
     // SAFETY : `cle` n'est utilisée qu'après une ouverture réussie, et fermée
     // à la sortie de la boucle.
@@ -166,11 +170,21 @@ mod tests {
 
     #[test]
     fn reconnait_les_manifestes_de_steam_et_d_epic() {
-        assert!(est_manifeste(Path::new(r"D:\SteamLibrary\steamapps\appmanifest_620.acf")));
-        assert!(est_manifeste(Path::new(r"C:\ProgramData\Epic\Manifests\ABC123.item")));
-        assert!(!est_manifeste(Path::new(r"D:\SteamLibrary\steamapps\libraryfolders.vdf")));
-        assert!(!est_manifeste(Path::new(r"D:\SteamLibrary\steamapps\appmanifest_620.acf.tmp")));
-        assert!(est_manifeste(Path::new(r"C:\Program Files\HoYoPlay\games\ZZZ Game\ZenlessZoneZero.exe")));
+        assert!(est_manifeste(Path::new(
+            r"D:\SteamLibrary\steamapps\appmanifest_620.acf"
+        )));
+        assert!(est_manifeste(Path::new(
+            r"C:\ProgramData\Epic\Manifests\ABC123.item"
+        )));
+        assert!(!est_manifeste(Path::new(
+            r"D:\SteamLibrary\steamapps\libraryfolders.vdf"
+        )));
+        assert!(!est_manifeste(Path::new(
+            r"D:\SteamLibrary\steamapps\appmanifest_620.acf.tmp"
+        )));
+        assert!(est_manifeste(Path::new(
+            r"C:\Program Files\HoYoPlay\games\ZZZ Game\ZenlessZoneZero.exe"
+        )));
     }
 
     #[test]
@@ -183,7 +197,10 @@ mod tests {
     #[test]
     fn ignore_la_reecriture_d_un_manifeste_pendant_un_telechargement() {
         let acf = r"D:\SteamLibrary\steamapps\appmanifest_620.acf";
-        assert!(!pertinent(&ev(EventKind::Modify(ModifyKind::Data(DataChange::Content)), acf)));
+        assert!(!pertinent(&ev(
+            EventKind::Modify(ModifyKind::Data(DataChange::Content)),
+            acf
+        )));
     }
 
     #[test]

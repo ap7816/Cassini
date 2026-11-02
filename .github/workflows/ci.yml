@@ -1,0 +1,130 @@
+name: CI
+
+# Joué à chaque poussée sur `main` et à chaque demande de fusion. Le workflow
+# de release, lui, ne part que sur un tag : rien ne vérifiait les tests avant
+# qu'un installeur soit construit.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Une poussée annule la vérification de la précédente sur la même branche :
+# seul le dernier état compte, et les coureurs ne travaillent pas pour rien.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  qualite:
+    name: Types, lint et mise en forme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      # Sous Linux la copie de travail est en LF, ce que `.prettierrc` attend.
+      # C'est pourquoi ce contrôle-là ne tourne pas sur un coureur Windows.
+      - name: Prettier
+        run: npm run format:check
+
+  tests-ts:
+    name: Tests TypeScript
+    # Windows, comme l'application : plusieurs suites raisonnent sur des
+    # chemins et des clés de registre Windows. Les vérifier ailleurs serait
+    # vérifier autre chose.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Vitest
+        run: npm test
+
+  tests-rust:
+    name: Tests Rust, clippy et rustfmt
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          shared-key: cassini-ci
+
+      - name: rustfmt
+        working-directory: src-tauri
+        run: cargo fmt --check
+
+      # `-D warnings` : un avertissement de clippy fait tomber la vérification.
+      # Le dépôt est à zéro, autant que cela se garde tout seul.
+      - name: clippy
+        working-directory: src-tauri
+        run: cargo clippy --lib --all-targets -- -D warnings
+
+      - name: cargo test
+        working-directory: src-tauri
+        run: cargo test --lib
+
+  parcours:
+    name: Parcours filmés
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Sans `--with-deps`, qui n'installe des paquets système que sous Linux.
+      - name: Installe le navigateur de Playwright
+        run: npx playwright install chromium
+
+      - name: Playwright
+        run: npm run test:e2e
+
+      # Les vidéos et les captures sont tout l'intérêt de cette suite : on les
+      # garde pour pouvoir regarder ce que le robot a fait, y compris quand
+      # tout passe. Sept jours suffisent — la prochaine exécution rend la
+      # précédente sans objet.
+      - name: Garde les films et les captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-filmes
+          path: .rapports/e2e
+          retention-days: 7
+          if-no-files-found: warn
+          # `.rapports` commence par un point, et depuis la v4.4 l'action
+          # écarte les fichiers cachés par défaut : sans cette ligne l'archive
+          # repartirait vide.
+          include-hidden-files: true

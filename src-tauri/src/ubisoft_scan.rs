@@ -53,10 +53,7 @@ pub fn scan_ubisoft_games() -> Result<Vec<GameDto>, String> {
         // URL de lancement via le protocole uplay://
         let launch_url = Some(format!("uplay://launch/{}/0", game_id));
 
-        let id = format!(
-            "ubisoft-{}",
-            game_id
-        );
+        let id = format!("ubisoft-{}", game_id);
 
         let sz = crate::steam_scan::dir_size(std::path::Path::new(install_dir));
         games.push(GameDto {
@@ -83,18 +80,27 @@ fn collect_ubisoft_installs() -> HashMap<String, String> {
 
     // Cherche dans les trois emplacements possibles selon la version installée
     let candidates = [
-        (HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs"),
+        (
+            HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs",
+        ),
         (HKEY_LOCAL_MACHINE, r"SOFTWARE\Ubisoft\Launcher\Installs"),
         (HKEY_CURRENT_USER, r"SOFTWARE\Ubisoft\Launcher\Installs"),
     ];
 
     for (hive, path) in candidates {
         let root = RegKey::predef(hive);
-        let Ok(installs) = root.open_subkey(path) else { continue };
+        let Ok(installs) = root.open_subkey(path) else {
+            continue;
+        };
 
         for key_name in installs.enum_keys().flatten() {
-            let Ok(sk) = installs.open_subkey(&key_name) else { continue };
-            let Ok(install_dir) = sk.get_value::<String, _>("InstallDir") else { continue };
+            let Ok(sk) = installs.open_subkey(&key_name) else {
+                continue;
+            };
+            let Ok(install_dir) = sk.get_value::<String, _>("InstallDir") else {
+                continue;
+            };
             // Ne remplace pas si déjà présent (priorité au premier trouvé)
             map.entry(key_name).or_insert(install_dir);
         }
@@ -113,10 +119,14 @@ fn collect_ubisoft_names_from_uninstall() -> HashMap<String, String> {
         r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
     ] {
-        let Ok(uninstall) = hklm.open_subkey(uninstall_path) else { continue };
+        let Ok(uninstall) = hklm.open_subkey(uninstall_path) else {
+            continue;
+        };
 
         for key_name in uninstall.enum_keys().flatten() {
-            let Ok(sk) = uninstall.open_subkey(&key_name) else { continue };
+            let Ok(sk) = uninstall.open_subkey(&key_name) else {
+                continue;
+            };
 
             // Filtre par éditeur Ubisoft
             let publisher: String = sk.get_value("Publisher").unwrap_or_default();

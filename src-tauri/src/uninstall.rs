@@ -214,7 +214,12 @@ fn dossier_normalise(p: &str) -> String {
 
 /// Note la ressemblance entre une entrée du registre et le jeu cherché.
 /// `None` quand rien ne correspond assez pour prendre le risque.
-pub fn score(titre_jeu: &str, nom_entree: &str, emplacement: Option<&str>, chemin_jeu: Option<&str>) -> Option<u32> {
+pub fn score(
+    titre_jeu: &str,
+    nom_entree: &str,
+    emplacement: Option<&str>,
+    chemin_jeu: Option<&str>,
+) -> Option<u32> {
     let a = normaliser_titre(titre_jeu);
     let b = normaliser_titre(nom_entree);
     if a.is_empty() || b.is_empty() {
@@ -366,9 +371,18 @@ pub fn est_systeme(nom: &str, editeur: Option<&str>) -> bool {
 /// Les trois endroits où Windows liste ce qui est installé.
 #[cfg(target_os = "windows")]
 const RACINES: [(isize, &str); 3] = [
-    (HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-    (HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
-    (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+    (
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    ),
+    (
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    ),
+    (
+        HKEY_CURRENT_USER,
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    ),
 ];
 
 /// Cherche dans le registre le désinstalleur d'un jeu.
@@ -377,9 +391,13 @@ pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
     let mut meilleur: Option<(u32, Desinstalleur)> = None;
 
     for (ruche, chemin) in RACINES {
-        let Ok(base) = RegKey::predef(ruche).open_subkey(chemin) else { continue };
+        let Ok(base) = RegKey::predef(ruche).open_subkey(chemin) else {
+            continue;
+        };
         for cle in base.enum_keys().flatten() {
-            let Ok(entree) = base.open_subkey(&cle) else { continue };
+            let Ok(entree) = base.open_subkey(&cle) else {
+                continue;
+            };
             let nom: String = entree.get_value("DisplayName").unwrap_or_default();
             if nom.is_empty() {
                 continue;
@@ -399,8 +417,12 @@ pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
             }
 
             let emplacement: String = entree.get_value("InstallLocation").unwrap_or_default();
-            let Some(note) = score(titre, &nom, Some(emplacement.as_str()).filter(|e| !e.is_empty()), chemin_jeu)
-            else {
+            let Some(note) = score(
+                titre,
+                &nom,
+                Some(emplacement.as_str()).filter(|e| !e.is_empty()),
+                chemin_jeu,
+            ) else {
                 continue;
             };
 
@@ -410,13 +432,22 @@ pub fn trouver(titre: &str, chemin_jeu: Option<&str>) -> Option<Desinstalleur> {
                 .get_value("QuietUninstallString")
                 .or_else(|_| entree.get_value("UninstallString"))
                 .unwrap_or_default();
-            let Some((programme, arguments)) = decouper(&brute) else { continue };
+            let Some((programme, arguments)) = decouper(&brute) else {
+                continue;
+            };
             if !commande_admise(&programme, &arguments) {
                 continue;
             }
 
             if meilleur.as_ref().is_none_or(|(n, _)| note > *n) {
-                meilleur = Some((note, Desinstalleur { nom, programme, arguments }));
+                meilleur = Some((
+                    note,
+                    Desinstalleur {
+                        nom,
+                        programme,
+                        arguments,
+                    },
+                ));
             }
         }
     }
@@ -435,11 +466,23 @@ mod tests {
 
     #[test]
     fn ecarte_les_pilotes_et_composants_systeme() {
-        assert!(est_systeme("NVIDIA Graphics Driver 566.36", Some("NVIDIA Corporation")));
-        assert!(est_systeme("Microsoft Visual C++ 2015-2022 Redistributable (x64)", Some("Microsoft Corporation")));
+        assert!(est_systeme(
+            "NVIDIA Graphics Driver 566.36",
+            Some("NVIDIA Corporation")
+        ));
+        assert!(est_systeme(
+            "Microsoft Visual C++ 2015-2022 Redistributable (x64)",
+            Some("Microsoft Corporation")
+        ));
         assert!(est_systeme("Microsoft Edge", Some("Microsoft Corporation")));
-        assert!(est_systeme("Intel(R) Chipset Device Software", Some("Intel Corporation")));
-        assert!(est_systeme("Realtek Audio Driver Package", Some("Realtek Semiconductor")));
+        assert!(est_systeme(
+            "Intel(R) Chipset Device Software",
+            Some("Intel Corporation")
+        ));
+        assert!(est_systeme(
+            "Realtek Audio Driver Package",
+            Some("Realtek Semiconductor")
+        ));
         assert!(est_systeme("Windows SDK", None));
         assert!(est_systeme("Easy Anti-Cheat", Some("Epic Games")));
         // Anti-triche : le retirer casse le jeu qui en dépend.
@@ -483,8 +526,14 @@ mod tests {
         // machine, et « un .exe qui existe » suffisait à les accepter.
         let racine = r"C:\Windows";
         assert!(!programme_admis(r"C:\Windows\System32\cmd.exe", racine));
-        assert!(!programme_admis(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", racine));
-        assert!(!programme_admis(r"C:\Windows\System32\rundll32.exe", racine));
+        assert!(!programme_admis(
+            r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+            racine
+        ));
+        assert!(!programme_admis(
+            r"C:\Windows\System32\rundll32.exe",
+            racine
+        ));
         assert!(!programme_admis(r"C:\Windows\explorer.exe", racine));
         assert!(!programme_admis(r"c:/windows/system32/CMD.EXE", racine));
     }
@@ -499,13 +548,19 @@ mod tests {
 
     #[test]
     fn refuse_un_binaire_distant() {
-        assert!(!programme_admis(r"\\serveur\partage\unins.exe", r"C:\Windows"));
+        assert!(!programme_admis(
+            r"\\serveur\partage\unins.exe",
+            r"C:\Windows"
+        ));
     }
 
     #[test]
     fn accepte_un_desinstalleur_ordinaire() {
         let racine = r"C:\Windows";
-        assert!(programme_admis(r"C:\Program Files\Mon Jeu\unins000.exe", racine));
+        assert!(programme_admis(
+            r"C:\Program Files\Mon Jeu\unins000.exe",
+            racine
+        ));
         assert!(programme_admis(r"D:\Jeux\X\uninstall.exe", racine));
         // Un dossier qui commence comme Windows sans en être : Windows Apps.
         assert!(programme_admis(r"C:\WindowsGames\X\unins.exe", racine));
@@ -535,8 +590,14 @@ mod tests {
     #[test]
     fn normalise_les_titres() {
         assert_eq!(normaliser_titre("PAYDAY 3"), "payday 3");
-        assert_eq!(normaliser_titre("Marvel's Spider-Man"), "marvel s spider man");
-        assert_eq!(normaliser_titre("Tomb Raider: Definitive Edition"), "tomb raider");
+        assert_eq!(
+            normaliser_titre("Marvel's Spider-Man"),
+            "marvel s spider man"
+        );
+        assert_eq!(
+            normaliser_titre("Tomb Raider: Definitive Edition"),
+            "tomb raider"
+        );
     }
 
     #[test]
@@ -550,13 +611,23 @@ mod tests {
     fn le_meme_dossier_prime_sur_le_nom() {
         // Deux noms sans rapport, un seul dossier : c'est bien la même chose.
         assert_eq!(
-            score("Mon Jeu", "Un nom tout autre", Some(r"C:\Jeux\MonJeu"), Some(r"C:\Jeux\MonJeu")),
+            score(
+                "Mon Jeu",
+                "Un nom tout autre",
+                Some(r"C:\Jeux\MonJeu"),
+                Some(r"C:\Jeux\MonJeu")
+            ),
             Some(100)
         );
         // La barre finale et le séparateur de l'autre bord ne changent rien :
         // le registre écrit les deux.
         assert_eq!(
-            score("Mon Jeu", "Un nom tout autre", Some(r"C:\Jeux\MonJeu\"), Some("C:/Jeux/MonJeu")),
+            score(
+                "Mon Jeu",
+                "Un nom tout autre",
+                Some(r"C:\Jeux\MonJeu\"),
+                Some("C:/Jeux/MonJeu")
+            ),
             Some(100)
         );
     }
@@ -615,7 +686,10 @@ mod tests {
         assert!(lanceur_etranger("Epic Games Launcher 17.2.1", "Fortnite"));
 
         // Le lanceur lui-même reste désinstallable.
-        assert!(!lanceur_etranger("Epic Games Launcher", "Epic Games Launcher"));
+        assert!(!lanceur_etranger(
+            "Epic Games Launcher",
+            "Epic Games Launcher"
+        ));
         assert!(!lanceur_etranger("Steam", "Steam"));
         // Hytale s'installe par un lanceur qui porte son nom : le bloquer
         // priverait le jeu du seul désinstalleur qu'il ait.

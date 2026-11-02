@@ -37,17 +37,13 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
             };
 
             // Filtre par éditeur : ne retient que les entrées Blizzard Entertainment
-            let publisher: String = subkey
-                .get_value("Publisher")
-                .unwrap_or_default();
+            let publisher: String = subkey.get_value("Publisher").unwrap_or_default();
 
             if !publisher.to_lowercase().contains("blizzard") {
                 continue;
             }
 
-            let display_name: String = subkey
-                .get_value("DisplayName")
-                .unwrap_or_default();
+            let display_name: String = subkey.get_value("DisplayName").unwrap_or_default();
 
             if display_name.is_empty() {
                 continue;
@@ -58,14 +54,10 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
                 continue;
             }
 
-            let install_location: String = subkey
-                .get_value("InstallLocation")
-                .unwrap_or_default();
+            let install_location: String = subkey.get_value("InstallLocation").unwrap_or_default();
 
             // Vérifie que le dossier d'installation existe vraiment sur le disque
-            if !install_location.is_empty()
-                && !std::path::Path::new(&install_location).is_dir()
-            {
+            if !install_location.is_empty() && !std::path::Path::new(&install_location).is_dir() {
                 continue;
             }
 
@@ -78,11 +70,19 @@ fn scan_uninstall_keys(games: &mut Vec<GameDto>) {
 
             let size_on_disk = if !install_location.is_empty() {
                 let sz = crate::steam_scan::dir_size(std::path::Path::new(&install_location));
-                if sz > 0 { Some(sz) } else { None }
+                if sz > 0 {
+                    Some(sz)
+                } else {
+                    None
+                }
             } else {
                 None
             };
-            let install_path = if !install_location.is_empty() { Some(install_location.clone()) } else { None };
+            let install_path = if !install_location.is_empty() {
+                Some(install_location.clone())
+            } else {
+                None
+            };
 
             games.push(GameDto {
                 id,

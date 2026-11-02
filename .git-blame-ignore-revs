@@ -1,0 +1,10 @@
+# Commits de pure mise en forme, a ignorer par git blame.
+#
+#   git blame --ignore-revs-file .git-blame-ignore-revs <fichier>
+#
+# Pour que ce soit automatique, une fois :
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: Prettier sur tout le depot (143 fichiers, aucun changement de
+# comportement)
+5689fba8e2c48e53867a267e40e19e819e9a6108

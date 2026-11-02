@@ -1812,10 +1812,12 @@ export function useSolarScene({
 
       if (canvas.parentNode === container) container.removeChild(canvas);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    // `platformRef` est volontairement absent : c'est une référence, sa valeur
-    // change sans que la scène doive être reconstruite — et la reconstruire à
-    // chaque voyage était précisément le défaut.
+    // `platformRef` et `evenementsRef` sont volontairement absents : ce sont
+    // des références, leur valeur change sans que la scène doive être
+    // reconstruite — et la reconstruire à chaque voyage était précisément
+    // le défaut.
     cleScene,
     parPlateformeRef,
     editionRef,

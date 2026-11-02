@@ -58,6 +58,28 @@ export default [
     },
   },
 
+  // Un fournisseur de contexte et le hook qui le consomme vivent dans le même
+  // fichier. C'est le découpage que documente React, et le seul qui garde le
+  // contexte privé : `ToastCtx` n'est jamais exporté, donc personne ne peut
+  // l'utiliser sans passer par `useToast` et sa vérification de montage.
+  //
+  // Fast refresh ne sait pas rafraîchir à chaud un module qui exporte autre
+  // chose que des composants : éditer un de ces fichiers recharge la page au
+  // lieu de remplacer le composant. C'est le prix, il ne coûte qu'en
+  // développement, et il est plus petit que quatre fichiers de plus dont le
+  // seul rôle serait de contenter l'outil.
+  {
+    files: [
+      'src/components/Tags/Tags.tsx',
+      'src/features/music/MusicContext.tsx',
+      'src/features/patchNotes/PatchNotesContext.tsx',
+      'src/features/toast/ToastContext.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+
   // Important: évite que ESLint se batte avec Prettier
   {
     rules: {

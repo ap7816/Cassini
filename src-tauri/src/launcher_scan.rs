@@ -400,7 +400,10 @@ mod tests {
         let premier_absent = out.iter().position(|l| !l.installed);
         let dernier_present = out.iter().rposition(|l| l.installed);
         if let (Some(a), Some(p)) = (premier_absent, dernier_present) {
-            assert!(p < a, "un « non trouvé » s'intercale entre deux launchers présents");
+            assert!(
+                p < a,
+                "un « non trouvé » s'intercale entre deux launchers présents"
+            );
         }
     }
 }

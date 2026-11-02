@@ -31,7 +31,11 @@ const RACINES: [&str; 2] = [r"Software\Cognosphere\HYP", r"Software\miHoYo\HYP"]
 /// Le titre ne sert qu'à défaut de celui qu'inscrit HoYoPlay dans la liste des
 /// programmes installés, qui est le nom officiel dans la langue du lanceur.
 const JEUX: [(&str, &str, &[&str]); 4] = [
-    ("hk4e", "Genshin Impact", &["GenshinImpact.exe", "YuanShen.exe"]),
+    (
+        "hk4e",
+        "Genshin Impact",
+        &["GenshinImpact.exe", "YuanShen.exe"],
+    ),
     ("hkrpg", "Honkai: Star Rail", &["StarRail.exe"]),
     ("nap", "Zenless Zone Zero", &["ZenlessZoneZero.exe"]),
     ("bh3", "Honkai Impact 3rd", &["BH3.exe"]),
@@ -42,13 +46,16 @@ const PAS_LE_JEU: [&str; 3] = ["unitycrashhandler", "crashreport", "uninstall"];
 
 fn connu(code: &str) -> Option<&'static (&'static str, &'static str, &'static [&'static str])> {
     let prefixe = code.split('_').next().unwrap_or(code);
-    JEUX.iter().find(|(p, _, _)| p.eq_ignore_ascii_case(prefixe))
+    JEUX.iter()
+        .find(|(p, _, _)| p.eq_ignore_ascii_case(prefixe))
 }
 
 /// Un code de jeu est un identifiant simple : il sert à composer un
 /// identifiant de bibliothèque, et rien d'autre ne doit y passer.
 fn code_valide(code: &str) -> bool {
-    !code.is_empty() && code.len() <= 64 && code.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    !code.is_empty()
+        && code.len() <= 64
+        && code.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
 /// L'exécutable du jeu dans son dossier, s'il y est.
@@ -64,7 +71,11 @@ pub fn trouver_exe(dossier: &Path, code: &str) -> Option<PathBuf> {
         .flatten()
         .map(|e| e.path())
         .filter(|p| {
-            let nom = p.file_name().and_then(|n| n.to_str()).unwrap_or("").to_ascii_lowercase();
+            let nom = p
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("")
+                .to_ascii_lowercase();
             p.is_file() && nom.ends_with(".exe") && !PAS_LE_JEU.iter().any(|x| nom.contains(x))
         })
         .collect();
@@ -83,9 +94,13 @@ fn titre_inscrit(code: &str) -> Option<String> {
             r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         ] {
-            let Ok(liste) = hive.open_subkey(chemin) else { continue };
+            let Ok(liste) = hive.open_subkey(chemin) else {
+                continue;
+            };
             for nom in liste.enum_keys().flatten() {
-                let Ok(cle) = liste.open_subkey(&nom) else { continue };
+                let Ok(cle) = liste.open_subkey(&nom) else {
+                    continue;
+                };
                 let commande: String = cle.get_value("UninstallString").unwrap_or_default();
                 if !commande.to_ascii_lowercase().contains(&marque) {
                     continue;
@@ -106,17 +121,23 @@ fn inscrits() -> Vec<(String, PathBuf)> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let mut sortie: Vec<(String, PathBuf)> = Vec::new();
     for racine in RACINES {
-        let Ok(hyp) = hkcu.open_subkey(racine) else { continue };
+        let Ok(hyp) = hkcu.open_subkey(racine) else {
+            continue;
+        };
         for version in hyp.enum_keys().flatten() {
             if version.eq_ignore_ascii_case("standalone") {
                 continue;
             }
-            let Ok(v) = hyp.open_subkey(&version) else { continue };
+            let Ok(v) = hyp.open_subkey(&version) else {
+                continue;
+            };
             for code in v.enum_keys().flatten() {
                 if !code_valide(&code) || sortie.iter().any(|(c, _)| c == &code) {
                     continue;
                 }
-                let Ok(jeu) = v.open_subkey(&code) else { continue };
+                let Ok(jeu) = v.open_subkey(&code) else {
+                    continue;
+                };
                 let dossier: String = jeu.get_value("GameInstallPath").unwrap_or_default();
                 if dossier.trim().is_empty() {
                     continue;
@@ -131,16 +152,24 @@ fn inscrits() -> Vec<(String, PathBuf)> {
 /// Dossiers des jeux HoYoPlay, pour la veille : l'exécutable y apparaît à la
 /// fin d'un téléchargement, sans qu'aucune clé du registre ne change.
 pub fn dossiers_jeux() -> Vec<PathBuf> {
-    inscrits().into_iter().map(|(_, d)| d).filter(|d| d.is_dir()).collect()
+    inscrits()
+        .into_iter()
+        .map(|(_, d)| d)
+        .filter(|d| d.is_dir())
+        .collect()
 }
 
 /// Le lanceur HoYoPlay, d'après le registre puis son emplacement habituel.
 pub fn chemin_lanceur() -> Option<PathBuf> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     for racine in RACINES {
-        let Ok(hyp) = hkcu.open_subkey(racine) else { continue };
+        let Ok(hyp) = hkcu.open_subkey(racine) else {
+            continue;
+        };
         for version in hyp.enum_keys().flatten() {
-            let Ok(v) = hyp.open_subkey(&version) else { continue };
+            let Ok(v) = hyp.open_subkey(&version) else {
+                continue;
+            };
             let dossier: String = v.get_value("InstallPath").unwrap_or_default();
             let exe = PathBuf::from(dossier.trim()).join("launcher.exe");
             if !dossier.trim().is_empty() && exe.is_file() {
@@ -222,13 +251,22 @@ mod tests {
     #[test]
     fn trouve_l_executable_d_un_jeu_connu() {
         let d = dossier("zzz", &["ZenlessZoneZero.exe", "UnityCrashHandler64.exe"]);
-        assert_eq!(trouver_exe(&d, "nap_global"), Some(d.join("ZenlessZoneZero.exe")));
+        assert_eq!(
+            trouver_exe(&d, "nap_global"),
+            Some(d.join("ZenlessZoneZero.exe"))
+        );
     }
 
     #[test]
     fn devine_un_jeu_inconnu_seulement_sans_ambiguite() {
-        let seul = dossier("inconnu-seul", &["NouveauJeu.exe", "UnityCrashHandler64.exe"]);
-        assert_eq!(trouver_exe(&seul, "xyz_global"), Some(seul.join("NouveauJeu.exe")));
+        let seul = dossier(
+            "inconnu-seul",
+            &["NouveauJeu.exe", "UnityCrashHandler64.exe"],
+        );
+        assert_eq!(
+            trouver_exe(&seul, "xyz_global"),
+            Some(seul.join("NouveauJeu.exe"))
+        );
 
         let deux = dossier("inconnu-deux", &["A.exe", "B.exe"]);
         assert!(trouver_exe(&deux, "xyz_global").is_none());

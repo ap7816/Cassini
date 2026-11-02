@@ -38,9 +38,7 @@ pub fn spawn_detached(program: &str, args: &[&str]) -> Result<(), String> {
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
-                .creation_flags(
-                    flags::DETACHED_PROCESS | flags::CREATE_NEW_PROCESS_GROUP | extra,
-                );
+                .creation_flags(flags::DETACHED_PROCESS | flags::CREATE_NEW_PROCESS_GROUP | extra);
             c
         };
 
@@ -93,7 +91,9 @@ pub fn spawn_avec_elevation(program: &str, args: &[&str]) -> Result<(), String> 
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .creation_flags(
-            flags::DETACHED_PROCESS | flags::CREATE_NEW_PROCESS_GROUP | flags::CREATE_BREAKAWAY_FROM_JOB,
+            flags::DETACHED_PROCESS
+                | flags::CREATE_NEW_PROCESS_GROUP
+                | flags::CREATE_BREAKAWAY_FROM_JOB,
         )
         .spawn();
 
@@ -134,7 +134,13 @@ fn shell_execute(program: &str, args: &[&str]) -> Result<(), String> {
 
     let ligne = args
         .iter()
-        .map(|a| if a.contains(' ') && !a.starts_with('"') { format!("\"{a}\"") } else { (*a).to_string() })
+        .map(|a| {
+            if a.contains(' ') && !a.starts_with('"') {
+                format!("\"{a}\"")
+            } else {
+                (*a).to_string()
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ");
 
@@ -176,7 +182,9 @@ pub fn spawn_avec_elevation(program: &str, args: &[&str]) -> Result<(), String> 
 /// `C:\jeu.exe` n'en est pas une : le deux-points y suit une seule lettre, et
 /// aucun `//` ne le suit.
 pub fn est_url(target: &str) -> bool {
-    let Some(i) = target.find("://") else { return false };
+    let Some(i) = target.find("://") else {
+        return false;
+    };
     i > 0
         && target[..i]
             .chars()
@@ -220,7 +228,6 @@ pub fn open_via_shell(target: &str) -> Result<(), String> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::est_url;
@@ -228,7 +235,9 @@ mod tests {
     #[test]
     fn reconnait_les_url_de_protocole() {
         assert!(est_url("steam://rungameid/440"));
-        assert!(est_url("com.epicgames.launcher://apps/Brill?action=launch&silent=true"));
+        assert!(est_url(
+            "com.epicgames.launcher://apps/Brill?action=launch&silent=true"
+        ));
         assert!(est_url("uplay://launch/123/0"));
     }
 

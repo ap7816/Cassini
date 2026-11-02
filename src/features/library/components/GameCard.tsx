@@ -116,6 +116,12 @@ export function GameCard({
       };
     }
     // `epoque` relance la demande au retour du réseau.
+    //
+    // Les champs de `game` sont cités un à un, et non l'objet entier que
+    // réclame la règle : `useLibraryGames` en recrée un à chaque scan, et
+    // dépendre de son identité relancerait la requête réseau à chaque
+    // passage, pour une couverture qui n'a pas changé.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, game.title, game.customImageUrl, resolvedSteamAppId, isSteam, sgdbKeySet, epoque]);
 
   function handleImgError() {
