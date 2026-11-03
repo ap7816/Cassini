@@ -174,6 +174,12 @@ Updates used to be served from a separate `ArcHive-updates` repo, which existed 
 because this one was private. It isn't needed now, and the updater points here
 instead.
 
+## Going further
+
+[notes.md](notes.md) is the long version: how each part works, the decisions
+behind it, what was tried and dropped, and what is left to do. Same document in
+French in [notes.fr.md](notes.fr.md).
+
 ## License
 
 MIT, see [LICENSE](LICENSE). Bundled music and artwork have their own terms, listed in
