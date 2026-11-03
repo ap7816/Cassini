@@ -503,11 +503,14 @@
     "sectionChange": "Changements"
   },
   "changelog": {
-    "v6_0_2": {
+    "v6_1_0": {
       "fix_0": "[Bibliothèque] Désinstaller un jeu Epic retirait le launcher Epic : Windows lui donne pour dossier celui qui contient tous les jeux, et Cassini y lisait le jeu lui-même. Ubisoft Connect et HoYoPlay tendaient le même piège. Un launcher ne peut plus répondre à la place d’un de ses jeux, et le message renvoie à celui qui l’a installé",
       "fix_1": "[Bibliothèque] La confirmation de désinstallation nomme le programme qui va vraiment s’ouvrir quand il ne porte pas le nom du jeu : c’est ce qui manquait pour voir l’erreur avant de la commettre",
       "fix_2": "[Mise à jour] La vérification de mise à jour envoyait un jeton d’authentification devenu inutile, qui se retrouvait en clair dans l’application installée. Il est retiré et révoqué. À savoir : les versions 6.0.1 et antérieures ne voient plus aucune mise à jour et ne le disent pas. Il faut réinstaller une fois à la main depuis GitHub ; la bibliothèque et les réglages sont conservés",
       "fix_3": "[Système solaire] Les boutons de la barre des launchers s’annonçaient « S » ou « E » à un lecteur d’écran, au lieu de « Steam, 3 jeux ». Ils portent maintenant leur nom entier",
+      "fix_4": "[Paramètres] Les menus et les interrupteurs des réglages n’avaient aucun nom pour un lecteur d’écran, qui annonçait « menu déroulant » sans dire de quoi. Vingt contrôles sont nommés, dans les réglages comme dans les filtres de la bibliothèque, et le nom lu est le mot affiché",
+      "fix_5": "[Bibliothèque] Un launcher installé dont la liste de jeux ne peut pas être lue est maintenant signalé. Il n’affichait aucun jeu sans rien dire, ce qui ne se distinguait pas de « tu n’as aucun jeu sur ce launcher »",
+      "fix_6": "[Bibliothèque] Les jeux Epic sont cherchés là où le registre de Windows le déclare, et non à un emplacement supposé : une installation d’Epic rangée ailleurs ne passe plus inaperçue",
       "change_0": "[Mise à jour] Les mises à jour viennent désormais du dépôt Cassini lui-même, devenu public. Le dépôt séparé qui les servait n’existait que parce que le code était privé"
     },
     "v6_0_1": {

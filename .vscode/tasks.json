@@ -261,7 +261,7 @@
       "id": "tagDeVersion",
       "type": "promptString",
       "description": "Version à publier, préfixée d'un v. Doit correspondre à package.json, tauri.conf.json et Cargo.toml.",
-      "default": "v6.0.2"
+      "default": "v6.1.0"
     }
   ]
 }

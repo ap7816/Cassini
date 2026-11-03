@@ -24,10 +24,11 @@ export function useUpdater(): UpdaterState {
     async function run() {
       try {
         // Aucun en-tête d'authentification, et c'est volontaire. Le manifeste
-        // et les installeurs sont servis depuis `ap7816/ArcHive-updates`, qui
-        // est public : GitHub ne demande rien. Un jeton a été porté ici
-        // jusqu'à la 6.0.2, du temps où les mises à jour venaient du dépôt
-        // privé. Il ne servait plus à rien et coûtait cher : Vite remplace
+        // et les installeurs sont joints aux releases de ce dépôt, qui est
+        // public : GitHub ne demande rien. Un jeton a été porté ici jusqu'à la
+        // 6.1.0, du temps où le code était privé et où les mises à jour
+        // venaient d'un second dépôt. Il ne servait plus à rien et coûtait
+        // cher : Vite remplace
         // `import.meta.env.VITE_*` par la valeur littérale à la compilation,
         // le jeton était donc gravé en clair dans le bundle, lui-même
         // distribué dans un `.exe` téléchargeable par tous.
