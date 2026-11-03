@@ -110,8 +110,13 @@ function Thumb({ game, color, sgdbKeySet }: { game: Game; color: string; sgdbKey
 
   if (!src) {
     return (
+      // L'initiale tient lieu de jaquette quand il n'y en a pas : décorative,
+      // comme l'`alt=""` de la vraie vignette plus bas. Le titre est déjà dans
+      // le nom du bouton, et laisser cette lettre visible à l'arbre
+      // d'accessibilité la faisait concurrencer ce nom.
       <div
         className={css.thumbFallback}
+        aria-hidden="true"
         style={{ background: `linear-gradient(135deg,${color}55,${color}18)` }}
       >
         {game.title.slice(0, 1).toUpperCase()}
@@ -525,7 +530,11 @@ export function GameList({
               {icone ? (
                 <img src={icone} alt="" className={css.railIcon} draggable={false} />
               ) : (
-                <span className={css.railInitiale}>
+                // L'initiale tient lieu d'icône quand il n'y en a pas : elle
+                // est décorative, et le bouton se nomme par son `aria-label`.
+                // Laissée visible à l'arbre d'accessibilité, elle entrait en
+                // concurrence avec lui.
+                <span className={css.railInitiale} aria-hidden="true">
                   {nomPlateforme(p.name, t).slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -672,6 +681,27 @@ function Ligne({
   const { t, i18n } = useTranslation();
   const teinte = PLATFORM_CSS[game.platform || 'Other'] ?? '#7a8a9a';
   const absent = game.installed === false;
+
+  // La taille sur disque d'un jeu désinstallé ne veut plus rien dire :
+  // l'espace a été rendu. On dit son état à la place.
+  const etat = absent
+    ? t('gameCard.notInstalled')
+    : game.sizeOnDisk != null && game.sizeOnDisk > 0
+      ? formaterTaille(game.sizeOnDisk, i18n.language)
+      : '—';
+
+  // Le nom accessible est composé ici plutôt que laissé au contenu du bouton.
+  // Sans cela il s'obtenait en recollant les morceaux affichés, numéro
+  // d'orbite compris, et se lisait « 1Portal 212,0 Go ».
+  const nomAccessible = [
+    game.title,
+    orbit !== null ? null : nomPlateforme(game.platform, t),
+    etat === '—' ? null : etat,
+    game.favorite ? t('gameCard.favorite') : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <li className={action ? css.ligneAvecAction : undefined}>
       <button
@@ -680,6 +710,7 @@ function Ligne({
           .filter(Boolean)
           .join(' ')}
         onClick={() => onPick(game)}
+        aria-label={nomAccessible}
         title={game.title}
         style={selected ? { borderColor: teinte + '88' } : undefined}
       >
@@ -687,7 +718,13 @@ function Ligne({
             tirée de `currentColor`, sans quoi elle serait blanche autour d'un
             point coloré. */}
         {orbit !== null ? (
-          <span className={css.orbitNum}>{orbit}</span>
+          // Décoratif : c'est le rang de la planète sur son orbite, que la
+          // position dans la liste donne déjà. Le laisser visible à l'arbre
+          // d'accessibilité le collait en tête du nom, qui se lisait
+          // « 1Portal 2 ».
+          <span className={css.orbitNum} aria-hidden="true">
+            {orbit}
+          </span>
         ) : (
           <>
             <span
@@ -704,14 +741,15 @@ function Ligne({
         <span className={css.labels}>
           <span className={css.name}>{game.title}</span>
           <span className={css.meta}>
-            {/* La taille sur disque d'un jeu désinstallé ne veut plus rien
-                dire : l'espace a été rendu. On dit son état à la place. */}
-            {absent
-              ? t('gameCard.notInstalled')
-              : game.sizeOnDisk != null && game.sizeOnDisk > 0
-                ? formaterTaille(game.sizeOnDisk, i18n.language)
-                : '—'}
-            {game.favorite && <span className={css.fav}> ★</span>}
+            {etat}
+            {/* L'étoile ne dit rien que le nom accessible ne dise déjà, en
+                toutes lettres. */}
+            {game.favorite && (
+              <span className={css.fav} aria-hidden="true">
+                {' '}
+                ★
+              </span>
+            )}
           </span>
         </span>
       </button>

@@ -453,6 +453,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 onChange={(e) => {
                   if (estModeTheme(e.target.value)) setThemeMode(e.target.value);
                 }}
+                aria-label={t('settings.themeLabel')}
               >
                 <option value="dark">{t('settings.themeDark')}</option>
                 <option value="light">{t('settings.themeLight')}</option>
@@ -581,6 +582,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 onChange={(e) => {
                   if (estLangue(e.target.value)) handleLanguageChange(e.target.value);
                 }}
+                aria-label={t('settings.languageLabel')}
               >
                 {/* Chaque langue sous son propre nom : on doit pouvoir retrouver la
                 sienne dans une interface qu'on ne lit pas. */}
@@ -678,6 +680,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={ambient.enabled}
                   onChange={(e) => ambient.setEnabled(e.target.checked)}
+                  aria-label={t('settings.ambientLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -693,6 +696,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   disabled={!ambient.enabled}
                   className={css.slider}
                   onChange={(e) => ambient.setVolume(Number(e.target.value) / 100)}
+                  aria-label={t('settings.ambientVolumeLabel')}
                 />
                 <span className={css.sliderValue}>{Math.round(ambient.volume * 100)} %</span>
               </div>
@@ -806,6 +810,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.planetSizeByPlaytime}
                   onChange={(e) => setPlanetSizeByPlaytime(e.target.checked)}
+                  aria-label={t('settings.planetPlaytimeLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -842,6 +847,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 className={css.langSelect}
                 value={preset}
                 onChange={(e) => appliquerPreset(e.target.value as Preset)}
+                aria-label={t('settings.presetLabel')}
               >
                 {ORDRE_PRESETS.map((nom) => (
                   <option key={nom} value={nom}>
@@ -867,6 +873,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 className={css.langSelect}
                 value={settings.echelleRendu}
                 onChange={(e) => setEchelleRendu(Number(e.target.value))}
+                aria-label={t('settings.echelleRenduLabel')}
               >
                 {ECHELLES.map((v) => (
                   <option key={v} value={v}>
@@ -885,6 +892,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 className={css.langSelect}
                 value={densiteLaPlusProche(settings.densiteCiel)}
                 onChange={(e) => setDensiteCiel(Number(e.target.value))}
+                aria-label={t('settings.densiteCielLabel')}
               >
                 {DENSITES.map((d) => (
                   <option key={d.cle} value={d.valeur}>
@@ -904,6 +912,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.debordement}
                   onChange={(e) => setDebordement(e.target.checked)}
+                  aria-label={t('settings.debordementLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -932,6 +941,7 @@ export function ReglagesContenu({ recherche }: Props) {
                 className={css.langSelect}
                 value={settings.limiteIPS}
                 onChange={(e) => setLimiteIPS(Number(e.target.value))}
+                aria-label={t('settings.limiteIPSLabel')}
               >
                 {LIMITES_IPS.map((v) => (
                   <option key={v} value={v}>
@@ -951,6 +961,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.afficherIPS}
                   onChange={(e) => setAfficherIPS(e.target.checked)}
+                  aria-label={t('settings.afficherIPSLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -981,6 +992,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.cielVivant}
                   onChange={(e) => setCielVivant(e.target.checked)}
+                  aria-label={t('settings.cielVivantLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -996,6 +1008,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.evenementsCiel}
                   onChange={(e) => setEvenementsCiel(e.target.checked)}
+                  aria-label={t('settings.evenementsLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -1021,6 +1034,7 @@ export function ReglagesContenu({ recherche }: Props) {
                     type="checkbox"
                     checked={settings[reglage]}
                     onChange={(e) => setPageVisible(reglage, e.target.checked)}
+                    aria-label={t(labelKey)}
                   />
                   <span className={css.toggleSlider} />
                 </label>
@@ -1059,6 +1073,7 @@ export function ReglagesContenu({ recherche }: Props) {
                       /* desktop only */
                     }
                   }}
+                  aria-label={t('settings.autostartLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -1070,6 +1085,7 @@ export function ReglagesContenu({ recherche }: Props) {
                   type="checkbox"
                   checked={settings.runInBackground}
                   onChange={(e) => setRunInBackground(e.target.checked)}
+                  aria-label={t('settings.runInBgLabel')}
                 />
                 <span className={css.toggleSlider} />
               </label>
@@ -1207,7 +1223,15 @@ function ChoixOuverture({ valeur, onChange }: { valeur: string; onChange: (v: st
     options.perso.some((o) => o.cle === valeur);
 
   return (
-    <select className={css.langSelect} value={valeur} onChange={(e) => onChange(e.target.value)}>
+    // Nommé ici et non par sa ligne : ce menu vit dans son propre composant,
+    // hors de portée de la boucle qui a nommé les autres. La clé est celle que
+    // `SettingRow` affiche au-dessus, donc le nom lu correspond au mot vu.
+    <select
+      className={css.langSelect}
+      aria-label={t('settings.startSystemLabel')}
+      value={valeur}
+      onChange={(e) => onChange(e.target.value)}
+    >
       <option value={OUVERTURE_AUTO}>{t('settings.startSystemAuto')}</option>
       <option value={OUVERTURE_DERNIER}>{t('settings.startSystemLast')}</option>
       {options.launchers.length > 0 && (

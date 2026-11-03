@@ -88,8 +88,13 @@ export function MusicVisualizer() {
   }, []);
 
   return (
+    // Purement décoratif : il réagit au son, ne porte aucune information et ne
+    // se clique pas. `aria-hidden` le retire de l'arbre d'accessibilité, où il
+    // n'apparaissait que comme un bloc de contenu hors de tout repère de
+    // navigation — ce que signalait l'audit.
     <canvas
       ref={canvasRef}
+      aria-hidden="true"
       style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}
     />
   );
