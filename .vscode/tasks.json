@@ -1,14 +1,14 @@
 {
-  // Les tâches sont nommées « Catégorie : ce que ça fait ». VS Code trie la
-  // liste par ordre alphabétique, donc le préfixe suffit à regrouper, et le
-  // champ `detail` dit ce que la commande coûte en temps — la seule chose
-  // qu'on veuille savoir avant de la lancer.
+  // Nommage « Catégorie : ce que ça fait ». VS Code trie par ordre
+  // alphabétique, donc le préfixe regroupe. Le `detail` tient en une ligne :
+  // ce que ça produit, et combien de temps ça prend.
+  // Vue d'ensemble et explications : voir notes.md, section « Tâches VS Code ».
   "version": "2.0.0",
   "tasks": [
     // ── Application ────────────────────────────────────────────────────────
     {
       "label": "Application : lancer en développement",
-      "detail": "L'application complète, Rust compris, avec rechargement à chaud. Première compilation : quelques minutes.",
+      "detail": "L'app complète, Rust compris, rechargement à chaud.",
       "icon": { "id": "rocket", "color": "terminal.ansiCyan" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -18,8 +18,8 @@
       "problemMatcher": []
     },
     {
-      "label": "Application : lancer le front seul dans un navigateur",
-      "detail": "Vite sur localhost:1420, sans le côté Rust. Les scans de launchers échouent, la galaxie se construit depuis le stockage du navigateur.",
+      "label": "Application : lancer le front seul (navigateur)",
+      "detail": "Vite sur localhost:1420, sans le Rust. Les scans échouent.",
       "icon": { "id": "browser", "color": "terminal.ansiCyan" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -29,8 +29,8 @@
       "problemMatcher": []
     },
     {
-      "label": "Application : construire l'installeur",
-      "detail": "Compile en release et produit le .exe d'installation. Compter dix à vingt minutes.",
+      "label": "Application : construire un .exe d'essai (local, non signé)",
+      "detail": "Pour l'essayer sur ta machine. Ne peut pas servir de mise à jour. 10 à 20 min.",
       "icon": { "id": "package", "color": "terminal.ansiCyan" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -43,7 +43,7 @@
     // ── Tests ──────────────────────────────────────────────────────────────
     {
       "label": "Tests : les 254 tests unitaires",
-      "detail": "TypeScript puis Rust, à la suite. Huit secondes. C'est la tâche de test par défaut (Ctrl+Maj+P, « Run Test Task »).",
+      "detail": "TypeScript puis Rust. 8 s. Tâche de test par défaut.",
       "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -54,7 +54,7 @@
     },
     {
       "label": "Tests : TypeScript seulement (204 cas)",
-      "detail": "Vitest, une fois. Logique de bibliothèque, stockage, traductions, géométrie des orbites.",
+      "detail": "Vitest, une fois. 6 s.",
       "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -65,7 +65,7 @@
     },
     {
       "label": "Tests : TypeScript en surveillance",
-      "detail": "Vitest rejoue les tests touchés à chaque sauvegarde. À laisser tourner pendant qu'on écrit.",
+      "detail": "Rejoue à chaque sauvegarde. À laisser tourner.",
       "icon": { "id": "eye", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -77,7 +77,7 @@
     },
     {
       "label": "Tests : Rust seulement (50 cas)",
-      "detail": "Scans de launchers, lecture du registre, choix du désinstalleur, extraction d'icônes.",
+      "detail": "Scans, registre, désinstalleur, icônes. 1 s.",
       "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -87,8 +87,8 @@
       "group": "test"
     },
     {
-      "label": "Tests : parcours filmés dans l'application (7 cas)",
-      "detail": "Playwright ouvre l'application et la traverse. Garde une vidéo et des captures de chaque parcours sous .rapports/e2e/. Une minute trente.",
+      "label": "Tests : parcours filmés (7 cas)",
+      "detail": "Ouvre l'app et la traverse. Laisse vidéos et captures. 1 min 30.",
       "icon": { "id": "device-camera-video", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -99,7 +99,7 @@
     },
     {
       "label": "Tests : interface Vitest",
-      "detail": "Ouvre l'adresse affichée dans le terminal. Elle porte un jeton : sans lui l'interface renvoie une erreur 403.",
+      "detail": "Ouvre l'adresse affichée dans le terminal : elle porte un jeton.",
       "icon": { "id": "window", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -111,7 +111,7 @@
     },
     {
       "label": "Tests : interface Playwright",
-      "detail": "Rejoue un parcours pas à pas, avec la chronologie et l'inspecteur de sélecteurs. Utile pour écrire un nouveau parcours.",
+      "detail": "Rejoue un parcours pas à pas. Pour en écrire un nouveau.",
       "icon": { "id": "window", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -125,7 +125,7 @@
     // ── Rapports ───────────────────────────────────────────────────────────
     {
       "label": "Rapport : les 261 tests, films compris",
-      "detail": "Joue les trois suites, écrit rapport-tests.html et l'ouvre. Deux minutes. Le rapport s'ouvre aussi quand un test échoue : c'est là qu'il sert.",
+      "detail": "Joue les trois suites et ouvre le rapport HTML. 2 min.",
       "icon": { "id": "graph", "color": "terminal.ansiMagenta" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -138,7 +138,7 @@
     },
     {
       "label": "Rapport : rapide, sans rejouer les films",
-      "detail": "Les tests unitaires seulement, mais le rapport montre quand même les derniers films connus. Huit secondes.",
+      "detail": "Unitaires seulement, mais montre les derniers films connus. 8 s.",
       "icon": { "id": "graph", "color": "terminal.ansiMagenta" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -150,8 +150,8 @@
       "problemMatcher": []
     },
     {
-      "label": "Rapport : ouvrir le dossier des films et captures",
-      "detail": "Ouvre .rapports/e2e/artefacts, que l'Explorateur cache par défaut puisque le nom commence par un point.",
+      "label": "Rapport : ouvrir le dossier des films",
+      "detail": "L'Explorateur le cache : son nom commence par un point.",
       "icon": { "id": "folder-opened", "color": "terminal.ansiMagenta" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -166,7 +166,7 @@
     // ── Qualité ────────────────────────────────────────────────────────────
     {
       "label": "Qualité : tout vérifier avant de pousser",
-      "detail": "Types, lint, mise en forme, puis clippy et rustfmt. C'est ce que la CI exécutera.",
+      "detail": "Exactement ce que joue la CI. 1 min.",
       "icon": { "id": "verified", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -179,7 +179,7 @@
     },
     {
       "label": "Qualité : vérifier les types (TypeScript)",
-      "detail": "tsc sans produire de fichiers. Les erreurs sont cliquables dans le panneau Problèmes.",
+      "detail": "tsc sans produire de fichiers.",
       "icon": { "id": "symbol-type-parameter", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -189,7 +189,7 @@
     },
     {
       "label": "Qualité : chercher les défauts (ESLint)",
-      "detail": "Le moindre avertissement fait échouer la tâche, comme sur la CI.",
+      "detail": "Le moindre avertissement fait échouer, comme sur la CI.",
       "icon": { "id": "search", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -199,7 +199,7 @@
     },
     {
       "label": "Qualité : corriger ce qui peut l'être (ESLint)",
-      "detail": "Applique les corrections automatiques d'ESLint. Modifie les fichiers.",
+      "detail": "Modifie les fichiers.",
       "icon": { "id": "wrench", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -209,7 +209,7 @@
     },
     {
       "label": "Qualité : remettre en forme (Prettier)",
-      "detail": "Réécrit tout le dépôt au format du projet. Modifie les fichiers.",
+      "detail": "Modifie les fichiers.",
       "icon": { "id": "symbol-ruler", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -219,7 +219,7 @@
     },
     {
       "label": "Qualité : clippy et rustfmt (Rust)",
-      "detail": "Le moindre avertissement de clippy fait échouer la tâche. La version du compilateur est figée côté CI, à 1.92.0.",
+      "detail": "Le moindre avertissement fait échouer.",
       "icon": { "id": "symbol-ruler", "color": "terminal.ansiYellow" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -233,8 +233,8 @@
 
     // ── Documentation et publication ───────────────────────────────────────
     {
-      "label": "Documentation : refabriquer les captures du README",
-      "detail": "Ouvre l'application, sème vingt jeux, photographie les six vues et filme le voyage. Le GIF demande ffmpeg : FFMPEG=/chemin/vers/ffmpeg si besoin.",
+      "label": "Documentation : refaire les captures du README",
+      "detail": "Photographie six vues et filme le voyage. Le GIF demande ffmpeg.",
       "icon": { "id": "device-camera", "color": "terminal.ansiBlue" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -243,8 +243,8 @@
       "problemMatcher": []
     },
     {
-      "label": "Publication : poser et pousser un tag de version",
-      "detail": "Déclenche la construction de l'installeur sur GitHub Actions. Un tag poussé ne peut plus être déplacé ni supprimé : la règle du dépôt l'interdit.",
+      "label": "Publication : publier la version aux utilisateurs",
+      "detail": "Pose le tag, GitHub construit et signe, les copies installées se mettent à jour. Sans retour arrière.",
       "icon": { "id": "tag", "color": "terminal.ansiRed" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
@@ -260,7 +260,7 @@
     {
       "id": "tagDeVersion",
       "type": "promptString",
-      "description": "Numéro de version à publier, préfixé d'un v. Il doit correspondre à celui de package.json, tauri.conf.json et Cargo.toml.",
+      "description": "Version à publier, préfixée d'un v. Doit correspondre à package.json, tauri.conf.json et Cargo.toml.",
       "default": "v6.0.2"
     }
   ]

@@ -175,6 +175,84 @@ Les autres pages — bibliothèque, launchers — sont masquées par défaut. Le
 
 ---
 
+## Tâches VS Code
+
+`Ctrl+Maj+P` puis **Run Task**, ou `Ctrl+Maj+B` pour la construction. Les
+tâches sont dans `.vscode/tasks.json`, nommées « Catégorie : ce que ça fait ».
+VS Code trie la liste par ordre alphabétique, donc le préfixe suffit à les
+regrouper.
+
+### Application
+
+| Tâche                                             | Ce qu'elle fait                                                                                                                                                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **lancer en développement**                       | L'app complète, Rust compris, avec rechargement à chaud. C'est celle du quotidien.                                                                                                                               |
+| **lancer le front seul (navigateur)**             | Vite sur `localhost:1420`, sans le côté Rust. Les scans de launchers échouent, la galaxie se construit depuis le stockage du navigateur. Pratique pour travailler l'interface sans attendre la compilation Rust. |
+| **construire un .exe d'essai (local, non signé)** | Produit un installeur dans `src-tauri/target/release/bundle/`, pour l'essayer sur ta machine.                                                                                                                    |
+
+**La différence entre construire un .exe d'essai et publier.** La première
+tâche compile chez toi et s'arrête là : le fichier reste sur ton disque, et il
+n'est **pas signé**, parce que la clé privée n'existe que comme secret GitHub.
+Or l'updater vérifie la signature contre la clé publique de
+`tauri.conf.json` : un installeur construit en local ne peut donc servir de
+mise à jour à personne. Il sert à répondre à « est-ce que l'installeur marche
+et est-ce que l'app se lance une fois installée ».
+
+Publier est l'autre bout de la chaîne : la tâche pousse un tag, GitHub Actions
+compile sur ses machines, **signe** avec la clé secrète, et attache au tag le
+`.exe`, sa signature et le `latest.json` que les copies déjà installées
+viennent lire. C'est la seule voie qui atteint les utilisateurs.
+
+### Tests
+
+| Tâche                              | Ce qu'elle fait                                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **les 254 tests unitaires**        | TypeScript puis Rust, 8 secondes. Tâche de test par défaut.                                                             |
+| **TypeScript seulement (204 cas)** | Logique de bibliothèque, stockage, traductions, géométrie des orbites.                                                  |
+| **TypeScript en surveillance**     | Rejoue les tests touchés à chaque sauvegarde. À laisser tourner pendant qu'on écrit.                                    |
+| **Rust seulement (50 cas)**        | Scans de launchers, registre, choix du désinstalleur, extraction d'icônes.                                              |
+| **parcours filmés (7 cas)**        | Playwright ouvre l'app et la traverse. Laisse une vidéo et des captures par parcours. 1 min 30.                         |
+| **interface Vitest**               | Les tests dans un navigateur, avec le détail de chaque cas. L'adresse porte un jeton, sans lui l'interface renvoie 403. |
+| **interface Playwright**           | Rejoue un parcours pas à pas, avec l'inspecteur de sélecteurs. Pour en écrire un nouveau.                               |
+
+### Rapports
+
+| Tâche                              | Ce qu'elle fait                                                                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **les 261 tests, films compris**   | Joue les trois suites, écrit `rapport-tests.html` et l'ouvre. 2 minutes.                                                                  |
+| **rapide, sans rejouer les films** | Les unitaires seulement, mais le rapport montre quand même les derniers films connus. 8 secondes.                                         |
+| **ouvrir le dossier des films**    | Ouvre `.rapports/e2e/artefacts`. Le nom commence par un point, donc l'Explorateur le cache tant qu'on n'a pas coché « Éléments masqués ». |
+
+### Qualité
+
+| Tâche                                    | Ce qu'elle fait                                                                                                                                                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **tout vérifier avant de pousser**       | Types, lint, mise en forme, rustfmt et clippy. Exactement ce que joue la CI : si ça passe ici, ça passe là-bas.                                                   |
+| **vérifier les types (TypeScript)**      | `tsc` sans produire de fichiers.                                                                                                                                  |
+| **chercher les défauts (ESLint)**        | Le moindre avertissement fait échouer, comme sur la CI.                                                                                                           |
+| **corriger ce qui peut l'être (ESLint)** | Applique les corrections automatiques. Modifie les fichiers.                                                                                                      |
+| **remettre en forme (Prettier)**         | Réécrit tout le dépôt au format du projet. Modifie les fichiers.                                                                                                  |
+| **clippy et rustfmt (Rust)**             | Même exigence côté Rust. La version du compilateur est figée à 1.92.0 sur la CI, pour qu'une sortie de Rust n'apporte pas de nouveaux lints du jour au lendemain. |
+
+### Documentation et publication
+
+| Tâche                                   | Ce qu'elle fait                                                                                                                                                                     |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **refaire les captures du README**      | Ouvre l'app, sème vingt jeux, photographie six vues et filme le voyage. Le GIF demande un vrai ffmpeg : `FFMPEG=/chemin/vers/ffmpeg` si besoin.                                     |
+| **publier la version aux utilisateurs** | Pose le tag et le pousse. Voir plus haut. **Sans retour arrière** : une règle du dépôt interdit de déplacer ou supprimer un tag une fois posé, parce que l'updater s'appuie dessus. |
+
+### Avant de publier
+
+1. Monter le numéro dans `package.json`, `src-tauri/tauri.conf.json` et
+   `src-tauri/Cargo.toml`
+2. Écrire les notes dans `src/features/patchNotes/changelog.ts`, en français et
+   en anglais
+3. **Qualité : tout vérifier avant de pousser**
+4. **Rapport : les 261 tests, films compris**
+5. Commit, push, puis **Publication : publier la version aux utilisateurs**
+
+---
+
 ## Détail des idées à venir
 
 ### Fonctionnalités
