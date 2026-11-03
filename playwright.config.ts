@@ -91,7 +91,21 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
     locale: 'fr-FR',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          // Aucune carte graphique sur un coureur : sans ce drapeau, les
+          // versions récentes de Chromium refusent le repli logiciel et la
+          // scène ne se dessine pas du tout. Sans effet sur une machine qui a
+          // un vrai GPU, qui n'emprunte jamais ce chemin.
+          args: SUR_CI ? ['--enable-unsafe-swiftshader'] : [],
+        },
+      },
+    },
+  ],
   webServer: {
     // En local, le serveur de développement, pour que le rechargement à chaud
     // serve aussi quand on écrit un parcours. Sur coureur, le build de

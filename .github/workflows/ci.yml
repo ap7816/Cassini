@@ -102,7 +102,14 @@ jobs:
 
   parcours:
     name: Parcours de bout en bout
-    runs-on: windows-latest
+    # Linux, contrairement aux deux travaux de tests. Ces parcours n'éprouvent
+    # que le front servi par Vite : React, la galaxie, les calques. Rien n'y
+    # touche au registre ni à un chemin Windows, donc rien n'impose le
+    # système. Et le coureur Windows s'est montré à la fois lent et irrégulier
+    # sur cette charge — de 9,8 secondes à 6,2 minutes pour des cas
+    # comparables, le rendu logiciel de la scène 3D n'y avançant que de
+    # quelques images par seconde.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -113,9 +120,8 @@ jobs:
 
       - run: npm ci
 
-      # Sans `--with-deps`, qui n'installe des paquets système que sous Linux.
       - name: Installe le navigateur de Playwright
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Playwright
         run: npm run test:e2e
