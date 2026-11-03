@@ -61,13 +61,21 @@ Windows 10 or 11. Grab the installer from the
 [latest release](https://github.com/ap7816/Cassini/releases/latest). The app updates
 itself after that.
 
+> [!NOTE]
+> **Windows will warn you that the publisher is unrecognised.** The installer is not
+> signed with an Authenticode certificate, so SmartScreen has nothing to identify it
+> by. Click **More info**, then **Run anyway**. The warning comes back on each new
+> version, because without a certificate every file is new to SmartScreen. The
+> certificates that remove it cost 300 to 600 € a year, which this project does not
+> spend.
+
 > [!IMPORTANT]
 > **If you are running 6.0.1 or earlier, you need to reinstall manually once.** Those
 > builds sent an authorization header with every update check, and the credential
 > behind it has since been revoked. GitHub answers 404 to a request carrying an
 > invalid header, so those copies see no updates at all and say nothing about it.
 > Download the installer above and run it over your existing install. Your library
-> and settings are kept. From 6.0.2 on, no header is sent and updates work again.
+> and settings are kept. From 6.1.0 on, no header is sent and updates work again.
 
 ## Development
 
