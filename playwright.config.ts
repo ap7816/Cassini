@@ -68,6 +68,26 @@ export default defineConfig({
     video: SUR_CI ? 'off' : { mode: 'on', size: { width: 1280, height: 800 } },
     screenshot: SUR_CI ? 'only-on-failure' : 'on',
     trace: 'retain-on-failure',
+    /**
+     * Mouvement réduit sur coureur, et c'est la clé de tout le reste.
+     *
+     * Playwright n'agit sur un élément qu'une fois celui-ci « stable », c'est-à-dire
+     * immobile d'une image à l'autre. Sur un coureur sans carte graphique, où la
+     * scène avance de quelques images par seconde pendant que les planètes
+     * tournent et que la caméra voyage, cette condition met un temps
+     * déraisonnable à se présenter : la trace du dernier échec montre **un seul
+     * clic à 85 secondes**, et un `waitForTimeout(0)` à 5.
+     *
+     * L'application sait déjà répondre à cette préférence système : le voyage de
+     * caméra devient instantané (`camDur = 0`) et les orbites s'arrêtent
+     * (`allure = 0`). La scène se fige donc une fois posée, et Playwright agit
+     * aussitôt. Ce n'est pas un contournement : c'est le comportement livré à
+     * qui demande moins de mouvement, et l'éprouver au passage ne fait pas de
+     * mal.
+     *
+     * En local, le mouvement reste entier : c'est lui qu'on filme.
+     */
+    reducedMotion: SUR_CI ? 'reduce' : 'no-preference',
     viewport: { width: 1280, height: 800 },
     locale: 'fr-FR',
   },
