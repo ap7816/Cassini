@@ -1296,6 +1296,30 @@ qui dirait la marge réelle ; et vérifier sur quelle carte WebView2 rend
 effectivement, la machine en ayant deux. L'application journalise celle qu'elle
 obtient.
 
+### Garder la CLI et le crate Tauri au même pas
+
+Une construction locale a averti qu'elle ne pouvait pas inscrire le type
+d'empaquetage dans le binaire, et que l'updater pourrait alors ne pas savoir
+mettre à jour l'application. Le crate `tauri` était en 2.10.3 et
+`@tauri-apps/cli` en 2.9.6, épinglée là par le verrou npm : la CI aurait
+construit la release avec le même décalage et livré un binaire sur lequel
+l'updater n'aurait pas pu agir.
+
+Vérifié plutôt que supposé : le marqueur `__TAURI_BUNDLE_TYPE` était bien
+présent dans le binaire construit. Le crate l'émettait, la CLI ne le
+reconnaissait plus. La mise à jour de la CLI a suffi, et l'empaquetage annonce
+désormais `Patching ...\cassini.exe with bundle type information: nsis`.
+
+Cette ligne mérite d'être relue à chaque publication. C'est un avertissement et
+non une erreur, donc la construction réussit dans les deux cas et rien d'autre
+ne dit que l'updater est cassé.
+
+La tâche de construction locale passe en outre
+`--config '{"bundle":{"createUpdaterArtifacts":false}}'`. Sans lui, elle finit
+sur une erreur de signature et un code de sortie 1, la clé privée n'existant que
+comme secret GitHub, ce qui contredit une tâche dont le libellé annonce « non
+signé ». La release garde la configuration du dépôt et signe pour de bon.
+
 ### Panneau de débogage, absent des versions publiées
 
 Un panneau flottant, ouvert par `Ctrl+Alt+D` ou le bouton en bas à gauche : 61

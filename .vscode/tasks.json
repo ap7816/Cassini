@@ -34,7 +34,16 @@
       "icon": { "id": "package", "color": "terminal.ansiCyan" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run tauri build"],
+      // `createUpdaterArtifacts` est coupé pour cette construction-là, et
+      // seulement pour elle. La clé privée de signature n'existe que comme
+      // secret GitHub : en la réclamant, la tâche finissait sur une erreur et
+      // un code de sortie 1, alors que l'installeur était produit et que son
+      // libellé annonce « non signé ». La release, elle, garde la
+      // configuration du dépôt et signe pour de bon.
+      "args": [
+        "-lc",
+        "npm run tauri build -- --config '{\"bundle\":{\"createUpdaterArtifacts\":false}}'"
+      ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "group": { "kind": "build", "isDefault": true }

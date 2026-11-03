@@ -1231,6 +1231,28 @@ Still to do: display work time alongside the interval, the only measure that
 would show real headroom; and check which GPU WebView2 actually renders on, the
 machine having two. The app logs the one it gets.
 
+### Keep the Tauri CLI and crate in step
+
+A local build warned that it could not add the bundle type to the binary, and
+that the updater might then be unable to update the package. The `tauri` crate
+was 2.10.3 while `@tauri-apps/cli` was 2.9.6, pinned there by the npm lockfile,
+so CI would have built the release with the same mismatch and shipped a binary
+the updater could not act on.
+
+Checked rather than assumed: the `__TAURI_BUNDLE_TYPE` marker was present in
+the built binary. The crate was emitting it, the CLI no longer recognised it.
+Updating the CLI fixed it, and packaging now reports
+`Patching ...\cassini.exe with bundle type information: nsis`.
+
+Worth re-reading that line on every release. It is a warning, not an error, so
+the build succeeds either way and nothing else says the updater is broken.
+
+The local build task also passes `--config '{"bundle":{"createUpdaterArtifacts":
+false}}'`. Without it the task ends on a signing error and exit code 1, since
+the private key only exists as a GitHub secret, which contradicts a task whose
+own label says "unsigned". The release keeps the repository configuration and
+signs for real.
+
 ### Debug panel, absent from published builds
 
 A floating panel, opened with `Ctrl+Alt+D` or the bug button at the bottom left:
