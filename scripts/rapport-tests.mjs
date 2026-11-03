@@ -210,6 +210,12 @@ function suiteRust() {
 function suiteBoutEnBout(relancer) {
   if (relancer) {
     process.stdout.write('· parcours Playwright (une minute et demie)…\n');
+    // Le navigateur d'abord. Playwright ne le télécharge pas à
+    // l'installation des paquets, et npm bloque de toute façon les scripts
+    // d'installation sur les versions récentes : sans cette ligne, les sept
+    // parcours tombent tous sur « Executable doesn't exist », ce qui ne
+    // ressemble en rien à un échec de test.
+    lancer('npx playwright install chromium');
     lancer('npx playwright test');
   }
 

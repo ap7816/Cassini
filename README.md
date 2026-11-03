@@ -119,6 +119,17 @@ The Playwright runs record a video and screenshots of each journey. They don't c
 pixels: a 3D render changes with the GPU and driver, so a test that failed over that
 wouldn't tell you anything useful. The videos are there to watch, not to assert on.
 
+They land in `.rapports/e2e/artefacts/`, one folder per journey, each with a
+`video.webm` and the screenshots taken along the way. The folder name starts with a
+dot, so File Explorer hides it unless you turn hidden items on. `npm run
+test:rapport:tout` folds the same files into the HTML report, which is the easier way
+to look at them.
+
+The first run downloads a Chromium build of about 400 MB. `npm install` does not do
+it, and recent npm versions block package install scripts anyway, so the npm scripts
+run `playwright install chromium` themselves before the tests. It takes three seconds
+once the browser is there.
+
 Video recording is disabled on CI, where no GPU is available and reading frames back
 from the software renderer took minutes per test. CI keeps Playwright traces for
 failed runs instead, which you can replay with `npx playwright show-trace`.
