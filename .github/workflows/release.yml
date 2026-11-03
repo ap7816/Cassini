@@ -1,5 +1,8 @@
 name: Release
 
+# Déclenché par un tag `vX.Y.Z`. Construit l'installeur, le signe, et publie
+# la release de ce dépôt avec ses trois pièces : le `.exe`, sa signature, et
+# le `latest.json` que l'updater des copies installées vient lire.
 on:
   push:
     tags:
@@ -35,72 +38,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `GITHUB_TOKEN` et non plus un jeton personnel : le dépôt étant public
+      # et la release étant créée ici même, le jeton fourni par Actions suffit.
+      # Les permissions du travail le déclarent en écriture, ce qui l'emporte
+      # sur le défaut du dépôt, passé en lecture seule.
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Cassini ${{ github.ref_name }}'
-          releaseBody: 'Voir les commits pour les changements.'
+          releaseBody: 'Notes de version dans l''application, ou dans `src/features/patchNotes/changelog.ts`.'
           releaseDraft: false
           prerelease: false
           updaterJsonKeepUniversal: true
-
-      # Les dépôts gardent leur nom d’origine, malgré le renommage de
-      # l’application en Cassini : l’adresse de mise à jour est gravée dans
-      # chaque copie déjà installée (voir tauri.conf.json). La renommer
-      # laisserait la base installée sans aucune mise à jour, et sans message.
-      - name: Publish to ArcHive-updates
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          $tag = "${{ github.ref_name }}"
-
-          # Le dépôt de code est celui où tourne ce workflow. Le nommer en dur
-          # obligeait à le corriger à chaque renommage — et le renommage du
-          # compte l’avait déjà laissé faux : il disait encore apoumier.
-          $code = "${{ github.repository }}"
-
-          # Le dépôt public, lui, est nommé en dur à dessein : son nom est gravé
-          # dans l’URL de mise à jour de chaque copie installée (tauri.conf.json).
-          # Le renommer priverait toute la base installée de mises à jour.
-          $updates = "ap7816/ArcHive-updates"
-
-          # Télécharger les artefacts depuis la release privée
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          gh release download $tag --repo $code --pattern "*.exe" --pattern "*.exe.sig" --pattern "latest.json" --dir artifacts
-
-          # Créer ou mettre à jour la release publique dans ArcHive-updates
-          $releaseExists = gh release view $tag --repo $updates 2>$null
-          if (-not $releaseExists) {
-            gh release create $tag --repo $updates --title "Cassini $tag" --notes "Voir les commits pour les changements."
-          }
-          gh release upload $tag --repo $updates (Get-ChildItem artifacts/*.exe,artifacts/*.exe.sig | Select-Object -ExpandProperty FullName) --clobber
-
-          # Mettre à jour les URLs dans latest.json pour pointer vers ArcHive-updates
-          $json = Get-Content artifacts/latest.json -Raw | ConvertFrom-Json
-          $json.platforms.PSObject.Properties | ForEach-Object {
-            $_.Value.url = $_.Value.url -replace [regex]::Escape("$code/releases/download"), "$updates/releases/download"
-          }
-          $updated = $json | ConvertTo-Json -Depth 10
-          Set-Content -Path artifacts/latest_public.json -Value $updated
-
-          # Pousser latest.json dans le repo ArcHive-updates
-          $bytes = [System.IO.File]::ReadAllBytes("artifacts/latest_public.json")
-          $base64 = [System.Convert]::ToBase64String($bytes)
-          $sha = gh api "repos/$updates/contents/latest.json" --jq '.sha' 2>$null
-          $body = @{ message = "chore: update latest.json for $tag"; content = $base64 }
-          if ($sha) { $body.sha = $sha.Trim() }
-          $body | ConvertTo-Json | gh api "repos/$updates/contents/latest.json" --method PUT --input -
-
-          # Nettoyer la release privée : garder uniquement le .exe
-          $assets = gh release view $tag --repo $code --json assets --jq '.assets[].name' 2>$null
-          foreach ($asset in $assets) {
-            if ($asset -match '\.sig$' -or $asset -eq 'latest.json') {
-              gh release delete-asset $tag $asset --repo $code --yes 2>$null
-            }
-          }

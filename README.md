@@ -58,8 +58,16 @@ window.
 ## Download
 
 Windows 10 or 11. Grab the installer from the
-[latest release](https://github.com/ap7816/ArcHive-updates/releases/latest). The app
-updates itself after that.
+[latest release](https://github.com/ap7816/Cassini/releases/latest). The app updates
+itself after that.
+
+> [!IMPORTANT]
+> **If you are running 6.0.1 or earlier, you need to reinstall manually once.** Those
+> builds sent an authorization header with every update check, and the credential
+> behind it has since been revoked. GitHub answers 404 to a request carrying an
+> invalid header, so those copies see no updates at all and say nothing about it.
+> Download the installer above and run it over your existing install. Your library
+> and settings are kept. From 6.0.2 on, no header is sent and updates work again.
 
 ## Development
 
@@ -147,13 +155,13 @@ browser with a seeded library.
    languages.
 3. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-GitHub Actions builds the installer, signs it, and publishes the update manifest to
-the `ArcHive-updates` repo. Takes about 20 minutes.
+GitHub Actions builds the installer, signs it, and attaches all three pieces to the
+release: the `.exe`, its signature, and the `latest.json` the updater reads. Takes
+about 20 minutes.
 
-> [!NOTE]
-> The update repo keeps its old name on purpose. Its URL is baked into every copy of
-> the app already installed, so renaming it would cut those copies off from updates
-> with no warning.
+Updates used to be served from a separate `ArcHive-updates` repo, which existed only
+because this one was private. It isn't needed now, and the updater points here
+instead.
 
 ## License
 

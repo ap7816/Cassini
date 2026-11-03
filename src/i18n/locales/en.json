@@ -504,7 +504,10 @@
   "changelog": {
     "v6_0_2": {
       "fix_0": "[Library] Uninstalling an Epic game removed the Epic launcher instead: Windows gives it the folder that holds every game, and Cassini read that as the game itself. Ubisoft Connect and HoYoPlay set the same trap. A launcher can no longer answer for one of its games, and the message now points to the one that installed it",
-      "fix_1": "[Library] The uninstall confirmation names the program that will really open when it does not carry the game's name: that is what was missing to catch the mistake before making it"
+      "fix_1": "[Library] The uninstall confirmation names the program that will really open when it does not carry the game's name: that is what was missing to catch the mistake before making it",
+      "fix_2": "[Updates] The update check used to send an authorization token that no longer served any purpose, and that shipped in plain text inside the installed app. It has been removed and revoked. Worth knowing: 6.0.1 and earlier no longer see any update, and say nothing about it. Reinstall once by hand from GitHub; your library and settings are kept",
+      "fix_3": "[Solar system] The launcher rail buttons announced themselves as \"S\" or \"E\" to a screen reader instead of \"Steam, 3 games\". They now carry their full name",
+      "change_0": "[Updates] Updates now come from the Cassini repository itself, which is public. The separate repo that served them existed only because this one was private"
     },
     "v6_0_1": {
       "new_0": "[Music] A fourth ambient track, fourteen minutes long: the rotation now has four, and repeats far less",
