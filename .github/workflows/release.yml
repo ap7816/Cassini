@@ -51,7 +51,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Cassini ${{ github.ref_name }}'
-          releaseBody: 'Notes de version dans l''application, ou dans `src/features/patchNotes/changelog.ts`.'
+          releaseBody: "Notes de version dans l'application, ou dans `src/features/patchNotes/changelog.ts`."
           releaseDraft: false
           prerelease: false
           updaterJsonKeepUniversal: true
