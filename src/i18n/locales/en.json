@@ -467,6 +467,7 @@
     }
   },
   "errors": {
+    "scanLauncher": "{{launcher}} is installed, but Cassini could not read its game list. Its games will not appear.",
     "gameNotInstalled": "This game is not installed.",
     "noLaunchTarget": "No launch target is set for this game.",
     "desktopOnlyLaunch": "Launching a local program only works in the desktop app.",

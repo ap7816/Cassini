@@ -467,6 +467,7 @@
     }
   },
   "errors": {
+    "scanLauncher": "{{launcher}} est installé, mais Cassini n’a pas pu lire sa liste de jeux. Ses jeux n’apparaîtront pas.",
     "gameNotInstalled": "Ce jeu n'est pas installé.",
     "noLaunchTarget": "Aucune cible de lancement n'est définie pour ce jeu.",
     "desktopOnlyLaunch": "Lancer un programme local n'est possible que dans l'application de bureau.",

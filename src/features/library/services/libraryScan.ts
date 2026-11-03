@@ -57,8 +57,15 @@ export function appliquerScan(
 export type ResultatScan = {
   /** Jeux découverts qui n'étaient pas dans la bibliothèque. */
   ajoutes: number;
-  /** Launchers dont la détection a échoué — absents, ou commande indisponible. */
-  echecs: string[];
+  /**
+   * Launchers dont la détection a échoué, avec ce que le côté natif en a dit.
+   *
+   * Le message compte autant que le nom : un launcher absent de la machine est
+   * sans intérêt, un launcher installé dont la base est illisible demande une
+   * réparation que seul l'utilisateur peut faire. Seul le natif sait les
+   * distinguer, et il le dit dans son erreur.
+   */
+  echecs: Array<{ platform: string; message: string }>;
   /** La bibliothèque a-t-elle changé ? */
   modifiee: boolean;
 };
@@ -116,8 +123,12 @@ async function scanner(): Promise<ResultatScan> {
           platform: s.platform,
           jeux: s.platform === 'Steam' ? await avecTempsDeJeu(jeux) : jeux,
         };
-      } catch {
-        return { platform: s.platform, jeux: null };
+      } catch (e) {
+        return {
+          platform: s.platform,
+          jeux: null,
+          message: e instanceof Error ? e.message : String(e),
+        };
       }
     }),
   );
@@ -126,10 +137,10 @@ async function scanner(): Promise<ResultatScan> {
   const connus = new Set(avant.map((g) => g.id));
 
   let apres = avant;
-  const echecs: string[] = [];
+  const echecs: Array<{ platform: string; message: string }> = [];
   for (const r of resultats) {
     if (r.jeux === null) {
-      echecs.push(r.platform);
+      echecs.push({ platform: r.platform, message: r.message ?? '' });
       continue;
     }
     apres = appliquerScan(apres, r.jeux, r.platform);

@@ -23,7 +23,14 @@ import {
  * n'a par exemple pas de détecteur alors que la bibliothèque connaît la
  * plateforme.
  */
-const PLATEFORME_PAR_LAUNCHER: Record<string, GamePlatform> = {
+/**
+ * Identifiant de launcher vers plateforme de la bibliothèque.
+ *
+ * Exporté parce que la coque s'en sert aussi : pour savoir si un scan qui a
+ * échoué concerne un launcher réellement installé, il faut relier les deux
+ * nommages, et deux tables finiraient par diverger.
+ */
+export const PLATEFORME_PAR_LAUNCHER: Record<string, GamePlatform> = {
   steam: 'Steam',
   epic: 'Epic',
   battlenet: 'BattleNet',

@@ -17,6 +17,8 @@ import { MiniPlayer } from './MiniPlayer';
 import { UpdateBanner } from './UpdateBanner';
 import { listen } from '@tauri-apps/api/event';
 import { scannerTousLesLaunchers } from '../../features/library/services/libraryScan';
+import { useToast } from '../../features/toast/ToastContext';
+import { PLATEFORME_PAR_LAUNCHER } from '../../pages/SolarSystem/lib/launcherIcons';
 
 /**
  * Panneau de débogage — développement seulement.
@@ -33,6 +35,15 @@ const DebugPanel = import.meta.env.DEV
 
 export function AppLayout() {
   const { t } = useTranslation();
+  const toast = useToast();
+
+  // Ref toujours à jour : l'effet de scan ne se monte qu'une fois, et `toast`
+  // comme `t` changent d'identité à chaque rendu. Les citer en dépendances
+  // relancerait un scan à chaque rendu.
+  const direRef = useRef({ t, toast });
+  useEffect(() => {
+    direRef.current = { t, toast };
+  }, [t, toast]);
 
   const navItems = [
     { to: '/library', label: t('nav.library') },
@@ -113,14 +124,44 @@ export function AppLayout() {
   useEffect(() => {
     if (!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__) return;
 
+    /**
+     * Dit à l'utilisateur qu'un launcher installé n'a pas pu être lu.
+     *
+     * Un scan qui échoue ne partait que dans `console.info`, et seulement si la
+     * bibliothèque avait changé par ailleurs, donc le plus souvent nulle part.
+     * Or le silence est indiscernable de « tu n'as aucun jeu sur ce launcher » :
+     * c'est ce qui a fait chercher une panne de Cassini alors qu'Epic avait
+     * perdu sa propre liste de jeux et ne les affichait pas non plus.
+     *
+     * On ne prévient que pour un launcher **réellement installé**. La plupart
+     * des commandes échouent simplement parce que leur launcher est absent de la
+     * machine, et prévenir de cela ferait sept avertissements chez tout le
+     * monde. Le message court suffit à l'écran ; le détail du côté natif, qui
+     * dit comment réparer, part dans la console.
+     */
+    const signalerLesEchecs = async (echecs: Array<{ platform: string; message: string }>) => {
+      let launchers: Array<{ id: string; name: string; installed: boolean }>;
+      try {
+        launchers = await invoke('scan_launchers');
+      } catch {
+        return;
+      }
+      const { t: dire, toast: avertir } = direRef.current;
+      for (const l of launchers) {
+        if (!l.installed) continue;
+        const echec = echecs.find((e) => e.platform === PLATEFORME_PAR_LAUNCHER[l.id]);
+        if (!echec) continue;
+        console.error(`[bibliothèque] ${l.name} : ${echec.message}`);
+        avertir.error(dire('errors.scanLauncher', { launcher: l.name }));
+      }
+    };
+
     const scanner = (raison: string) =>
-      void scannerTousLesLaunchers().then((r) => {
+      void scannerTousLesLaunchers().then(async (r) => {
         if (r.modifiee) {
-          console.info(
-            `[bibliothèque] ${raison} : ${r.ajoutes} jeu(x) découvert(s)` +
-              (r.echecs.length > 0 ? `, non détectés : ${r.echecs.join(', ')}` : ''),
-          );
+          console.info(`[bibliothèque] ${raison} : ${r.ajoutes} jeu(x) découvert(s)`);
         }
+        if (r.echecs.length > 0) await signalerLesEchecs(r.echecs);
       });
 
     scanner('scan de démarrage');
