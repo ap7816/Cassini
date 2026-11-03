@@ -1,180 +1,267 @@
 {
+  // Les tâches sont nommées « Catégorie : ce que ça fait ». VS Code trie la
+  // liste par ordre alphabétique, donc le préfixe suffit à regrouper, et le
+  // champ `detail` dit ce que la commande coûte en temps — la seule chose
+  // qu'on veuille savoir avant de la lancer.
   "version": "2.0.0",
   "tasks": [
+    // ── Application ────────────────────────────────────────────────────────
     {
-      "label": "Cassini: Dev (web)",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run dev"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "Cassini: Dev (tauri)",
+      "label": "Application : lancer en développement",
+      "detail": "L'application complète, Rust compris, avec rechargement à chaud. Première compilation : quelques minutes.",
+      "icon": { "id": "rocket", "color": "terminal.ansiCyan" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run tauri dev"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
       "problemMatcher": []
     },
     {
-      "label": "Cassini: Tests (TypeScript)",
+      "label": "Application : lancer le front seul dans un navigateur",
+      "detail": "Vite sur localhost:1420, sans le côté Rust. Les scans de launchers échouent, la galaxie se construit depuis le stockage du navigateur.",
+      "icon": { "id": "browser", "color": "terminal.ansiCyan" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run dev"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Application : construire l'installeur",
+      "detail": "Compile en release et produit le .exe d'installation. Compter dix à vingt minutes.",
+      "icon": { "id": "package", "color": "terminal.ansiCyan" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run tauri build"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+
+    // ── Tests ──────────────────────────────────────────────────────────────
+    {
+      "label": "Tests : les 254 tests unitaires",
+      "detail": "TypeScript puis Rust, à la suite. Huit secondes. C'est la tâche de test par défaut (Ctrl+Maj+P, « Run Test Task »).",
+      "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm test && cd src-tauri && cargo test --lib"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "Tests : TypeScript seulement (204 cas)",
+      "detail": "Vitest, une fois. Logique de bibliothèque, stockage, traductions, géométrie des orbites.",
+      "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm test"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      }
+      "group": "test"
     },
     {
-      "label": "Cassini: Tests (Rust)",
+      "label": "Tests : TypeScript en surveillance",
+      "detail": "Vitest rejoue les tests touchés à chaque sauvegarde. À laisser tourner pendant qu'on écrit.",
+      "icon": { "id": "eye", "color": "terminal.ansiGreen" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run test:watch"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Tests : Rust seulement (50 cas)",
+      "detail": "Scans de launchers, lecture du registre, choix du désinstalleur, extraction d'icônes.",
+      "icon": { "id": "beaker", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "cd src-tauri && cargo test --lib"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": ["$rustc"],
       "group": "test"
     },
     {
-      "label": "Cassini: Tests unitaires (TypeScript + Rust)",
+      "label": "Tests : parcours filmés dans l'application (7 cas)",
+      "detail": "Playwright ouvre l'application et la traverse. Garde une vidéo et des captures de chaque parcours sous .rapports/e2e/. Une minute trente.",
+      "icon": { "id": "device-camera-video", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm test && cd src-tauri && cargo test --lib"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "args": ["-lc", "npm run test:e2e"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "group": "test"
     },
     {
-      "label": "Cassini: Tests — interface (Vitest UI)",
-      "detail": "Ouvre l'adresse affichée dans le terminal : elle porte un jeton, sans lui l'interface renvoie une erreur 403.",
+      "label": "Tests : interface Vitest",
+      "detail": "Ouvre l'adresse affichée dans le terminal. Elle porte un jeton : sans lui l'interface renvoie une erreur 403.",
+      "icon": { "id": "window", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": ["-lc", "npm run test:ui"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
       "problemMatcher": [],
       "group": "test"
     },
     {
-      "label": "Cassini: Tests — rapport HTML",
-      "detail": "Lance les tests unitaires, écrit rapport-tests.html et l'ouvre. Le rapport s'ouvre aussi quand un test échoue : c'est là qu'il sert.",
+      "label": "Tests : interface Playwright",
+      "detail": "Rejoue un parcours pas à pas, avec la chronologie et l'inspecteur de sélecteurs. Utile pour écrire un nouveau parcours.",
+      "icon": { "id": "window", "color": "terminal.ansiGreen" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": [
-        "-lc",
-        "npm run test:rapport; code=$?; explorer.exe \"$(cygpath -w \"$PWD/rapport-tests.html\")\" >/dev/null 2>&1; exit $code"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "args": ["-lc", "npm run test:e2e:ui"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
       "problemMatcher": [],
       "group": "test"
     },
+
+    // ── Rapports ───────────────────────────────────────────────────────────
     {
-      "label": "Cassini: Parcours filmés (Playwright)",
-      "detail": "Ouvre l'application, la parcourt, et garde une vidéo et des captures de chaque parcours. Deux minutes environ.",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run test:e2e"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "group": "test"
-    },
-    {
-      "label": "Cassini: Tests — rapport complet, films compris",
-      "detail": "Les trois suites — TypeScript, Rust et les parcours filmés — dans un seul rapport, puis l'ouvre. Deux minutes environ.",
+      "label": "Rapport : les 261 tests, films compris",
+      "detail": "Joue les trois suites, écrit rapport-tests.html et l'ouvre. Deux minutes. Le rapport s'ouvre aussi quand un test échoue : c'est là qu'il sert.",
+      "icon": { "id": "graph", "color": "terminal.ansiMagenta" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": [
         "-lc",
         "npm run test:rapport:tout; code=$?; explorer.exe \"$(cygpath -w \"$PWD/rapport-tests.html\")\" >/dev/null 2>&1; exit $code"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "group": "test"
-    },
-    {
-      "label": "Cassini: Build (tauri)",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run tauri build"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "group": "build"
-    },
-    {
-      "label": "Cassini: Lint",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run lint"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     },
     {
-      "label": "Cassini: Format (write)",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run format"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Cassini: Check (typecheck+lint+format:check)",
-      "type": "shell",
-      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
-      "args": ["-lc", "npm run typecheck && npm run lint && npm run format:check"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Cassini: Release (tag + push)",
+      "label": "Rapport : rapide, sans rejouer les films",
+      "detail": "Les tests unitaires seulement, mais le rapport montre quand même les derniers films connus. Huit secondes.",
+      "icon": { "id": "graph", "color": "terminal.ansiMagenta" },
       "type": "shell",
       "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
       "args": [
         "-lc",
-        "TAG=${input:releaseTag} && git tag $TAG && git push origin $TAG && echo \"Release $TAG pushed — build en cours sur GitHub Actions\""
+        "npm run test:rapport; code=$?; explorer.exe \"$(cygpath -w \"$PWD/rapport-tests.html\")\" >/dev/null 2>&1; exit $code"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rapport : ouvrir le dossier des films et captures",
+      "detail": "Ouvre .rapports/e2e/artefacts, que l'Explorateur cache par défaut puisque le nom commence par un point.",
+      "icon": { "id": "folder-opened", "color": "terminal.ansiMagenta" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "test -d .rapports/e2e/artefacts && explorer.exe \"$(cygpath -w \"$PWD/.rapports/e2e/artefacts\")\" || echo 'Aucun artefact : lance d abord les parcours filmes.'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
+    // ── Qualité ────────────────────────────────────────────────────────────
+    {
+      "label": "Qualité : tout vérifier avant de pousser",
+      "detail": "Types, lint, mise en forme, puis clippy et rustfmt. C'est ce que la CI exécutera.",
+      "icon": { "id": "verified", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "npm run typecheck && npm run lint && npm run format:check && cd src-tauri && cargo fmt --check && cargo clippy --lib --all-targets -- -D warnings"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$tsc", "$rustc"]
+    },
+    {
+      "label": "Qualité : vérifier les types (TypeScript)",
+      "detail": "tsc sans produire de fichiers. Les erreurs sont cliquables dans le panneau Problèmes.",
+      "icon": { "id": "symbol-type-parameter", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run typecheck"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Qualité : chercher les défauts (ESLint)",
+      "detail": "Le moindre avertissement fait échouer la tâche, comme sur la CI.",
+      "icon": { "id": "search", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run lint"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Qualité : corriger ce qui peut l'être (ESLint)",
+      "detail": "Applique les corrections automatiques d'ESLint. Modifie les fichiers.",
+      "icon": { "id": "wrench", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run lint:fix"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Qualité : remettre en forme (Prettier)",
+      "detail": "Réécrit tout le dépôt au format du projet. Modifie les fichiers.",
+      "icon": { "id": "symbol-ruler", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run format"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Qualité : clippy et rustfmt (Rust)",
+      "detail": "Le moindre avertissement de clippy fait échouer la tâche. La version du compilateur est figée côté CI, à 1.92.0.",
+      "icon": { "id": "symbol-ruler", "color": "terminal.ansiYellow" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "cd src-tauri && cargo fmt --check && cargo clippy --lib --all-targets -- -D warnings"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$rustc"]
+    },
+
+    // ── Documentation et publication ───────────────────────────────────────
+    {
+      "label": "Documentation : refabriquer les captures du README",
+      "detail": "Ouvre l'application, sème vingt jeux, photographie les six vues et filme le voyage. Le GIF demande ffmpeg : FFMPEG=/chemin/vers/ffmpeg si besoin.",
+      "icon": { "id": "device-camera", "color": "terminal.ansiBlue" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": ["-lc", "npm run captures"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Publication : poser et pousser un tag de version",
+      "detail": "Déclenche la construction de l'installeur sur GitHub Actions. Un tag poussé ne peut plus être déplacé ni supprimé : la règle du dépôt l'interdit.",
+      "icon": { "id": "tag", "color": "terminal.ansiRed" },
+      "type": "shell",
+      "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+      "args": [
+        "-lc",
+        "TAG=${input:tagDeVersion} && git tag $TAG && git push origin $TAG && echo \"Tag $TAG poussé. Suivi : https://github.com/ap7816/Cassini/actions\""
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     }
   ],
   "inputs": [
     {
-      "id": "releaseTag",
+      "id": "tagDeVersion",
       "type": "promptString",
-      "description": "Nom du tag de release (ex: v0.8.0)",
-      "default": "v0.8.0"
+      "description": "Numéro de version à publier, préfixé d'un v. Il doit correspondre à celui de package.json, tauri.conf.json et Cargo.toml.",
+      "default": "v6.0.2"
     }
   ]
 }
